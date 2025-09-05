@@ -1,0 +1,278 @@
+# ZONIX Project Rules for Cursor AI
+
+## 🏭 Business Model Context
+
+### 🎯 **Core Business: Gas Distribution Management System**
+ZONIX es un sistema integral de gestión de distribución de gas doméstico que maneja:
+
+#### **🏪 Estaciones de Gas (Stations)**
+- **Ubicaciones físicas** donde se distribuye gas
+- **Horarios específicos** por día de la semana
+- **Límite diario**: 200 citas por estación
+- **Códigos únicos** para identificación
+- **Estado activo/inactivo**
+
+#### **🎫 Tickets de Gas (Gas Tickets)**
+- **Sistema de citas** para compra de bombonas
+- **Cola virtual** con posiciones (1-200)
+- **Estados del ticket**:
+  - `pending` - Pendiente de verificación
+  - `verifying` - En proceso de verificación
+  - `waiting` - Esperando en cola
+  - `dispatched` - Entregado/Comprado
+  - `canceled` - Cancelado
+  - `expired` - Expirado
+- **Reglas de negocio**:
+  - **21 días mínimo** entre compras (para usuarios internos)
+  - **Citas solo en domingo** para usuarios externos
+  - **Expiración**: 2 días después de la cita
+  - **QR Code** único por ticket
+
+#### **🛢️ Bombonas de Gas (Gas Cylinders)**
+- **Tipos**: small, wide
+- **Pesos**: 10kg, 18kg, 45kg
+- **Códigos únicos** de fabricación
+- **Aprobación** requerida antes de uso
+- **Proveedores** asociados
+
+#### **👥 Roles de Usuario**
+1. **Usuario Regular**: Crear tickets, ver historial
+2. **Sales Admin**: Verificar datos, escanear QR, aprobar tickets
+3. **Dispatcher**: Gestionar colas, despachar tickets
+
+### 🔄 **Flujo de Negocio Principal**
+1. **Usuario crea ticket** → Selecciona bombona → Asigna estación
+2. **Sistema valida** → Reglas de negocio → Asigna posición en cola
+3. **Sales Admin verifica** → Escanea QR → Valida datos
+4. **Dispatcher gestiona** → Cola física → Entrega bombona
+5. **Ticket marcado** → `dispatched` → Registro completo
+
+## Project Context
+- This is a Flutter + Laravel project for gas ticket management
+- Frontend: Flutter 3.35.2 (Dart 3.9.0) - Mobile app
+- Backend: Laravel 10 (PHP 8.1+) - REST API
+- Database: MySQL with tables for users, profiles, tickets, stations
+- Authentication: Google Sign-In + Laravel Sanctum (JWT)
+
+## File Structure
+- Frontend: `/var/www/html/proyectos/AIPP/PRODUCCION/ZONIX/zonix/`
+- Backend: `/var/www/html/proyectos/AIPP/PRODUCCION/ZONIX/zonix-backend/`
+- Key files: `lib/main.dart`, `routes/api.php`, `app/Http/Controllers/`
+
+## Coding Standards
+
+### Flutter/Dart
+- Always use Spanish comments and variable names when possible
+- Follow Flutter conventions: camelCase for variables, PascalCase for classes
+- Use Provider for state management
+- Handle errors with try-catch and proper logging
+- Use flutter_secure_storage for sensitive data
+- Always add proper imports and exports
+
+### Laravel/PHP
+- Use Spanish comments and variable names when possible
+- Follow Laravel conventions: snake_case for database, camelCase for variables
+- Use Eloquent relationships properly
+- Always validate input data
+- Use proper HTTP status codes
+- Handle errors with try-catch and logging
+- Use Laravel Sanctum for authentication
+
+### API Design
+- Use RESTful conventions
+- Always return JSON responses
+- Include proper HTTP headers
+- Use Bearer token authentication
+- Handle CORS properly
+- Validate all inputs
+
+## Project-Specific Rules
+
+### Authentication Flow
+- Google Sign-In → Laravel Sanctum token → Role-based access
+- Store tokens in flutter_secure_storage
+- Check authentication status on app start
+- Handle token expiration gracefully
+
+### Database Relationships
+- User 1:1 Profile
+- Profile has many: Phones, Emails, Documents, Addresses
+- GasTicket belongs to: Profile, GasCylinder, Station
+- Use proper foreign keys and constraints
+
+### Business Logic Rules
+- **Ticket Creation**:
+  - Validate 21-day rule for internal users
+  - Sunday-only appointments for external users
+  - Check daily limit (200 tickets per station)
+  - Assign queue position automatically
+  - Generate unique QR code
+- **Ticket States**:
+  - `pending` → `verifying` → `waiting` → `dispatched`
+  - Only Sales Admin can change to `verifying`
+  - Only Dispatcher can change to `dispatched`
+  - Auto-expire after 2 days
+- **Station Management**:
+  - Validate days available per station
+  - Check opening/closing times
+  - Handle external vs internal appointments
+- **Gas Cylinder Validation**:
+  - Must be approved before use
+  - Validate manufacturing date
+  - Check supplier association
+
+### Error Handling
+- Always log errors with proper context
+- Return user-friendly error messages
+- Handle network errors gracefully
+- Validate data types (especially int/string conversions)
+
+### Security
+- Never expose sensitive data in logs
+- Always validate user permissions
+- Use proper CORS configuration
+- Sanitize all user inputs
+
+## Common Patterns
+
+### Frontend State Management
+```dart
+// Use Provider pattern
+class UserProvider with ChangeNotifier {
+  bool _isAuthenticated = false;
+  String _userRole = '';
+  
+  bool get isAuthenticated => _isAuthenticated;
+  String get userRole => _userRole;
+  
+  Future<void> checkAuthentication() async {
+    // Implementation
+  }
+}
+```
+
+### Business Logic Implementation
+```dart
+// Gas Ticket Business Rules
+class GasTicketBusinessRules {
+  static bool canCreateTicket(DateTime lastPurchase) {
+    final daysSince = DateTime.now().difference(lastPurchase).inDays;
+    return daysSince >= 21; // Regla de 21 días
+  }
+  
+  static bool isExternalAppointmentAllowed() {
+    return DateTime.now().weekday == DateTime.sunday; // Solo domingos
+  }
+  
+  static int calculateQueuePosition(int stationId, DateTime appointmentDate) {
+    // Lógica para calcular posición en cola
+  }
+}
+```
+
+### Backend API Response
+```php
+// Always return consistent JSON structure
+return response()->json([
+    'success' => true,
+    'data' => $data,
+    'message' => 'Operation completed successfully'
+], 200);
+```
+
+### Error Handling
+```dart
+// Frontend
+try {
+  final response = await apiService.fetchData();
+  // Handle success
+} catch (e) {
+  logger.e('Error fetching data: $e');
+  // Show user-friendly error
+}
+```
+
+```php
+// Backend
+try {
+    $data = $this->service->process($request);
+    return response()->json(['success' => true, 'data' => $data]);
+} catch (Exception $e) {
+    Log::error('Error processing request: ' . $e->getMessage());
+    return response()->json(['success' => false, 'message' => 'Error occurred'], 500);
+}
+```
+
+## Environment Configuration
+- Local: API_URL_LOCAL=http://192.168.27.4:8000
+- Production: API_URL_PROD=https://zonix.aiblockweb.com
+- Database: zionix_BD
+- Device: Always 192.168.27.5:5555 (fixed device)
+- Backend: Native installation (no Docker)
+- Version Control: GitHub with CI/CD for backend
+
+## Testing Guidelines
+- Run tests before commits for safety
+- Test all API endpoints
+- Test authentication flows
+- Test role-based access
+- Test error scenarios
+- Test data validation
+- Use both unit and integration tests when possible
+- Reset database when schema changes are required
+- Use seeders for different testing scenarios
+
+### Flutter Testing
+- Test widget functionality
+- Test state management (Provider)
+- Test API integration
+- Test authentication flows
+- Test error handling
+- Test on actual device (192.168.27.5:5555)
+
+## Performance Considerations
+- Use proper indexing on database
+- Implement caching where appropriate
+- Optimize image uploads
+- Handle large datasets efficiently
+- Use proper pagination
+
+## Documentation
+- Always add comments in Spanish for complex logic
+- Document API endpoints
+- Keep README updated
+- Document environment setup
+- Document deployment process
+- Use Spanish for all user-facing content and comments
+
+## Git Workflow
+- Use meaningful commit messages
+- Create feature branches
+- Test before merging
+- Keep commits atomic
+- Document breaking changes
+- Use GitHub for version control
+- Backend has CI/CD - push triggers production deployment
+- Frontend: manual deployment process
+
+## Deployment
+- Test in local environment first
+- Use proper environment variables
+- Backup database before updates
+- Monitor logs after deployment
+- Test all critical paths
+- Backend: Automatic deployment via CI/CD on GitHub push
+- Frontend: Manual deployment process
+- Database: Reset when schema changes required
+
+## Remember
+- This is a production system handling real user data
+- Security and data integrity are critical
+- Always test changes thoroughly
+- Follow the established patterns
+- Keep code clean and maintainable
+- Use Spanish for user-facing content
+- Handle errors gracefully
+- Log important events
+- Validate all inputs
+- Test all scenarios

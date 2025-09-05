@@ -1,0 +1,174 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: Laravel Serve",
+      "type": "shell",
+      "command": "php",
+      "args": ["artisan", "serve", "--host", "0.0.0.0", "--port", "8000"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/../zonix-backend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Migrate Fresh Seed",
+      "type": "shell",
+      "command": "php",
+      "args": ["artisan", "migrate:fresh", "--seed"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/../zonix-backend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Test",
+      "type": "shell",
+      "command": "php",
+      "args": ["artisan", "test"],
+      "group": "test",
+      "options": {
+        "cwd": "${workspaceFolder}/../zonix-backend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Flutter Get",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["pub", "get"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Frontend: Flutter Run Android (Producción)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "--release", "-d", "192.168.27.5:5555"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Flutter Run Android (Desarrollo)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-d", "192.168.27.5:5555"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Frontend: Analyze",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["analyze"],
+      "group": "test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Test",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["test"],
+      "group": "test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Test Widget",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["test", "--tags", "widget"],
+      "group": "test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Clean",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["clean"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Clear Cache",
+      "type": "shell",
+      "command": "php",
+      "args": ["artisan", "cache:clear"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/../zonix-backend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Config Cache",
+      "type": "shell",
+      "command": "php",
+      "args": ["artisan", "config:cache"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/../zonix-backend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Route Cache",
+      "type": "shell",
+      "command": "php",
+      "args": ["artisan", "route:cache"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/../zonix-backend"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
