@@ -16,10 +16,8 @@ class Country {
         .toList();
 
     return Country(
-      id: json['id'] is int
-          ? json['id']
-          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      name: (json['name'] ?? 'Unknown').toString(),
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'Unknown',
       states: statesList,
     );
   }
@@ -42,14 +40,13 @@ class StateModel {
         .toList();
 
     return StateModel(
-      id: json['id'] is int
-          ? json['id']
-          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      name: (json['name'] ?? 'Unknown').toString(),
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'Unknown',
       cities: citiesList,
     );
   }
 }
+
 
 class City {
   final int id;
@@ -62,10 +59,8 @@ class City {
 
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
-      id: json['id'] is int
-          ? json['id']
-          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      name: (json['name'] ?? 'Unknown').toString(),
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'Unknown',
     );
   }
 }

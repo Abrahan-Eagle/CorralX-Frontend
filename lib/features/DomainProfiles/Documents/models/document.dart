@@ -6,10 +6,8 @@ class Document {
   final String? rifUrl;
   final String? taxDomicile;
   final int? sky; // Campo específico para 'rif'
-  final String?
-      communeRegister; // Campo específico para 'neighborhood_association'
-  final String?
-      communityRif; // Campo específico para 'neighborhood_association'
+  final String? communeRegister; // Campo específico para 'neighborhood_association'
+  final String? communityRif; // Campo específico para 'neighborhood_association'
   final String? frontImage;
   final DateTime? issuedAt;
   final DateTime? expiresAt;
@@ -35,34 +33,20 @@ class Document {
 
   factory Document.fromJson(Map<String, dynamic> json) {
     return Document(
-      id: json['id'] is int
-          ? json['id']
-          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      id: json['id'],
       type: json['type']?.toString(),
       numberCi: json['type'] == 'ci' ? json['number_ci']?.toString() : null,
-      receiptN: json['RECEIPT_N'] is int
-          ? json['RECEIPT_N']
-          : int.tryParse(json['RECEIPT_N']?.toString() ?? ''),
+      receiptN: json['RECEIPT_N'],
       rifUrl: json['rif_url'],
       taxDomicile: json['taxDomicile'],
-      sky: json['sky'] is int
-          ? json['sky']
-          : int.tryParse(json['sky']?.toString() ?? ''),
+      sky: json['sky'],
       communeRegister: json['commune_register'],
       communityRif: json['community_rif'],
       frontImage: json['front_image'],
-      issuedAt: json['issued_at'] != null
-          ? DateTime.tryParse(json['issued_at'].toString())
-          : null,
-      expiresAt: json['expires_at'] != null
-          ? DateTime.tryParse(json['expires_at'].toString())
-          : null,
-      approved: json['approved'] is bool
-          ? json['approved']
-          : (int.tryParse(json['approved']?.toString() ?? '') ?? 0) == 1,
-      status: json['status'] is bool
-          ? json['status']
-          : (int.tryParse(json['status']?.toString() ?? '') ?? 0) == 1,
+      issuedAt: json['issued_at'] != null ? DateTime.parse(json['issued_at']) : null,
+      expiresAt: json['expires_at'] != null ? DateTime.parse(json['expires_at']) : null,
+      approved: json['approved'] ?? false,
+      status: json['status'] ?? false,
     );
   }
 

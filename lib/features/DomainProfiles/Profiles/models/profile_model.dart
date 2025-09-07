@@ -10,7 +10,18 @@ class Profile {
   String dateOfBirth;
   String maritalStatus;
   String sex;
-  // String status; // Agregado
+  String status; // Estado del perfil
+  String? phone; // Teléfono
+  String? address; // Dirección
+  
+  // Campos específicos para comercios
+  String? businessName; // Nombre del negocio
+  String? businessType; // Tipo de negocio
+  String? taxId; // RFC
+  
+  // Campos específicos para delivery
+  String? vehicleType; // Tipo de vehículo
+  String? licenseNumber; // Número de licencia
 
   // Constructor
   Profile({
@@ -24,26 +35,36 @@ class Profile {
     required this.dateOfBirth,
     required this.maritalStatus,
     required this.sex,
-    // required this.status, // Agregado
+    this.status = 'notverified', // Valor por defecto
+    this.phone,
+    this.address,
+    this.businessName,
+    this.businessType,
+    this.taxId,
+    this.vehicleType,
+    this.licenseNumber,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
-      id: json['id'] is int
-          ? json['id']
-          : int.tryParse(json['id'].toString()) ?? 0,
-      userId: json['user_id'] is int
-          ? json['user_id']
-          : int.tryParse(json['user_id'].toString()) ?? 0,
-      firstName: (json['firstName'] ?? '').toString(),
-      middleName: (json['middleName'] ?? '').toString(),
-      lastName: (json['lastName'] ?? '').toString(),
-      secondLastName: (json['secondLastName'] ?? '').toString(),
-      photo: json['photo_users']?.toString(),
-      dateOfBirth: (json['date_of_birth'] ?? '').toString(),
-      maritalStatus: (json['maritalStatus'] ?? '').toString(),
-      sex: (json['sex'] ?? '').toString(),
-      // status: json['status'], // Agregado
+      id: json['id'],
+      userId: json['user_id'],
+      firstName: json['firstName'],
+      middleName: json['middleName'],
+      lastName: json['lastName'],
+      secondLastName: json['secondLastName'],
+      photo: json['photo_users'],
+      dateOfBirth: json['date_of_birth'],
+      maritalStatus: json['maritalStatus'],
+      sex: json['sex'],
+      status: json['status'] ?? 'notverified',
+      phone: json['phone'],
+      address: json['address'],
+      businessName: json['business_name'],
+      businessType: json['business_type'],
+      taxId: json['tax_id'],
+      vehicleType: json['vehicle_type'],
+      licenseNumber: json['license_number'],
     );
   }
 
@@ -59,7 +80,14 @@ class Profile {
       'date_of_birth': dateOfBirth,
       'maritalStatus': maritalStatus,
       'sex': sex,
-      // 'status': status, // Agregado
+      'status': status,
+      'phone': phone,
+      'address': address,
+      'business_name': businessName,
+      'business_type': businessType,
+      'tax_id': taxId,
+      'vehicle_type': vehicleType,
+      'license_number': licenseNumber,
     };
   }
 
@@ -75,7 +103,14 @@ class Profile {
     String? dateOfBirth,
     String? maritalStatus,
     String? sex,
-    // String? status, // Agregado
+    String? status,
+    String? phone,
+    String? address,
+    String? businessName,
+    String? businessType,
+    String? taxId,
+    String? vehicleType,
+    String? licenseNumber,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -88,7 +123,14 @@ class Profile {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       maritalStatus: maritalStatus ?? this.maritalStatus,
       sex: sex ?? this.sex,
-      // status: status ?? this.status, // Agregado
+      status: status ?? this.status,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
+      businessName: businessName ?? this.businessName,
+      businessType: businessType ?? this.businessType,
+      taxId: taxId ?? this.taxId,
+      vehicleType: vehicleType ?? this.vehicleType,
+      licenseNumber: licenseNumber ?? this.licenseNumber,
     );
   }
 }
