@@ -56,6 +56,7 @@ dependencies:
   pdf: ^3.11.1
   path_provider: ^2.1.5
   qr: ^3.0.2
+  shimmer: ^3.0.0
   
 
 dev_dependencies:
@@ -67,20 +68,36 @@ dev_dependencies:
   json_serializable: ^6.8.0
   mockito: ^5.4.4
 
+# flutter_launcher_icons:
+#   android: true
+#   ios: true
+#   image_path: "assets/icon/icon1.png"
+#   image_path_android: "assets/icon/icon1.png"
+#   # adaptive_icon_background: "#FFFFFF"
+#   # adaptive_icon_foreground: "assets/icon/foreground_icon.png"
+
+#   adaptive_icon_background: "assets/icon/christmas-background.png" # only available for Android 8.0 devices and above
+#   adaptive_icon_foreground: "assets/icon/icon-foreground-432x432.png" # only available for Android 8.0 devices and above
+#   adaptive_icon_monochrome: "assets/icon/icon-monochrome-432x432.png" # onl
+
+#   remove_alpha_ios: true
+#   min_sdk_android: 21
+
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon1.png"
-  image_path_android: "assets/icon/icon1.png"
-  # adaptive_icon_background: "#FFFFFF"
-  # adaptive_icon_foreground: "assets/icon/foreground_icon.png"
 
-  adaptive_icon_background: "assets/icon/christmas-background.png" # only available for Android 8.0 devices and above
-  adaptive_icon_foreground: "assets/icon/icon-foreground-432x432.png" # only available for Android 8.0 devices and above
-  adaptive_icon_monochrome: "assets/icon/icon-monochrome-432x432.png" # onl
+  # archivo real que existe
+  image_path: "assets/icon/icon1_1024.png"
+  image_path_android: "assets/icon/icon1_1024.png"
+
+  adaptive_icon_background: "assets/icon/christmas-background.png"
+  adaptive_icon_foreground: "assets/icon/icon-foreground-432x432.png"
+  adaptive_icon_monochrome: "assets/icon/icon-monochrome-432x432.png"
 
   remove_alpha_ios: true
   min_sdk_android: 21
+
 
 # flutter_launcher_icons:
 #   #  image_path: "assets/images/icon-128x128.png"
@@ -106,13 +123,44 @@ flutter_launcher_icons:
 
 
 
+# flutter:
+#   uses-material-design: true
+#   assets:
+#     - assets/images/splash_logo.png
+#     - assets/images/splash_logo_dark.png
+#     - assets/images/undraw_launching_szjw.png
+#     - assets/icon/icon1.png
+#     - assets/default_avatar.png
+#     - assets/images/undraw_date_picker_re_r0p8.svg
+#     - assets/images/undraw_mention_re_k5xc.svg
+#     - assets/images/undraw_insert_re_s97w.svg
+#     - assets/onboarding/welcome_image.svg
+#     - assets/onboarding/scooter.png
+#     - assets/onboarding/storefront-illustration-2.png
+#     - assets/onboarding/building.png
+#     - assets/onboarding/undraw_add_information_j2wg.svg
+#     - assets/onboarding/undraw_outer_space_re_u9vd.svg
+#     - assets/images/1.png
+#     - assets/images/2.png 
+#     - assets/images/profile_photos/16a4f66ff40d30c7a8fa1fe44b1e3c3e.jpg
+#     - assets/images/profile_photos/HD-wallpaper-floating-in-asteroids-astronaut-asteroid-belt-space.jpg
+#     - .env
+#     - assets/fonts/Roboto-Regular.ttf
+
+
 flutter:
   uses-material-design: true
   assets:
+    - assets/onboarding/onboarding_eats.png
+    - assets/onboarding/onboarding_eats2.png
+    - assets/onboarding/onboarding_eats_familia.png
+    - assets/images/logo_login.png
+    - assets/images/logo_login2.png
+    - assets/images/dart_dark-android.png
     - assets/images/splash_logo.png
     - assets/images/splash_logo_dark.png
     - assets/images/undraw_launching_szjw.png
-    - assets/icon/icon1.png
+    - assets/icon/icon1_1024.png
     - assets/default_avatar.png
     - assets/images/undraw_date_picker_re_r0p8.svg
     - assets/images/undraw_mention_re_k5xc.svg
@@ -129,7 +177,6 @@ flutter:
     - assets/images/profile_photos/HD-wallpaper-floating-in-asteroids-astronaut-asteroid-belt-space.jpg
     - .env
     - assets/fonts/Roboto-Regular.ttf
-
 
 
 # name: zonix

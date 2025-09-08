@@ -1,278 +1,156 @@
-# ZONIX Project Rules for Cursor AI
 
-## 🏭 Business Model Context
+## Frontend (Flutter) `.cursorrules`
 
-### 🎯 **Core Business: Gas Distribution Management System**
-ZONIX es un sistema integral de gestión de distribución de gas doméstico que maneja:
+```md
+---
+description: "Guía de desarrollo Frontend (Flutter) para el MVP de Corral X"
+alwaysApply: true
+---
 
-#### **🏪 Estaciones de Gas (Stations)**
-- **Ubicaciones físicas** donde se distribuye gas
-- **Horarios específicos** por día de la semana
-- **Límite diario**: 200 citas por estación
-- **Códigos únicos** para identificación
-- **Estado activo/inactivo**
+## Estructura de Carpetas y Convenciones (Flutter)
+- Organizar el código en la carpeta `lib/` en módulos lógicos:
+  - **`lib/screens/`** – Pantallas principales de la app (ej: `marketplace_screen.dart`, `listing_detail_screen.dart`, `profile_screen.dart`, `chat_screen.dart`, `login_screen.dart`).
+  - **`lib/widgets/`** – Widgets reutilizables o componentes UI pequeños (ej: `listing_card.dart` para mostrar un anuncio en la lista, `user_avatar.dart` para la foto de perfil, etc.).
+  - **`lib/providers/`** – Clases de gestión de estado (usando Provider/ChangeNotifier) para separar la lógica de negocio de la UI (ej: `listing_provider.dart`, `auth_provider.dart`, `chat_provider.dart`).
+  - **`lib/services/`** – Servicios para comunicación con la API u otras utilidades (ej: `api_service.dart` para peticiones HTTP genéricas, o servicios por funcionalidad: `listing_service.dart`, `chat_service.dart`).
+  - *Opcional:* **`lib/models/`** – Clases modelo de datos que representen las estructuras JSON del backend (ej: `Listing.dart`, `User.dart`, `Message.dart`) con métodos factory `fromJson`/`toJson` para conversión.
+- Seguir convenciones de nombrado de Dart/Flutter:
+  - Nombres de archivos y directorios en minúscula y con guiones bajos (snake_case), sin espacios ni mayúsculas:contentReference[oaicite:0]{index=0}.
+  - Nombres de clases en PascalCase (capitalizando cada palabra, e.j. class `ListingProvider`).
+  - Nombres de variables y métodos en lowerCamelCase.
+  - Evitar nombres muy largos; preferir claridad y brevedad (ej. `ListingsScreen` mejor que `AllListingsListScreen`).
+- Mantener una estructura limpia: una pantalla por archivo; widgets auxiliares en archivos separados si son lo suficientemente complejos. Se puede agrupar sub-componentes dentro de carpetas por pantalla (ej. `screens/listing_detail/` con `listing_detail_screen.dart` y widgets relacionados).
+- Incluir comentarios y documentación en el código para facilitar la lectura por el equipo (usar `///` para documentar clases y métodos públicos).
+- Usar el patrón **Provider** para gestión de estado por simplicidad en el MVP (evitar patrones más complejos como BLoC o Riverpod a menos que el equipo los prefiera).
 
-#### **🎫 Tickets de Gas (Gas Tickets)**
-- **Sistema de citas** para compra de bombonas
-- **Cola virtual** con posiciones (1-200)
-- **Estados del ticket**:
-  - `pending` - Pendiente de verificación
-  - `verifying` - En proceso de verificación
-  - `waiting` - Esperando en cola
-  - `dispatched` - Entregado/Comprado
-  - `canceled` - Cancelado
-  - `expired` - Expirado
-- **Reglas de negocio**:
-  - **21 días mínimo** entre compras (para usuarios internos)
-  - **Citas solo en domingo** para usuarios externos
-  - **Expiración**: 2 días después de la cita
-  - **QR Code** único por ticket
+## Servicios y Comunicación con la API
+- Centralizar las llamadas HTTP en clases de servicio bajo `lib/services/`:
+  - Crear un `ApiService` base que use paquetes como `http` (o `dio` si se prefiere) para manejar peticiones. Este servicio puede gestionar el token de autenticación globalmente (p.ej., adjuntar header `Authorization: Bearer <token>` a cada request tras login).
+  - Servicios específicos por recurso: ej. un `ListingService` con métodos para la lógica de publicaciones: `fetchListings({filters})`, `getListingDetail(id)`, `createListing(data)`, `updateListing(id, data)`, `deleteListing(id)`. Cada método realiza la petición REST correspondiente y retorna datos procesados (decodificados a Map o convertidos a modelo).
+  - **AuthService:** métodos `login(email, pass)`, `register(datos)`, `logout()` que llaman a las rutas `/api/login`, `/api/register` y gestionan el almacenamiento seguro del token (usando `flutter_secure_storage` para el JWT, por ejemplo).
+  - **ChatService:** métodos para obtener conversaciones (`getConversations()` -> GET `/api/conversations`), obtener mensajes de un chat (`getMessages(convId)` -> GET `/api/conversations/{id}`) y enviar mensaje (`sendMessage(convId, text)` -> POST `/api/conversations/{id}/messages`).
+  - Manejar errores HTTP en estos servicios: si la respuesta tiene código de error, interpretar y lanzar excepciones o retornar valores de error para que la UI pueda reaccionar. Ej.: 401 -> lanzar error de autenticación (frontend redirige a login), 422 -> devolver lista de errores de validación para mostrarlos en el formulario.
+- Parsear las respuestas JSON en modelos Dart o mapas:
+  - Si se definieron clases de modelo (con factory `fromJson`), usarlas para convertir las respuestas. Ej: `Listing.fromJson(json)` por cada elemento en la lista de listings.
+  - Enviar datos al backend en formato JSON con `http.post/put` y encabezado `Content-Type: application/json`. Usar `jsonEncode` en los cuerpos, asegurando que los nombres de campos coinciden con los esperados por el backend.
+- Implementar un mecanismo global de autenticación:
+  - Guardar el token del usuario (y posiblemente el objeto User) en un provider global (`AuthProvider`) al hacer login.
+  - Adjuntar el token en **ApiService** en cada llamada (p.ej., configurar `http.Client` con un interceptor o añadir header en cada método de servicio).
+  - El AuthProvider maneja verificar si hay token guardado al iniciar la app (auto-login) y la lógica de cerrar sesión (borrar token de storage, limpiar estados).
+- Manejar subida de archivos/imágenes si aplica:
+  - Para adjuntar foto en una publicación o actualizar avatar, usar `ImagePicker` (para obtener la imagen local) y luego `http.MultipartRequest` o métodos de `dio` para enviar la imagen al backend (ya sea a un endpoint dedicado o incluido en el payload de creación). El servicio correspondiente debe manejar la construcción de la petición multipart.
+  - Asegurarse que el backend devuelva la URL o path de la imagen guardada, y actualizar el modelo (Listing o User) con ese dato para futuras solicitudes.
+- Evitar lógica de negocio compleja en las pantallas: delegar a los servicios y providers. Las pantallas solo invocan métodos de provider o service, esperan los resultados (futures) y muestran feedback (spinners, mensajes de error).
 
-#### **🛢️ Bombonas de Gas (Gas Cylinders)**
-- **Tipos**: small, wide
-- **Pesos**: 10kg, 18kg, 45kg
-- **Códigos únicos** de fabricación
-- **Aprobación** requerida antes de uso
-- **Proveedores** asociados
+## Gestión de Estado (Provider) y Flujos de Datos
+- Utilizar el paquete **provider** para manejo sencillo del estado:
+  - En `main.dart`, envolver la app con `MultiProvider` registrando los ChangeNotifiers necesarios: `AuthProvider`, `ListingProvider`, `ChatProvider`, etc.
+  - **AuthProvider:** mantiene info del usuario actual (usuario logueado) y su token. Expone propiedades como `isAuthenticated` y `currentUser`. Maneja `login()`/`register()`/`logout()` llamando a AuthService y notificando listeners en consecuencia.
+  - **ListingProvider:** maneja la lista de publicaciones y las operaciones CRUD relacionadas.
+    - Tiene una lista `listings` (inicialmente vacía) y quizás `Listing? selectedListing` para detalle. 
+    - Métodos: `fetchListings([filters])` llama a ListingService.fetchListings; al obtener datos, rellena `listings` y hace `notifyListeners()`. Opcionalmente recibe filtros de búsqueda y los pasa a la API.
+    - `getListingDetail(id)` podría obtener detalle de una publicación (o aprovechar los datos ya cargados en `listings`). 
+    - `createListing(datos)` llama ListingService.createListing; si éxito, añade la nueva publicación a `listings` y notifica. 
+    - `updateListing(id, datos)` actualiza tanto vía API como localmente en la lista (reemplazando el objeto modificado).
+    - `deleteListing(id)` envía DELETE a API y si éxito, remueve la publicación de `listings`.
+    - También maneja filtros locales de ser necesario (aunque es preferible delegar filtrado al backend enviando query params).
+  - **ChatProvider:** maneja las conversaciones y mensajes del chat:
+    - Contiene lista `conversations` (conversaciones del usuario actual) y quizás un mapa `messagesByConv` para almacenar mensajes de cada conversación cargada.
+    - Método `loadConversations()` llama ChatService.getConversations y actualiza la lista.
+    - Método `openConversation(userId)` (o `startConversation(listingId, sellerId)`) podría llamarse para iniciar chat con un vendedor desde un anuncio: llama a ChatService (que devuelve convId existente o nuevo) y luego carga mensajes de esa conversación.
+    - Método `loadMessages(convId)` obtiene mensajes (ChatService.getMessages) y guarda en `messagesByConv[convId]`, notificando listeners.
+    - Método `sendMessage(convId, text)` usa ChatService.sendMessage; al obtener respuesta exitosa, agrega el mensaje a `messagesByConv[convId]` y actualiza el último mensaje en `conversations`. En caso de error, puede manejarse con una notificación de error.
+  - Los providers deben notificar a la UI para refrescar: usar `notifyListeners()` tras cambios. En la UI, usar `Consumer<...>` o `context.watch()` para reconstruir widgets reactivos cuando cambie el estado.
+- Manejar estados de carga y error en los providers:
+  - Por ejemplo, `ListingProvider` puede tener `bool isLoading` mientras carga publicaciones, y `String? errorMessage` si falla la carga. La UI (MarketplaceScreen) debe revisar estos para mostrar un `CircularProgressIndicator` cuando `isLoading=true` o un mensaje de error si `errorMessage != null`.
+  - Similar para operaciones de envío: se puede tener `isSubmitting` en formularios (evita doble submit) y `validationErrors` para mostrar errores específicos de campos.
+  - `ChatProvider` podría tener un indicador `isSending` para deshabilitar el campo de texto mientras se envía un mensaje, o manejar una cola de mensajes pendientes si se quiere extender.
 
-#### **👥 Roles de Usuario**
-1. **Usuario Regular**: Crear tickets, ver historial
-2. **Sales Admin**: Verificar datos, escanear QR, aprobar tickets
-3. **Dispatcher**: Gestionar colas, despachar tickets
+## Diseño de Pantallas y Navegación
+- Implementar una navegación acorde a los flujos principales (se puede usar `Navigator.push`/`pop` o rutas nombradas con `onGenerateRoute`). Una barra de navegación inferior puede facilitar el acceso a secciones: Marketplace, Chats, Perfil, etc.
+- **Pantalla Marketplace (Listado Principal):**
+  - Muestra la lista de publicaciones en venta utilizando `ListingProvider.listings`. Usar un `ListView.builder` con un widget personalizado (`ListingCard`) para cada item, mostrando foto principal, tipo/raza, ubicación y posiblemente precio o edad.
+  - En la parte superior, incluir barra de búsqueda y filtros (por raza, tipo, ubicación). Al aplicar filtros, llamar `fetchListings` con parámetros o filtrar la lista existente y notificar.
+  - Implementar pull-to-refresh (usando `RefreshIndicator`) que dispare `fetchListings()` nuevamente desde el backend.
+  - Al tocar una publicación, navegar a la pantalla de detalle de publicación (pasando el ID o el objeto Listing).
+- **Pantalla Detalle de Publicación:**
+  - Muestra la información completa de la publicación seleccionada: varias imágenes (Carousel o PageView), descripción extensa, detalles (edad, cantidad, ubicación específica, fecha publicación), y datos del vendedor (nombre comercial, ubicación general, rating, verificado con insignia).
+  - Botones contextuales:
+    - **Contactar / Mensaje:** visible para usuarios que no son dueños. Al pulsar, iniciar o abrir chat con el vendedor: llamar a `ChatProvider.openConversation(sellerId)` (posiblemente pasando también listingId para contexto inicial) y navegar a ChatScreen.
+    - **Editar / Eliminar:** visibles solo si el usuario actual es el propietario de la publicación. *Editar* navega a la pantalla de formulario de publicación con los datos precargados. *Eliminar* muestra confirmación y si se acepta, llama `ListingProvider.deleteListing` y al éxito hace `Navigator.pop()` (y quizá refresca la lista).
+  - Mostrar métricas: número de vistas de la publicación, cuántos usuarios la marcaron como favorita, etc., para el dueño (si el viewer es el propietario, mostrar estas estadísticas).
+  - Debajo, listar comentarios/reseñas si existen, mostrando texto, autor y rating.
+- **Pantalla Crear/Editar Publicación:**
+  - Formulario (`Form` + `TextFormField`) con campos: tipo (DropdownButton o opciones predefinidas), raza (texto o dropdown si hay catálogo), edad (TextField numérico), cantidad, descripción (multilínea), ubicación (ej. Dropdown de estados o campo de texto autocompletable), y carga de imagen (botón para seleccionar foto de la galería/cámara).
+  - Validar localmente campos obligatorios y formatos (no textos vacíos, números > 0 en edad/cantidad). Utilizar validadores en los `TextFormField` para feedback inmediato.
+  - Botón **Guardar**: al presionar, llamar `ListingProvider.createListing` o `updateListing` según modo. Manejar estado de envío (`isSubmitting=true` para mostrar spinner sobre el botón).
+  - Si el backend retorna errores de validación (422), capturar en el provider y mostrarlos en el formulario (por ejemplo, usando `validator` de cada campo con mensajes del provider, o un widget de texto rojo debajo del campo).
+  - Tras una creación/edición exitosa, navegar de regreso: si es nueva publicación, puede volver al Marketplace o directamente al detalle de la publicación creada; si es edición, volver al detalle actualizado.
+- **Pantalla Mi Perfil:**
+  - Mostrar la información del usuario actual (desde `AuthProvider.currentUser`): foto de perfil (CircleAvatar), nombre, ubicación, email/teléfono (si se quiere mostrar en perfil privado), bio, rating promedio y número de calificaciones, estado verificado (insignia verificada si `isVerified=true`).
+  - Botón **Editar Perfil**: navega a una pantalla o diálogo para editar los datos de perfil (nombre, contacto, ubicación, bio, foto). Similar a formulario de publicación pero para User: campos básicos y opción de nueva foto de perfil.
+  - Sección **Mis Publicaciones**: debajo de la info del perfil, listar las publicaciones creadas por el usuario (usar `ListingProvider.listings` filtradas por ownerId o mantener un método para obtener solo las del usuario). Mostrar cada publicación con sus métricas (vistas, interesados, estado activo/vendido si aplica). Permitir entrar a detalle o editar directamente.
+  - Opcional: mostrar notificación si el usuario no está verificado (“Tu cuenta no está verificada. Completa X proceso para verificar.”) para incentivar la verificación.
+- **Pantalla Perfil de Vendedor (otro usuario):**
+  - Similar a una vista de perfil pero para un vendedor ajeno: mostrar nombre comercial, ubicación, bio, rating y verificado. No mostrar datos sensibles (email, teléfono).
+  - Listar también las publicaciones activas de ese vendedor (para que el comprador pueda ver más ofertas del mismo). 
+  - Botón **Contactar** presente (redundante con el de detalle, pero útil si se llega al perfil por otro medio).
+- **Pantalla de Conversaciones (Chats):**
+  - Mostrar todas las conversaciones del usuario (Fuente: `ChatProvider.conversations`). Usar ListView.builder. Cada item muestra: foto y nombre del otro participante, snippet del último mensaje, timestamp relativo (ej. "hace 5 min"), y un indicador de no leídos (por ejemplo, texto en negrita si hay no leídos, o un badge con el número).
+  - Al entrar a esta pantalla (posiblemente mediante un icono de chat en un BottomNavigationBar), llamar `ChatProvider.loadConversations()` para refrescar la lista desde backend. Implementar igualmente pull-to-refresh para actualizar manualmente.
+  - Al tocar una conversación, navegar a **ChatScreen** pasando el `conversationId` (y cargar mensajes si no lo hizo aún).
+- **Pantalla de Chat (Conversación 1:1):**
+  - Mostrar la lista de mensajes entre el usuario actual y el otro participante. Usar un ListView (o ListView.reverse) para presentar mensajes del más antiguo al más reciente. Formato de burbujas: mensajes del usuario actual alineados a la derecha con color distinto, mensajes recibidos a la izquierda.
+  - Barra superior con el nombre del contacto y su estado (si se quiere, aunque sin WebSocket no sabremos si está en línea). Mostrar también si el contacto es verificado (pequeño icono).
+  - En la parte inferior, un campo de texto para escribir mensaje y botón enviar (IconButton con ícono de envío). Integrar con el teclado (usar `Scaffold` con `resizeToAvoidBottomInset` para que el ListView no quede oculto).
+  - Al enviar un mensaje:
+    - Llamar `ChatProvider.sendMessage(convId, texto)`. Se puede agregar inmediatamente el mensaje a la UI para feedback optimista (asumiendo éxito), pero manejar el caso de fallo (ej. mostrar un icono de reintento si no se entregó).
+    - Despejar el campo de texto tras enviar.
+  - **Polling de chat:** actualizar periódicamente para obtener nuevos mensajes:
+    - Usar `Timer.periodic(Duration(seconds: 5), ...)` en `initState` de ChatScreen para llamar `ChatProvider.loadMessages(convId)` cada cierto intervalo. Cancelar el timer en `dispose` para no filtrar recursos.
+    - Alternativamente, usar un `Stream.periodic` o simplemente refrescar al volver a la pantalla de chat. Pero el polling continuo brinda una experiencia más en tiempo real sin implementar WebSockets en MVP.
+    - Optimizar el polling: el provider puede almacenar la marca de tiempo o ID del último mensaje recibido y solicitar solo mensajes nuevos (si el backend lo soporta, e.g. `GET /conversations/{id}?since=ts`), de lo contrario, obtener todos y actualizar lista (diferenciar nuevos por ID).
+  - Marcar mensajes como leídos: cuando se abre la pantalla, después de cargar los mensajes, llamar a un método (quizá en ChatService) para marcar la conversación como leída (o asumir que la acción de obtenerlos ya los marca). Asegurarse de actualizar `has_unread_messages` en AuthProvider o ChatProvider para que al volver a lista de chats, esa conversación aparezca sin notificaciones pendientes.
+- **Pantallas de Autenticación:**
+  - **LoginScreen:** campos para email y contraseña, con validación básica (no vacío, formato email). Botón "Iniciar Sesión" que al presionar llama `AuthProvider.login(email, pass)`. Mostrar indicador de carga durante autenticación. Si error (credenciales inválidas), mostrar mensaje ("Email o contraseña incorrecta").
+  - **RegisterScreen:** campos para nombre, email, teléfono, contraseña y confirmación. Validar formatos (email válido, teléfono quizás opcional pero formato numérico, contraseña mínima 6 caracteres y coincide con confirmación). Botón "Registrarse" llama `AuthProvider.register(datos)` y luego inicia sesión automática o indica éxito.
+  - Tras login o registro exitoso, navegar a la pantalla principal (MarketplaceScreen). Mantener la sesión guardando token en SecureStorage y cargando datos de usuario.
+  - Considerar un SplashScreen inicial que verifique si ya hay un token válido al abrir la app: 
+    - Si sí, saltar login (ir directo a home tras cargar perfil mediante AuthService.getProfile).
+    - Si no, mostrar pantallas de bienvenida/login.
 
-### 🔄 **Flujo de Negocio Principal**
-1. **Usuario crea ticket** → Selecciona bombona → Asigna estación
-2. **Sistema valida** → Reglas de negocio → Asigna posición en cola
-3. **Sales Admin verifica** → Escanea QR → Valida datos
-4. **Dispatcher gestiona** → Cola física → Entrega bombona
-5. **Ticket marcado** → `dispatched` → Registro completo
+## Manejo de Errores y Validaciones en la UI
+- Dar feedback claro al usuario en caso de errores:
+  - Si el backend devuelve error de validación (422) con detalles, parsear los mensajes y mostrarlos junto a los campos correspondientes en formularios (usando `FormField.errorText` o widgets de texto de error).
+  - Si devuelve error de autenticación (401 no autorizado), redirigir al login (por ejemplo, si el token expiró, asegurar que las próximas llamadas AuthService fallen y triggereen logout).
+  - Errores generales (500 o desconocidos): mostrar un mensaje genérico mediante un `SnackBar` o `AlertDialog` ("Ocurrió un error, inténtalo más tarde") para no dejar al usuario sin retroalimentación.
+- Validar en el frontend antes de enviar para mejorar UX: por ejemplo, campos obligatorios marcados con `*`, y usar validadores en `TextFormField` para evitar llamadas innecesarias al backend. Sin embargo, siempre manejar también la respuesta de error del backend en caso de que pase una validación del lado cliente.
+- Manejar estados de carga con indicaciones visuales:
+  - Mostrar **loaders** (ej. `CircularProgressIndicator`) mientras se cargan datos iniciales de una pantalla. Por ejemplo, MarketplaceScreen muestra un spinner central si `ListingProvider.isLoading` y la lista vacía.
+  - Deshabilitar botones mientras se procesa una acción: ej. botón "Guardar" del formulario de publicación se desactiva durante el envío para prevenir envíos duplicados, mostrando quizá un spinner pequeño en el propio botón.
+  - Para acciones rápidas (like/unlike favorito), retroalimentar con cambios inmediatos en el icono, pero confirmar el estado real según la respuesta del backend (y revertir si falló).
+- Implementar estados vacíos y mensajes informativos:
+  - Ej.: Si `ListingProvider.listings` está vacío tras cargar, mostrar texto "No se encontraron publicaciones" (quizá debido a filtros activos o sin datos en la plataforma).
+  - En la pantalla de chats, si no hay conversaciones: mostrar un mensaje "No tienes mensajes aún. ¡Empieza a contactar vendedores desde una publicación!".
+  - Estos mensajes mejoran la UX y guían al usuario sobre qué hacer.
 
-## Project Context
-- This is a Flutter + Laravel project for gas ticket management
-- Frontend: Flutter 3.35.2 (Dart 3.9.0) - Mobile app
-- Backend: Laravel 10 (PHP 8.1+) - REST API
-- Database: MySQL with tables for users, profiles, tickets, stations
-- Authentication: Google Sign-In + Laravel Sanctum (JWT)
-
-## File Structure
-- Frontend: `/var/www/html/proyectos/AIPP/PRODUCCION/ZONIX/zonix/`
-- Backend: `/var/www/html/proyectos/AIPP/PRODUCCION/ZONIX/zonix-backend/`
-- Key files: `lib/main.dart`, `routes/api.php`, `app/Http/Controllers/`
-
-## Coding Standards
-
-### Flutter/Dart
-- Always use Spanish comments and variable names when possible
-- Follow Flutter conventions: camelCase for variables, PascalCase for classes
-- Use Provider for state management
-- Handle errors with try-catch and proper logging
-- Use flutter_secure_storage for sensitive data
-- Always add proper imports and exports
-
-### Laravel/PHP
-- Use Spanish comments and variable names when possible
-- Follow Laravel conventions: snake_case for database, camelCase for variables
-- Use Eloquent relationships properly
-- Always validate input data
-- Use proper HTTP status codes
-- Handle errors with try-catch and logging
-- Use Laravel Sanctum for authentication
-
-### API Design
-- Use RESTful conventions
-- Always return JSON responses
-- Include proper HTTP headers
-- Use Bearer token authentication
-- Handle CORS properly
-- Validate all inputs
-
-## Project-Specific Rules
-
-### Authentication Flow
-- Google Sign-In → Laravel Sanctum token → Role-based access
-- Store tokens in flutter_secure_storage
-- Check authentication status on app start
-- Handle token expiration gracefully
-
-### Database Relationships
-- User 1:1 Profile
-- Profile has many: Phones, Emails, Documents, Addresses
-- GasTicket belongs to: Profile, GasCylinder, Station
-- Use proper foreign keys and constraints
-
-### Business Logic Rules
-- **Ticket Creation**:
-  - Validate 21-day rule for internal users
-  - Sunday-only appointments for external users
-  - Check daily limit (200 tickets per station)
-  - Assign queue position automatically
-  - Generate unique QR code
-- **Ticket States**:
-  - `pending` → `verifying` → `waiting` → `dispatched`
-  - Only Sales Admin can change to `verifying`
-  - Only Dispatcher can change to `dispatched`
-  - Auto-expire after 2 days
-- **Station Management**:
-  - Validate days available per station
-  - Check opening/closing times
-  - Handle external vs internal appointments
-- **Gas Cylinder Validation**:
-  - Must be approved before use
-  - Validate manufacturing date
-  - Check supplier association
-
-### Error Handling
-- Always log errors with proper context
-- Return user-friendly error messages
-- Handle network errors gracefully
-- Validate data types (especially int/string conversions)
-
-### Security
-- Never expose sensitive data in logs
-- Always validate user permissions
-- Use proper CORS configuration
-- Sanitize all user inputs
-
-## Common Patterns
-
-### Frontend State Management
-```dart
-// Use Provider pattern
-class UserProvider with ChangeNotifier {
-  bool _isAuthenticated = false;
-  String _userRole = '';
-  
-  bool get isAuthenticated => _isAuthenticated;
-  String get userRole => _userRole;
-  
-  Future<void> checkAuthentication() async {
-    // Implementation
-  }
-}
-```
-
-### Business Logic Implementation
-```dart
-// Gas Ticket Business Rules
-class GasTicketBusinessRules {
-  static bool canCreateTicket(DateTime lastPurchase) {
-    final daysSince = DateTime.now().difference(lastPurchase).inDays;
-    return daysSince >= 21; // Regla de 21 días
-  }
-  
-  static bool isExternalAppointmentAllowed() {
-    return DateTime.now().weekday == DateTime.sunday; // Solo domingos
-  }
-  
-  static int calculateQueuePosition(int stationId, DateTime appointmentDate) {
-    // Lógica para calcular posición en cola
-  }
-}
-```
-
-### Backend API Response
-```php
-// Always return consistent JSON structure
-return response()->json([
-    'success' => true,
-    'data' => $data,
-    'message' => 'Operation completed successfully'
-], 200);
-```
-
-### Error Handling
-```dart
-// Frontend
-try {
-  final response = await apiService.fetchData();
-  // Handle success
-} catch (e) {
-  logger.e('Error fetching data: $e');
-  // Show user-friendly error
-}
-```
-
-```php
-// Backend
-try {
-    $data = $this->service->process($request);
-    return response()->json(['success' => true, 'data' => $data]);
-} catch (Exception $e) {
-    Log::error('Error processing request: ' . $e->getMessage());
-    return response()->json(['success' => false, 'message' => 'Error occurred'], 500);
-}
-```
-
-## Environment Configuration
-- Local: API_URL_LOCAL=http://192.168.27.4:8000
-- Production: API_URL_PROD=https://zonix.aiblockweb.com
-- Database: zionix_BD
-- Device: Always 192.168.27.5:5555 (fixed device)
-- Backend: Native installation (no Docker)
-- Version Control: GitHub with CI/CD for backend
-
-## Testing Guidelines
-- Run tests before commits for safety
-- Test all API endpoints
-- Test authentication flows
-- Test role-based access
-- Test error scenarios
-- Test data validation
-- Use both unit and integration tests when possible
-- Reset database when schema changes are required
-- Use seeders for different testing scenarios
-
-### Flutter Testing
-- Test widget functionality
-- Test state management (Provider)
-- Test API integration
-- Test authentication flows
-- Test error handling
-- Test on actual device (192.168.27.5:5555)
-
-## Performance Considerations
-- Use proper indexing on database
-- Implement caching where appropriate
-- Optimize image uploads
-- Handle large datasets efficiently
-- Use proper pagination
-
-## Documentation
-- Always add comments in Spanish for complex logic
-- Document API endpoints
-- Keep README updated
-- Document environment setup
-- Document deployment process
-- Use Spanish for all user-facing content and comments
-
-## Git Workflow
-- Use meaningful commit messages
-- Create feature branches
-- Test before merging
-- Keep commits atomic
-- Document breaking changes
-- Use GitHub for version control
-- Backend has CI/CD - push triggers production deployment
-- Frontend: manual deployment process
-
-## Deployment
-- Test in local environment first
-- Use proper environment variables
-- Backup database before updates
-- Monitor logs after deployment
-- Test all critical paths
-- Backend: Automatic deployment via CI/CD on GitHub push
-- Frontend: Manual deployment process
-- Database: Reset when schema changes required
-
-## Remember
-- This is a production system handling real user data
-- Security and data integrity are critical
-- Always test changes thoroughly
-- Follow the established patterns
-- Keep code clean and maintainable
-- Use Spanish for user-facing content
-- Handle errors gracefully
-- Log important events
-- Validate all inputs
-- Test all scenarios
+## Responsabilidades Cruzadas y Sincronización con Backend
+- El frontend depende del backend para la veracidad de datos. Siempre que la app realice una acción (crear, editar, eliminar), esperar la respuesta confirmada del servidor antes de actualizar la UI definitivamente:
+  - Ej.: al eliminar una publicación, no quitarla de la lista inmediatamente al hacer clic, sino tras confirmar éxito (mientras tanto, se puede optimísticamente ocultar con un placeholder de "eliminando..." o deshabilitarla).
+  - Si el backend responde con error (403, 404, etc.), mostrar el error y restaurar cualquier cambio optimista en la interfaz.
+- Mantener los modelos de datos del frontend sincronizados con la API:
+  - Si cambia la estructura JSON en el backend (ej. se renombra un campo), actualizar los métodos `fromJson`/`toJson` y el uso correspondiente en la app. Este archivo de reglas debe actualizarse también si hay cambios mayores de contrato.
+  - Definir constantes para la URL base de API y endpoints en un solo lugar (ej. `const String API_BASE_URL = "...";` en ApiService) para facilitar cambios de entorno (desarrollo, producción) y evitar strings duplicados.
+- **Seguridad en frontend:** aunque el token previene acceso no autorizado, su manejo debe ser cuidadoso:
+  - Guardar token de forma segura (usar `flutter_secure_storage` en vez de SharedPreferences para información sensible).
+  - Nunca exponer el token ni información sensible en los logs de la app. 
+  - Si el usuario cierra sesión, borrar token y datos personales. 
+  - Implementar detección de expiración: si una llamada recibe 401 y el token estaba enviado, asumir expirado o inválido, realizar `logout()` automático y redirigir a login.
+- Optimizar la experiencia de chat con polling:
+  - Elegir un intervalo de polling que balancee entre inmediatez y consumo: ~5 segundos suele ser aceptable para chats MVP sin sobrecargar (tanto la batería del dispositivo como el servidor).
+  - Pausar o reducir el polling cuando la app está en segundo plano o el usuario no está en la pantalla de chat. Por ejemplo, iniciar el Timer solo en `ChatScreen` y cancelarlo en `dispose`, de modo que no se hagan peticiones constantes cuando el usuario no está activamente chateando.
+  - Notar que este enfoque es de MVP; a futuro se considerará migrar a WebSockets/Notificaciones push para chat en tiempo real.
+- El frontend debe reflejar las reglas del backend en la UI para claridad del usuario:
+  - Ej.: Si solo usuarios verificados pueden publicar (si se aplicara), la app debería informar o bloquear esa acción para usuarios no verificados con un mensaje del estilo "Tu cuenta debe ser verificada para publicar anuncios.".
+  - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.
+- Pruebas manuales de integración: el equipo frontend y backend deben realizar pruebas conjuntas de los flujos principales (registro, login, crear publicación, navegar, chatear) en un entorno de staging. Cualquier fallo de integración (discordancia de nombres de campos, comportamiento inesperado) debe reflejarse en ajustes tanto de código como de estas reglas para mantener la documentación actualizada.
