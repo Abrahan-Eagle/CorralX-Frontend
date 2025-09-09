@@ -988,7 +988,7 @@ class SignInScreenState extends State<SignInScreen>
             borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
           ),
           child: Icon(
-            Icons.agriculture, // Temporal hasta tener el logo
+            Icons.pets, // Icono de ganado en lugar de tractor
             size: isSmallScreen
                 ? 28
                 : isTablet
@@ -1057,43 +1057,94 @@ class SignInScreenState extends State<SignInScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Icono principal de ganado
-                  Icon(
-                    Icons
-                        .agriculture, // Cambiar por icono de ganado personalizado
-                    size: isSmallScreen
-                        ? 40
-                        : isTablet
-                            ? 80
-                            : isLandscape
-                                ? 60
-                                : 64,
-                    color: CorralXColors.primaryGreen,
+                  // Logo principal mejorado con elementos ganaderos
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Icono de vaca
+                      Icon(
+                        Icons.pets,
+                        size: isSmallScreen
+                            ? 24
+                            : isTablet
+                                ? 48
+                                : isLandscape
+                                    ? 36
+                                    : 40,
+                        color: CorralXColors.primaryGreen,
+                      ),
+                      SizedBox(width: 8),
+                      // Icono de corral/establo
+                      Icon(
+                        Icons.home_work,
+                        size: isSmallScreen
+                            ? 24
+                            : isTablet
+                                ? 48
+                                : isLandscape
+                                    ? 36
+                                    : 40,
+                        color: CorralXColors.secondaryBrown,
+                      ),
+                    ],
                   ),
 
                   SizedBox(
                       height: isSmallScreen
-                          ? 6
+                          ? 8
                           : isTablet
                               ? 16
                               : isLandscape
-                                  ? 8
-                                  : 12),
+                                  ? 12
+                                  : 16),
 
-                  // Nombre de la marca
+                  // Nombre de la marca mejorado
                   Text(
                     'CORRAL X',
                     style: TextStyle(
                       color: CorralXColors.textPrimaryLight,
                       fontSize: isSmallScreen
-                          ? 20
+                          ? 24
                           : isTablet
-                              ? 40
+                              ? 48
                               : isLandscape
-                                  ? 28
-                                  : 32,
+                                  ? 36
+                                  : 40,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: isTablet ? 3 : 2,
+                      letterSpacing: isTablet ? 4 : 3,
+                      shadows: [
+                        Shadow(
+                          color: CorralXColors.primaryGreen.withOpacity(0.3),
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(
+                      height: isSmallScreen
+                          ? 4
+                          : isTablet
+                              ? 8
+                              : isLandscape
+                                  ? 6
+                                  : 8),
+
+                  // Subtítulo del logo
+                  Text(
+                    'GANADERÍA',
+                    style: TextStyle(
+                      color: CorralXColors.secondaryBrown,
+                      fontSize: isSmallScreen
+                          ? 12
+                          : isTablet
+                              ? 20
+                              : isLandscape
+                                  ? 16
+                                  : 18,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: isTablet ? 2 : 1.5,
                     ),
                   ),
                 ],
