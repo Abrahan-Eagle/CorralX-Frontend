@@ -975,28 +975,6 @@ class SignInScreenState extends State<SignInScreen>
             ),
           ],
         ),
-
-        // Logo de Corral X (asumiendo que tienes el logo)
-        Container(
-          padding: EdgeInsets.all(isSmallScreen
-              ? 6
-              : isTablet
-                  ? 12
-                  : 8),
-          decoration: BoxDecoration(
-            color: CorralXColors.primaryGreen.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
-          ),
-          child: Icon(
-            Icons.pets, // Icono de ganado en lugar de tractor
-            size: isSmallScreen
-                ? 28
-                : isTablet
-                    ? 48
-                    : 36,
-            color: CorralXColors.primaryGreen,
-          ),
-        ),
       ],
     );
   }
@@ -1057,68 +1035,20 @@ class SignInScreenState extends State<SignInScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo principal mejorado con elementos ganaderos
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Icono de vaca
-                      Icon(
-                        Icons.pets,
-                        size: isSmallScreen
-                            ? 24
-                            : isTablet
-                                ? 48
-                                : isLandscape
-                                    ? 36
-                                    : 40,
-                        color: CorralXColors.primaryGreen,
-                      ),
-                      SizedBox(width: 8),
-                      // Icono de corral/establo
-                      Icon(
-                        Icons.home_work,
-                        size: isSmallScreen
-                            ? 24
-                            : isTablet
-                                ? 48
-                                : isLandscape
-                                    ? 36
-                                    : 40,
-                        color: CorralXColors.secondaryBrown,
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(
-                      height: isSmallScreen
-                          ? 8
-                          : isTablet
-                              ? 16
-                              : isLandscape
-                                  ? 12
-                                  : 16),
-
-                  // Nombre de la marca mejorado
+                  // Nombre de la marca - más prominente como nombre de la app
                   Text(
                     'CORRAL X',
                     style: TextStyle(
-                      color: CorralXColors.textPrimaryLight,
+                      color: CorralXColors.primaryGreen,
                       fontSize: isSmallScreen
-                          ? 24
+                          ? 36
                           : isTablet
-                              ? 48
+                              ? 64
                               : isLandscape
-                                  ? 36
-                                  : 40,
+                                  ? 52
+                                  : 56,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: isTablet ? 4 : 3,
-                      shadows: [
-                        Shadow(
-                          color: CorralXColors.primaryGreen.withOpacity(0.3),
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
+                      letterSpacing: isTablet ? 6 : 5,
                     ),
                   ),
 
