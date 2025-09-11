@@ -56,13 +56,13 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     ];
   }
 
-  Future<void> _completeOnboarding(int userId) async {
+  Future<void> _completeOnboarding() async {
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _onboardingService.completeOnboarding(userId);
+      await _onboardingService.completeOnboarding(context);
       if (!mounted) return;
 
       Navigator.pushReplacement(
@@ -93,7 +93,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     if (_currentPage == onboardingPages.length - 1) {
       final userId = Provider.of<UserProvider>(context, listen: false).userId;
       if (userId != null) {
-        _completeOnboarding(userId);
+        _completeOnboarding();
       }
     } else {
       _controller.nextPage(
@@ -182,7 +182,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
                               onPressed: () async {
                                 final userId = userProvider.userId;
                                 if (userId != null) {
-                                  await _completeOnboarding(userId);
+                                  await _completeOnboarding();
                                 }
                               },
                               child: const Text('Saltar'),

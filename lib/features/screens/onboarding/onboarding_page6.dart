@@ -20,14 +20,14 @@ class CorralXColors {
   static const Color darkWarning = Color(0xFFEAB308);
 }
 
-class OnboardingPage4 extends StatefulWidget {
-  const OnboardingPage4({super.key});
+class OnboardingPage6 extends StatefulWidget {
+  const OnboardingPage6({super.key});
 
   @override
-  State<OnboardingPage4> createState() => _OnboardingPage4State();
+  State<OnboardingPage6> createState() => _OnboardingPage6State();
 }
 
-class _OnboardingPage4State extends State<OnboardingPage4>
+class _OnboardingPage6State extends State<OnboardingPage6>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -74,7 +74,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
         fit: StackFit.expand,
         children: [
           Image.asset(
-            'assets/onboarding/cowboy_hero4.png',
+            'assets/onboarding/cowboy_hero6.png',
             fit: BoxFit.cover,
           ),
           Container(
@@ -107,7 +107,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                         children: [
                           const Spacer(flex: 1),
                           Text(
-                            'Tus Favoritos',
+                            'Tu Perfil',
                             textAlign: TextAlign.center,
                             style: Theme.of(context)
                                 .textTheme
@@ -130,7 +130,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                                   color: Colors.white.withOpacity(0.15)),
                             ),
                             child: Text(
-                              'Si te gusta un animal pero quieres pensarlo, guárdalo aquí para no perderle la pista.',
+                              'Aquí manejas tu información, ves tus publicaciones y te aseguras de que todo esté al día. ¡Listo el pollo!',
                               textAlign: TextAlign.center,
                               style: Theme.of(context)
                                   .textTheme
@@ -143,7 +143,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                             ),
                           ),
                           const SizedBox(height: 24),
-                          _buildFavoritesFeatures(),
+                          _buildProfileFeatures(),
                           const Spacer(flex: 2),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -152,7 +152,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                                   color: Colors.white.withOpacity(0.8)),
                               const SizedBox(width: 8),
                               Text(
-                                'Guarda tus favoritos',
+                                'Gestiona tu cuenta',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -177,7 +177,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
     );
   }
 
-  Widget _buildFavoritesFeatures() {
+  Widget _buildProfileFeatures() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
@@ -185,18 +185,20 @@ class _OnboardingPage4State extends State<OnboardingPage4>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.12)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 12,
+        runSpacing: 12,
         children: [
-          _buildFavoritesFeature('❤️', 'Guarda\nfavoritos'),
-          _buildFavoritesFeature('📋', 'Lista\npersonal'),
-          _buildFavoritesFeature('🔔', 'Notificaciones\nnuevas'),
+          _buildProfileFeature('👤', 'Información\npersonal'),
+          _buildProfileFeature('📝', 'Mis\npublicaciones'),
+          _buildProfileFeature('⚙️', 'Ajustes\nde cuenta'),
         ],
       ),
     );
   }
 
-  Widget _buildFavoritesFeature(String emoji, String text) {
+  Widget _buildProfileFeature(String emoji, String text) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

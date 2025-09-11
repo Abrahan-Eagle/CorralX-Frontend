@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
+import 'package:zonix/features/utils/user_provider.dart';
 
 final logger = Logger();
 
@@ -21,16 +23,23 @@ class OnboardingService {
     return token;
   }
 
-  // Completar el proceso de onboarding del usuario
-  Future<void> completeOnboarding(int userId) async {
+  // Completar el proceso de onboarding del usuario usando UserProvider
+  Future<void> completeOnboarding(BuildContext context) async {
     final token = await _getToken();
-    
+
     if (token == null) {
       logger.e("Token no encontrado. No se puede completar el onboarding.");
       throw Exception("Token no encontrado.");
     }
-    
+
     try {
+      // Obtener el userId usando UserProvider (como en el código comentado)
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userDetails = await userProvider.getUserDetails();
+      final userId = userDetails['userId'] as int;
+
+      logger.i('Completando onboarding para userId: $userId');
+
       final response = await http.put(
         Uri.parse('$baseUrl/api/onboarding/$userId'),
         headers: {
@@ -46,8 +55,10 @@ class OnboardingService {
         logger.i("Onboarding completado con éxito.");
       } else {
         // Manejo de error
-        logger.e("Error al completar el onboarding: ${response.statusCode} - ${response.body}");
-        throw Exception("Error al completar el onboarding: ${response.statusCode}");
+        logger.e(
+            "Error al completar el onboarding: ${response.statusCode} - ${response.body}");
+        throw Exception(
+            "Error al completar el onboarding: ${response.statusCode}");
       }
     } catch (e) {
       logger.e("Excepción al hacer la solicitud de onboarding: $e");

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import './form/commerce_registration_page.dart';
-import './onboarding_page4.dart';
+
+/// Paletas de color mínimas para esta vista (modo dark)
+class CorralXColors {
+  static const Color darkBackground = Color(0xFF121212);
+}
 
 class OnboardingPage3 extends StatefulWidget {
   const OnboardingPage3({super.key});
@@ -9,317 +12,204 @@ class OnboardingPage3 extends StatefulWidget {
   State<OnboardingPage3> createState() => _OnboardingPage3State();
 }
 
-class _OnboardingPage3State extends State<OnboardingPage3> {
-  String? selectedRole;
+class _OnboardingPage3State extends State<OnboardingPage3>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF667eea), // Azul púrpura
-              Color(0xFF764ba2), // Púrpura
-              Color(0xFF8E2DE2), // Púrpura vibrante
-            ],
+    return Container(
+      decoration: const BoxDecoration(color: CorralXColors.darkBackground),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Imagen hero del vaquero con lazo a pantalla completa
+          Image.asset(
+            'assets/onboarding/cowboy_hero3.png',
+            fit: BoxFit.cover,
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+
+          // Overlay cálido para legibilidad
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.4),
+                  const Color(0xFF8B5E3C).withOpacity(0.25),
+                  Colors.black.withOpacity(0.6),
+                ],
+                stops: const [0.0, 0.6, 1.0],
               ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.06,
-                  vertical: screenHeight * 0.02,
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(height: screenHeight * 0.03),
-                    
-                    Text(
-                      '¿Cómo quieres usar FoodZone?',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.065,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.3),
-                            offset: const Offset(0, 2),
-                            blurRadius: 4,
+            ),
+          ),
+
+          // Contenido
+          SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _slideAnimation.value),
+                    child: Opacity(
+                      opacity: _fadeAnimation.value,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Spacer(flex: 1),
+
+                          // Título
+                          Text(
+                            'Publica tu Ganado',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 36,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
                           ),
+                          const SizedBox(height: 8),
+
+                          // Descripción
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.15)),
+                            ),
+                            child: Text(
+                              'Cuando quieras vender, le das a este botón. Montar un anuncio es facilito y rápido.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: Colors.white.withOpacity(0.92),
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.4,
+                                  ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Pasos para publicar
+                          _buildPublishSteps(),
+
+                          const Spacer(flex: 2),
+
+                          // Indicador de gesto
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.swipe_right_alt,
+                                  color: Colors.white.withOpacity(0.8)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Lista tu anuncio en minutos',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                         ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    
-                    SizedBox(height: screenHeight * 0.01),
-                    
-                    Text(
-                      'Selecciona tu rol para personalizar tu experiencia',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: screenWidth * 0.04,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    
-                    SizedBox(height: screenHeight * 0.04),
-                    
-                    // Role cards - Solo buyer y commerce
-                    Column(
-                      children: [
-                        _buildRoleCard(
-                          role: 'buyer',
-                          title: 'Cliente',
-                          subtitle: 'Ordena tu comida favorita',
-                          icon: Icons.person,
-                          color: const Color(0xFFFF6B6B),
-                          description: 'Explora restaurantes y realiza pedidos',
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
-                        ),
-                        
-                        SizedBox(height: screenHeight * 0.02),
-                        
-                        _buildRoleCard(
-                          role: 'commerce',
-                          title: 'Restaurante',
-                          subtitle: 'Vende tus productos',
-                          icon: Icons.store,
-                          color: const Color(0xFFFFB347),
-                          description: 'Registra tu negocio y aumenta ventas',
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
-                        ),
-                      ],
-                    ),
-                    
-                    SizedBox(height: screenHeight * 0.04),
-                    
-                    if (selectedRole != null)
-                      Container(
-                        width: double.infinity,
-                        height: screenHeight * 0.07,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFF6B6B), Color(0xFFFFB347)],
-                          ),
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (selectedRole == 'buyer') {
-                              // Registra automáticamente como buyer y continúa al siguiente onboarding
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const OnboardingPage4(),
-                                ),
-                              );
-                            } else {
-                              _navigateToRegistration(selectedRole!);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          child: Text(
-                            selectedRole == 'buyer' 
-                              ? 'Continuar como Cliente' 
-                              : 'Continuar como ${_getRoleTitle(selectedRole!)}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                    SizedBox(height: screenHeight * 0.02),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildRoleCard({
-    required String role,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required String description,
-    required double screenWidth,
-    required double screenHeight,
-  }) {
-    final isSelected = selectedRole == role;
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedRole = role;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: EdgeInsets.all(screenWidth * 0.04),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? Colors.white.withOpacity(0.25)
-              : Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected 
-                ? Colors.white.withOpacity(0.8)
-                : Colors.white.withOpacity(0.3),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.2),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(screenWidth * 0.03),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: color.withOpacity(0.5),
-                  width: 1,
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: screenWidth * 0.07,
-              ),
-            ),
-            SizedBox(width: screenWidth * 0.04),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.048,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.005),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: screenWidth * 0.035,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.003),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: screenWidth * 0.03,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Container(
-                padding: EdgeInsets.all(screenWidth * 0.02),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: color,
-                  size: screenWidth * 0.045,
-                ),
-              ),
-          ],
-        ),
+  Widget _buildPublishSteps() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildStep('📸', 'Fotos\nclaras'),
+          _buildStep('🏷️', 'Precio\njusto'),
+          _buildStep('📍', 'Ubicación\nprecisa'),
+        ],
       ),
     );
   }
 
-  String _getRoleTitle(String role) {
-    switch (role) {
-      case 'buyer':
-        return 'Cliente';
-      case 'commerce':
-        return 'Restaurante';
-      default:
-        return '';
-    }
-  }
-
-  void _navigateToRegistration(String role) {
-    // Mostrar mensaje de confirmación
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navegando al registro para ${_getRoleTitle(role)}'),
-        backgroundColor: const Color(0xFF4ECDC4),
-        duration: const Duration(seconds: 1),
+  Widget _buildStep(String emoji, String text) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 8),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
+            ),
+          ),
+        ],
       ),
     );
-
-    // Navegar a la página de registro correspondiente
-    switch (role) {
-      case 'commerce':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CommerceRegistrationPage(),
-          ),
-        );
-        break;
-      default:
-        // Fallback en caso de error
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rol no reconocido'),
-            backgroundColor: Color(0xFFE74C3C),
-          ),
-        );
-    }
   }
 }
