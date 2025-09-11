@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'onboarding_page1.dart';
 import 'onboarding_page2.dart';
@@ -12,6 +11,27 @@ import 'onboarding_service.dart';
 import 'package:zonix/main.dart';
 
 final OnboardingService _onboardingService = OnboardingService();
+
+/// Paletas de color oficiales de Corral X para Light/Dark
+class CorralXColors {
+  // White mode
+  static const Color lightBackground = Color(0xFFFFFFFF);
+  static const Color lightTextPrimary = Color(0xFF1F2937); // Gray 800
+  static const Color lightTextSecondary = Color(0xFF4B5563); // Gray 600
+  static const Color lightPrimary = Color(0xFF3B7A57); // Verde campo
+  static const Color lightSecondary = Color(0xFF8B5E3C); // Marrón tierra
+  static const Color lightSuccess = Color(0xFF4CAF50);
+  static const Color lightWarning = Color(0xFFFBBF24);
+
+  // Dark mode
+  static const Color darkBackground = Color(0xFF121212);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFB0B0B0);
+  static const Color darkPrimary = Color(0xFF4CAF50); // Verde vivo
+  static const Color darkSecondary = Color(0xFFA47148); // Marrón cálido
+  static const Color darkSuccess = Color(0xFF6EE7B7);
+  static const Color darkWarning = Color(0xFFEAB308);
+}
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -38,13 +58,13 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _completeOnboarding(int userId) async {
     if (_isLoading) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       await _onboardingService.completeOnboarding(userId);
       if (!mounted) return;
-      
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainRouter()),
@@ -52,12 +72,12 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       debugPrint("Error al completar el onboarding: $e");
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-       const SnackBar(
-          content:  Text('Error al completar el onboarding'),
+        const SnackBar(
+          content: Text('Error al completar el onboarding'),
           behavior: SnackBarBehavior.floating,
-          margin:  EdgeInsets.all(20),
+          margin: EdgeInsets.all(20),
         ),
       );
     } finally {
@@ -69,7 +89,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
   void _handleNext() {
     if (_isLoading) return;
-    
+
     if (_currentPage == onboardingPages.length - 1) {
       final userId = Provider.of<UserProvider>(context, listen: false).userId;
       if (userId != null) {
@@ -138,11 +158,8 @@ class OnboardingScreenState extends State<OnboardingScreen> {
                         effect: ExpandingDotsEffect(
                           dotHeight: 6,
                           dotWidth: 6,
-                          // activeDotColor: theme.primaryColor,
-                          // dotColor: theme.dividerColor,
-
-                          activeDotColor: Colors.white, // Punto activo blanco
-                        dotColor: Colors.white.withOpacity(0.5), // Puntos inactivos semitransparentes
+                          activeDotColor: Colors.white,
+                          dotColor: Colors.white.withOpacity(0.45),
                           spacing: 8,
                           expansionFactor: 3,
                         ),
@@ -174,7 +191,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
                           // Botón Siguiente/Finalizar
                           FloatingActionButton(
                             onPressed: _handleNext,
-                            backgroundColor: theme.primaryColor,
+                            backgroundColor: theme.brightness == Brightness.dark
+                                ? CorralXColors.darkPrimary
+                                : CorralXColors.lightPrimary,
                             elevation: 2,
                             child: _isLoading
                                 ? const CircularProgressIndicator(
@@ -207,230 +226,150 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    
     return Container(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment.center,
-          radius: 1.2,
-          colors: [
-            Color(0xFF0F172A), // Azul muy oscuro (espacio)
-            Color(0xFF1E293B), // Azul oscuro
-            Color(0xFF334155), // Azul medio
-          ],
-          stops: [0.0, 0.6, 1.0],
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Espaciado superior flexible
-              const Spacer(flex: 1),
-              
-              // Imagen de familia con efecto planetario
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFF59E0B).withOpacity(0.2), // Naranja suave
-                      const Color(0xFF3B82F6).withOpacity(0.1), // Azul suave
-                      Colors.transparent,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(100),
-                  border: Border.all(
-                    color: const Color(0xFFF59E0B).withOpacity(0.3),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withOpacity(0.4),
-                      blurRadius: 30,
-                      spreadRadius: 5,
-                    ),
-                    BoxShadow(
-                      color: const Color(0xFF3B82F6).withOpacity(0.3),
-                      blurRadius: 15,
-                      spreadRadius: -5,
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(80),
-                  child: Image.asset(
-                    'assets/onboarding/onboarding_eats_familia.png',
-                    height: size.height * 0.22,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+      decoration: const BoxDecoration(color: CorralXColors.darkBackground),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Imagen hero a pantalla completa
+          Image.asset(
+            'assets/onboarding/cowboy_hero.png',
+            fit: BoxFit.cover,
+          ),
+
+          // Overlay de gradientes cálidos para legibilidad y branding
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.35),
+                  const Color(0xFF8B5E3C).withOpacity(0.30), // Marrón cálido
+                  Colors.black.withOpacity(0.55),
+                ],
+                stops: const [0.0, 0.55, 1.0],
               ),
-              
-              const SizedBox(height: 40),
-              
-              // Título con temática espacial
-              Column(
+            ),
+          ),
+
+          // Contenido
+          SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    '🪐 Bienvenido al',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 22,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const Spacer(flex: 1),
+
+                  // Logotipo / Nombre
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: 'Universo ',
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 34,
-                            color: Colors.white,
-                            height: 1.1,
-                          ),
+                          text: 'Corral ',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 36,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
                         ),
                         TextSpan(
-                          text: 'ZONIX',
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 34,
-                            color: const Color(0xFFF59E0B), // Naranja del logo
-                            height: 1.1,
-                          ),
+                          text: 'X',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 40,
+                                color: CorralXColors.darkWarning,
+                                letterSpacing: 0.5,
+                              ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Badge espacial
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFEF4444), // Rojo
-                      Color(0xFFF59E0B), // Naranja
-                      Color(0xFFFBBF24), // Amarillo
-                    ],
+
+                  const SizedBox(height: 8),
+                  Text(
+                    'Compra y venta de ganado con confianza',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.92),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withOpacity(0.5),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
+
+                  const SizedBox(height: 18),
+
+                  // Chips de confianza
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.12)),
                     ),
-                  ],
-                ),
-                child: const Text(
-                  '🚀 ¡Comida a la velocidad de la luz!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black26,
-                        blurRadius: 2,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildTrustElement('✅', 'Vendedores\nverificados'),
+                        _buildTrustElement('🛡️', 'Pagos\nseguros'),
+                        _buildTrustElement('🤝', 'Trato\ndirecto'),
+                      ],
+                    ),
+                  ),
+
+                  const Spacer(flex: 2),
+
+                  // Mensaje de gesto
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.swipe_right_alt,
+                          color: Colors.white.withOpacity(0.9)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Desliza para continuar',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withOpacity(0.9),
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ],
                   ),
-                ),
+
+                  const SizedBox(height: 8),
+                ],
               ),
-              
-              const SizedBox(height: 36),
-              
-              // Elementos de trust con temática espacial
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF1E293B).withOpacity(0.8),
-                      const Color(0xFF334155).withOpacity(0.6),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: const Color(0xFFF59E0B).withOpacity(0.4),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withOpacity(0.2),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildTrustElement('🛸', 'Entrega\nUltra Rápida'),
-                    _buildTrustElement('🌟', 'Experiencia\nEstelar'),
-                    _buildTrustElement('🪐', 'Miles de\nSabores'),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Descripción espacial
-              Text(
-                'Conecta con tu familia a través de la comida 👨‍👩‍👧‍👦\n¡Sabores que unen planetas! 🌍✨',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withOpacity(0.85),
-                  fontSize: 16,
-                  height: 1.5,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              
-              // Espaciado inferior flexible
-              const Spacer(flex: 2),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
-  
+
   Widget _buildTrustElement(String emoji, String text) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: RadialGradient(
-          colors: [
-            const Color(0xFFF59E0B).withOpacity(0.2),
-            Colors.transparent,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: const Color(0xFFF59E0B).withOpacity(0.4),
-          width: 1,
-        ),
+        color: Colors.white.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             emoji,
-            style: const TextStyle(fontSize: 28),
+            style: const TextStyle(fontSize: 24),
           ),
           const SizedBox(height: 8),
           Text(

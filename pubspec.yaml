@@ -93,6 +93,13 @@ flutter:
     - assets/onboarding/building.png
     - assets/onboarding/undraw_add_information_j2wg.svg
     - assets/onboarding/undraw_outer_space_re_u9vd.svg
+    - assets/onboarding/cowboy_hero.png
+    - assets/onboarding/cowboy_hero1.png
+    - assets/onboarding/cowboy_hero2.png
+    - assets/onboarding/cowboy_hero3.png
+    - assets/onboarding/cowboy_hero4.png
+    - assets/onboarding/cowboy_hero5.png
+    - assets/onboarding/cowboy_hero6.png
     - assets/images/1.png
     - assets/images/2.png
     - .env
