@@ -81,6 +81,10 @@ flutter:
   assets:
     - assets/images/splash_logo.png
     - assets/images/splash_logo_dark.png
+    - assets/splash/image_light_1024.png
+    - assets/splash/image_light_android12_1024.png
+    - assets/splash/image_dark_1024.png
+    - assets/splash/image_dark_android12_1024.png
     - assets/icon/icon1_1024.png
     - assets/default_avatar.png
     - assets/images/undraw_date_picker_re_r0p8.svg

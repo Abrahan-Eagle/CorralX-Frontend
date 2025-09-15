@@ -1,24 +1,7 @@
 import 'package:flutter/material.dart';
-
-class CorralXColors {
-  // White mode
-  static const Color lightBackground = Color(0xFFFFFFFF);
-  static const Color lightTextPrimary = Color(0xFF1F2937); // Gray 800
-  static const Color lightTextSecondary = Color(0xFF4B5563); // Gray 600
-  static const Color lightPrimary = Color(0xFF3B7A57); // Verde campo
-  static const Color lightSecondary = Color(0xFF8B5E3C); // Marrón tierra
-  static const Color lightSuccess = Color(0xFF4CAF50);
-  static const Color lightWarning = Color(0xFFFBBF24);
-
-  // Dark mode
-  static const Color darkBackground = Color(0xFF121212);
-  static const Color darkTextPrimary = Color(0xFFFFFFFF);
-  static const Color darkTextSecondary = Color(0xFFB0B0B0);
-  static const Color darkPrimary = Color(0xFF4CAF50); // Verde vivo
-  static const Color darkSecondary = Color(0xFFA47148); // Marrón cálido
-  static const Color darkSuccess = Color(0xFF6EE7B7);
-  static const Color darkWarning = Color(0xFFEAB308);
-}
+import 'package:flutter/services.dart';
+import '../../../core/theme/corral_x_theme.dart';
+import '../../../core/widgets/amazon_widgets.dart';
 
 class OnboardingPage6 extends StatefulWidget {
   const OnboardingPage6({super.key});
@@ -28,200 +11,490 @@ class OnboardingPage6 extends StatefulWidget {
 }
 
 class _OnboardingPage6State extends State<OnboardingPage6>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+    with TickerProviderStateMixin {
+  late AnimationController _mainController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+    _mainController = AnimationController(
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _mainController, curve: Curves.easeOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
-    ));
-
-    _animationController.forward();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _mainController.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _mainController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      decoration: const BoxDecoration(color: CorralXColors.darkBackground),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            'assets/onboarding/cowboy_hero6.png',
-            fit: BoxFit.cover,
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.4),
-                  const Color(0xFF8B5E3C).withOpacity(0.25),
-                  Colors.black.withOpacity(0.6),
-                ],
-                stops: const [0.0, 0.6, 1.0],
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-              child: AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: _slideAnimation.value,
-                    child: Opacity(
-                      opacity: _fadeAnimation.value,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Spacer(flex: 1),
-                          Text(
-                            'Tu Perfil',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 36,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: Colors.white.withOpacity(0.15)),
+      color: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFFAFAFA),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+
+                // Header con título
+                AmazonFadeIn(
+                  delay: const Duration(milliseconds: 100),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              color: CorralXTheme.primarySolid,
+                              size: 24,
                             ),
-                            child: Text(
-                              'Aquí manejas tu información, ves tus publicaciones y te aseguras de que todo esté al día. ¡Listo el pollo!',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    color: Colors.white.withOpacity(0.92),
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.4,
+                            const SizedBox(width: 8),
+                            Text(
+                              'Tu Perfil',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: CorralXTheme.primarySolid,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Construye tu reputación',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Información principal
+                AmazonFadeIn(
+                  delay: const Duration(milliseconds: 200),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Perfil Profesional',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Crea confianza con tu perfil completo',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Crea un perfil profesional que genere confianza. Completa tu información, verifica tu identidad y construye tu reputación en la plataforma.',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Características del perfil
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: CorralXTheme.successSolid
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: CorralXTheme.successSolid
+                                        .withOpacity(0.2),
                                   ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      color: CorralXTheme.successSolid,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Verificación',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: CorralXTheme.successSolid,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    Text(
+                                      'ID Verificada',
+                                      style: TextStyle(
+                                        color: CorralXTheme.successSolid,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color:
+                                      CorralXTheme.accentSolid.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: CorralXTheme.accentSolid
+                                        .withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      color: CorralXTheme.accentSolid,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Reputación',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: CorralXTheme.accentSolid,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    Text(
+                                      '5 Estrellas',
+                                      style: TextStyle(
+                                        color: CorralXTheme.accentSolid,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: CorralXTheme.secondarySolid
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: CorralXTheme.secondarySolid
+                                        .withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.business,
+                                      color: CorralXTheme.secondarySolid,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Empresa',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: CorralXTheme.secondarySolid,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Profesional',
+                                      style: TextStyle(
+                                        color: CorralXTheme.secondarySolid,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Características del perfil
+                AmazonFadeIn(
+                  delay: const Duration(milliseconds: 300),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.02)
+                                : Colors.grey.withOpacity(0.05),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(2),
+                              topRight: Radius.circular(2),
                             ),
                           ),
-                          const SizedBox(height: 24),
-                          _buildProfileFeatures(),
-                          const Spacer(flex: 2),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Row(
                             children: [
-                              Icon(Icons.swipe_right_alt,
-                                  color: Colors.white.withOpacity(0.8)),
-                              const SizedBox(width: 8),
                               Text(
-                                'Gestiona tu cuenta',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                'Características del perfil',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                        ],
+                        ),
+                        AmazonListItem(
+                          title: 'Verificación de Identidad',
+                          subtitle:
+                              'Verifica tu identidad con documentos oficiales',
+                          icon: Icons.verified_user,
+                          trailing: 'Certificado',
+                        ),
+                        AmazonListItem(
+                          title: 'Sistema de Calificaciones',
+                          subtitle:
+                              'Construye reputación con calificaciones confiables',
+                          icon: Icons.star_rate,
+                          trailing: '5★',
+                        ),
+                        AmazonListItem(
+                          title: 'Perfil de Empresa',
+                          subtitle: 'Muestra tu empresa de forma profesional',
+                          icon: Icons.business_center,
+                          trailing: 'Pro',
+                        ),
+                        AmazonListItem(
+                          title: 'Historial de Transacciones',
+                          subtitle: 'Muestra tu historial exitoso de ventas',
+                          icon: Icons.history,
+                          trailing: 'Completo',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Perfiles destacados
+                AmazonFadeIn(
+                  delay: const Duration(milliseconds: 400),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey.withOpacity(0.1),
+                        width: 1,
                       ),
                     ),
-                  );
-                },
-              ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Perfiles Destacados',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ejemplos de perfiles exitosos',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AmazonFeature(
+                                title: 'Finca San José',
+                                description: 'Vendedor verificado 5★',
+                                price: '500+ Ventas',
+                                rating: '4.9',
+                                reviews: 'Verificado',
+                                accentColor: CorralXTheme.successSolid,
+                                icon: Icons.verified,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AmazonFeature(
+                                title: 'Rancho El Toro',
+                                description: 'Empresa certificada',
+                                price: '300+ Ventas',
+                                rating: '4.8',
+                                reviews: 'Empresa',
+                                accentColor: CorralXTheme.secondarySolid,
+                                icon: Icons.business,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AmazonFeature(
+                                title: 'Granja Los Andes',
+                                description: 'Perfil completo 100%',
+                                price: '250+ Ventas',
+                                rating: '4.7',
+                                reviews: 'Completo',
+                                accentColor: CorralXTheme.accentSolid,
+                                icon: Icons.check_circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AmazonFeature(
+                                title: 'Hacienda Verde',
+                                description: 'Especialista en orgánicos',
+                                price: '180+ Ventas',
+                                rating: '4.9',
+                                reviews: 'Especialista',
+                                accentColor: CorralXTheme.successSolid,
+                                icon: Icons.eco,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Información adicional
+                AmazonFadeIn(
+                  delay: const Duration(milliseconds: 500),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? CorralXTheme.successSolid.withOpacity(0.1)
+                          : CorralXTheme.successSolid.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(2),
+                      border: Border.all(
+                        color: CorralXTheme.successSolid.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_add,
+                          size: 16,
+                          color: CorralXTheme.successSolid,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Perfiles verificados tienen 3x más probabilidades de cerrar ventas',
+                            style: TextStyle(
+                              color: CorralXTheme.successSolid,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileFeatures() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.35),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
-      ),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 12,
-        runSpacing: 12,
-        children: [
-          _buildProfileFeature('👤', 'Información\npersonal'),
-          _buildProfileFeature('📝', 'Mis\npublicaciones'),
-          _buildProfileFeature('⚙️', 'Ajustes\nde cuenta'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileFeature(String emoji, String text) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(height: 8),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -555,9 +555,6 @@
 // }
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:logger/logger.dart';
 import 'package:zonix/features/services/auth/api_service.dart';
 import 'package:zonix/main.dart';
 import 'package:zonix/features/services/auth/google_sign_in_service.dart';
@@ -566,30 +563,8 @@ import 'package:zonix/features/utils/auth_utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:zonix/features/screens/onboarding/onboarding_screen.dart';
 
-// 🎨 PALETA CORRAL X - MODO CLARO
-class CorralXColors {
-  // Base clara
-  static const Color backgroundLight = Color(0xFFFFFFFF);
-  static const Color textPrimaryLight = Color(0xFF1F2937);
-  static const Color textSecondaryLight = Color(0xFF4B5563);
-
-  // Colores agropecuarios principales
-  static const Color primaryGreen =
-      Color(0xFF3B7A57); // Verde campo - confianza
-  static const Color secondaryBrown =
-      Color(0xFF8B5E3C); // Marrón tierra - solidez
-  static const Color accentGold = Color(0xFFFBBF24); // Dorado - premium
-  static const Color successGreen = Color(0xFF4CAF50);
-
-  // Base oscura (para modo dark futuro)
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFFB0B0B0);
-}
-
 const FlutterSecureStorage _storage = FlutterSecureStorage();
 final ApiService apiService = ApiService();
-final logger = Logger();
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -603,70 +578,60 @@ class SignInScreenState extends State<SignInScreen>
   final GoogleSignInService googleSignInService = GoogleSignInService();
   bool isAuthenticated = false;
   GoogleSignInAccount? _currentUser;
-  late AnimationController _pulseController;
-  late AnimationController _rotateController;
-  late AnimationController
-      _floatController; // Nueva animación para elementos flotantes
-  late Animation<double> _pulseAnimation;
-  late Animation<double> _rotateAnimation;
-  late Animation<double> _floatAnimation;
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
   String? _loginError;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    _initializeDateFormatting();
     _checkAuthentication();
   }
 
-  Future<void> _initializeDateFormatting() async {
-    await initializeDateFormatting('es_ES', null);
-  }
-
   void _setupAnimations() {
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 3), // Más lento y elegante
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
-    _rotateController = AnimationController(
-      duration: const Duration(seconds: 30), // Rotación más suave
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
-    )..repeat();
+    );
 
-    _floatController = AnimationController(
-      duration: const Duration(seconds: 4),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.05,
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _pulseController,
+      parent: _fadeController,
       curve: Curves.easeInOut,
     ));
 
-    _rotateAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(_rotateController);
-
-    _floatAnimation = Tween<double>(
-      begin: -10,
-      end: 10,
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _floatController,
+      parent: _scaleController,
       curve: Curves.easeInOut,
     ));
+
+    // Iniciar animaciones
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _fadeController.forward();
+        _scaleController.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
-    _rotateController.dispose();
-    _floatController.dispose();
+    _fadeController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -675,10 +640,10 @@ class SignInScreenState extends State<SignInScreen>
     if (isAuthenticated) {
       _currentUser = await GoogleSignInService.getCurrentUser();
       if (_currentUser != null) {
-        logger.i('Foto de usuario: ${_currentUser!.photoUrl}');
+        debugPrint('Foto de usuario: ${_currentUser!.photoUrl}');
         await _storage.write(
             key: 'userPhotoUrl', value: _currentUser!.photoUrl);
-        logger.i('Nombre de usuario: ${_currentUser!.displayName}');
+        debugPrint('Nombre de usuario: ${_currentUser!.displayName}');
         await _storage.write(
             key: 'displayName', value: _currentUser!.displayName);
       }
@@ -688,6 +653,11 @@ class SignInScreenState extends State<SignInScreen>
   }
 
   Future<void> _handleSignIn() async {
+    setState(() {
+      _loginError = null;
+      _isLoading = true;
+    });
+
     try {
       await GoogleSignInService.signInWithGoogle();
       _currentUser = await GoogleSignInService.getCurrentUser();
@@ -698,8 +668,7 @@ class SignInScreenState extends State<SignInScreen>
       if (_currentUser != null) {
         await AuthUtils.saveUserName(
             _currentUser!.displayName ?? 'Nombre no disponible');
-        await AuthUtils.saveUserEmail(
-            _currentUser!.email ?? 'Email no disponible');
+        await AuthUtils.saveUserEmail(_currentUser!.email);
         await AuthUtils.saveUserPhotoUrl(
             _currentUser!.photoUrl ?? 'URL de foto no disponible');
 
@@ -709,13 +678,13 @@ class SignInScreenState extends State<SignInScreen>
         String? savedOnboardingString =
             await _storage.read(key: 'userCompletedOnboarding');
 
-        logger.i('Nombre guardado: $savedName');
-        logger.i('Correo guardado: $savedEmail');
-        logger.i('Foto guardada: $savedPhotoUrl');
-        logger.i('Onboarding guardada: $savedOnboardingString');
+        debugPrint('Nombre guardado: $savedName');
+        debugPrint('Correo guardado: $savedEmail');
+        debugPrint('Foto guardada: $savedPhotoUrl');
+        debugPrint('Onboarding guardada: $savedOnboardingString');
 
         bool onboardingCompleted = savedOnboardingString == '1';
-        logger.i('Conversión de completedOnboarding: $onboardingCompleted');
+        debugPrint('Conversión de completedOnboarding: $onboardingCompleted');
 
         if (!mounted) return;
 
@@ -731,699 +700,339 @@ class SignInScreenState extends State<SignInScreen>
           );
         }
       } else {
-        logger.i('Inicio de sesión cancelado o fallido');
+        debugPrint('Inicio de sesión cancelado o fallido');
         if (!mounted) return;
         setState(() {
           _loginError = 'Inicio de sesión cancelado o fallido';
+          _isLoading = false;
         });
       }
     } catch (e) {
-      logger.e('Error durante el manejo del inicio de sesión: $e');
+      debugPrint('Error durante el manejo del inicio de sesión: $e');
       if (!mounted) return;
       setState(() {
         _loginError = 'Error durante el inicio de sesión';
+        _isLoading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 400;
-    final isMediumScreen = screenWidth >= 400 && screenWidth <= 600;
-    final isLargeScreen = screenWidth > 600;
-    final isVerySmallScreen = screenHeight < 600;
-    final isTablet = screenWidth > 800;
-    final isLandscape = screenWidth > screenHeight;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Fondo agropecuario con elementos visuales
-          _buildAgrarianBackground(),
+      backgroundColor:
+          isDark ? const Color(0xFF0F0F0F) : const Color(0xFFFAFAFA),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenSize.width * 0.05,
+            vertical: screenSize.height * 0.03,
+          ),
+          child: Column(
+            children: [
+              // Espacio superior
+              SizedBox(height: screenSize.height * 0.08),
 
-          // Contenido principal
-          SafeArea(
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).padding.top -
-                      MediaQuery.of(context).padding.bottom,
-                ),
-                child: IntrinsicHeight(
+              // Logo grande sin sombra
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen
-                          ? 16
-                          : isMediumScreen
-                              ? 24
-                              : isTablet
-                                  ? 48
-                                  : 32,
-                      vertical: isVerySmallScreen
-                          ? 8
-                          : isLandscape
-                              ? 16
-                              : 24,
+                    width: screenSize.width * 0.8,
+                    height: screenSize.width * 0.8,
+                    child: Image.asset(
+                      'assets/splash/image_light_1024.png',
+                      fit: BoxFit.contain,
                     ),
-                    child: Column(
+                  ),
+                ),
+              ),
+
+              SizedBox(height: screenSize.height * 0.02),
+
+              // Subtítulo
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Text(
+                  'Marketplace Ganadero',
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.045,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurfaceVariant,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: screenSize.height * 0.06),
+
+              // Estadísticas
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        '1.2K+',
+                        'Vendedores',
+                        Icons.people_outline,
+                        const Color(0xFF3B7A57),
+                      ),
+                    ),
+                    SizedBox(width: screenSize.width * 0.03),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        '5.8K+',
+                        'Publicaciones',
+                        Icons.inventory_2_outlined,
+                        const Color(0xFF4CAF50),
+                      ),
+                    ),
+                    SizedBox(width: screenSize.width * 0.03),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        '98%',
+                        'Satisfacción',
+                        Icons.star_outline,
+                        const Color(0xFFFBBF24),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Spacer(),
+
+              // Mensaje de error
+              if (_loginError != null)
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    margin: EdgeInsets.only(bottom: screenSize.height * 0.02),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: Row(
                       children: [
-                        // Header con branding ganadero
-                        _buildCorralHeader(
-                            isSmallScreen, isTablet, isLandscape),
-
-                        if (_loginError != null) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.red.shade200),
-                              ),
-                              child: Text(
-                                _loginError!,
-                                style: TextStyle(
-                                  color: Colors.red.shade800,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-
-                        // Contenido central
+                        Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            children: [
-                              // Logo y marca principal
-                              Expanded(
-                                flex: isLandscape ? 2 : 3,
-                                child: _buildCorralBranding(
-                                    screenWidth,
-                                    isSmallScreen,
-                                    isMediumScreen,
-                                    isLargeScreen,
-                                    isVerySmallScreen,
-                                    isTablet,
-                                    isLandscape),
-                              ),
-
-                              // CTA y acciones
-                              Expanded(
-                                flex: isLandscape ? 1 : 2,
-                                child: _buildActionSection(
-                                    screenWidth,
-                                    isSmallScreen,
-                                    isMediumScreen,
-                                    isLargeScreen,
-                                    isVerySmallScreen,
-                                    isTablet,
-                                    isLandscape),
-                              ),
-                            ],
+                          child: Text(
+                            _loginError!,
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: screenSize.width * 0.035,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildAgrarianBackground() {
-    return Container(
-      decoration: BoxDecoration(
-        // Gradiente que evoca el amanecer en el campo
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            CorralXColors.backgroundLight,
-            const Color(0xFFF8F9FA), // Gris muy suave
-            CorralXColors.backgroundLight,
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Elementos decorativos que evocan el campo
-          Positioned(
-            top: 60,
-            right: -30,
-            child: RotationTransition(
-              turns: _rotateAnimation,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: CorralXColors.primaryGreen.withOpacity(0.08),
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: -80,
-            left: -60,
-            child: RotationTransition(
-              turns: _rotateAnimation,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: CorralXColors.secondaryBrown.withOpacity(0.06),
-                ),
-              ),
-            ),
-          ),
-
-          // Patrón sutil que simula hierba o textura del campo
-          ...List.generate(15, (index) {
-            return Positioned(
-              top: ((index * 60.0) % 700).roundToDouble(),
-              left: ((index * 90.0) % 350).roundToDouble(),
-              child: AnimatedBuilder(
-                animation: _floatAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(0, _floatAnimation.value),
-                    child: Container(
-                      width: 3,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: CorralXColors.primaryGreen.withOpacity(0.12),
+              // Botón de login
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Container(
+                  width: double.infinity,
+                  height: screenSize.height * 0.065,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFFBBF24),
+                        const Color(0xFFFBBF24).withOpacity(0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFBBF24).withOpacity(0.3),
+                        offset: const Offset(0, 8),
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: _isLoading ? null : _handleSignIn,
+                      child: Center(
+                        child: _isLoading
+                            ? SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'G',
+                                        style: TextStyle(
+                                          color: const Color(0xFFFBBF24),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Text(
+                                    'Continuar con Google',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenSize.width * 0.045,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
-                  );
-                },
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCorralHeader(
-      bool isSmallScreen, bool isTablet, bool isLandscape) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Hora con estilo más elegante
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              TimeOfDay.now().format(context),
-              style: TextStyle(
-                color: CorralXColors.textPrimaryLight,
-                fontSize: isSmallScreen
-                    ? 14
-                    : isTablet
-                        ? 20
-                        : 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              DateFormat('dd MMM, yyyy', 'es_ES').format(DateTime.now()),
-              style: TextStyle(
-                color: CorralXColors.textSecondaryLight,
-                fontSize: isSmallScreen
-                    ? 10
-                    : isTablet
-                        ? 14
-                        : 12,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCorralBranding(
-      double screenWidth,
-      bool isSmallScreen,
-      bool isMediumScreen,
-      bool isLargeScreen,
-      bool isVerySmallScreen,
-      bool isTablet,
-      bool isLandscape) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Logo principal animado con identidad ganadera
-          ScaleTransition(
-            scale: _pulseAnimation,
-            child: Container(
-              width: isSmallScreen
-                  ? screenWidth * 0.7
-                  : isTablet
-                      ? screenWidth * 0.3
-                      : isLandscape
-                          ? screenWidth * 0.25
-                          : screenWidth * 0.5,
-              height: isSmallScreen
-                  ? screenWidth * 0.7
-                  : isTablet
-                      ? screenWidth * 0.3
-                      : isLandscape
-                          ? screenWidth * 0.25
-                          : screenWidth * 0.5,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: CorralXColors.backgroundLight,
-                boxShadow: [
-                  BoxShadow(
-                    color: CorralXColors.primaryGreen.withOpacity(0.15),
-                    blurRadius: 40,
-                    spreadRadius: 8,
-                    offset: const Offset(0, 8),
                   ),
-                  BoxShadow(
-                    color: CorralXColors.secondaryBrown.withOpacity(0.1),
-                    blurRadius: 60,
-                    spreadRadius: 15,
-                  ),
-                ],
-                border: Border.all(
-                  color: CorralXColors.primaryGreen.withOpacity(0.2),
-                  width: 2,
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Nombre de la marca - más prominente como nombre de la app
-                  Text(
-                    'CORRAL X',
+
+              SizedBox(height: screenSize.height * 0.03),
+
+              // Términos y condiciones
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
                     style: TextStyle(
-                      color: CorralXColors.primaryGreen,
-                      fontSize: isSmallScreen
-                          ? 36
-                          : isTablet
-                              ? 64
-                              : isLandscape
-                                  ? 52
-                                  : 56,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: isTablet ? 6 : 5,
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: screenSize.width * 0.032,
+                      height: 1.4,
                     ),
+                    children: [
+                      TextSpan(
+                        text: 'Al continuar, aceptas nuestros ',
+                      ),
+                      TextSpan(
+                        text: 'Términos de Servicio',
+                        style: TextStyle(
+                          color: const Color(0xFF3B7A57),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' y ',
+                      ),
+                      TextSpan(
+                        text: 'Política de Privacidad',
+                        style: TextStyle(
+                          color: const Color(0xFF3B7A57),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
                   ),
-
-                  SizedBox(
-                      height: isSmallScreen
-                          ? 4
-                          : isTablet
-                              ? 8
-                              : isLandscape
-                                  ? 6
-                                  : 8),
-
-                  // Subtítulo del logo
-                  Text(
-                    'GANADERÍA',
-                    style: TextStyle(
-                      color: CorralXColors.secondaryBrown,
-                      fontSize: isSmallScreen
-                          ? 12
-                          : isTablet
-                              ? 20
-                              : isLandscape
-                                  ? 16
-                                  : 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: isTablet ? 2 : 1.5,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+
+              SizedBox(height: screenSize.height * 0.03),
+            ],
           ),
+        ),
+      ),
+    );
+  }
 
-          SizedBox(
-              height: isVerySmallScreen
-                  ? 12
-                  : isLandscape
-                      ? 16
-                      : 24),
+  Widget _buildStatCard(BuildContext context, String value, String label,
+      IconData icon, Color color) {
+    final theme = Theme.of(context);
+    final screenSize = MediaQuery.of(context).size;
 
-          // Mensaje reconectado con el mercado ganadero
-          Text(
-            'Tu ganado, nuestra plataforma',
-            style: TextStyle(
-              color: CorralXColors.textSecondaryLight,
-              fontSize: isSmallScreen
-                  ? 14
-                  : isTablet
-                      ? 24
-                      : isLandscape
-                          ? 18
-                          : 20,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
-            ),
-          ),
-
-          SizedBox(
-              height: isVerySmallScreen
-                  ? 6
-                  : isLandscape
-                      ? 8
-                      : 12),
-
-          // Iconos ganaderos en lugar de emojis de comida
-          Container(
-            padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen
-                    ? 12
-                    : isTablet
-                        ? 32
-                        : 20,
-                vertical: isSmallScreen
-                    ? 6
-                    : isTablet
-                        ? 16
-                        : 12),
-            decoration: BoxDecoration(
-              color: CorralXColors.primaryGreen.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: CorralXColors.primaryGreen.withOpacity(0.2),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildAnimalIcon('🐄', isSmallScreen, isTablet),
-                _buildAnimalIcon('🐖', isSmallScreen, isTablet),
-                _buildAnimalIcon('🐑', isSmallScreen, isTablet),
-                _buildAnimalIcon('🐔', isSmallScreen, isTablet),
-                _buildAnimalIcon('🐐', isSmallScreen, isTablet),
-                _buildAnimalIcon('🐴', isSmallScreen, isTablet),
-              ],
-            ),
+    return Container(
+      padding: EdgeInsets.all(screenSize.width * 0.03),
+      decoration: BoxDecoration(
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+            spreadRadius: 0,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAnimalIcon(String emoji, bool isSmallScreen, bool isTablet) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-          horizontal: isSmallScreen
-              ? 2
-              : isTablet
-                  ? 6
-                  : 4),
-      child: Text(
-        emoji,
-        style: TextStyle(
-            fontSize: isSmallScreen
-                ? 16
-                : isTablet
-                    ? 32
-                    : 24),
-      ),
-    );
-  }
-
-  Widget _buildActionSection(
-      double screenWidth,
-      bool isSmallScreen,
-      bool isMediumScreen,
-      bool isLargeScreen,
-      bool isVerySmallScreen,
-      bool isTablet,
-      bool isLandscape) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // Propuesta de valor para ganaderos
-        Text(
-          'Conectamos ganaderos y compradores\nen todo el país',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: CorralXColors.textSecondaryLight,
-            fontSize: isSmallScreen
-                ? 12
-                : isTablet
-                    ? 20
-                    : isLandscape
-                        ? 16
-                        : 16,
-            fontWeight: FontWeight.w500,
-            height: 1.5,
-          ),
-        ),
-
-        SizedBox(
-            height: isVerySmallScreen
-                ? 12
-                : isLandscape
-                    ? 16
-                    : 24),
-
-        // Botón principal con diseño agropecuario premium
-        Container(
-          width: isTablet
-              ? screenWidth * 0.5
-              : isLandscape
-                  ? screenWidth * 0.4
-                  : isLargeScreen
-                      ? screenWidth * 0.65
-                      : double.infinity,
-          height: isSmallScreen
-              ? 50
-              : isTablet
-                  ? 80
-                  : isLandscape
-                      ? 60
-                      : 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
-            gradient: LinearGradient(
-              colors: [
-                CorralXColors.primaryGreen,
-                CorralXColors.primaryGreen.withBlue(120), // Variación tonal
-              ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: screenSize.width * 0.08,
+            height: screenSize.width * 0.08,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: CorralXColors.primaryGreen.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _handleSignIn,
-              borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(isSmallScreen
-                        ? 6
-                        : isTablet
-                            ? 14
-                            : 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-                    ),
-                    child: Image.asset(
-                      'assets/images/google_logo.png',
-                      height: isSmallScreen
-                          ? 20
-                          : isTablet
-                              ? 36
-                              : 28,
-                      width: isSmallScreen
-                          ? 20
-                          : isTablet
-                              ? 36
-                              : 28,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.login,
-                          size: isSmallScreen
-                              ? 20
-                              : isTablet
-                                  ? 36
-                                  : 28,
-                          color: Colors.white,
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(
-                      width: isSmallScreen
-                          ? 8
-                          : isTablet
-                              ? 20
-                              : 16),
-                  Text(
-                    'INGRESAR CON GOOGLE',
-                    style: TextStyle(
-                      fontSize: isSmallScreen
-                          ? 12
-                          : isTablet
-                              ? 20
-                              : isLandscape
-                                  ? 16
-                                  : 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: isTablet ? 1.5 : 1,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(
+              icon,
+              color: color,
+              size: screenSize.width * 0.05,
             ),
           ),
-        ),
-
-        SizedBox(
-            height: isVerySmallScreen
-                ? 12
-                : isLandscape
-                    ? 16
-                    : 20),
-
-        // Indicadores de proceso para ganaderos
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildProcessStep(
-                '📝', '2 min', 'Registro', isSmallScreen, isTablet),
-            Container(
-              margin: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen
-                      ? 6
-                      : isTablet
-                          ? 16
-                          : 12),
-              width: isSmallScreen
-                  ? 16
-                  : isTablet
-                      ? 40
-                      : 30,
-              height: 2,
-              decoration: BoxDecoration(
-                color: CorralXColors.primaryGreen.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-            _buildProcessStep(
-                '🤝', '24/7', 'Negocios', isSmallScreen, isTablet),
-          ],
-        ),
-
-        SizedBox(height: isVerySmallScreen ? 12 : 16),
-
-        // Términos con enfoque profesional
-        Text(
-          'Al continuar aceptas nuestros términos y condiciones\nTus datos están protegidos',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: CorralXColors.textSecondaryLight.withOpacity(0.8),
-            fontSize: isSmallScreen
-                ? 9
-                : isTablet
-                    ? 14
-                    : 11,
-            height: 1.4,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-
-        SizedBox(height: isVerySmallScreen ? 8 : 12),
-      ],
-    );
-  }
-
-  Widget _buildProcessStep(String emoji, String time, String label,
-      bool isSmallScreen, bool isTablet) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.all(isSmallScreen
-              ? 6
-              : isTablet
-                  ? 12
-                  : 8),
-          decoration: BoxDecoration(
-            color: CorralXColors.primaryGreen.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-          ),
-          child: Text(
-            emoji,
+          SizedBox(height: screenSize.height * 0.008),
+          Text(
+            value,
             style: TextStyle(
-                fontSize: isSmallScreen
-                    ? 16
-                    : isTablet
-                        ? 28
-                        : 20),
+              fontWeight: FontWeight.w700,
+              color: color,
+              fontSize: screenSize.width * 0.04,
+            ),
           ),
-        ),
-        SizedBox(
-            height: isSmallScreen
-                ? 2
-                : isTablet
-                    ? 6
-                    : 4),
-        Text(
-          time,
-          style: TextStyle(
-            color: CorralXColors.primaryGreen,
-            fontSize: isSmallScreen
-                ? 10
-                : isTablet
-                    ? 18
-                    : 14,
-            fontWeight: FontWeight.w700,
+          Text(
+            label,
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: screenSize.width * 0.025,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: CorralXColors.textSecondaryLight,
-            fontSize: isSmallScreen
-                ? 8
-                : isTablet
-                    ? 14
-                    : 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
