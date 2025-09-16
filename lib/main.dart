@@ -7,8 +7,7 @@
 // import 'package:provider/provider.dart';
 // import 'package:zonix/features/utils/user_provider.dart';
 // import 'package:flutter/services.dart';
-// import 'package:zonix/features/screens/profile/profile_page.dart';
-// import 'package:zonix/features/screens/settings/settings_page_2.dart';
+// // import 'package:zonix/features/screens/settings/settings_page_2.dart';
 // import 'package:zonix/features/screens/auth/sign_in_screen.dart';
 // import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
@@ -20,8 +19,7 @@
 // import 'package:zonix/features/services/order_service.dart';
 // import 'package:zonix/features/screens/orders/commerce_orders_page.dart';
 
-// const FlutterSecureStorage _storage = FlutterSecureStorage();
-// final ApiService apiService = ApiService();
+// // final ApiService apiService = ApiService();
 
 // final String baseUrl =
 //     const bool.fromEnvironment('dart.vm.product')
@@ -324,24 +322,13 @@
 //   return const AssetImage('assets/default_avatar.png'); // Imagen predeterminada
 // }
 
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zonix/features/services/auth/api_service.dart';
-import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:zonix/features/utils/user_provider.dart';
 import 'package:flutter/services.dart';
@@ -350,21 +337,15 @@ import 'package:flutter/services.dart';
 // import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:zonix/features/screens/profile/profile_page.dart';
 import 'package:zonix/features/screens/settings/settings_page_2.dart';
 import 'package:zonix/features/screens/auth/sign_in_screen.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 
 import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
-
 
 import 'package:zonix/features/screens/products/products_page.dart';
 import 'package:zonix/features/screens/cart/cart_page.dart';
 import 'package:zonix/features/screens/orders/orders_page.dart';
 import 'package:zonix/features/screens/restaurants/restaurants_page.dart';
-
-import 'package:zonix/features/screens/cart/checkout_page.dart';
 
 import 'package:zonix/features/services/cart_service.dart';
 import 'package:zonix/features/services/order_service.dart';
@@ -399,9 +380,7 @@ import 'package:zonix/features/screens/admin/admin_users_page.dart';
 import 'package:zonix/features/screens/admin/admin_security_page.dart';
 import 'package:zonix/features/screens/admin/admin_analytics_page.dart';
 
-import 'package:zonix/features/screens/help/help_and_faq_page.dart';
 import 'package:zonix/features/services/websocket_service.dart';
-import 'package:zonix/features/utils/app_colors.dart';
 import 'package:zonix/features/screens/commerce/commerce_notifications_page.dart';
 import 'package:zonix/features/screens/commerce/commerce_profile_page.dart';
 
@@ -417,13 +396,11 @@ import 'package:zonix/features/screens/commerce/commerce_profile_page.dart';
  * 5 - Administrador: Panel Admin, Usuarios, Seguridad, Sistema
  */
 
-const FlutterSecureStorage _storage = FlutterSecureStorage();
 final ApiService apiService = ApiService();
 
-final String baseUrl =
-    const bool.fromEnvironment('dart.vm.product')
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
+final String baseUrl = const bool.fromEnvironment('dart.vm.product')
+    ? dotenv.env['API_URL_PROD']!
+    : dotenv.env['API_URL_LOCAL']!;
 
 // Configuración del logger
 final logger = Logger();
@@ -450,7 +427,9 @@ Future<void> main() async {
   await dotenv.load();
 
   // Bypass de login para tests de integración
-  final bool isIntegrationTest = const String.fromEnvironment('INTEGRATION_TEST', defaultValue: 'false') == 'true';
+  final bool isIntegrationTest =
+      const String.fromEnvironment('INTEGRATION_TEST', defaultValue: 'false') ==
+          'true';
 
   runApp(
     MultiProvider(
@@ -497,64 +476,76 @@ class MyApp extends StatelessWidget {
     }
 
     return MaterialApp(
-      title: 'ZONIX',
+      title: 'CorralX',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
-        primaryColor: AppColors.blue,
-        scaffoldBackgroundColor: AppColors.white,
+        primaryColor: const Color(0xFF2E7D32),
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
         appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.blue,
-          foregroundColor: AppColors.white,
-          elevation: 2,
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF333333),
+          elevation: 0,
+          shadowColor: Colors.transparent,
           titleTextStyle: TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+            color: const Color(0xFF333333),
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            letterSpacing: 0.2,
           ),
         ),
         colorScheme: ColorScheme.light(
-          primary: AppColors.blue,
-          secondary: AppColors.orange,
-          error: AppColors.red,
-          background: AppColors.white,
+          primary: const Color(0xFF2E7D32),
+          secondary: const Color(0xFF4CAF50),
+          error: const Color(0xFFE53935),
+          background: const Color(0xFFF5F5F5),
+          surface: Colors.white,
+          onSurface: const Color(0xFF333333),
+          onSurfaceVariant: const Color(0xFF666666),
         ),
-        cardColor: AppColors.grayLight,
+        cardColor: Colors.white,
         buttonTheme: ButtonThemeData(
-          buttonColor: AppColors.orange,
+          buttonColor: const Color(0xFF2E7D32),
           textTheme: ButtonTextTheme.primary,
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: AppColors.orange,
+          backgroundColor: const Color(0xFF2E7D32),
+          foregroundColor: Colors.white,
         ),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: AppColors.purple,
-        scaffoldBackgroundColor: AppColors.backgroundDark,
+        primaryColor: const Color(0xFF4CAF50),
+        scaffoldBackgroundColor: const Color(0xFF121212),
         appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.purple,
-          foregroundColor: AppColors.white,
-          elevation: 2,
+          backgroundColor: const Color(0xFF1E1E1E),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
           titleTextStyle: TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            letterSpacing: 0.2,
           ),
         ),
         colorScheme: ColorScheme.dark(
-          primary: AppColors.purple,
-          secondary: AppColors.orangeCoral,
-          error: AppColors.red,
-          background: AppColors.backgroundDark,
+          primary: const Color(0xFF4CAF50),
+          secondary: const Color(0xFF66BB6A),
+          error: const Color(0xFFEF5350),
+          background: const Color(0xFF121212),
+          surface: const Color(0xFF1E1E1E),
+          onSurface: Colors.white,
+          onSurfaceVariant: Colors.white70,
         ),
-        cardColor: AppColors.grayDark,
+        cardColor: const Color(0xFF1E1E1E),
         buttonTheme: ButtonThemeData(
-          buttonColor: AppColors.orangeCoral,
+          buttonColor: const Color(0xFF4CAF50),
           textTheme: ButtonTextTheme.primary,
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: AppColors.orangeCoral,
+          backgroundColor: const Color(0xFF4CAF50),
+          foregroundColor: Colors.white,
         ),
       ),
       themeMode: ThemeMode.system,
@@ -572,7 +563,8 @@ class MyApp extends StatelessWidget {
         '/commerce/inventory': (context) => const CommerceInventoryPage(),
         '/commerce/orders': (context) => const CommerceOrdersPage(),
         '/commerce/profile': (context) => CommerceProfilePage(),
-        '/commerce/notifications': (context) => const CommerceNotificationsPage(),
+        '/commerce/notifications': (context) =>
+            const CommerceNotificationsPage(),
       },
     );
   }
@@ -597,28 +589,26 @@ class MainRouterState extends State<MainRouter> {
     _loadLastPosition();
   }
 
+  Future<void> _loadProfile() async {
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-   Future<void> _loadProfile() async {
-      try {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
+      // Obtén los detalles del usuario y verifica su contenido
+      final userDetails = await userProvider.getUserDetails();
 
-        // Obtén los detalles del usuario y verifica su contenido
-        final userDetails = await userProvider.getUserDetails();
-       
-
-        // Extrae y valida el ID del usuario
-        final id = userDetails['userId'];
-        if (id == null || id is! int) {
-          throw Exception('El ID del usuario es inválido: $id');
-        }
-        // Obtén el perfil usando el ID del usuario
-        _profile = await ProfileService().getProfileById(id);
-       
-        setState(() {});
-      } catch (e) {
-        logger.e('Error obteniendo el ID del usuario: $e');
+      // Extrae y valida el ID del usuario
+      final id = userDetails['userId'];
+      if (id == null || id is! int) {
+        throw Exception('El ID del usuario es inválido: $id');
       }
+      // Obtén el perfil usando el ID del usuario
+      _profile = await ProfileService().getProfileById(id);
+
+      setState(() {});
+    } catch (e) {
+      logger.e('Error obteniendo el ID del usuario: $e');
     }
+  }
 
   Future<void> _loadLastPosition() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -788,9 +778,9 @@ class MainRouterState extends State<MainRouter> {
 
     // // Agregar elementos específicos según el rol si el nivel es 0
     // if (level == 0) {
-    //   if (role == 'sales_admin') { 
+    //   if (role == 'sales_admin') {
     //     items.insert( 2, const BottomNavigationBarItem( icon: Icon(Icons.qr_code), label: 'Verificar', ),);
-       
+
     //     items.insert( 3, const BottomNavigationBarItem( icon: Icon(Icons.check_circle), label: 'Aprobar', ),);
     //   }
 
@@ -839,15 +829,24 @@ class MainRouterState extends State<MainRouter> {
   }
 
   Widget _createLevelButton(int level, IconData icon, String tooltip) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return FloatingActionButton.small(
       heroTag: 'level$level',
-      backgroundColor:
-          _selectedLevel == level
-              ? Colors.blueAccent[700]
-              : Colors.blueAccent[50],
+      backgroundColor: _selectedLevel == level
+          ? const Color(0xFF2E7D32)
+          : isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.grey.withOpacity(0.1),
       child: Icon(
         icon,
-        color: _selectedLevel == level ? Colors.white : Colors.black,
+        color: _selectedLevel == level
+            ? Colors.white
+            : isDark
+                ? Colors.white.withOpacity(0.7)
+                : Colors.grey[600],
+        size: 20,
       ),
       onPressed: () => _onLevelSelected(level),
     );
@@ -856,137 +855,26 @@ class MainRouterState extends State<MainRouter> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        elevation: 4.0,
-        title: RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: 'ZONI',
-                style: TextStyle(
-                  fontFamily: 'system-ui',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              TextSpan(
-                text: 'X',
-                style: TextStyle(
-                  fontFamily: 'system-ui',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors.blueAccent[700]
-                          : Colors.orange,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
-          ),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        shadowColor: Colors.transparent,
+        leading: null,
+        title: Image.asset(
+          isDark
+              ? 'assets/splash/branding_dark_2048x1024.png'
+              : 'assets/splash/branding_light_2048x1024.png',
+          height: 90,
+          fit: BoxFit.contain,
         ),
         centerTitle: false,
-        actions: [
-          Consumer<UserProvider>(
-            builder: (context, userProvider, child) {
-              return GestureDetector(
-                onTap: () {
-                  showMenu(
-                    context: context,
-                    position: const RelativeRect.fromLTRB(200, 80, 0, 0),
-                    items: [
-                      PopupMenuItem(
-                        child: const Text('Mi QR'),
-                        onTap:
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfilePage1(),
-                              ),
-                            ),
-                      ),
-                      PopupMenuItem(
-                        child: const Text('Configuración'),
-                        onTap:
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SettingsPage2(),
-                              ),
-                            ),
-                      ),
-                      PopupMenuItem(
-                        child: const Text('Cerrar sesión'),
-                        onTap: () async {
-                          await userProvider.logout();
-                          // await _storage.deleteAll();
-                          if (!mounted) return;
-                        
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (context) => const SignInScreen()), // Redirige al login
-                            (Route<dynamic> route) => false, // Elimina todas las rutas previas
-                          );
-
-                       },
-                      ),
-                    ],
-                  );
-                },
-
-                child: FutureBuilder<String?>(
-                  future: _storage.read(key: 'userPhotoUrl'),
-                  builder: (
-                    BuildContext context,
-                    AsyncSnapshot<String?> snapshot,
-                  ) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircleAvatar(radius: 20);
-                    } else if (snapshot.hasError ||
-                        snapshot.data == null ||
-                        snapshot.data!.isEmpty) {
-                      return const CircleAvatar(
-                        radius: 20,
-                        child: Icon(Icons.person),
-                      );
-                    } else {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        // child: CircleAvatar(
-                        //   radius: 20,
-                        //   child: ClipOval(
-                        //     child: Image.network(
-                        //       snapshot.data!,
-                        //       fit: BoxFit.cover,
-                        //     ),
-                        //   ),
-                        // ),
-                        child: CircleAvatar(
-                            radius: 20,
-                            backgroundImage: _getProfileImage(
-                                    _profile?.photo, // Foto del perfil del usuario (desde el backend)
-                                     snapshot.data!, // Foto de Google (si está disponible)
-                                  ),
-                            child: (_profile?.photo == null &&  snapshot.data == null)
-                                ? const Icon(Icons.person, color: Colors.white) // Ícono predeterminado si no hay foto
-                                : null,
-                          ),
-
-                     );
-                    }
-                  },
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
@@ -1118,7 +1006,7 @@ class MainRouterState extends State<MainRouter> {
       ),
       floatingActionButtonLocation: ExpandableFab.location,
       floatingActionButton: ExpandableFab(
-        distance: 70,
+        distance: 80,
         type: ExpandableFabType.up,
         children: [
           _createLevelButton(0, Icons.shopping_bag, 'Comprador'),
@@ -1129,38 +1017,62 @@ class MainRouterState extends State<MainRouter> {
           _createLevelButton(5, Icons.admin_panel_settings, 'Administrador'),
         ],
       ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          items: _getBottomNavItems(_selectedLevel, userProvider.userRole),
+          currentIndex: _bottomNavIndex,
+          selectedItemColor: const Color(0xFF2E7D32),
+          unselectedItemColor: Colors.grey[600],
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w400,
+            fontSize: 11,
+          ),
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            // Obtener el itemCount llamando a _getBottomNavItems antes de la navegación
+            List<BottomNavigationBarItem> items = _getBottomNavItems(
+              _selectedLevel,
+              userProvider.userRole,
+            );
+            int itemCount = items.length;
 
-      bottomNavigationBar: BottomNavigationBar(
-        items: _getBottomNavItems(_selectedLevel, userProvider.userRole),
-        currentIndex: _bottomNavIndex,
-        selectedItemColor: Colors.blueAccent,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          // Obtener el itemCount llamando a _getBottomNavItems antes de la navegación
-          List<BottomNavigationBarItem> items = _getBottomNavItems(
-            _selectedLevel,
-            userProvider.userRole,
-          );
-          int itemCount = items.length;
-
-          // Llamar a la función _onBottomNavTapped con el index y el itemCount
-          _onBottomNavTapped(index, itemCount);
-        },
+            // Llamar a la función _onBottomNavTapped con el index y el itemCount
+            _onBottomNavTapped(index, itemCount);
+          },
+        ),
       ),
     );
   }
 }
 
-ImageProvider<Object> _getProfileImage(String? profilePhoto, String? googlePhotoUrl) {
+ImageProvider<Object> _getProfileImage(
+    String? profilePhoto, String? googlePhotoUrl) {
   if (profilePhoto != null && profilePhoto.isNotEmpty) {
     // Detectar URLs de placeholder y evitarlas
-    if (profilePhoto.contains('via.placeholder.com') || 
+    if (profilePhoto.contains('via.placeholder.com') ||
         profilePhoto.contains('placeholder.com') ||
         profilePhoto.contains('placehold.it')) {
-      logger.w('Detectada URL de placeholder en perfil, usando imagen local: $profilePhoto');
+      logger.w(
+          'Detectada URL de placeholder en perfil, usando imagen local: $profilePhoto');
       return const AssetImage('assets/default_avatar.png');
     }
-    
+
     logger.i('Usando foto del perfil: $profilePhoto');
     return NetworkImage(profilePhoto); // Imagen del perfil del usuario
   }
