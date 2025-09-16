@@ -154,3 +154,23 @@ alwaysApply: true
   - Ej.: Si solo usuarios verificados pueden publicar (si se aplicara), la app debería informar o bloquear esa acción para usuarios no verificados con un mensaje del estilo "Tu cuenta debe ser verificada para publicar anuncios.".
   - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.
 - Pruebas manuales de integración: el equipo frontend y backend deben realizar pruebas conjuntas de los flujos principales (registro, login, crear publicación, navegar, chatear) en un entorno de staging. Cualquier fallo de integración (discordancia de nombres de campos, comportamiento inesperado) debe reflejarse en ajustes tanto de código como de estas reglas para mantener la documentación actualizada.
+
+## Especificación de UI del Demo (HTML)
+- Navegación inferior: Mercado, Favoritos, Publicar, Mensajes (con badge de no leídos), Perfil.
+- Vistas: `marketplace`, `detail`, `create`, `profile`, `editProfile`, `favorites`, `dashboard`, `myListings`, `messages`, `chat`, `marketPulse`, `admin*`.
+- Marketplace: búsqueda, filtro por tipo (`all|lechero|engorde|padrote`), filtro por ubicación, sección Destacadas y Recientes.
+- Detalle: miniaturas con selección, favorito, reporte, registro del animal (con/sin certificado), vendedor con insignia de verificado, editar/eliminar si es dueño, comentarios con estrellas (1–5) y recálculo de rating promedio del vendedor.
+- Crear/Editar: hasta 5 fotos (primera = portada), validación de certificado si `con-registro`, campos tipo/raza/edad/cantidad/ubicación/descr., toggle Destacado.
+- Perfil: avatar, nombre comercial, full name, bio, rating, verificado, fecha de alta, contacto y ubicación; listado de publicaciones del usuario.
+- Favoritos: rejilla de publicaciones marcadas.
+- Dashboard/Mis publicaciones: métricas (publicaciones, vistas, favoritos) y lista editable.
+- Mensajes/Chat: conversaciones con snippet del último mensaje; chat 1:1 con input; al entrar a `messages` se limpian no leídos.
+- MarketPulse: genera resumen (mock) con tendencias por tipo/ubicación.
+- Admin (mock): dashboard, publicaciones, usuarios, actividad, soporte a usuario y reportes.
+
+### Comportamientos clave
+- Botón favorito con animación “pop” y estado.
+- Modal de certificado con bloqueo de scroll y cierre por overlay o botón.
+- Límite 5 imágenes y ocultar caja de subida al alcanzar límite.
+- Chips de filtro con estado activo y select de ubicación.
+- Badge de no leídos en nav y limpieza al abrir `messages`.

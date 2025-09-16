@@ -205,3 +205,38 @@ Alineación back/front: nombres de campos y rutas ya coinciden; cualquier cambio
 Hosting compartido: evita websockets, usa polling. Optimiza imágenes y cachea config/rutas/vistas.
 
 Criterios de “Hecho” (DoD): endpoints funcionales, validaciones y policies aplicadas, pruebas básicas verdes, deploy en hosting compartido, flujos principales verificados (crear listing, buscar, ver, chatear).
+
+14) Especificación de UI del Demo (HTML)
+
+Navegación inferior (Bottom Nav):
+- Mercado (`store`), Favoritos (`favorite`), Publicar (`add_circle`), Mensajes (`chat` con badge de no leídos), Perfil (`account_circle`).
+
+Vistas principales (IDs de vista):
+- `marketplace`: búsqueda, filtros por tipo (`all|lechero|engorde|padrote`), filtro por ubicación, sección Destacadas y lista de recientes.
+- `detail`: detalle de publicación con carrusel/miniaturas, favorito, reporte, registro del animal (con/sin certificado), info de vendedor verificado, acciones de editar/eliminar si es dueño, comentarios y calificaciones (1–5).
+- `create`: formulario de publicación con hasta 5 fotos (primera = portada), registro (obliga certificado si aplica), tipo/raza/edad/cantidad/ubicación/descr., toggle Destacado.
+- `profile`/`editProfile`: perfil propio o público con avatar, nombre comercial, datos de contacto, ubicación, bio, rating, verificado, fecha de alta; edición con cambio de foto y datos.
+- `favorites`: rejilla con publicaciones marcadas por el usuario.
+- `dashboard` y `myListings`: panel del vendedor con métricas (total publicaciones, vistas, favoritos) y gestión de publicaciones.
+- `messages` y `chat`: lista de conversaciones (último mensaje), vista de chat 1:1 con input y envío; al abrir `messages` se limpian no leídos.
+- `marketPulse`: analítica resumida del mercado (mock) a partir de publicaciones.
+- Admin (`adminDashboard`, `adminListings`, `adminUsers`, `adminActivity`, `adminUserSupport`, `adminReports`): vistas para métricas, usuarios, actividad y reportes (mock en demo).
+
+Componentes y comportamientos:
+- Card de publicación: imagen principal, favorito con animación, vendedor con insignia verificado, CTA “Ver Detalles”.
+- Favoritos: botón con estado persistente en usuario; animación “pop”.
+- Comentarios: selección de estrellas con hover/filled; recalcula rating promedio del vendedor según comentarios acumulados.
+- Reportes: modal con motivos predefinidos, registra evento de actividad.
+- Certificado: modal de imagen con bloqueo de scroll y cierre por overlay o botón.
+- Carga de imágenes: límite 5, previews con eliminar; oculta caja de subida al alcanzar límite.
+- Filtros: búsqueda por raza/tipo/ubicación, chips de tipo con estado activo, select de ubicación.
+- Mensajes: badge de no leídos en nav; al entrar en `messages` se marcan como leídos.
+
+Estilos y diseño:
+- Tokens Material Design (variables CSS) para colores; TailwindCSS para layout/responsivo.
+- Contenedores surface para tarjetas y secciones.
+
+Notas de integración Frontend Flutter:
+- Mapear estas vistas a pantallas Flutter equivalentes (Marketplace, Detalle, Formulario, Perfil, Favoritos, Chats, Dashboard, Admin opcional).
+- Reutilizar los nombres de acciones/estados (favoritos, verificado, reportes) y comportamientos (límite de imágenes, validación de certificado, limpieza de no leídos) en Providers/Services.
+- Para MVP, los módulos Admin pueden quedar detrás de flag/rol.
