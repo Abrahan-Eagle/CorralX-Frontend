@@ -215,9 +215,9 @@ class ProfilePagex extends StatelessWidget {
           ],
         ),
 
-        // Nombre personal (Juan Pérez como en HTML)
+        // Nombre personal (datos reales del perfil)
         Text(
-          'Juan Pérez',
+          '${profile.firstName ?? ''} ${profile.lastName ?? ''}'.trim(),
           style: TextStyle(
             fontSize: 18,
             color: isDark
@@ -258,9 +258,9 @@ class ProfilePagex extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Descripción
+        // Descripción (datos reales del perfil)
         Text(
-          'Dedicados a la cría de ganado de alta genética. Más de 20 años de experiencia en el campo venezolano.',
+          profile.businessType ?? 'Sin descripción disponible',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
@@ -271,9 +271,9 @@ class ProfilePagex extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Fecha de membresía
+        // Fecha de membresía (datos reales)
         Text(
-          'Miembro desde: mayo de 2023',
+          'Miembro desde: ${profile.dateOfBirth.isNotEmpty ? _formatDate(profile.dateOfBirth) : 'Fecha no disponible'}',
           style: TextStyle(
             fontSize: 14,
             color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
@@ -293,7 +293,7 @@ class ProfilePagex extends StatelessWidget {
               child: _buildContactItem(
                 context,
                 Icons.location_on,
-                'Valencia, Carabobo',
+                profile.address ?? 'Sin ubicación',
                 isDark,
               ),
             ),
@@ -317,7 +317,7 @@ class ProfilePagex extends StatelessWidget {
               child: _buildContactItem(
                 context,
                 Icons.mail,
-                'juan.perez@elfuturo.com',
+                profile.user?.email ?? 'Sin email',
                 isDark,
               ),
             ),
@@ -327,7 +327,9 @@ class ProfilePagex extends StatelessWidget {
               child: _buildContactItem(
                 context,
                 Icons.cake,
-                '24/10/1980', // Fecha fija como en HTML
+                profile.dateOfBirth.isNotEmpty
+                    ? _formatDate(profile.dateOfBirth)
+                    : 'Sin fecha',
                 isDark,
               ),
             ),
