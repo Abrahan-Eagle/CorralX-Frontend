@@ -44,7 +44,7 @@ class EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _loadProfile() async {
     try {
-      _profile = await ProfileService().getProfileById(widget.userId);
+      _profile = await ProfileService().getProfileByUserId(widget.userId);
       if (_profile != null) {
         _dateController.text = formatDate(_profile!.dateOfBirth);
         // Solo actualizamos el estado una vez que los datos están listos

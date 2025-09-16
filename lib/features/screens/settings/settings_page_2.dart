@@ -12,10 +12,7 @@ import 'package:zonix/features/screens/about/about_page.dart';
 import 'package:zonix/features/screens/help/help_and_faq_page.dart';
 import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
 import 'package:zonix/features/screens/notifications/notifications_page.dart';
-// Importaciones para funcionalidades avanzadas
-import 'package:zonix/features/DomainProfiles/Profiles/screens/activity_history_page.dart';
-import 'package:zonix/features/DomainProfiles/Profiles/screens/data_export_page.dart';
-import 'package:zonix/features/DomainProfiles/Profiles/screens/privacy_settings_page.dart';
+// Importaciones para funcionalidades avanzadas eliminadas
 import 'package:zonix/features/screens/account_deletion_page.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
@@ -27,11 +24,8 @@ import 'package:zonix/features/screens/commerce/commerce_promotions_page.dart';
 import 'package:zonix/features/screens/commerce/commerce_zones_page.dart';
 import 'package:zonix/features/screens/commerce/commerce_notifications_page.dart';
 
-
 // Configuración del logger
 final logger = Logger();
-
-
 
 class SettingsPage2 extends StatefulWidget {
   const SettingsPage2({super.key});
@@ -39,7 +33,6 @@ class SettingsPage2 extends StatefulWidget {
   @override
   State<SettingsPage2> createState() => _SettingsPage2State();
 }
-
 
 class _SettingsPage2State extends State<SettingsPage2> {
   dynamic _profile;
@@ -79,45 +72,44 @@ class _SettingsPage2State extends State<SettingsPage2> {
   // }
 
   Future<void> _loadProfile() async {
-  setState(() {
-    _loading = true;
-    _error = null;
-  });
-  try {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final userDetails = await userProvider.getUserDetails();
-    
-    // More flexible ID handling
-    final id = userDetails['userId'];
-    if (id == null) {
-      throw Exception('No se pudo obtener el ID del usuario');
-    }
-    
-    // Convert to int if necessary
-    final userId = id is int ? id : int.tryParse(id.toString());
-    if (userId == null) {
-      throw Exception('El ID del usuario no es válido: $id');
-    }
-    
-    _email = userDetails['users']['email'];
-    _profile = await ProfileService().getProfileById(userId);
-    
-    // Log success as info, not error
-    logger.i('Perfil cargado correctamente: $_profile');
-    
-  } catch (e, stackTrace) {
-    // logger.e('Error al cargar el perfil', error: e, stackTrace: stackTrace);
     setState(() {
-      // _error = 'Error al cargar el perfil: ${e.toString()}';
+      _loading = true;
+      _error = null;
     });
-  } finally {
-    if (mounted) {
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userDetails = await userProvider.getUserDetails();
+
+      // More flexible ID handling
+      final id = userDetails['userId'];
+      if (id == null) {
+        throw Exception('No se pudo obtener el ID del usuario');
+      }
+
+      // Convert to int if necessary
+      final userId = id is int ? id : int.tryParse(id.toString());
+      if (userId == null) {
+        throw Exception('El ID del usuario no es válido: $id');
+      }
+
+      _email = userDetails['users']['email'];
+      _profile = await ProfileService().getProfileById(userId);
+
+      // Log success as info, not error
+      logger.i('Perfil cargado correctamente: $_profile');
+    } catch (e, stackTrace) {
+      // logger.e('Error al cargar el perfil', error: e, stackTrace: stackTrace);
       setState(() {
-        _loading = false;
+        // _error = 'Error al cargar el perfil: ${e.toString()}';
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +163,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                     color: AppColors.cardBg(context),
                     elevation: 8,
                     shadowColor: AppColors.purple.withOpacity(0.10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Row(
@@ -181,7 +174,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                             backgroundImage: _getProfileImage(_profile?.photo),
                             backgroundColor: AppColors.purple.withOpacity(0.15),
                             child: (_profile?.photo == null)
-                                ? const Icon(Icons.person, color: Colors.white, size: 40)
+                                ? const Icon(Icons.person,
+                                    color: Colors.white, size: 40)
                                 : null,
                           ),
                           const SizedBox(width: 18),
@@ -191,18 +185,24 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               children: [
                                 Text(
                                   '${_profile?.firstName ?? ''} ${_profile?.lastName ?? ''}',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 22,
-                                    color: AppColors.primaryText(context),
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22,
+                                        color: AppColors.primaryText(context),
+                                      ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   _email ?? 'Correo no disponible',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.secondaryText(context),
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.secondaryText(context),
+                                      ),
                                 ),
                               ],
                             ),
@@ -217,16 +217,17 @@ class _SettingsPage2State extends State<SettingsPage2> {
                   Text(
                     "Mi cuenta", // TODO: internacionalizar
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.accentButton(context),
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: AppColors.accentButton(context),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Card(
                     color: AppColors.cardBg(context),
                     elevation: 6,
                     shadowColor: AppColors.orange.withOpacity(0.10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Column(
                       children: [
                         _buildListTile(
@@ -238,7 +239,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ProfilePagex(userId: userProvider.userId),
+                                builder: (context) =>
+                                    ProfilePagex(userId: userProvider.userId),
                               ),
                             );
                           },
@@ -252,7 +254,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DocumentListScreen(userId: userProvider.userId),
+                                builder: (context) => DocumentListScreen(
+                                    userId: userProvider.userId),
                               ),
                             );
                           },
@@ -266,7 +269,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddressPage(userId: userProvider.userId),
+                                builder: (context) =>
+                                    AddressPage(userId: userProvider.userId),
                               ),
                             );
                           },
@@ -280,12 +284,12 @@ class _SettingsPage2State extends State<SettingsPage2> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PhoneScreen(userId: userProvider.userId),
+                                builder: (context) =>
+                                    PhoneScreen(userId: userProvider.userId),
                               ),
                             );
                           },
                         ),
-
                       ],
                     ),
                   ),
@@ -295,16 +299,17 @@ class _SettingsPage2State extends State<SettingsPage2> {
                     Text(
                       "Gestión del comercio",
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.accentButton(context),
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: AppColors.accentButton(context),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Card(
                       color: AppColors.cardBg(context),
                       elevation: 6,
                       shadowColor: AppColors.purple.withOpacity(0.10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                       child: Column(
                         children: [
                           _buildListTile(
@@ -316,7 +321,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommerceDataPage(),
+                                  builder: (context) =>
+                                      const CommerceDataPage(),
                                 ),
                               );
                             },
@@ -330,7 +336,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommercePaymentPage(),
+                                  builder: (context) =>
+                                      const CommercePaymentPage(),
                                 ),
                               );
                             },
@@ -344,7 +351,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommerceSchedulePage(),
+                                  builder: (context) =>
+                                      const CommerceSchedulePage(),
                                 ),
                               );
                             },
@@ -358,13 +366,12 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommerceOpenPage(),
+                                  builder: (context) =>
+                                      const CommerceOpenPage(),
                                 ),
                               );
                             },
                           ),
-
-
                           _buildListTile(
                             context,
                             icon: Icons.local_offer,
@@ -374,12 +381,12 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommercePromotionsPage(),
+                                  builder: (context) =>
+                                      const CommercePromotionsPage(),
                                 ),
                               );
                             },
                           ),
-
                           _buildListTile(
                             context,
                             icon: Icons.map,
@@ -389,7 +396,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommerceZonesPage(),
+                                  builder: (context) =>
+                                      const CommerceZonesPage(),
                                 ),
                               );
                             },
@@ -403,7 +411,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CommerceNotificationsPage(),
+                                  builder: (context) =>
+                                      const CommerceNotificationsPage(),
                                 ),
                               );
                             },
@@ -418,73 +427,63 @@ class _SettingsPage2State extends State<SettingsPage2> {
                   Text(
                     "Funcionalidades Avanzadas", // TODO: internacionalizar
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.accentButton(context),
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: AppColors.accentButton(context),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Card(
                     color: AppColors.cardBg(context),
                     elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
-                        _buildListTile(
-                          context,
-                          icon: Icons.history,
-                          color: AppColors.accentButton(context),
-                          title: "Historial de Actividad", // TODO: internacionalizar
-                          subtitle: "Revisa todas tus actividades en la aplicación", // TODO: internacionalizar
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ActivityHistoryPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildListTile(
-                          context,
-                          icon: Icons.download,
-                          color: AppColors.green,
-                          title: "Exportar Datos", // TODO: internacionalizar
-                          subtitle: "Descarga una copia de todos tus datos personales", // TODO: internacionalizar
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const DataExportPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildListTile(
-                          context,
-                          icon: Icons.privacy_tip,
-                          color: AppColors.orange,
-                          title: "Configuración de Privacidad", // TODO: internacionalizar
-                          subtitle: "Controla cómo se utilizan y comparten tus datos", // TODO: internacionalizar
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PrivacySettingsPage(),
-                              ),
-                            );
-                          },
-                        ),
+                        // Funcionalidades avanzadas temporalmente deshabilitadas
+                        // _buildListTile(
+                        //   context,
+                        //   icon: Icons.history,
+                        //   color: AppColors.accentButton(context),
+                        //   title: "Historial de Actividad",
+                        //   subtitle: "Revisa todas tus actividades en la aplicación",
+                        //   onTap: () {
+                        //     // Funcionalidad temporalmente deshabilitada
+                        //   },
+                        // ),
+                        // _buildListTile(
+                        //   context,
+                        //   icon: Icons.download,
+                        //   color: AppColors.green,
+                        //   title: "Exportar Datos",
+                        //   subtitle: "Descarga una copia de todos tus datos personales",
+                        //   onTap: () {
+                        //     // Funcionalidad temporalmente deshabilitada
+                        //   },
+                        // ),
+                        // _buildListTile(
+                        //   context,
+                        //   icon: Icons.privacy_tip,
+                        //   color: AppColors.orange,
+                        //   title: "Configuración de Privacidad",
+                        //   subtitle: "Controla cómo se utilizan y comparten tus datos",
+                        //   onTap: () {
+                        //     // Funcionalidad temporalmente deshabilitada
+                        //   },
+                        // ),
                         _buildListTile(
                           context,
                           icon: Icons.delete_forever,
                           color: AppColors.red,
-                          title: "Eliminación de Cuenta", // TODO: internacionalizar
-                          subtitle: "Solicitar eliminación permanente de tu cuenta", // TODO: internacionalizar
+                          title:
+                              "Eliminación de Cuenta", // TODO: internacionalizar
+                          subtitle:
+                              "Solicitar eliminación permanente de tu cuenta", // TODO: internacionalizar
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const AccountDeletionPage(),
+                                builder: (context) =>
+                                    const AccountDeletionPage(),
                               ),
                             );
                           },
@@ -498,15 +497,16 @@ class _SettingsPage2State extends State<SettingsPage2> {
                   Text(
                     "Administración y Ayuda", // TODO: internacionalizar
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.accentButton(context),
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: AppColors.accentButton(context),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Card(
                     color: AppColors.cardBg(context),
                     elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
                         _buildListTile(
@@ -527,7 +527,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
                           context,
                           icon: Icons.help_outline_rounded,
                           color: AppColors.purple,
-                          title: "Ayuda y Comentarios", // TODO: internacionalizar
+                          title:
+                              "Ayuda y Comentarios", // TODO: internacionalizar
                           onTap: () {
                             Navigator.push(
                               context,
@@ -606,7 +607,12 @@ class _SettingsPage2State extends State<SettingsPage2> {
     );
   }
 
-  Widget _buildListTile(BuildContext context, {required IconData icon, required Color color, required String title, String? subtitle, required VoidCallback onTap}) {
+  Widget _buildListTile(BuildContext context,
+      {required IconData icon,
+      required Color color,
+      required String title,
+      String? subtitle,
+      required VoidCallback onTap}) {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withOpacity(0.15),
@@ -614,38 +620,40 @@ class _SettingsPage2State extends State<SettingsPage2> {
         radius: 20,
       ),
       title: Text(
-        title, 
+        title,
         style: const TextStyle(fontWeight: FontWeight.bold),
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
       ),
-      subtitle: subtitle != null ? Text(
-        subtitle,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 2,
-      ) : null,
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            )
+          : null,
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
   }
 
+  ImageProvider<Object> _getProfileImage(String? profilePhoto) {
+    if (profilePhoto != null && profilePhoto.isNotEmpty) {
+      // Detectar URLs de placeholder y evitarlas
+      if (profilePhoto.contains('via.placeholder.com') ||
+          profilePhoto.contains('placeholder.com') ||
+          profilePhoto.contains('placehold.it')) {
+        logger.w(
+            'Detectada URL de placeholder, usando imagen local: $profilePhoto');
+        return const AssetImage('assets/default_avatar.png');
+      }
 
-ImageProvider<Object> _getProfileImage(String? profilePhoto) {
-  if (profilePhoto != null && profilePhoto.isNotEmpty) {
-    // Detectar URLs de placeholder y evitarlas
-    if (profilePhoto.contains('via.placeholder.com') || 
-        profilePhoto.contains('placeholder.com') ||
-        profilePhoto.contains('placehold.it')) {
-      logger.w('Detectada URL de placeholder, usando imagen local: $profilePhoto');
-      return const AssetImage('assets/default_avatar.png');
+      logger.i('Usando foto del perfil: $profilePhoto');
+      return NetworkImage(profilePhoto);
     }
-    
-    logger.i('Usando foto del perfil: $profilePhoto');
-    return NetworkImage(profilePhoto); 
-  }
 
-  logger.w('Usando imagen predeterminada');
-  return const AssetImage('assets/default_avatar.png'); 
-}
+    logger.w('Usando imagen predeterminada');
+    return const AssetImage('assets/default_avatar.png');
+  }
 }

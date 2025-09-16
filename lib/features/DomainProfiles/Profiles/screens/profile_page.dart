@@ -22,8 +22,10 @@ class ProfileModel with ChangeNotifier {
     notifyListeners();
 
     try {
-      _profile = await ProfileService().getProfileById(userId);
+      _profile = await ProfileService().getProfileByUserId(userId);
+      logger.i('Perfil cargado: $_profile');
     } catch (e) {
+      logger.e('Error cargando perfil: $e');
       _profile = null;
     } finally {
       _isLoading = false;
@@ -156,9 +158,9 @@ class ProfilePagex extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.headerGradientStart(context),
-            AppColors.headerGradientMid(context),
-            AppColors.headerGradientEnd(context),
+            AppColors.blue,
+            AppColors.blue.withOpacity(0.8),
+            AppColors.blue.withOpacity(0.6),
           ],
         ),
       ),
@@ -167,25 +169,86 @@ class ProfilePagex extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            // Avatar con borde y sombra
+            // Avatar con borde y sombra profesional
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: CircleAvatar(
                 radius: 60,
-                backgroundColor: isDark ? const Color(0xFF23262B) : Colors.white,
+                backgroundColor: AppColors.white,
                 child: CircleAvatar(
                   radius: 55,
-                  backgroundImage: _buildProfileImage(context),
-                  backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                  backgroundColor: AppColors.grayLight,
+                  child: () {
+                    logger.i('🔍 Verificando imagen del perfil:');
+                    logger.i('   - photo: ${profile.photo}');
+                    logger.i('   - photo != null: ${profile.photo != null}');
+                    logger.i('   - photo.isNotEmpty: ${profile.photo?.isNotEmpty}');
+                    logger.i('   - contiene placeholder: ${profile.photo?.contains('URL de foto no disponible')}');
+                    
+                    if (profile.photo != null && profile.photo!.isNotEmpty && !profile.photo!.contains('URL de foto no disponible')) {
+                      logger.i('✅ Mostrando imagen del perfil: ${profile.photo}');
+                      return ClipOval(
+                          child: Image.network(
+                            profile.photo!,
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  color: AppColors.grayLight,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.blue,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              logger.e('Error cargando imagen del perfil: $error');
+                              logger.i('🔄 Intentando usar imagen de Google como fallback...');
+                              
+                              // Intentar usar la imagen de Google como fallback
+                              if (profile.user?.profilePic != null && profile.user!.profilePic!.isNotEmpty) {
+                                logger.i('✅ Usando imagen de Google: ${profile.user!.profilePic}');
+                                return ClipOval(
+                                  child: Image.network(
+                                    profile.user!.profilePic!,
+                                    width: 110,
+                                    height: 110,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      logger.e('Error también con imagen de Google: $error');
+                                      return const Icon(Icons.person, color: AppColors.blue, size: 50);
+                                    },
+                                  ),
+                                );
+                              }
+                              
+                              return const Icon(Icons.person, color: AppColors.blue, size: 50);
+                            },
+                          ),
+                        );
+                    } else {
+                      logger.w('❌ Usando icono placeholder');
+                      return const Icon(Icons.person, color: AppColors.blue, size: 50);
+                    }
+                  }(),
                 ),
               ),
             ),
@@ -194,8 +257,9 @@ class ProfilePagex extends StatelessWidget {
               '${profile.firstName} ${profile.lastName}',
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
+                letterSpacing: 0.5,
               ),
               textAlign: TextAlign.center,
             ),
@@ -206,18 +270,20 @@ class ProfilePagex extends StatelessWidget {
                 Icon(
                   Icons.circle,
                   size: 8,
-                  color: Colors.greenAccent.shade400,
+                  color: AppColors.green,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Usuario Activo',
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? Colors.white.withOpacity(0.9) : Colors.black.withOpacity(0.7),
+                    color: AppColors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -225,10 +291,22 @@ class ProfilePagex extends StatelessWidget {
   }
 
   Widget _buildPersonalInfoCard(BuildContext context, Profile profile) {
-    return Card(
-      color: AppColors.cardBg(context),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grayDark : AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -237,10 +315,10 @@ class ProfilePagex extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.blue.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.person,
@@ -253,8 +331,9 @@ class ProfilePagex extends StatelessWidget {
                   'Información Personal',
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.white : AppColors.blueDark,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],
@@ -276,11 +355,22 @@ class ProfilePagex extends StatelessWidget {
   }
 
   Widget _buildContactInfoCard(BuildContext context, Profile profile) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      color: AppColors.cardBg(context),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grayDark : AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -289,10 +379,10 @@ class ProfilePagex extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.green.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.contact_phone,
@@ -305,8 +395,9 @@ class ProfilePagex extends StatelessWidget {
                   'Información de Contacto',
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.white : AppColors.blueDark,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],
@@ -461,6 +552,9 @@ class ProfilePagex extends StatelessWidget {
   }
 
   Widget _buildInfoRow(BuildContext context, String label, String value, IconData icon) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -468,7 +562,7 @@ class ProfilePagex extends StatelessWidget {
           Icon(
             icon,
             size: 20,
-            color: AppColors.secondaryText(context),
+            color: AppColors.gray,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -479,8 +573,9 @@ class ProfilePagex extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.secondaryText(context),
+                    color: AppColors.gray,
                     fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -489,7 +584,8 @@ class ProfilePagex extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryText(context),
+                    color: isDark ? AppColors.white : AppColors.blueDark,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],
@@ -501,25 +597,36 @@ class ProfilePagex extends StatelessWidget {
   }
 
   Widget _buildEditProfileButton(BuildContext context, Profile profile) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.blue.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ElevatedButton.icon(
         onPressed: () => _navigateToEditOrCreatePage(context, profile),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xff0043ba),
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.blue,
+          foregroundColor: AppColors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 2,
+          elevation: 0,
         ),
         icon: const Icon(Icons.edit, size: 20),
         label: const Text(
           'Editar Perfil',
           style: TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -615,11 +722,4 @@ class ProfilePagex extends StatelessWidget {
     });
   }
 
-  ImageProvider<Object>? _buildProfileImage(BuildContext context) {
-    final profile = context.read<ProfileModel>().profile;
-    if (profile?.photo != null) {
-      return NetworkImage(profile!.photo!);
-    }
-    return const AssetImage('assets/default_avatar.png');
-  }
 }

@@ -1,4 +1,29 @@
 // profile_model.dart
+
+// Clase para información del usuario
+class UserInfo {
+  int id;
+  String name;
+  String email;
+  String? profilePic;
+  
+  UserInfo({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.profilePic,
+  });
+  
+  factory UserInfo.fromJson(Map<String, dynamic> json) {
+    return UserInfo(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      profilePic: json['profile_pic'],
+    );
+  }
+}
+
 class Profile {
   int id;
   int userId; // Clave foránea
@@ -22,6 +47,9 @@ class Profile {
   // Campos específicos para delivery
   String? vehicleType; // Tipo de vehículo
   String? licenseNumber; // Número de licencia
+  
+  // Información del usuario asociado
+  UserInfo? user;
 
   // Constructor
   Profile({
@@ -43,6 +71,7 @@ class Profile {
     this.taxId,
     this.vehicleType,
     this.licenseNumber,
+    this.user,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -65,6 +94,7 @@ class Profile {
       taxId: json['tax_id'],
       vehicleType: json['vehicle_type'],
       licenseNumber: json['license_number'],
+      user: json['user'] != null ? UserInfo.fromJson(json['user']) : null,
     );
   }
 
@@ -111,6 +141,7 @@ class Profile {
     String? taxId,
     String? vehicleType,
     String? licenseNumber,
+    UserInfo? user,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -131,6 +162,7 @@ class Profile {
       taxId: taxId ?? this.taxId,
       vehicleType: vehicleType ?? this.vehicleType,
       licenseNumber: licenseNumber ?? this.licenseNumber,
+      user: user ?? this.user,
     );
   }
 }
