@@ -379,7 +379,7 @@ import 'package:zonix/features/screens/admin/admin_dashboard_page.dart';
 import 'package:zonix/features/screens/admin/admin_users_page.dart';
 import 'package:zonix/features/screens/admin/admin_security_page.dart';
 import 'package:zonix/features/screens/admin/admin_analytics_page.dart';
-
+import 'package:zonix/features/DomainProfiles/Profiles/screens/profile_page.dart';
 import 'package:zonix/features/services/websocket_service.dart';
 import 'package:zonix/features/screens/commerce/commerce_notifications_page.dart';
 import 'package:zonix/features/screens/commerce/commerce_profile_page.dart';
@@ -801,13 +801,17 @@ class MainRouterState extends State<MainRouter> {
 
   // Función para manejar el tap en el BottomNavigationBar
   void _onBottomNavTapped(int index, int itemCount) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     logger.i('Bottom navigation tapped: $index, Total items: $itemCount');
 
     // Verifica si el índice seleccionado es el último item
     if (index == itemCount - 1) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const SettingsPage2()),
+        // MaterialPageRoute(builder: (context) => const SettingsPage2()),
+        MaterialPageRoute(
+          builder: (context) => ProfilePagex(userId: userProvider.userId),
+        ),
       );
     } else {
       setState(() {
