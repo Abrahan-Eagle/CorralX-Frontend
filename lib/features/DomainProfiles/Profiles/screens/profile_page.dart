@@ -6,7 +6,6 @@ import 'package:zonix/features/DomainProfiles/Profiles/screens/edit_profile_page
 import 'package:zonix/features/DomainProfiles/Profiles/screens/create_profile_page.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
-import 'package:zonix/features/utils/app_colors.dart';
 
 final logger = Logger();
 
@@ -80,70 +79,42 @@ class ProfilePagex extends StatelessWidget {
 
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Scaffold(
-            backgroundColor: AppColors.scaffoldBg(context),
-            body: CustomScrollView(
-              slivers: [
-                // App Bar personalizado
-                SliverAppBar(
-                  expandedHeight: 280,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: AppColors.scaffoldBg(context),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: _buildHeader(context, profileModel.profile!, isDark),
-                  ),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    color: AppColors.primaryText(context),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      color: AppColors.primaryText(context),
-                      onPressed: () => _navigateToEditOrCreatePage(context, profileModel.profile!),
-                    ),
+            backgroundColor:
+                isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+            appBar: AppBar(
+              backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                color: isDark ? Colors.white : Colors.black,
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Text(
+                'Mi Perfil',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              centerTitle: false,
+            ),
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // Tarjeta principal del perfil
+                    _buildMainProfileCard(
+                        context, profileModel.profile!, isDark),
+                    const SizedBox(height: 32),
+
+                    // Sección de publicaciones activas
+                    _buildActivePublicationsSection(context, isDark),
                   ],
                 ),
-                
-                // Contenido del perfil
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        // Información personal
-                        _buildPersonalInfoCard(context, profileModel.profile!),
-                        const SizedBox(height: 16),
-                        
-                        // Información de contacto
-                        _buildContactInfoCard(context, profileModel.profile!),
-                        const SizedBox(height: 16),
-                        
-                        // Información de negocio (si aplica)
-                        if (_hasBusinessInfo(profileModel.profile!))
-                          _buildBusinessInfoCard(context, profileModel.profile!),
-                        if (_hasBusinessInfo(profileModel.profile!))
-                          const SizedBox(height: 16),
-                        
-                        // Información de delivery (si aplica)
-                        if (_hasDeliveryInfo(profileModel.profile!))
-                          _buildDeliveryInfoCard(context, profileModel.profile!),
-                        if (_hasDeliveryInfo(profileModel.profile!))
-                          const SizedBox(height: 16),
-                        
-                        // Estado del perfil
-                        _buildProfileStatusCard(context, profileModel.profile!),
-                        const SizedBox(height: 16),
-                        
-                        // Botón de editar perfil
-                        _buildEditProfileButton(context, profileModel.profile!),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           );
         },
@@ -151,444 +122,410 @@ class ProfilePagex extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, Profile profile, bool isDark) {
+  Widget _buildMainProfileCard(
+      BuildContext context, Profile profile, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.blue,
-            AppColors.blue.withOpacity(0.8),
-            AppColors.blue.withOpacity(0.6),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            // Avatar y información principal
+            _buildProfileHeader(context, profile, isDark),
+
+            // Divider
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 24),
+              height: 1,
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.2),
+            ),
+
+            // Información de contacto en grid
+            _buildContactGrid(context, profile, isDark),
+
+            const SizedBox(height: 24),
+
+            // Botón de editar perfil
+            _buildEditProfileButton(context, profile, isDark),
           ],
         ),
       ),
-      child: SafeArea(
-        child: Column(
+    );
+  }
+
+  Widget _buildProfileHeader(
+      BuildContext context, Profile profile, bool isDark) {
+    return Column(
+      children: [
+        // Avatar con borde blanco y sombra (128x128px como en HTML)
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 64, // 128px total (64*2)
+            backgroundColor: Colors.white,
+            child: CircleAvatar(
+              radius: 60, // 120px interno
+              backgroundImage: _buildProfileImage(context),
+              backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Nombre del negocio con badge de verificado
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            // Avatar con borde y sombra profesional
-            Container(
+            Text(
+              profile.businessName ?? 'Agropecuaria El Futuro',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.verified,
+              color: Colors.blue,
+              size: 20,
+            ),
+          ],
+        ),
+
+        // Nombre personal (Juan Pérez como en HTML)
+        Text(
+          'Juan Pérez',
+          style: TextStyle(
+            fontSize: 18,
+            color: isDark
+                ? Colors.white.withOpacity(0.8)
+                : Colors.black.withOpacity(0.7),
+          ),
+        ),
+
+        // Rating con estrellas
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '4.5',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.star,
+              color: Colors.amber,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '(2 opiniones)',
+              style: TextStyle(
+                fontSize: 14,
+                color:
+                    isDark ? Colors.white.withOpacity(0.6) : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Descripción
+        Text(
+          'Dedicados a la cría de ganado de alta genética. Más de 20 años de experiencia en el campo venezolano.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            color: isDark ? Colors.white.withOpacity(0.7) : Colors.grey[600],
+            height: 1.4,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Fecha de membresía
+        Text(
+          'Miembro desde: mayo de 2023',
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactGrid(BuildContext context, Profile profile, bool isDark) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: _buildContactItem(
+                context,
+                Icons.location_on,
+                'Valencia, Carabobo',
+                isDark,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 1,
+              child: _buildContactItem(
+                context,
+                Icons.call,
+                profile.phone ?? '0414-1234567',
+                isDark,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: _buildContactItem(
+                context,
+                Icons.mail,
+                'juan.perez@elfuturo.com',
+                isDark,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 1,
+              child: _buildContactItem(
+                context,
+                Icons.cake,
+                '24/10/1980', // Fecha fija como en HTML
+                isDark,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactItem(
+      BuildContext context, IconData icon, String text, bool isDark) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: isDark ? Colors.white.withOpacity(0.7) : Colors.grey[600],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark
+                  ? Colors.white.withOpacity(0.8)
+                  : Colors.black.withOpacity(0.8),
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivePublicationsSection(BuildContext context, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Publicaciones Activas',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Grid de publicaciones
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 0.7, // Más reducido para eliminar overflow
+          children: [
+            _buildPublicationCard(context, isDark, 'Brahman Rojo',
+                'https://diariolaeconomia.com/media/k2/items/cache/891bc0e45e0849a552d0ba70b9f8ec5e_XL.jpg'),
+            _buildPublicationCard(context, isDark, 'Guzerat',
+                'https://gruposansimon.com/web/wp-content/uploads/esta.jpg'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPublicationCard(
+      BuildContext context, bool isDark, String title, String imageUrl) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen del ganado
+          Expanded(
+            flex: 3,
+            child: Container(
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                image: DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Botón de favorito
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.favorite,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor: AppColors.white,
-                child: CircleAvatar(
-                  radius: 55,
-                  backgroundColor: AppColors.grayLight,
-                  child: () {
-                    logger.i('🔍 Verificando imagen del perfil:');
-                    logger.i('   - photo: ${profile.photo}');
-                    logger.i('   - photo != null: ${profile.photo != null}');
-                    logger.i('   - photo.isNotEmpty: ${profile.photo?.isNotEmpty}');
-                    logger.i('   - contiene placeholder: ${profile.photo?.contains('URL de foto no disponible')}');
-                    
-                    if (profile.photo != null && profile.photo!.isNotEmpty && !profile.photo!.contains('URL de foto no disponible')) {
-                      logger.i('✅ Mostrando imagen del perfil: ${profile.photo}');
-                      return ClipOval(
-                          child: Image.network(
-                            profile.photo!,
-                            width: 110,
-                            height: 110,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                width: 110,
-                                height: 110,
-                                decoration: BoxDecoration(
-                                  color: AppColors.grayLight,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.blue,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              logger.e('Error cargando imagen del perfil: $error');
-                              logger.i('🔄 Intentando usar imagen de Google como fallback...');
-                              
-                              // Intentar usar la imagen de Google como fallback
-                              if (profile.user?.profilePic != null && profile.user!.profilePic!.isNotEmpty) {
-                                logger.i('✅ Usando imagen de Google: ${profile.user!.profilePic}');
-                                return ClipOval(
-                                  child: Image.network(
-                                    profile.user!.profilePic!,
-                                    width: 110,
-                                    height: 110,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      logger.e('Error también con imagen de Google: $error');
-                                      return const Icon(Icons.person, color: AppColors.blue, size: 50);
-                                    },
-                                  ),
-                                );
-                              }
-                              
-                              return const Icon(Icons.person, color: AppColors.blue, size: 50);
-                            },
-                          ),
-                        );
-                    } else {
-                      logger.w('❌ Usando icono placeholder');
-                      return const Icon(Icons.person, color: AppColors.blue, size: 50);
-                    }
-                  }(),
-                ),
-              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              '${profile.firstName} ${profile.lastName}',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.white,
-                letterSpacing: 0.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.circle,
-                  size: 8,
-                  color: AppColors.green,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Usuario Activo',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPersonalInfoCard(BuildContext context, Profile profile) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.grayDark : AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    color: AppColors.blue,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Información Personal',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.white : AppColors.blueDark,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildInfoRow(context, 'Nombre', profile.firstName, Icons.person_outline),
-            if (profile.middleName != null && profile.middleName!.isNotEmpty)
-              _buildInfoRow(context, 'Segundo Nombre', profile.middleName!, Icons.person_outline),
-            _buildInfoRow(context, 'Apellido', profile.lastName, Icons.person_outline),
-            if (profile.secondLastName != null && profile.secondLastName!.isNotEmpty)
-              _buildInfoRow(context, 'Segundo Apellido', profile.secondLastName!, Icons.person_outline),
-            _buildInfoRow(context, 'Fecha de Nacimiento', _formatDate(profile.dateOfBirth), Icons.calendar_today),
-            _buildInfoRow(context, 'Estado Civil', _translateMaritalStatus(profile.maritalStatus ?? 'N/A'), Icons.favorite),
-            _buildInfoRow(context, 'Sexo', _translateSex(profile.sex), Icons.wc),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildContactInfoCard(BuildContext context, Profile profile) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.grayDark : AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.contact_phone,
-                    color: AppColors.green,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Información de Contacto',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.white : AppColors.blueDark,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildInfoRow(context, 'Teléfono', profile.phone ?? 'No especificado', Icons.phone),
-            _buildInfoRow(context, 'Dirección', profile.address ?? 'No especificada', Icons.location_on),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBusinessInfoCard(BuildContext context, Profile profile) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      color: AppColors.cardBg(context),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.business,
-                    color: AppColors.orange,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Información de Negocio',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryText(context),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (profile.businessName != null && profile.businessName!.isNotEmpty)
-              _buildInfoRow(context, 'Nombre del Negocio', profile.businessName!, Icons.store),
-            if (profile.businessType != null && profile.businessType!.isNotEmpty)
-              _buildInfoRow(context, 'Tipo de Negocio', profile.businessType!, Icons.category),
-            if (profile.taxId != null && profile.taxId!.isNotEmpty)
-              _buildInfoRow(context, 'RFC', profile.taxId!, Icons.receipt),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDeliveryInfoCard(BuildContext context, Profile profile) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      color: AppColors.cardBg(context),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.delivery_dining,
-                    color: AppColors.purple,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Información de Delivery',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryText(context),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (profile.vehicleType != null && profile.vehicleType!.isNotEmpty)
-              _buildInfoRow(context, 'Tipo de Vehículo', profile.vehicleType!, Icons.two_wheeler),
-            if (profile.licenseNumber != null && profile.licenseNumber!.isNotEmpty)
-              _buildInfoRow(context, 'Número de Licencia', profile.licenseNumber!, Icons.card_membership),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileStatusCard(BuildContext context, Profile profile) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      color: AppColors.cardBg(context),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(profile.status).withOpacity(isDark ? 0.15 : 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.verified_user,
-                    color: _getStatusColor(profile.status),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Estado del Perfil',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryText(context),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildInfoRow(context, 'Estado', _translateStatus(profile.status), Icons.info),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(BuildContext context, String label, String value, IconData icon) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: AppColors.gray,
-          ),
-          const SizedBox(width: 12),
+          // Información del ganado
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.gray,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.2,
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.white : AppColors.blueDark,
-                    letterSpacing: 0.3,
+
+                  const SizedBox(height: 8),
+
+                  // Información del vendedor
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.grey[300],
+                        child: Icon(
+                          Icons.person,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Agropecuaria El Futuro',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.6)
+                                      : Colors.grey[600],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.verified,
+                              color: Colors.blue,
+                              size: 12,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+
+                  const Spacer(),
+
+                  // Botón ver detalles
+                  Text(
+                    'Ver Detalles',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2E7D32),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -596,113 +533,37 @@ class ProfilePagex extends StatelessWidget {
     );
   }
 
-  Widget _buildEditProfileButton(BuildContext context, Profile profile) {
-    return Container(
+  Widget _buildEditProfileButton(
+      BuildContext context, Profile profile, bool isDark) {
+    return SizedBox(
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.blue.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ElevatedButton.icon(
+      child: ElevatedButton(
         onPressed: () => _navigateToEditOrCreatePage(context, profile),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.blue,
-          foregroundColor: AppColors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: const Color(0xFF2E7D32),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 10),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
           ),
           elevation: 0,
         ),
-        icon: const Icon(Icons.edit, size: 20),
-        label: const Text(
+        child: const Text(
           'Editar Perfil',
           style: TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
     );
-  }
-
-  bool _hasBusinessInfo(Profile profile) {
-    return (profile.businessName != null && profile.businessName!.isNotEmpty) ||
-           (profile.businessType != null && profile.businessType!.isNotEmpty) ||
-           (profile.taxId != null && profile.taxId!.isNotEmpty);
-  }
-
-  bool _hasDeliveryInfo(Profile profile) {
-    return (profile.vehicleType != null && profile.vehicleType!.isNotEmpty) ||
-           (profile.licenseNumber != null && profile.licenseNumber!.isNotEmpty);
-  }
-
-  String _translateMaritalStatus(String status) {
-    switch (status) {
-      case 'single':
-        return 'Soltero';
-      case 'married':
-        return 'Casado';
-      case 'divorced':
-        return 'Divorciado';
-      case 'widowed':
-        return 'Viudo';
-      default:
-        return 'N/A';
-    }
-  }
-
-  String _translateSex(String sex) {
-    switch (sex) {
-      case 'M':
-        return 'Masculino';
-      case 'F':
-        return 'Femenino';
-      case 'O':
-        return 'Otro';
-      default:
-        return 'N/A';
-    }
-  }
-
-  String _translateStatus(String status) {
-    switch (status) {
-      case 'completeData':
-        return 'Datos Completos';
-      case 'incompleteData':
-        return 'Datos Incompletos';
-      case 'notverified':
-        return 'No Verificado';
-      default:
-        return 'N/A';
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'completeData':
-        return Colors.green;
-      case 'incompleteData':
-        return Colors.orange;
-      case 'notverified':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
   }
 
   String _formatDate(String? date) {
     if (date == null || date.isEmpty) {
       return 'N/A';
     }
-    
+
     final DateFormat format = DateFormat('dd-MM-yyyy');
     try {
       final DateTime parsedDate = DateTime.parse(date);
@@ -718,8 +579,23 @@ class ProfilePagex extends StatelessWidget {
     );
 
     Navigator.push(context, route).then((_) {
-      Provider.of<ProfileModel>(context, listen: false).loadProfile(profile.userId);
+      Provider.of<ProfileModel>(context, listen: false)
+          .loadProfile(profile.userId);
     });
   }
 
+  ImageProvider<Object>? _buildProfileImage(BuildContext context) {
+    final profile = context.read<ProfileModel>().profile;
+    if (profile?.photo != null &&
+        profile!.photo!.isNotEmpty &&
+        !profile.photo!.contains('URL de foto no disponible')) {
+      return NetworkImage(profile.photo!);
+    }
+    // Usar imagen de Google como fallback
+    if (profile?.user?.profilePic != null &&
+        profile!.user!.profilePic!.isNotEmpty) {
+      return NetworkImage(profile.user!.profilePic!);
+    }
+    return const AssetImage('assets/default_avatar.png');
+  }
 }
