@@ -5,13 +5,18 @@ class MarketplaceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isTablet = screenWidth > 600;
+    final isDesktop = screenWidth > 900;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
       body: Column(
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isTablet ? 24 : 16),
             decoration: const BoxDecoration(
               color: Color(0xFFFCFDF7),
               border: Border(
@@ -26,21 +31,23 @@ class MarketplaceScreen extends StatelessWidget {
                   children: [
                     Image.network(
                       'https://aiblockweb.com/img/img_renny/2.png',
-                      height: 48,
+                      height: isTablet ? 56 : 48,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.store, size: 48);
+                        return Icon(Icons.store, size: isTablet ? 56 : 48);
                       },
                     ),
                     IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.admin_panel_settings),
+                      icon: Icon(Icons.admin_panel_settings,
+                          size: isTablet ? 28 : 24),
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFFE9E9E2),
+                        padding: EdgeInsets.all(isTablet ? 12 : 8),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: isTablet ? 20 : 16),
                 // Search bar
                 TextField(
                   decoration: InputDecoration(
@@ -48,13 +55,17 @@ class MarketplaceScreen extends StatelessWidget {
                     filled: true,
                     fillColor: const Color(0xFFF4F4ED),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: Icon(Icons.search, size: isTablet ? 24 : 20),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 20 : 16,
+                      vertical: isTablet ? 16 : 12,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: isTablet ? 16 : 12),
                 // Location filter and market pulse button
                 Row(
                   children: [
@@ -64,48 +75,65 @@ class MarketplaceScreen extends StatelessWidget {
                           filled: true,
                           fillColor: const Color(0xFFF4F4ED),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius:
+                                BorderRadius.circular(isTablet ? 12 : 8),
                             borderSide: BorderSide.none,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 16 : 12,
+                            vertical: isTablet ? 12 : 8,
                           ),
                         ),
                         value: 'all',
                         items: const [
-                          DropdownMenuItem(value: 'all', child: Text('Toda Venezuela')),
-                          DropdownMenuItem(value: 'carabobo', child: Text('Carabobo')),
-                          DropdownMenuItem(value: 'aragua', child: Text('Aragua')),
+                          DropdownMenuItem(
+                              value: 'all', child: Text('Toda Venezuela')),
+                          DropdownMenuItem(
+                              value: 'carabobo', child: Text('Carabobo')),
+                          DropdownMenuItem(
+                              value: 'aragua', child: Text('Aragua')),
                         ],
                         onChanged: (value) {},
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: isTablet ? 12 : 8),
                     ElevatedButton.icon(
                       onPressed: () {},
-                      icon: const Icon(Icons.insights, size: 16),
-                      label: const Text('Mercado'),
+                      icon: Icon(Icons.insights, size: isTablet ? 20 : 16),
+                      label: Text('Mercado',
+                          style: TextStyle(fontSize: isTablet ? 16 : 14)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD9E7CA),
                         foregroundColor: const Color(0xFF131F0D),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius:
+                              BorderRadius.circular(isTablet ? 12 : 8),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 16 : 12,
+                          vertical: isTablet ? 12 : 8,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: isTablet ? 16 : 12),
                 // Filter buttons
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip('Todos', true),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Lechero', false),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Engorde', false),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Padrote', false),
-                    ],
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isTablet ? 4 : 2),
+                    child: Row(
+                      children: [
+                        _buildFilterChip('Todos', true, isTablet),
+                        SizedBox(width: isTablet ? 12 : 8),
+                        _buildFilterChip('Lechero', false, isTablet),
+                        SizedBox(width: isTablet ? 12 : 8),
+                        _buildFilterChip('Engorde', false, isTablet),
+                        SizedBox(width: isTablet ? 12 : 8),
+                        _buildFilterChip('Padrote', false, isTablet),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -114,52 +142,68 @@ class MarketplaceScreen extends StatelessWidget {
           // Content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(isTablet ? 24 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Featured section
-                  const Text(
+                  Text(
                     'Destacadas',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: isTablet ? 28 : 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: 2,
-                    itemBuilder: (context, index) => _buildCattleCard(),
+                  SizedBox(height: isTablet ? 20 : 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
+                          final childAspectRatio = isTablet ? 1.1 : 1.0;
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                          crossAxisSpacing: isTablet ? 20 : 16,
+                          mainAxisSpacing: isTablet ? 20 : 16,
+                        ),
+                        itemCount: 2,
+                        itemBuilder: (context, index) =>
+                            _buildCattleCard(isTablet),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: isTablet ? 40 : 32),
                   // Recent section
-                  const Text(
+                  Text(
                     'Recientes',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: isTablet ? 28 : 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: 4,
-                    itemBuilder: (context, index) => _buildCattleCard(),
+                  SizedBox(height: isTablet ? 20 : 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
+                          final childAspectRatio = isTablet ? 1.1 : 1.0;
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                          crossAxisSpacing: isTablet ? 20 : 16,
+                          mainAxisSpacing: isTablet ? 20 : 16,
+                        ),
+                        itemCount: 4,
+                        itemBuilder: (context, index) =>
+                            _buildCattleCard(isTablet),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -170,26 +214,33 @@ class MarketplaceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isActive) {
+  Widget _buildFilterChip(String label, bool isActive, bool isTablet) {
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: TextStyle(fontSize: isTablet ? 16 : 14),
+      ),
       selected: isActive,
       onSelected: (selected) {},
       selectedColor: const Color(0xFFB7F399),
       checkmarkColor: const Color(0xFF082100),
       backgroundColor: const Color(0xFFF4F4ED),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 16 : 12,
+        vertical: isTablet ? 8 : 4,
+      ),
     );
   }
 
-  Widget _buildCattleCard() {
+  Widget _buildCattleCard(bool isTablet) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF4F4ED),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            blurRadius: isTablet ? 6 : 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -201,58 +252,75 @@ class MarketplaceScreen extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Container(
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(isTablet ? 20 : 16),
+                ),
                 color: Colors.grey,
               ),
-              child: const Center(
-                child: Icon(Icons.image, size: 48, color: Colors.grey),
+              child: Center(
+                child: Icon(
+                  Icons.image,
+                  size: isTablet ? 64 : 48,
+                  color: Colors.grey,
+                ),
               ),
             ),
           ),
           // Content
           Expanded(
             flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
+              child: Padding(
+                padding: EdgeInsets.all(isTablet ? 6 : 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Brahman Rojo',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isTablet ? 18 : 16,
                       fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                      SizedBox(height: isTablet ? 2 : 1),
                   Row(
                     children: [
-                      const CircleAvatar(
-                        radius: 12,
+                      CircleAvatar(
+                        radius: isTablet ? 14 : 12,
                         backgroundColor: Colors.grey,
-                        child: Icon(Icons.person, size: 16),
+                        child: Icon(
+                          Icons.person,
+                          size: isTablet ? 18 : 16,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      const Expanded(
+                      SizedBox(width: isTablet ? 10 : 8),
+                      Expanded(
                         child: Text(
                           'Agropecuaria El Futuro',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: isTablet ? 14 : 12,
                             color: Colors.grey,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Icon(Icons.verified, size: 16, color: Color(0xFF386A20)),
+                      Icon(
+                        Icons.verified,
+                        size: isTablet ? 18 : 16,
+                        color: const Color(0xFF386A20),
+                      ),
                     ],
                   ),
                   const Spacer(),
-                  const Text(
+                  Text(
                     'Ver Detalles',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: isTablet ? 16 : 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF386A20),
+                      color: const Color(0xFF386A20),
                     ),
                   ),
                 ],

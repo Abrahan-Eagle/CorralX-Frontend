@@ -5,46 +5,65 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isDesktop = screenWidth > 900;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFCFDF7),
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Mis Favoritos',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: isTablet ? 24 : 20,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF1A1C18),
+            color: const Color(0xFF1A1C18),
           ),
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.8,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
+      body: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isDesktop ? 800 : double.infinity,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 24 : 16,
+            vertical: isTablet ? 20 : 16,
           ),
-          itemCount: 3, // Mock data
-          itemBuilder: (context, index) => _buildCattleCard(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
+                  final childAspectRatio = isTablet ? 1.1 : 1.0;
+              
+              return GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: childAspectRatio,
+                  crossAxisSpacing: isTablet ? 20 : 16,
+                  mainAxisSpacing: isTablet ? 20 : 16,
+                ),
+                itemCount: 3, // Mock data
+                itemBuilder: (context, index) => _buildCattleCard(isTablet),
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCattleCard() {
+  Widget _buildCattleCard(bool isTablet) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF4F4ED),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            blurRadius: isTablet ? 6 : 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -58,28 +77,34 @@ class FavoritesScreen extends StatelessWidget {
             child: Stack(
               children: [
                 Container(
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(isTablet ? 20 : 16),
+                    ),
                     color: Colors.grey,
                   ),
-                  child: const Center(
-                    child: Icon(Icons.image, size: 48, color: Colors.grey),
+                  child: Center(
+                    child: Icon(
+                      Icons.image,
+                      size: isTablet ? 64 : 48,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  top: isTablet ? 12 : 8,
+                  right: isTablet ? 12 : 8,
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    width: isTablet ? 40 : 32,
+                    height: isTablet ? 40 : 32,
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.favorite,
                       color: Colors.red,
-                      size: 20,
+                      size: isTablet ? 24 : 20,
                     ),
                   ),
                 ),
@@ -89,46 +114,57 @@ class FavoritesScreen extends StatelessWidget {
           // Content
           Expanded(
             flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
+              child: Padding(
+                padding: EdgeInsets.all(isTablet ? 6 : 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Holstein',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isTablet ? 18 : 16,
                       fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                      SizedBox(height: isTablet ? 2 : 1),
                   Row(
                     children: [
-                      const CircleAvatar(
-                        radius: 12,
+                      CircleAvatar(
+                        radius: isTablet ? 14 : 12,
                         backgroundColor: Colors.grey,
-                        child: Icon(Icons.person, size: 16),
+                        child: Icon(
+                          Icons.person,
+                          size: isTablet ? 18 : 16,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      const Expanded(
+                      SizedBox(width: isTablet ? 10 : 8),
+                      Expanded(
                         child: Text(
                           'Finca Los Girasoles',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: isTablet ? 14 : 12,
                             color: Colors.grey,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Icon(Icons.verified, size: 16, color: Color(0xFF386A20)),
+                      Icon(
+                        Icons.verified,
+                        size: isTablet ? 18 : 16,
+                        color: const Color(0xFF386A20),
+                      ),
                     ],
                   ),
                   const Spacer(),
-                  const Text(
+                  Text(
                     'Ver Detalles',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: isTablet ? 16 : 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF386A20),
+                      color: const Color(0xFF386A20),
                     ),
                   ),
                 ],
@@ -140,3 +176,4 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 }
+

@@ -12,53 +12,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isDesktop = screenWidth > 900;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFCFDF7),
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Mi Perfil',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: isTablet ? 24 : 20,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF1A1C18),
+            color: const Color(0xFF1A1C18),
           ),
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Tabs
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTabButton('profile', 'Perfil'),
+      body: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isDesktop ? 800 : double.infinity,
+        ),
+        child: Column(
+          children: [
+            // Tabs
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: isTablet ? 24 : 16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: isTablet ? 120 : 100,
+                      child: _buildTabButton('profile', 'Perfil', isTablet),
+                    ),
+                    SizedBox(width: isTablet ? 20 : 16),
+                    SizedBox(
+                      width: isTablet ? 160 : 140,
+                      child: _buildTabButton(
+                          'myListings', 'Mis Publicaciones', isTablet),
+                    ),
+                    SizedBox(width: isTablet ? 20 : 16),
+                    SizedBox(
+                      width: isTablet ? 120 : 100,
+                      child: _buildTabButton('farms', 'Mis Fincas', isTablet),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTabButton('myListings', 'Mis Publicaciones'),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTabButton('farms', 'Mis Fincas'),
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          // Content
-          Expanded(
-            child: _buildTabContent(),
-          ),
-        ],
+            SizedBox(height: isTablet ? 32 : 24),
+            // Content
+            Expanded(
+              child: _buildTabContent(isTablet),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTabButton(String tab, String label) {
+  Widget _buildTabButton(String tab, String label, bool isTablet) {
     final isActive = _activeTab == tab;
     return GestureDetector(
       onTap: () {
@@ -67,21 +83,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: EdgeInsets.symmetric(
+          vertical: isTablet ? 12 : 8,
+          horizontal: isTablet ? 20 : 16,
+        ),
         decoration: BoxDecoration(
-          color: isActive 
-              ? const Color(0xFFB7F399) 
-              : const Color(0xFFF4F4ED),
-          borderRadius: BorderRadius.circular(25),
+          color: isActive ? const Color(0xFFB7F399) : const Color(0xFFF4F4ED),
+          borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isActive 
-                ? const Color(0xFF082100) 
-                : const Color(0xFF1A1C18),
-            fontSize: 14,
+            color: isActive ? const Color(0xFF082100) : const Color(0xFF1A1C18),
+            fontSize: isTablet ? 16 : 14,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -89,91 +104,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(bool isTablet) {
     switch (_activeTab) {
       case 'myListings':
-        return _buildMyListingsContent();
+        return _buildMyListingsContent(isTablet);
       case 'farms':
-        return _buildFarmsContent();
+        return _buildFarmsContent(isTablet);
       case 'profile':
       default:
-        return _buildProfileContent();
+        return _buildProfileContent(isTablet);
     }
   }
 
-  Widget _buildProfileContent() {
+  Widget _buildProfileContent(bool isTablet) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
       child: Column(
         children: [
           // Profile info card
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isTablet ? 32 : 24),
             decoration: BoxDecoration(
               color: const Color(0xFFF4F4ED),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
             ),
             child: Column(
               children: [
-                const CircleAvatar(
-                  radius: 64,
+                CircleAvatar(
+                  radius: isTablet ? 80 : 64,
                   backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, size: 64, color: Colors.white),
+                  child: Icon(
+                    Icons.person,
+                    size: isTablet ? 80 : 64,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: isTablet ? 20 : 16),
+                Text(
                   'Juan Pérez',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: isTablet ? 28 : 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isTablet ? 10 : 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 20),
-                    const SizedBox(width: 4),
-                    const Text(
-                      '4.5',
-                      style: TextStyle(fontSize: 18),
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: isTablet ? 24 : 20,
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
+                    SizedBox(width: isTablet ? 6 : 4),
+                    Text(
+                      '4.5',
+                      style: TextStyle(fontSize: isTablet ? 20 : 18),
+                    ),
+                    SizedBox(width: isTablet ? 10 : 8),
+                    Text(
                       '(2 opiniones)',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: isTablet ? 16 : 14,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: isTablet ? 20 : 16),
+                Text(
                   'Este usuario no ha agregado una biografía.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: isTablet ? 16 : 14,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: isTablet ? 20 : 16),
+                Text(
                   'Miembro desde: mayo 2023',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: isTablet ? 16 : 14,
                     color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: isTablet ? 32 : 24),
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF386A20),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 32 : 24,
+                      vertical: isTablet ? 16 : 12,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
                     ),
                   ),
-                  child: const Text('Editar Perfil'),
+                  child: Text(
+                    'Editar Perfil',
+                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                  ),
                 ),
               ],
             ),
@@ -183,56 +215,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMyListingsContent() {
+  Widget _buildMyListingsContent(bool isTablet) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
       child: Column(
         children: [
-          _buildListingItem('Brahman Rojo', 'Agropecuaria El Futuro', '124 vistas'),
-          const SizedBox(height: 16),
-          _buildListingItem('Guzerat', 'Agropecuaria El Futuro', '210 vistas'),
+          _buildListingItem(
+              'Brahman Rojo', 'Agropecuaria El Futuro', '124 vistas', isTablet),
+          SizedBox(height: isTablet ? 20 : 16),
+          _buildListingItem(
+              'Guzerat', 'Agropecuaria El Futuro', '210 vistas', isTablet),
         ],
       ),
     );
   }
 
-  Widget _buildFarmsContent() {
+  Widget _buildFarmsContent(bool isTablet) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
       child: Column(
         children: [
           ElevatedButton.icon(
             onPressed: () {},
-            icon: const Icon(Icons.add),
-            label: const Text('Agregar Nueva Finca'),
+            icon: Icon(Icons.add, size: isTablet ? 24 : 20),
+            label: Text(
+              'Agregar Nueva Finca',
+              style: TextStyle(fontSize: isTablet ? 16 : 14),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF386A20),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          _buildFarmItem('Agropecuaria El Futuro', 'Valencia, Carabobo'),
-          const SizedBox(height: 16),
-          _buildFarmItem('Hato La Esperanza', 'San Carlos, Cojedes'),
+          SizedBox(height: isTablet ? 32 : 24),
+          _buildFarmItem(
+              'Agropecuaria El Futuro', 'Valencia, Carabobo', isTablet),
+          SizedBox(height: isTablet ? 20 : 16),
+          _buildFarmItem('Hato La Esperanza', 'San Carlos, Cojedes', isTablet),
         ],
       ),
     );
   }
 
-  Widget _buildListingItem(String breed, String farm, String views) {
+  Widget _buildListingItem(
+      String breed, String farm, String views, bool isTablet) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            blurRadius: isTablet ? 6 : 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -240,39 +279,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: isTablet ? 80 : 64,
+            height: isTablet ? 80 : 64,
             decoration: BoxDecoration(
               color: Colors.grey,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
             ),
-            child: const Icon(Icons.image, color: Colors.white),
+            child: Icon(
+              Icons.image,
+              color: Colors.white,
+              size: isTablet ? 40 : 32,
+            ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isTablet ? 20 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   breed,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    fontSize: 16,
+                    fontSize: isTablet ? 18 : 16,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: isTablet ? 6 : 4),
                 Text(
                   'De la finca: $farm',
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
                     color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: isTablet ? 6 : 4),
                 Text(
                   views,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
                     color: Colors.grey,
                   ),
                 ),
@@ -283,16 +326,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.edit),
+                icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.grey.withOpacity(0.2),
+                  padding: EdgeInsets.all(isTablet ? 12 : 8),
                 ),
               ),
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: Icon(Icons.delete,
+                    color: Colors.red, size: isTablet ? 24 : 20),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.red.withOpacity(0.1),
+                  padding: EdgeInsets.all(isTablet ? 12 : 8),
                 ),
               ),
             ],
@@ -302,16 +348,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildFarmItem(String name, String location) {
+  Widget _buildFarmItem(String name, String location, bool isTablet) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            blurRadius: isTablet ? 6 : 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -319,31 +365,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: isTablet ? 80 : 64,
+            height: isTablet ? 80 : 64,
             decoration: BoxDecoration(
               color: Colors.grey,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
             ),
-            child: const Icon(Icons.home, color: Colors.white),
+            child: Icon(
+              Icons.home,
+              color: Colors.white,
+              size: isTablet ? 40 : 32,
+            ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isTablet ? 20 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    fontSize: 16,
+                    fontSize: isTablet ? 18 : 16,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: isTablet ? 6 : 4),
                 Text(
                   location,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
                     color: Colors.grey,
                   ),
                 ),
@@ -354,16 +404,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.edit),
+                icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.grey.withOpacity(0.2),
+                  padding: EdgeInsets.all(isTablet ? 12 : 8),
                 ),
               ),
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: Icon(Icons.delete,
+                    color: Colors.red, size: isTablet ? 24 : 20),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.red.withOpacity(0.1),
+                  padding: EdgeInsets.all(isTablet ? 12 : 8),
                 ),
               ),
             ],

@@ -5,57 +5,84 @@ class MessagesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isDesktop = screenWidth > 900;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFCFDF7),
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Mensajes',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: isTablet ? 24 : 20,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF1A1C18),
+            color: const Color(0xFF1A1C18),
           ),
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: 3, // Mock data
-        itemBuilder: (context, index) => _buildConversationItem(),
+      body: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isDesktop ? 800 : double.infinity,
+        ),
+        child: ListView.builder(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 20 : 16,
+            vertical: isTablet ? 16 : 12,
+          ),
+          itemCount: 3, // Mock data
+          itemBuilder: (context, index) => _buildConversationItem(isTablet),
+        ),
       ),
     );
   }
 
-  Widget _buildConversationItem() {
+  Widget _buildConversationItem(bool isTablet) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: EdgeInsets.symmetric(
+        horizontal: isTablet ? 20 : 16,
+        vertical: isTablet ? 6 : 4,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
         border: Border(
           bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: isTablet ? 4 : 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: const CircleAvatar(
-          radius: 24,
+        contentPadding: EdgeInsets.all(isTablet ? 20 : 16),
+        leading: CircleAvatar(
+          radius: isTablet ? 28 : 24,
           backgroundColor: Colors.grey,
-          child: Icon(Icons.person, color: Colors.white),
+          child: Icon(
+            Icons.person,
+            color: Colors.white,
+            size: isTablet ? 28 : 24,
+          ),
         ),
-        title: const Text(
+        title: Text(
           'Ana Rodríguez',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: isTablet ? 18 : 16,
           ),
         ),
-        subtitle: const Text(
+        subtitle: Text(
           'Buenas, ¿sigue disponible la Holstein?',
           style: TextStyle(
             color: Colors.grey,
-            fontSize: 14,
+            fontSize: isTablet ? 16 : 14,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -63,17 +90,17 @@ class MessagesScreen extends StatelessWidget {
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               '5 min',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isTablet ? 14 : 12,
                 color: Colors.grey,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: isTablet ? 6 : 4),
             Container(
-              width: 8,
-              height: 8,
+              width: isTablet ? 10 : 8,
+              height: isTablet ? 10 : 8,
               decoration: const BoxDecoration(
                 color: Color(0xFFBA1A1A),
                 shape: BoxShape.circle,
