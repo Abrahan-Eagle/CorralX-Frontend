@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/features/utils/user_provider.dart';
+import 'package:zonix/shared/utils/user_provider.dart';
 
 final logger = Logger();
 

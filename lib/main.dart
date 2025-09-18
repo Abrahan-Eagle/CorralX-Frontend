@@ -2,13 +2,13 @@
 // import 'package:logger/logger.dart';
 // import 'package:flutter_native_splash/flutter_native_splash.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:zonix/features/services/auth/api_service.dart';
+// import 'package:zonix/features/auth/services/api_service.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:provider/provider.dart';
-// import 'package:zonix/features/utils/user_provider.dart';
+// import 'package:zonix/shared/utils/user_provider.dart';
 // import 'package:flutter/services.dart';
 // // import 'package:zonix/features/screens/settings/settings_page_2.dart';
-// import 'package:zonix/features/screens/auth/sign_in_screen.dart';
+// import 'package:zonix/features/auth/screens/sign_in_screen.dart';
 // import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
 // import 'package:zonix/features/screens/products/products_page.dart';
@@ -327,16 +327,16 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zonix/features/services/auth/api_service.dart';
+import 'package:zonix/features/auth/services/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/features/utils/user_provider.dart';
+import 'package:zonix/shared/utils/user_provider.dart';
 import 'package:flutter/services.dart';
 
 // import 'dart:io';
 // import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:zonix/features/screens/auth/sign_in_screen.dart';
+import 'package:zonix/features/auth/screens/sign_in_screen.dart';
 
 import 'package:zonix/screens/marketplace_screen.dart';
 import 'package:zonix/screens/favorites_screen.dart';
