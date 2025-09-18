@@ -338,49 +338,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:zonix/features/screens/auth/sign_in_screen.dart';
 
-import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
-
-import 'package:zonix/features/screens/products/products_page.dart';
-import 'package:zonix/features/screens/cart/cart_page.dart';
-import 'package:zonix/features/screens/orders/orders_page.dart';
-import 'package:zonix/features/screens/restaurants/restaurants_page.dart';
-
-import 'package:zonix/features/services/cart_service.dart';
-import 'package:zonix/features/services/order_service.dart';
-import 'package:zonix/features/screens/orders/commerce_orders_page.dart';
-import 'package:zonix/features/services/commerce_service.dart';
-import 'package:zonix/features/services/delivery_service.dart';
-import 'package:zonix/features/services/transport_service.dart';
-import 'package:zonix/features/services/affiliate_service.dart';
-import 'package:zonix/features/services/admin_service.dart';
-import 'package:zonix/features/services/notification_service.dart';
-import 'package:zonix/features/services/location_service.dart';
-import 'package:zonix/features/services/payment_service.dart';
-import 'package:zonix/features/services/chat_service.dart';
-import 'package:zonix/features/services/analytics_service.dart';
-import 'package:zonix/features/screens/commerce/commerce_dashboard_page.dart';
-import 'package:zonix/features/screens/commerce/commerce_inventory_page.dart';
-import 'package:zonix/features/screens/commerce/commerce_reports_page.dart';
-import 'package:zonix/features/screens/delivery/delivery_orders_page.dart';
-import 'package:zonix/features/screens/delivery/delivery_history_page.dart';
-import 'package:zonix/features/screens/delivery/delivery_routes_page.dart';
-import 'package:zonix/features/screens/delivery/delivery_earnings_page.dart';
-import 'package:zonix/features/screens/transport/transport_fleet_page.dart';
-import 'package:zonix/features/screens/transport/transport_orders_page.dart';
-import 'package:zonix/features/screens/transport/transport_analytics_page.dart';
-import 'package:zonix/features/screens/transport/transport_settings_page.dart';
-import 'package:zonix/features/screens/affiliate/affiliate_dashboard_page.dart';
-import 'package:zonix/features/screens/affiliate/affiliate_commissions_page.dart';
-import 'package:zonix/features/screens/affiliate/affiliate_support_page.dart';
-import 'package:zonix/features/screens/affiliate/affiliate_statistics_page.dart';
-import 'package:zonix/features/screens/admin/admin_dashboard_page.dart';
-import 'package:zonix/features/screens/admin/admin_users_page.dart';
-import 'package:zonix/features/screens/admin/admin_security_page.dart';
-import 'package:zonix/features/screens/admin/admin_analytics_page.dart';
-import 'package:zonix/features/DomainProfiles/Profiles/screens/profile_page.dart';
-import 'package:zonix/features/services/websocket_service.dart';
-import 'package:zonix/features/screens/commerce/commerce_notifications_page.dart';
-import 'package:zonix/features/screens/commerce/commerce_profile_page.dart';
+import 'package:zonix/screens/marketplace_screen.dart';
+import 'package:zonix/screens/favorites_screen.dart';
+import 'package:zonix/screens/create_screen.dart';
+import 'package:zonix/screens/messages_screen.dart';
+import 'package:zonix/screens/profile_screen.dart';
 
 /*
  * ZONIX EATS - Aplicación Multi-Rol
@@ -433,20 +395,6 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => CartService()),
-        ChangeNotifierProvider(create: (_) => OrderService()),
-        ChangeNotifierProvider(create: (_) => CommerceService()),
-        ChangeNotifierProvider(create: (_) => DeliveryService()),
-        ChangeNotifierProvider(create: (_) => TransportService()),
-        ChangeNotifierProvider(create: (_) => AffiliateService()),
-        ChangeNotifierProvider(create: (_) => AdminService()),
-        ChangeNotifierProvider(create: (_) => NotificationService()),
-        ChangeNotifierProvider(create: (_) => LocationService()),
-        ChangeNotifierProvider(create: (_) => PaymentService()),
-        ChangeNotifierProvider(create: (_) => ChatService()),
-        ChangeNotifierProvider(create: (_) => AnalyticsService()),
-        // WebSocket Service como singleton
-        Provider<WebSocketService>.value(value: WebSocketService()),
       ],
       child: MyApp(isIntegrationTest: isIntegrationTest),
     ),
@@ -556,11 +504,7 @@ class MyApp extends StatelessWidget {
         },
       ),
       routes: {
-        '/commerce/inventory': (context) => const CommerceInventoryPage(),
-        '/commerce/orders': (context) => const CommerceOrdersPage(),
-        '/commerce/profile': (context) => CommerceProfilePage(),
-        '/commerce/notifications': (context) =>
-            const CommerceNotificationsPage(),
+        // Rutas básicas del MVP
       },
     );
   }
@@ -597,8 +541,8 @@ class MainRouterState extends State<MainRouter> {
       if (id == null || id is! int) {
         throw Exception('El ID del usuario es inválido: $id');
       }
-      // Obtén el perfil usando el ID del usuario
-      _profile = await ProfileService().getProfileById(id);
+      // Perfil simplificado para MVP
+      // _profile = await ProfileService().getProfileById(id);
 
       setState(() {});
     } catch (e) {
@@ -626,112 +570,36 @@ class MainRouterState extends State<MainRouter> {
     );
   }
 
-  // Función para obtener los items del BottomNavigationBar
+  // Función para obtener los items del BottomNavigationBar (solo 2 niveles)
   List<BottomNavigationBarItem> _getBottomNavItems(int level, String role) {
     List<BottomNavigationBarItem> items = [];
 
     switch (level) {
-      case 0: // Comprador
+      case 0: // Users (compra y vende)
         items = [
           const BottomNavigationBarItem(
             icon: Icon(Icons.storefront),
-            label: 'Productos',
+            label: 'Mercado',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Carrito',
+            icon: Icon(Icons.favorite),
+            label: 'Favoritos',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Mis Órdenes',
+            icon: Icon(Icons.add_circle),
+            label: 'Publicar',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant),
-            label: 'Restaurantes',
+            icon: Icon(Icons.message),
+            label: 'Mensajes',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
           ),
         ];
         break;
-      case 1: // Tiendas/Comercio
-        items = [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Órdenes',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.inventory),
-            label: 'Productos',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Reportes',
-          ),
-        ];
-        break;
-      case 2: // Delivery
-        items = [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.delivery_dining),
-            label: 'Entregas',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Historial',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.location_on),
-            label: 'Rutas',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Ganancias',
-          ),
-        ];
-        break;
-      case 3: // Agencia de Transporte
-        items = [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping),
-            label: 'Flota',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Pedidos',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Analíticas',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configuración',
-          ),
-        ];
-        break;
-      case 4: // Afiliado a Delivery
-        items = [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.percent),
-            label: 'Comisiones',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.support_agent),
-            label: 'Soporte',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Estadísticas',
-          ),
-        ];
-        break;
-      case 5: // Administrador
+      case 1: // Admin
         items = [
           const BottomNavigationBarItem(
             icon: Icon(Icons.admin_panel_settings),
@@ -757,41 +625,9 @@ class MainRouterState extends State<MainRouter> {
             icon: Icon(Icons.home),
             label: 'Inicio',
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.help),
-            label: 'Ayuda',
-          ),
         ];
     }
 
-    // Agregar el item de configuración siempre
-    items.add(
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.settings),
-        label: 'Configuración',
-      ),
-    );
-
-    // // Agregar elementos específicos según el rol si el nivel es 0
-    // if (level == 0) {
-    //   if (role == 'sales_admin') {
-    //     items.insert( 2, const BottomNavigationBarItem( icon: Icon(Icons.qr_code), label: 'Verificar', ),);
-
-    //     items.insert( 3, const BottomNavigationBarItem( icon: Icon(Icons.check_circle), label: 'Aprobar', ),);
-    //   }
-
-    //   if (role == 'dispatcher') {
-    //     items.insert(
-    //       2,
-    //       const BottomNavigationBarItem(
-    //         icon: Icon(Icons.workspace_premium),
-    //         label: 'Despachar',
-    //       ),
-    //     );
-    //   }
-    // }
-
-    // Devolver los items y el contador
     return items;
   }
 
@@ -806,7 +642,7 @@ class MainRouterState extends State<MainRouter> {
         context,
         // MaterialPageRoute(builder: (context) => const SettingsPage2()),
         MaterialPageRoute(
-          builder: (context) => ProfilePagex(userId: userProvider.userId),
+          builder: (context) => const ProfileScreen(),
         ),
       );
     } else {
@@ -849,6 +685,50 @@ class MainRouterState extends State<MainRouter> {
         size: 20,
       ),
       onPressed: () => _onLevelSelected(level),
+    );
+  }
+
+  Widget _buildComingSoonScreen(String title) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCFDF7),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.construction,
+              size: 80,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1C18),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Próximamente',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Esta funcionalidad estará disponible en futuras versiones',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -899,99 +779,37 @@ class MainRouterState extends State<MainRouter> {
                 //   if (_bottomNavIndex == 2 && role == 'dispatcher') return const DispatcherScreen();
                 // }
 
-                // Nivel 0: Comprador
+                // Nivel 0: Users (compra y vende)
                 if (_selectedLevel == 0) {
                   switch (_bottomNavIndex) {
                     case 0:
-                      return const ProductsPage();
+                      return const MarketplaceScreen();
                     case 1:
-                      return const CartPage();
+                      return const FavoritesScreen();
                     case 2:
-                      return const OrdersPage();
+                      return const CreateScreen();
                     case 3:
-                      return const RestaurantsPage();
+                      return const MessagesScreen();
+                    case 4:
+                      return const ProfileScreen();
                     default:
-                      return const ProductsPage();
+                      return const MarketplaceScreen();
                   }
                 }
 
-                // Nivel 1: Tiendas/Comercio
+                // Nivel 1: Admin
                 if (_selectedLevel == 1) {
                   switch (_bottomNavIndex) {
                     case 0:
-                      return const CommerceDashboardPage(); // Dashboard
+                      return _buildComingSoonScreen('Panel Admin');
                     case 1:
-                      return const CommerceOrdersPage(); // Órdenes
+                      return _buildComingSoonScreen('Gestión de Usuarios');
                     case 2:
-                      return const CommerceInventoryPage(); // Productos
+                      return _buildComingSoonScreen('Seguridad');
                     case 3:
-                      return const CommerceReportsPage(); // Reportes
+                      return _buildComingSoonScreen('Sistema');
                     default:
-                      return const CommerceDashboardPage();
-                  }
-                }
-
-                // Nivel 2: Delivery
-                if (_selectedLevel == 2) {
-                  switch (_bottomNavIndex) {
-                    case 0:
-                      return DeliveryOrdersPage(); // Entregas
-                    case 1:
-                      return const DeliveryHistoryPage(); // Historial
-                    case 2:
-                      return const DeliveryRoutesPage(); // Rutas
-                    case 3:
-                      return const DeliveryEarningsPage(); // Ganancias
-                    default:
-                      return DeliveryOrdersPage();
-                  }
-                }
-
-                // Nivel 3: Agencia de Transporte
-                if (_selectedLevel == 3) {
-                  switch (_bottomNavIndex) {
-                    case 0:
-                      return TransportFleetPage(); // Flota
-                    case 1:
-                      return const TransportOrdersPage(); // Gestión de Pedidos
-                    case 2:
-                      return const TransportAnalyticsPage(); // Analíticas
-                    case 3:
-                      return const TransportSettingsPage(); // Configuración
-                    default:
-                      return TransportFleetPage();
-                  }
-                }
-
-                // Nivel 4: Afiliado a Delivery
-                if (_selectedLevel == 4) {
-                  switch (_bottomNavIndex) {
-                    case 0:
-                      return AffiliateDashboardPage(); // Dashboard
-                    case 1:
-                      return const AffiliateCommissionsPage(); // Comisiones
-                    case 2:
-                      return const AffiliateSupportPage(); // Soporte
-                    case 3:
-                      return const AffiliateStatisticsPage(); // Estadísticas
-                    default:
-                      return AffiliateDashboardPage();
-                  }
-                }
-
-                // Nivel 5: Administrador
-                if (_selectedLevel == 5) {
-                  switch (_bottomNavIndex) {
-                    case 0:
-                      return AdminDashboardPage(); // Panel Admin
-                    case 1:
-                      return const AdminUsersPage(); // Usuarios
-                    case 2:
-                      return const AdminSecurityPage(); // Seguridad
-                    case 3:
-                      return const AdminAnalyticsPage(); // Sistema/Analíticas
-                    default:
-                      return AdminDashboardPage();
+                      return _buildComingSoonScreen('Panel Admin');
                   }
                 }
 
@@ -1009,12 +827,8 @@ class MainRouterState extends State<MainRouter> {
         distance: 80,
         type: ExpandableFabType.up,
         children: [
-          _createLevelButton(0, Icons.shopping_bag, 'Comprador'),
-          _createLevelButton(1, Icons.storefront, 'Tiendas'),
-          _createLevelButton(2, Icons.delivery_dining, 'Delivery'),
-          _createLevelButton(3, Icons.local_shipping, 'Agencia de Transporte'),
-          _createLevelButton(4, Icons.handshake, 'Afiliado a Delivery'),
-          _createLevelButton(5, Icons.admin_panel_settings, 'Administrador'),
+          _createLevelButton(0, Icons.shopping_bag, 'Users (Compra y Vende)'),
+          _createLevelButton(1, Icons.admin_panel_settings, 'Admin'),
         ],
       ),
       bottomNavigationBar: Container(
