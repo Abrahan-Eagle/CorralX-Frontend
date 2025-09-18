@@ -25,7 +25,7 @@ Crea publicación (listado) con datos y fotos.
 
 Otros usuarios buscan/filtran y abren el detalle.
 
-Interesan → contactan por chat (polling HTTP).
+Interesan → contactan por chat (WebSocket en tiempo real).
 
 El vendedor gestiona sus publicaciones y ve métricas (vistas, favoritos).
 
@@ -51,7 +51,7 @@ Publicidad sectorial (limitada, sin invadir la UX).
 
 📱 README — Frontend (Flutter)
 
-Stack: Flutter (stable), Provider para estado, HTTP/dio, flutter_secure_storage para token. UI mobile-first. Chat por polling (Timer.periodic + since_id).
+Stack: Flutter (stable), Provider para estado, HTTP/dio, flutter_secure_storage para token, web_socket_channel para chat en tiempo real. UI mobile-first.
 
 1) Funcionalidad (MVP)
 
@@ -63,16 +63,16 @@ Publicar: crear/editar/eliminar publicaciones (con imágenes).
 
 Perfiles: propio (editar) y público (de vendedores).
 
-Chat: conversaciones + mensajes (polling).
+Chat: conversaciones + mensajes (WebSocket en tiempo real).
 
 Dashboard: mis publicaciones + métricas.
 
 2) Estructura de carpetas
 lib/
   main.dart
-  config/             (constantes: baseUrl, tiempo de polling)
+  config/             (constantes: baseUrl, configuración WebSocket)
   models/             (User, Listing, ListingImage, Review, Conversation, Message)
-  services/           (api_service.dart, auth_service.dart, listing_service.dart, chat_service.dart, profile_service.dart)
+  services/           (api_service.dart, auth_service.dart, listing_service.dart, chat_service.dart, websocket_service.dart, profile_service.dart)
   providers/          (auth_provider.dart, listing_provider.dart, chat_provider.dart, profile_provider.dart)
   screens/
     auth/             (login_screen.dart, register_screen.dart)
@@ -99,7 +99,8 @@ lib/config/app_config.dart
 
 class AppConfig {
   static const baseUrl = "https://backend.tudominio.com/api";
-  static const chatPollingSeconds = 10; // 10–15s recomendado
+  static const websocketUrl = "wss://backend.tudominio.com/ws";
+  static const reconnectDelaySeconds = 5; // Delay para reconexión automática
 }
 
 5) Servicios (patrón)
@@ -142,7 +143,7 @@ Chats:
 
 Lista de conversaciones (badge no leídos).
 
-ChatScreen: ListView de burbujas; al abrir, startPolling(convId) usando Timer.periodic(Duration(seconds: AppConfig.chatPollingSeconds), ...). Cancelar en dispose(). since_id para mensajes nuevos.
+ChatScreen: ListView de burbujas; al abrir, conectar WebSocket para la conversación específica. Manejar estados de conexión (conectado/desconectado/reconectando) con indicadores visuales. Reconexión automática en caso de pérdida de conexión.
 
 8) Manejo de errores
 
@@ -202,7 +203,7 @@ Analítica de búsquedas y conversión.
 
 Alineación back/front: nombres de campos y rutas ya coinciden; cualquier cambio de contrato debe reflejarse en ambos README.
 
-Hosting compartido: evita websockets, usa polling. Optimiza imágenes y cachea config/rutas/vistas.
+Hosting compartido: implementa WebSockets para chat en tiempo real. Optimiza imágenes y cachea config/rutas/vistas.
 
 Criterios de “Hecho” (DoD): endpoints funcionales, validaciones y policies aplicadas, pruebas básicas verdes, deploy en hosting compartido, flujos principales verificados (crear listing, buscar, ver, chatear).
 

@@ -29,6 +29,7 @@ alwaysApply: true
   - Servicios específicos por recurso: ej. un `ListingService` con métodos para la lógica de publicaciones: `fetchListings({filters})`, `getListingDetail(id)`, `createListing(data)`, `updateListing(id, data)`, `deleteListing(id)`. Cada método realiza la petición REST correspondiente y retorna datos procesados (decodificados a Map o convertidos a modelo).
   - **AuthService:** métodos `login(email, pass)`, `register(datos)`, `logout()` que llaman a las rutas `/api/login`, `/api/register` y gestionan el almacenamiento seguro del token (usando `flutter_secure_storage` para el JWT, por ejemplo).
   - **ChatService:** métodos para obtener conversaciones (`getConversations()` -> GET `/api/conversations`), obtener mensajes de un chat (`getMessages(convId)` -> GET `/api/conversations/{id}`) y enviar mensaje (`sendMessage(convId, text)` -> POST `/api/conversations/{id}/messages`).
+  - **WebSocketService:** manejo de conexión WebSocket para chat en tiempo real, incluyendo conexión, desconexión, reconexión automática y manejo de eventos de mensajes.
   - Manejar errores HTTP en estos servicios: si la respuesta tiene código de error, interpretar y lanzar excepciones o retornar valores de error para que la UI pueda reaccionar. Ej.: 401 -> lanzar error de autenticación (frontend redirige a login), 422 -> devolver lista de errores de validación para mostrarlos en el formulario.
 - Parsear las respuestas JSON en modelos Dart o mapas:
   - Si se definieron clases de modelo (con factory `fromJson`), usarlas para convertir las respuestas. Ej: `Listing.fromJson(json)` por cada elemento en la lista de listings.
@@ -59,12 +60,13 @@ alwaysApply: true
     - Método `loadConversations()` llama ChatService.getConversations y actualiza la lista.
     - Método `openConversation(userId)` (o `startConversation(listingId, sellerId)`) podría llamarse para iniciar chat con un vendedor desde un anuncio: llama a ChatService (que devuelve convId existente o nuevo) y luego carga mensajes de esa conversación.
     - Método `loadMessages(convId)` obtiene mensajes (ChatService.getMessages) y guarda en `messagesByConv[convId]`, notificando listeners.
-    - Método `sendMessage(convId, text)` usa ChatService.sendMessage; al obtener respuesta exitosa, agrega el mensaje a `messagesByConv[convId]` y actualiza el último mensaje en `conversations`. En caso de error, puede manejarse con una notificación de error.
+    - Método `sendMessage(convId, text)` usa WebSocketService para envío inmediato; al obtener confirmación, agrega el mensaje a `messagesByConv[convId]` y actualiza el último mensaje en `conversations`.
+    - Integración con WebSocketService para recibir mensajes en tiempo real y actualizar automáticamente la UI.
   - Los providers deben notificar a la UI para refrescar: usar `notifyListeners()` tras cambios. En la UI, usar `Consumer<...>` o `context.watch()` para reconstruir widgets reactivos cuando cambie el estado.
 - Manejar estados de carga y error en los providers:
   - Por ejemplo, `ListingProvider` puede tener `bool isLoading` mientras carga publicaciones, y `String? errorMessage` si falla la carga. La UI (MarketplaceScreen) debe revisar estos para mostrar un `CircularProgressIndicator` cuando `isLoading=true` o un mensaje de error si `errorMessage != null`.
   - Similar para operaciones de envío: se puede tener `isSubmitting` en formularios (evita doble submit) y `validationErrors` para mostrar errores específicos de campos.
-  - `ChatProvider` podría tener un indicador `isSending` para deshabilitar el campo de texto mientras se envía un mensaje, o manejar una cola de mensajes pendientes si se quiere extender.
+  - `ChatProvider` podría tener indicadores `isSending` para deshabilitar el campo de texto mientras se envía un mensaje, `isConnected` para mostrar el estado de la conexión WebSocket, y manejar una cola de mensajes pendientes si se quiere extender.
 
 ## Diseño de Pantallas y Navegación
 - Implementar una navegación acorde a los flujos principales (se puede usar `Navigator.push`/`pop` o rutas nombradas con `onGenerateRoute`). Una barra de navegación inferior puede facilitar el acceso a secciones: Marketplace, Chats, Perfil, etc.
@@ -101,15 +103,17 @@ alwaysApply: true
   - Al tocar una conversación, navegar a **ChatScreen** pasando el `conversationId` (y cargar mensajes si no lo hizo aún).
 - **Pantalla de Chat (Conversación 1:1):**
   - Mostrar la lista de mensajes entre el usuario actual y el otro participante. Usar un ListView (o ListView.reverse) para presentar mensajes del más antiguo al más reciente. Formato de burbujas: mensajes del usuario actual alineados a la derecha con color distinto, mensajes recibidos a la izquierda.
-  - Barra superior con el nombre del contacto y su estado (si se quiere, aunque sin WebSocket no sabremos si está en línea). Mostrar también si el contacto es verificado (pequeño icono).
+  - Barra superior con el nombre del contacto, su estado de conexión (en línea/desconectado) y el estado de la conexión WebSocket (conectado/desconectado/reconectando). Mostrar también si el contacto es verificado (pequeño icono).
   - En la parte inferior, un campo de texto para escribir mensaje y botón enviar (IconButton con ícono de envío). Integrar con el teclado (usar `Scaffold` con `resizeToAvoidBottomInset` para que el ListView no quede oculto).
   - Al enviar un mensaje:
     - Llamar `ChatProvider.sendMessage(convId, texto)`. Se puede agregar inmediatamente el mensaje a la UI para feedback optimista (asumiendo éxito), pero manejar el caso de fallo (ej. mostrar un icono de reintento si no se entregó).
     - Despejar el campo de texto tras enviar.
-  - **Polling de chat:** actualizar periódicamente para obtener nuevos mensajes:
-    - Usar `Timer.periodic(Duration(seconds: 5), ...)` en `initState` de ChatScreen para llamar `ChatProvider.loadMessages(convId)` cada cierto intervalo. Cancelar el timer en `dispose` para no filtrar recursos.
-    - Alternativamente, usar un `Stream.periodic` o simplemente refrescar al volver a la pantalla de chat. Pero el polling continuo brinda una experiencia más en tiempo real sin implementar WebSockets en MVP.
-    - Optimizar el polling: el provider puede almacenar la marca de tiempo o ID del último mensaje recibido y solicitar solo mensajes nuevos (si el backend lo soporta, e.g. `GET /conversations/{id}?since=ts`), de lo contrario, obtener todos y actualizar lista (diferenciar nuevos por ID).
+  - **WebSockets para chat en tiempo real:**
+    - Implementar conexión WebSocket usando `web_socket_channel` para recibir mensajes en tiempo real.
+    - En `ChatProvider`, establecer conexión WebSocket al abrir una conversación y escuchar eventos de nuevos mensajes.
+    - Manejar reconexión automática en caso de pérdida de conexión.
+    - Enviar mensajes a través de WebSocket para entrega inmediata y recibir confirmación de entrega.
+    - Implementar indicadores de estado de conexión (conectado/desconectado) en la UI del chat.
   - Marcar mensajes como leídos: cuando se abre la pantalla, después de cargar los mensajes, llamar a un método (quizá en ChatService) para marcar la conversación como leída (o asumir que la acción de obtenerlos ya los marca). Asegurarse de actualizar `has_unread_messages` en AuthProvider o ChatProvider para que al volver a lista de chats, esa conversación aparezca sin notificaciones pendientes.
 - **Pantallas de Autenticación:**
   - **LoginScreen:** campos para email y contraseña, con validación básica (no vacío, formato email). Botón "Iniciar Sesión" que al presionar llama `AuthProvider.login(email, pass)`. Mostrar indicador de carga durante autenticación. Si error (credenciales inválidas), mostrar mensaje ("Email o contraseña incorrecta").
@@ -146,10 +150,12 @@ alwaysApply: true
   - Nunca exponer el token ni información sensible en los logs de la app. 
   - Si el usuario cierra sesión, borrar token y datos personales. 
   - Implementar detección de expiración: si una llamada recibe 401 y el token estaba enviado, asumir expirado o inválido, realizar `logout()` automático y redirigir a login.
-- Optimizar la experiencia de chat con polling:
-  - Elegir un intervalo de polling que balancee entre inmediatez y consumo: ~5 segundos suele ser aceptable para chats MVP sin sobrecargar (tanto la batería del dispositivo como el servidor).
-  - Pausar o reducir el polling cuando la app está en segundo plano o el usuario no está en la pantalla de chat. Por ejemplo, iniciar el Timer solo en `ChatScreen` y cancelarlo en `dispose`, de modo que no se hagan peticiones constantes cuando el usuario no está activamente chateando.
-  - Notar que este enfoque es de MVP; a futuro se considerará migrar a WebSockets/Notificaciones push para chat en tiempo real.
+- Optimizar la experiencia de chat con WebSockets:
+  - Implementar conexión WebSocket persistente para chat en tiempo real usando `web_socket_channel`.
+  - Manejar estados de conexión: conectado, desconectado, reconectando, con indicadores visuales en la UI.
+  - Implementar reconexión automática con backoff exponencial en caso de pérdida de conexión.
+  - Pausar la conexión WebSocket cuando la app está en segundo plano para optimizar recursos.
+  - Implementar notificaciones push para mensajes recibidos cuando la app está en background.
 - El frontend debe reflejar las reglas del backend en la UI para claridad del usuario:
   - Ej.: Si solo usuarios verificados pueden publicar (si se aplicara), la app debería informar o bloquear esa acción para usuarios no verificados con un mensaje del estilo "Tu cuenta debe ser verificada para publicar anuncios.".
   - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.
