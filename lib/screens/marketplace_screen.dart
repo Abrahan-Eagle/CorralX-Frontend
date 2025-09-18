@@ -25,29 +25,6 @@ class MarketplaceScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Logo y admin button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Image.network(
-                      'https://aiblockweb.com/img/img_renny/2.png',
-                      height: isTablet ? 56 : 48,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.store, size: isTablet ? 56 : 48);
-                      },
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.admin_panel_settings,
-                          size: isTablet ? 28 : 24),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFE9E9E2),
-                        padding: EdgeInsets.all(isTablet ? 12 : 8),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: isTablet ? 20 : 16),
                 // Search bar
                 TextField(
                   decoration: InputDecoration(
@@ -158,7 +135,7 @@ class MarketplaceScreen extends StatelessWidget {
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                          final childAspectRatio = isTablet ? 1.1 : 1.0;
+                      final childAspectRatio = isTablet ? 1.3 : 1.2;
 
                       return GridView.builder(
                         shrinkWrap: true,
@@ -188,7 +165,7 @@ class MarketplaceScreen extends StatelessWidget {
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                          final childAspectRatio = isTablet ? 1.1 : 1.0;
+                      final childAspectRatio = isTablet ? 1.3 : 1.2;
 
                       return GridView.builder(
                         shrinkWrap: true,
@@ -270,8 +247,8 @@ class MarketplaceScreen extends StatelessWidget {
           // Content
           Expanded(
             flex: 2,
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 6 : 4),
+            child: Padding(
+              padding: EdgeInsets.all(isTablet ? 2 : 1),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -284,7 +261,7 @@ class MarketplaceScreen extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                      SizedBox(height: isTablet ? 2 : 1),
+                  SizedBox(height: isTablet ? 1 : 0),
                   Row(
                     children: [
                       CircleAvatar(

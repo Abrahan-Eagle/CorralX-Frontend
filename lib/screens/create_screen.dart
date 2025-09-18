@@ -8,7 +8,7 @@ class CreateScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isDesktop = screenWidth > 900;
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
       appBar: AppBar(
@@ -88,14 +88,16 @@ class CreateScreen extends StatelessWidget {
                           groupValue: 'sin-registro',
                           onChanged: (value) {},
                         ),
-                        Text('Con Registro', style: TextStyle(fontSize: isTablet ? 16 : 14)),
+                        Text('Con Registro',
+                            style: TextStyle(fontSize: isTablet ? 16 : 14)),
                         SizedBox(width: isTablet ? 32 : 24),
                         Radio<String>(
                           value: 'sin-registro',
                           groupValue: 'sin-registro',
                           onChanged: (value) {},
                         ),
-                        Text('Sin Registro', style: TextStyle(fontSize: isTablet ? 16 : 14)),
+                        Text('Sin Registro',
+                            style: TextStyle(fontSize: isTablet ? 16 : 14)),
                       ],
                     ),
                   ],
@@ -116,7 +118,8 @@ class CreateScreen extends StatelessWidget {
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                                borderRadius:
+                                    BorderRadius.circular(isTablet ? 12 : 8),
                               ),
                               labelText: 'Tipo',
                               contentPadding: EdgeInsets.symmetric(
@@ -125,9 +128,12 @@ class CreateScreen extends StatelessWidget {
                               ),
                             ),
                             items: const [
-                              DropdownMenuItem(value: 'lechero', child: Text('Lechero')),
-                              DropdownMenuItem(value: 'engorde', child: Text('Engorde')),
-                              DropdownMenuItem(value: 'padrote', child: Text('Padrote')),
+                              DropdownMenuItem(
+                                  value: 'lechero', child: Text('Lechero')),
+                              DropdownMenuItem(
+                                  value: 'engorde', child: Text('Engorde')),
+                              DropdownMenuItem(
+                                  value: 'padrote', child: Text('Padrote')),
                             ],
                             onChanged: (value) {},
                           ),
@@ -139,7 +145,8 @@ class CreateScreen extends StatelessWidget {
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                                borderRadius:
+                                    BorderRadius.circular(isTablet ? 12 : 8),
                               ),
                               labelText: 'Raza',
                               contentPadding: EdgeInsets.symmetric(
@@ -160,7 +167,8 @@ class CreateScreen extends StatelessWidget {
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                                borderRadius:
+                                    BorderRadius.circular(isTablet ? 12 : 8),
                               ),
                               labelText: 'Edad (años)',
                               contentPadding: EdgeInsets.symmetric(
@@ -178,7 +186,8 @@ class CreateScreen extends StatelessWidget {
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                                borderRadius:
+                                    BorderRadius.circular(isTablet ? 12 : 8),
                               ),
                               labelText: 'Cantidad',
                               contentPadding: EdgeInsets.symmetric(
@@ -206,7 +215,8 @@ class CreateScreen extends StatelessWidget {
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                          borderRadius:
+                              BorderRadius.circular(isTablet ? 12 : 8),
                         ),
                         labelText: 'Selecciona la Finca',
                         contentPadding: EdgeInsets.symmetric(
@@ -215,8 +225,11 @@ class CreateScreen extends StatelessWidget {
                         ),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'farm1', child: Text('Agropecuaria El Futuro')),
-                        DropdownMenuItem(value: 'farm2', child: Text('Hato La Esperanza')),
+                        DropdownMenuItem(
+                            value: 'farm1',
+                            child: Text('Agropecuaria El Futuro')),
+                        DropdownMenuItem(
+                            value: 'farm2', child: Text('Hato La Esperanza')),
                       ],
                       onChanged: (value) {},
                     ),
@@ -226,7 +239,8 @@ class CreateScreen extends StatelessWidget {
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                          borderRadius:
+                              BorderRadius.circular(isTablet ? 12 : 8),
                         ),
                         labelText: 'Descripción',
                         contentPadding: EdgeInsets.symmetric(
@@ -249,9 +263,11 @@ class CreateScreen extends StatelessWidget {
                       value: false,
                       onChanged: (value) {},
                     ),
-                    Text(
-                      'Marcar como Publicación Destacada',
-                      style: TextStyle(fontSize: isTablet ? 16 : 14),
+                    Flexible(
+                      child: Text(
+                        'Marcar como Publicación Destacada',
+                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      ),
                     ),
                   ],
                 ),
@@ -268,9 +284,11 @@ class CreateScreen extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: () {},
                           style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: isTablet ? 16 : 12),
+                            padding: EdgeInsets.symmetric(
+                                vertical: isTablet ? 16 : 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                              borderRadius:
+                                  BorderRadius.circular(isTablet ? 30 : 25),
                             ),
                           ),
                           child: Text(
@@ -286,9 +304,11 @@ class CreateScreen extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF386A20),
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: isTablet ? 16 : 12),
+                            padding: EdgeInsets.symmetric(
+                                vertical: isTablet ? 16 : 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                              borderRadius:
+                                  BorderRadius.circular(isTablet ? 30 : 25),
                             ),
                           ),
                           child: Text(

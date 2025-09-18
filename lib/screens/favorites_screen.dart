@@ -8,7 +8,7 @@ class FavoritesScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isDesktop = screenWidth > 900;
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
       appBar: AppBar(
@@ -36,8 +36,8 @@ class FavoritesScreen extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                  final childAspectRatio = isTablet ? 1.1 : 1.0;
-              
+                  final childAspectRatio = isTablet ? 1.3 : 1.2;
+
               return GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
@@ -114,8 +114,8 @@ class FavoritesScreen extends StatelessWidget {
           // Content
           Expanded(
             flex: 2,
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 6 : 4),
+            child: Padding(
+              padding: EdgeInsets.all(isTablet ? 2 : 1),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -128,7 +128,7 @@ class FavoritesScreen extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                      SizedBox(height: isTablet ? 2 : 1),
+                  SizedBox(height: isTablet ? 1 : 0),
                   Row(
                     children: [
                       CircleAvatar(
@@ -176,4 +176,3 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 }
-
