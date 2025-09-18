@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 class CommercePromotionFormPage extends StatefulWidget {
   final Map<String, dynamic>? promotion;
-  const CommercePromotionFormPage({Key? key, this.promotion}) : super(key: key);
+  const CommercePromotionFormPage({super.key, this.promotion});
 
   @override
   State<CommercePromotionFormPage> createState() => _CommercePromotionFormPageState();
@@ -307,7 +307,7 @@ class _CommercePromotionFormPageState extends State<CommercePromotionFormPage> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.discount),
                     ),
-                    value: _discountType,
+                    initialValue: _discountType,
                     items: const [
                       DropdownMenuItem(value: 'percentage', child: Text('Porcentaje (%)')),
                       DropdownMenuItem(value: 'fixed', child: Text('Monto fijo (\$)')),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zonix/features/services/transport_service.dart';
 
 class TransportFleetPage extends StatefulWidget {
+  const TransportFleetPage({super.key});
+
   @override
   _TransportFleetPageState createState() => _TransportFleetPageState();
 }

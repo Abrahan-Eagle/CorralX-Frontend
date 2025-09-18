@@ -4,7 +4,7 @@ import '../../../features/services/commerce_order_service.dart';
 import 'commerce_order_detail_page.dart';
 
 class CommerceOrdersPage extends StatefulWidget {
-  const CommerceOrdersPage({Key? key}) : super(key: key);
+  const CommerceOrdersPage({super.key});
 
   @override
   State<CommerceOrdersPage> createState() => _CommerceOrdersPageState();
@@ -252,7 +252,7 @@ class _CommerceOrdersPageState extends State<CommerceOrdersPage> with TickerProv
                       labelText: 'Ordenar por',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortBy,
+                    initialValue: _sortBy,
                     items: const [
                       DropdownMenuItem(value: 'created_at', child: Text('Fecha')),
                       DropdownMenuItem(value: 'total', child: Text('Total')),
@@ -271,7 +271,7 @@ class _CommerceOrdersPageState extends State<CommerceOrdersPage> with TickerProv
                       labelText: 'Orden',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortOrder,
+                    initialValue: _sortOrder,
                     items: const [
                       DropdownMenuItem(value: 'desc', child: Text('Descendente')),
                       DropdownMenuItem(value: 'asc', child: Text('Ascendente')),

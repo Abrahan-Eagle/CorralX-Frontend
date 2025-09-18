@@ -3,7 +3,7 @@ import '../services/activity_service.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class ActivityHistoryPage extends StatefulWidget {
-  const ActivityHistoryPage({Key? key}) : super(key: key);
+  const ActivityHistoryPage({super.key});
 
   @override
   State<ActivityHistoryPage> createState() => _ActivityHistoryPageState();
@@ -352,7 +352,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: selectedActivityType,
+              initialValue: selectedActivityType,
               decoration: const InputDecoration(
                 labelText: 'Tipo de actividad',
               ),

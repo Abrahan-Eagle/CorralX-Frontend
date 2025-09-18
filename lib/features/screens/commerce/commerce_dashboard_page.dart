@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/commerce_product_service.dart';
 import '../../../services/commerce_order_service.dart';
-import '../../../models/commerce_product.dart';
-import '../../../models/commerce_order.dart';
 import 'package:zonix/features/services/notification_service.dart';
 import '../../../services/commerce_profile_service.dart';
 import 'package:zonix/features/services/websocket_service.dart';
@@ -12,7 +10,7 @@ import '../../../models/commerce_profile.dart';
 class CommerceDashboardPage extends StatefulWidget {
   final CommerceProfile? initialProfile;
   final int? initialUnreadNotifications;
-  const CommerceDashboardPage({Key? key, this.initialProfile, this.initialUnreadNotifications}) : super(key: key);
+  const CommerceDashboardPage({super.key, this.initialProfile, this.initialUnreadNotifications});
 
   @override
   State<CommerceDashboardPage> createState() => _CommerceDashboardPageState();

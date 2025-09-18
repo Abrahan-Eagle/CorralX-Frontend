@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import '../../../features/services/commerce_promotion_service.dart';
 import 'commerce_promotion_form_page.dart';
 
 class CommercePromotionsPage extends StatefulWidget {
-  const CommercePromotionsPage({Key? key}) : super(key: key);
+  const CommercePromotionsPage({super.key});
 
   @override
   State<CommercePromotionsPage> createState() => _CommercePromotionsPageState();
@@ -270,7 +268,7 @@ class _CommercePromotionsPageState extends State<CommercePromotionsPage> with Ti
                       labelText: 'Ordenar por',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortBy,
+                    initialValue: _sortBy,
                     items: const [
                       DropdownMenuItem(value: 'created_at', child: Text('Fecha')),
                       DropdownMenuItem(value: 'title', child: Text('Título')),
@@ -290,7 +288,7 @@ class _CommercePromotionsPageState extends State<CommercePromotionsPage> with Ti
                       labelText: 'Orden',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortOrder,
+                    initialValue: _sortOrder,
                     items: const [
                       DropdownMenuItem(value: 'desc', child: Text('Descendente')),
                       DropdownMenuItem(value: 'asc', child: Text('Ascendente')),

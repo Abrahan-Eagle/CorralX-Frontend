@@ -4,9 +4,6 @@ import 'package:zonix/features/DomainProfiles/Addresses/models/adresse.dart';
 import 'package:zonix/features/DomainProfiles/Addresses/screens/adresse_create_screen.dart';
 import 'package:zonix/features/DomainProfiles/Addresses/screens/adresse_edit_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AddressModel with ChangeNotifier {

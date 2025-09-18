@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import '../../../features/services/commerce_product_service.dart';
 import '../../../models/commerce_product.dart';
 import 'commerce_product_form_page.dart';
 import '../../../features/services/commerce_data_service.dart';
-import '../../../models/commerce_profile.dart';
 
 class CommerceInventoryPage extends StatefulWidget {
-  const CommerceInventoryPage({Key? key}) : super(key: key);
+  const CommerceInventoryPage({super.key});
 
   @override
   State<CommerceInventoryPage> createState() => _CommerceInventoryPageState();
@@ -22,7 +20,7 @@ class _CommerceInventoryPageState extends State<CommerceInventoryPage> {
   String _searchQuery = '';
   bool _showOnlyAvailable = false;
   String _sortBy = 'created_at';
-  String _sortOrder = 'desc';
+  final String _sortOrder = 'desc';
 
   @override
   void initState() {
@@ -263,7 +261,7 @@ class _CommerceInventoryPageState extends State<CommerceInventoryPage> {
                       labelText: 'Ordenar por',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortBy,
+                    initialValue: _sortBy,
                     items: const [
                       DropdownMenuItem(value: 'created_at', child: Text('Fecha')),
                       DropdownMenuItem(value: 'name', child: Text('Nombre')),

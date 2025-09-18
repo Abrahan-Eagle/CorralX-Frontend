@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/account_deletion_service.dart';
-import '../../helpers/auth_helper.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class AccountDeletionPage extends StatefulWidget {
-  const AccountDeletionPage({Key? key}) : super(key: key);
+  const AccountDeletionPage({super.key});
 
   @override
   State<AccountDeletionPage> createState() => _AccountDeletionPageState();
@@ -329,7 +328,7 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
             
             // Razón de eliminación
             DropdownButtonFormField<String>(
-              value: selectedReason,
+              initialValue: selectedReason,
               decoration: const InputDecoration(
                 labelText: 'Razón de eliminación *',
                 border: OutlineInputBorder(),

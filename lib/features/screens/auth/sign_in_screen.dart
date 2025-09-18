@@ -743,7 +743,7 @@ class SignInScreenState extends State<SignInScreen>
                 opacity: _fadeAnimation,
                 child: ScaleTransition(
                   scale: _scaleAnimation,
-                  child: Container(
+                  child: SizedBox(
                     width: screenSize.width * 0.8,
                     height: screenSize.width * 0.8,
                     child: Image.asset(

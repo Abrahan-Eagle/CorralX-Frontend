@@ -209,7 +209,7 @@ class ScheduledOrderService {
   /// Formatear fecha y hora para mostrar
   static String formatScheduledDateTime(String date, String time) {
     final dateTime = DateTime.parse('$date $time');
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} a las ${time}';
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} a las $time';
   }
 
   /// Obtener estado del pedido programado

@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/adresse.dart';
 import '../models/models.dart';
 import '../api/adresse_service.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'location_module.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:zonix/features/utils/user_provider.dart';
 import 'package:logger/logger.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 
 final logger = Logger();
@@ -537,7 +534,7 @@ class RegisterAddressScreenState extends State<RegisterAddressScreen>
         ],
       ),
       child: DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: const Color(0xFF1976D2)),

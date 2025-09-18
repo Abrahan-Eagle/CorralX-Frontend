@@ -300,7 +300,7 @@ class _TransportSettingsPageState extends State<TransportSettingsPage> {
       subtitle: Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
       value: value,
       onChanged: onChanged,
-      activeColor: Colors.blue[700],
+      activeThumbColor: Colors.blue[700],
     );
   }
 

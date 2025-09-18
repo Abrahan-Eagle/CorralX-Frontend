@@ -9,7 +9,6 @@ import 'package:image/image.dart' as img;
 import 'package:zonix/features/utils/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
-import 'package:flutter/scheduler.dart';
 
 final logger = Logger();
 final documentService = DocumentService();
@@ -349,7 +348,7 @@ class DocumentEditScreenState extends State<DocumentEditScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.3),
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
               ),
@@ -510,7 +509,7 @@ class DocumentEditScreenState extends State<DocumentEditScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.3),
+              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -875,11 +874,6 @@ class DocumentEditScreenState extends State<DocumentEditScreen> {
         );
 
         final userId = widget.userId ?? Provider.of<UserProvider>(context, listen: false).userId;
-        if (userId == null) {
-          Navigator.of(context).pop();
-          _showCustomSnackBar(context, 'Error: ID de usuario no encontrado', Colors.red);
-          return;
-        }
 
         // Create updated document
         Document updatedDocument = Document(

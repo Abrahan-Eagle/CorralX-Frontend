@@ -48,7 +48,7 @@ class _TransportAnalyticsPageState extends State<TransportAnalyticsPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedPeriod,
+                      initialValue: _selectedPeriod,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:zonix/models/order.dart';
 
 class CommerceReportsPage extends StatefulWidget {
-  const CommerceReportsPage({Key? key}) : super(key: key);
+  const CommerceReportsPage({super.key});
 
   @override
   State<CommerceReportsPage> createState() => _CommerceReportsPageState();
@@ -162,7 +161,7 @@ class _CommerceReportsPageState extends State<CommerceReportsPage> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -233,7 +232,7 @@ class _CommerceReportsPageState extends State<CommerceReportsPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

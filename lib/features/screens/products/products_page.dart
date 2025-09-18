@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/features/services/cart_service.dart';
 import 'package:zonix/features/services/product_service.dart';
@@ -10,7 +9,7 @@ import 'product_detail_page.dart';
 
 class ProductsPage extends StatefulWidget {
   final ProductService? productService;
-  const ProductsPage({Key? key, this.productService}) : super(key: key);
+  const ProductsPage({super.key, this.productService});
 
   @override
   State<ProductsPage> createState() => _ProductsPageState();

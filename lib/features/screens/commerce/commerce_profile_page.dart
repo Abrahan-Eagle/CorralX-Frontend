@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 class CommerceProfilePage extends StatefulWidget {
   final CommerceProfile? initialProfile;
   final bool isTestMode;
-  const CommerceProfilePage({Key? key, this.initialProfile, this.isTestMode = false}) : super(key: key);
+  const CommerceProfilePage({super.key, this.initialProfile, this.isTestMode = false});
 
   @override
   State<CommerceProfilePage> createState() => _CommerceProfilePageState();
@@ -128,7 +128,7 @@ class _CommerceProfilePageState extends State<CommerceProfilePage> {
                   subtitle: const Text('Controla si tu comercio está visible y recibe pedidos'),
                   value: _open,
                   onChanged: (widget.isTestMode || !_loading) ? (v) { setState(() { _open = v; }); } : null,
-                  activeColor: Colors.green,
+                  activeThumbColor: Colors.green,
                   inactiveThumbColor: Colors.red,
                 ),
                 const SizedBox(height: 24),
@@ -218,7 +218,7 @@ class _CommerceProfilePageState extends State<CommerceProfilePage> {
                     onChanged: _loading ? null : (v) {
                       setState(() { _open = v; });
                     },
-                    activeColor: Colors.green,
+                    activeThumbColor: Colors.green,
                     inactiveThumbColor: Colors.red,
                   ),
                   const SizedBox(height: 24),

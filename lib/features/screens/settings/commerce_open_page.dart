@@ -3,7 +3,7 @@ import 'package:zonix/features/services/commerce_data_service.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class CommerceOpenPage extends StatefulWidget {
-  const CommerceOpenPage({Key? key}) : super(key: key);
+  const CommerceOpenPage({super.key});
 
   @override
   State<CommerceOpenPage> createState() => _CommerceOpenPageState();
@@ -202,7 +202,7 @@ class _CommerceOpenPageState extends State<CommerceOpenPage> {
                         ),
                         Switch(
                           value: _open,
-                          activeColor: Colors.green,
+                          activeThumbColor: Colors.green,
                           inactiveThumbColor: Colors.red,
                           inactiveTrackColor: Colors.red.shade200,
                           onChanged: (v) => setState(() => _open = v),

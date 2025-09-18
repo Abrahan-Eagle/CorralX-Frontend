@@ -6,7 +6,7 @@ import 'package:zonix/models/cart_item.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class CartPage extends StatelessWidget {
-  const CartPage({Key? key}) : super(key: key);
+  const CartPage({super.key});
 
   @override
   Widget build(BuildContext context) {

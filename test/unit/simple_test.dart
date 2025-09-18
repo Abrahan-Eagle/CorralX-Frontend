@@ -10,7 +10,7 @@ void main() {
     });
 
     test('should handle string operations', () {
-      expect('Hello' + ' ' + 'World', equals('Hello World'));
+      expect('Hello' ' ' 'World', equals('Hello World'));
       expect('ZONIX'.toLowerCase(), equals('zonix'));
       expect('zonix'.toUpperCase(), equals('ZONIX'));
     });

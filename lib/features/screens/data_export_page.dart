@@ -3,7 +3,7 @@ import '../services/export_service.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class DataExportPage extends StatefulWidget {
-  const DataExportPage({Key? key}) : super(key: key);
+  const DataExportPage({super.key});
 
   @override
   State<DataExportPage> createState() => _DataExportPageState();

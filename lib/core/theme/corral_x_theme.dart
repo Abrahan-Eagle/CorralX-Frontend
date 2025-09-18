@@ -146,8 +146,8 @@ class CorralXTheme {
         shadowColor: colorScheme.shadow.withOpacity(0.15),
         backgroundColor: colorScheme.surface,
         indicatorColor: colorScheme.secondaryContainer,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -289,8 +289,8 @@ class CorralXTheme {
         shadowColor: Colors.black.withOpacity(0.4),
         backgroundColor: colorScheme.surface,
         indicatorColor: colorScheme.secondaryContainer,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,

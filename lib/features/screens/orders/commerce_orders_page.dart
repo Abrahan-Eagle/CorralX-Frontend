@@ -5,7 +5,7 @@ import 'package:zonix/models/order.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class CommerceOrdersPage extends StatefulWidget {
-  const CommerceOrdersPage({Key? key}) : super(key: key);
+  const CommerceOrdersPage({super.key});
 
   @override
   State<CommerceOrdersPage> createState() => _CommerceOrdersPageState();

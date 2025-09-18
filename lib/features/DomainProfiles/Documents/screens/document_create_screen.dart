@@ -6,10 +6,7 @@ import '../models/document.dart';
 import 'package:flutter/services.dart'; // Importar para usar FilteringTextInputFormatter
 import 'package:logger/logger.dart';
 import 'package:image/image.dart' as img; // Importar el paquete de imagen
-import 'package:zonix/features/utils/user_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
-import 'package:flutter/scheduler.dart';
 
 final logger = Logger();
 final documentService = DocumentService();
@@ -332,7 +329,7 @@ class CreateDocumentScreenState extends State<CreateDocumentScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedType,
+              initialValue: _selectedType,
               items: typeTranslations.entries
                   .map(
                     (entry) => DropdownMenuItem(
@@ -537,7 +534,7 @@ class CreateDocumentScreenState extends State<CreateDocumentScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.3),
+              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(

@@ -4,7 +4,7 @@ import '../../../features/services/commerce_notification_service.dart';
 import '../../../features/services/commerce_data_service.dart';
 
 class CommerceNotificationsPage extends StatefulWidget {
-  const CommerceNotificationsPage({Key? key}) : super(key: key);
+  const CommerceNotificationsPage({super.key});
 
   @override
   State<CommerceNotificationsPage> createState() => _CommerceNotificationsPageState();
@@ -343,7 +343,7 @@ class _CommerceNotificationsPageState extends State<CommerceNotificationsPage> w
                       labelText: 'Ordenar por',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortBy,
+                    initialValue: _sortBy,
                     items: const [
                       DropdownMenuItem(value: 'created_at', child: Text('Fecha')),
                       DropdownMenuItem(value: 'title', child: Text('Título')),
@@ -363,7 +363,7 @@ class _CommerceNotificationsPageState extends State<CommerceNotificationsPage> w
                       labelText: 'Orden',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortOrder,
+                    initialValue: _sortOrder,
                     items: const [
                       DropdownMenuItem(value: 'desc', child: Text('Descendente')),
                       DropdownMenuItem(value: 'asc', child: Text('Ascendente')),

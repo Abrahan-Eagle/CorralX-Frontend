@@ -5,7 +5,7 @@ import 'privacy_settings_page.dart';
 import 'account_deletion_page.dart';
 
 class AdvancedUserFeaturesPage extends StatelessWidget {
-  const AdvancedUserFeaturesPage({Key? key}) : super(key: key);
+  const AdvancedUserFeaturesPage({super.key});
 
   @override
   Widget build(BuildContext context) {

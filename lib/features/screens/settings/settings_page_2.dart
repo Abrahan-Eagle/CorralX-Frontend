@@ -97,7 +97,7 @@ class _SettingsPage2State extends State<SettingsPage2> {
 
       // Log success as info, not error
       logger.i('Perfil cargado correctamente: $_profile');
-    } catch (e, stackTrace) {
+    } catch (e) {
       // logger.e('Error al cargar el perfil', error: e, stackTrace: stackTrace);
       setState(() {
         // _error = 'Error al cargar el perfil: ${e.toString()}';
@@ -616,8 +616,8 @@ class _SettingsPage2State extends State<SettingsPage2> {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withOpacity(0.15),
-        child: Icon(icon, color: color, size: 24),
         radius: 20,
+        child: Icon(icon, color: color, size: 24),
       ),
       title: Text(
         title,

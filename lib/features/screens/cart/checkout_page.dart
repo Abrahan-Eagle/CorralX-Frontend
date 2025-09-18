@@ -5,7 +5,7 @@ import 'package:zonix/features/services/order_service.dart';
 import 'package:zonix/models/cart_item.dart';
 
 class CheckoutPage extends StatefulWidget {
-  const CheckoutPage({Key? key}) : super(key: key);
+  const CheckoutPage({super.key});
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();

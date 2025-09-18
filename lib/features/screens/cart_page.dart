@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../models/cart_item.dart';
-import '../../../models/product.dart';
 import '../../../features/services/cart_service.dart';
 import '../../../features/services/order_service.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class CartPage extends StatefulWidget {
-  const CartPage({Key? key}) : super(key: key);
+  const CartPage({super.key});
 
   @override
   State<CartPage> createState() => _CartPageState();
@@ -81,7 +78,7 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _removeItem(CartItem item) async {
     try {
-      await _cartService.removeFromCart(item.id);
+      _cartService.removeFromCart(item.id);
       await _loadCart();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -101,7 +98,7 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _clearCart() async {
     try {
-      await _cartService.clearCart();
+      _cartService.clearCart();
       await _loadCart();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

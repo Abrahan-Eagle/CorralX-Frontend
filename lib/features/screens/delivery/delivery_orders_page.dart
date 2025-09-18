@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zonix/features/services/delivery_service.dart';
 
 class DeliveryOrdersPage extends StatefulWidget {
+  const DeliveryOrdersPage({super.key});
+
   @override
   _DeliveryOrdersPageState createState() => _DeliveryOrdersPageState();
 }

@@ -4,7 +4,7 @@ import '../../../features/services/commerce_order_service.dart';
 
 class CommerceOrderDetailPage extends StatefulWidget {
   final CommerceOrder order;
-  const CommerceOrderDetailPage({Key? key, required this.order}) : super(key: key);
+  const CommerceOrderDetailPage({super.key, required this.order});
 
   @override
   State<CommerceOrderDetailPage> createState() => _CommerceOrderDetailPageState();
@@ -244,7 +244,7 @@ class _CommerceOrderDetailPageState extends State<CommerceOrderDetailPage> {
               ],
             ),
             const SizedBox(height: 12),
-            ..._order.items.map((item) => _buildOrderItem(item)).toList(),
+            ..._order.items.map((item) => _buildOrderItem(item)),
           ],
         ),
       ),

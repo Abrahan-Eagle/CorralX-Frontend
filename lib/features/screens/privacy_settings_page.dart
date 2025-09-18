@@ -3,7 +3,7 @@ import '../services/privacy_service.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class PrivacySettingsPage extends StatefulWidget {
-  const PrivacySettingsPage({Key? key}) : super(key: key);
+  const PrivacySettingsPage({super.key});
 
   @override
   State<PrivacySettingsPage> createState() => _PrivacySettingsPageState();
@@ -174,7 +174,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                             'profile_visibility': value,
                           });
                         },
-                        activeColor: AppColors.accentButton(context),
+                        activeThumbColor: AppColors.accentButton(context),
                       ),
                     ],
                   ),
@@ -192,7 +192,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                             'order_history_visibility': value,
                           });
                         },
-                        activeColor: AppColors.accentButton(context),
+                        activeThumbColor: AppColors.accentButton(context),
                       ),
                     ],
                   ),
@@ -210,7 +210,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                             'activity_visibility': value,
                           });
                         },
-                        activeColor: AppColors.accentButton(context),
+                        activeThumbColor: AppColors.accentButton(context),
                       ),
                     ],
                   ),
@@ -228,7 +228,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                             'marketing_emails': value,
                           });
                         },
-                        activeColor: AppColors.accentButton(context),
+                        activeThumbColor: AppColors.accentButton(context),
                       ),
                       SwitchListTile(
                         title: const Text('Notificaciones push'), // TODO: internacionalizar
@@ -239,7 +239,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                             'push_notifications': value,
                           });
                         },
-                        activeColor: AppColors.accentButton(context),
+                        activeThumbColor: AppColors.accentButton(context),
                       ),
                     ],
                   ),
@@ -257,7 +257,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                             'location_sharing': value,
                           });
                         },
-                        activeColor: AppColors.accentButton(context),
+                        activeThumbColor: AppColors.accentButton(context),
                       ),
                     ],
                   ),

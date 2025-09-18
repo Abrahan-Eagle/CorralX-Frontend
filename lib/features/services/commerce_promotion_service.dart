@@ -78,7 +78,7 @@ class CommercePromotionService {
       if (sortBy != null) queryParams['sort_by'] = sortBy;
       if (sortOrder != null) queryParams['sort_order'] = sortOrder;
 
-      final uri = Uri.parse('${baseUrl}/commerce/promotions').replace(queryParameters: queryParams);
+      final uri = Uri.parse('$baseUrl/commerce/promotions').replace(queryParameters: queryParams);
       
       final response = await http.get(
         uri,

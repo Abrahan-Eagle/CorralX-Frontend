@@ -5,7 +5,6 @@ import 'package:zonix/features/services/order_service.dart';
 import 'package:zonix/features/services/websocket_service.dart';
 import 'package:zonix/features/utils/user_provider.dart';
 import 'package:zonix/config/app_config.dart';
-import 'package:zonix/helpers/auth_helper.dart';
 import 'dart:async'; // Added for StreamSubscription
 import 'package:zonix/features/utils/app_colors.dart';
 
@@ -46,10 +45,6 @@ class _OrdersPageState extends State<OrdersPage> {
 
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.user;
-      
-      if (user == null) {
-        throw Exception('Usuario no autenticado');
-      }
 
       final orders = await _orderService.getUserOrders();
       
@@ -75,15 +70,13 @@ class _OrdersPageState extends State<OrdersPage> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.user;
       
-      if (user != null) {
-        // Suscribirse a actualizaciones de órdenes del usuario
-        await _webSocketService!.subscribeToChannel('orders.user.${user['id']}');
-        
-        _webSocketSubscription = _webSocketService!.messageStream?.listen((message) {
-          _handleWebSocketMessage(message);
-        });
-      }
-    } catch (e) {
+      // Suscribirse a actualizaciones de órdenes del usuario
+      await _webSocketService!.subscribeToChannel('orders.user.${user['id']}');
+      
+      _webSocketSubscription = _webSocketService!.messageStream?.listen((message) {
+        _handleWebSocketMessage(message);
+      });
+        } catch (e) {
       print('Error inicializando WebSocket: $e');
     }
   }

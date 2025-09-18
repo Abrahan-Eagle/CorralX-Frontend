@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/phone.dart';
 import '../api/phone_service.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class EditPhoneScreen extends StatefulWidget {
   final Phone phone;
@@ -156,7 +155,7 @@ class EditPhoneScreenState extends State<EditPhoneScreen> {
                                   Column(
                                     children: [
                                       DropdownButtonFormField<int>(
-                                        value: _selectedOperatorCodeId,
+                                        initialValue: _selectedOperatorCodeId,
                                         decoration: const InputDecoration(
                                           labelText: 'Código',
                                           border: OutlineInputBorder(),
@@ -218,7 +217,7 @@ class EditPhoneScreenState extends State<EditPhoneScreen> {
                                       Flexible(
                                         flex: 1,
                                         child: DropdownButtonFormField<int>(
-                                          value: _selectedOperatorCodeId,
+                                          initialValue: _selectedOperatorCodeId,
                                           decoration: const InputDecoration(
                                             labelText: 'Código',
                                             border: OutlineInputBorder(),

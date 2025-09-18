@@ -72,7 +72,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedFilter,
+                    initialValue: _selectedFilter,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -207,7 +207,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   const Spacer(),
                   Icon(Icons.phone, color: Colors.grey[600], size: 16),
                   const SizedBox(width: 8),
-                  Text('${_getUserPhone(index)}', style: TextStyle(color: Colors.grey[600])),
+                  Text(_getUserPhone(index), style: TextStyle(color: Colors.grey[600])),
                 ],
               ),
               

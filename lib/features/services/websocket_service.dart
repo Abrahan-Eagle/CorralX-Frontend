@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -91,7 +90,7 @@ class WebSocketService {
         completer.complete();
       } catch (e) {
         timeoutTimer.cancel();
-        throw e;
+        rethrow;
       }
     } catch (e) {
       _logger.e('Error connecting WebSocket: $e');

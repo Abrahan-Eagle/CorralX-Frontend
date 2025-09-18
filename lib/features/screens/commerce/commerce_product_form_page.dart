@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 
 class CommerceProductFormPage extends StatefulWidget {
   final CommerceProduct? product;
-  const CommerceProductFormPage({Key? key, this.product}) : super(key: key);
+  const CommerceProductFormPage({super.key, this.product});
 
   @override
   State<CommerceProductFormPage> createState() => _CommerceProductFormPageState();
@@ -435,7 +435,7 @@ class _CommerceProductFormPageState extends State<CommerceProductFormPage> {
                     _loadingCategories
                         ? const Center(child: CircularProgressIndicator())
                         : DropdownButtonFormField<int>(
-                            value: _selectedCategoryId,
+                            initialValue: _selectedCategoryId,
                             items: _categories.map((cat) => DropdownMenuItem<int>(
                               value: cat['id'],
                               child: Text(cat['name']),

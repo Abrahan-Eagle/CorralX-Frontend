@@ -7,15 +7,12 @@ import 'package:shimmer/shimmer.dart';
 import 'package:zonix/features/services/restaurant_service.dart';
 import 'package:zonix/models/restaurant.dart';
 import 'restaurant_details_page.dart';
-import 'package:zonix/features/services/product_service.dart';
-import 'package:zonix/models/product.dart';
 import '../../services/test_auth_service.dart';
-import 'package:zonix/features/utils/debouncer.dart';
 import 'package:zonix/features/utils/network_image_with_fallback.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class RestaurantsPage extends StatefulWidget {
-  const RestaurantsPage({Key? key}) : super(key: key);
+  const RestaurantsPage({super.key});
 
   @override
   State<RestaurantsPage> createState() => _RestaurantsPageState();
@@ -105,7 +102,7 @@ class _RestaurantsPageState extends State<RestaurantsPage> {
     if (_searchQuery.isEmpty) return restaurants;
     return restaurants.where((restaurant) => 
       restaurant.nombreLocal.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      (restaurant.direccion?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
+      (restaurant.direccion.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
     ).toList();
   }
 
@@ -266,24 +263,23 @@ class _RestaurantsPageState extends State<RestaurantsPage> {
                   ),
                   const SizedBox(height: 8),
                   // Dirección
-                  if (restaurant.direccion != null)
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: AppColors.accentButton(context), size: 18),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            restaurant.direccion!,
-                            style: TextStyle(
-                              color: AppColors.secondaryText(context),
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: AppColors.accentButton(context), size: 18),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          restaurant.direccion,
+                          style: TextStyle(
+                            color: AppColors.secondaryText(context),
+                            fontSize: 14,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
                   // Estado abierto/cerrado
                   Row(
                     children: [

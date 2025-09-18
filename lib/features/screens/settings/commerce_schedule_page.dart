@@ -3,7 +3,7 @@ import 'package:zonix/features/services/commerce_data_service.dart';
 import 'package:zonix/features/utils/app_colors.dart';
 
 class CommerceSchedulePage extends StatefulWidget {
-  const CommerceSchedulePage({Key? key}) : super(key: key);
+  const CommerceSchedulePage({super.key});
 
   @override
   State<CommerceSchedulePage> createState() => _CommerceSchedulePageState();
@@ -19,7 +19,7 @@ class _CommerceSchedulePageState extends State<CommerceSchedulePage> {
   String? _success;
 
   // Horarios por día
-  Map<String, Map<String, dynamic>> _scheduleData = {
+  final Map<String, Map<String, dynamic>> _scheduleData = {
     'monday': {'enabled': true, 'open': '08:00', 'close': '18:00'},
     'tuesday': {'enabled': true, 'open': '08:00', 'close': '18:00'},
     'wednesday': {'enabled': true, 'open': '08:00', 'close': '18:00'},
@@ -329,7 +329,7 @@ class _CommerceSchedulePageState extends State<CommerceSchedulePage> {
                         '• Los días marcados como "Cerrado" no aparecerán en el horario público\n'
                         '• Puedes usar el horario personalizado para casos especiales\n'
                         '• Los cambios se aplican inmediatamente',
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                     ],
                   ),

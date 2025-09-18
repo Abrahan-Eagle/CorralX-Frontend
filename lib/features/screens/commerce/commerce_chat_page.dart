@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CommerceChatPage extends StatefulWidget {
-  const CommerceChatPage({Key? key}) : super(key: key);
+  const CommerceChatPage({super.key});
 
   @override
   State<CommerceChatPage> createState() => _CommerceChatPageState();

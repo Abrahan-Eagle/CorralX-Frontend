@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/phone.dart';
 import '../api/phone_service.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:zonix/features/utils/user_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -186,7 +185,7 @@ class CreatePhoneScreenState extends State<CreatePhoneScreen> {
           Column(
             children: [
               DropdownButtonFormField<int>(
-                value: _selectedOperatorCodeId,
+                initialValue: _selectedOperatorCodeId,
                 decoration: const InputDecoration(
                   labelText: 'Código de Operador',
                   border: OutlineInputBorder(),
@@ -245,7 +244,7 @@ class CreatePhoneScreenState extends State<CreatePhoneScreen> {
               Flexible(
                 flex: 1,
                 child: DropdownButtonFormField<int>(
-                  value: _selectedOperatorCodeId,
+                  initialValue: _selectedOperatorCodeId,
                   decoration: const InputDecoration(
                     labelText: 'Código de Operador',
                     border: OutlineInputBorder(),

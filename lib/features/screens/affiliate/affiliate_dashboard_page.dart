@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zonix/features/services/affiliate_service.dart';
 
 class AffiliateDashboardPage extends StatefulWidget {
+  const AffiliateDashboardPage({super.key});
+
   @override
   _AffiliateDashboardPageState createState() => _AffiliateDashboardPageState();
 }

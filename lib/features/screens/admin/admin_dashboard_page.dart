@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zonix/features/services/admin_service.dart';
 
 class AdminDashboardPage extends StatefulWidget {
+  const AdminDashboardPage({super.key});
+
   @override
   _AdminDashboardPageState createState() => _AdminDashboardPageState();
 }

@@ -3,7 +3,7 @@ import '../../../features/services/commerce_delivery_zone_service.dart';
 import 'commerce_delivery_zone_form_page.dart';
 
 class CommerceDeliveryZonesPage extends StatefulWidget {
-  const CommerceDeliveryZonesPage({Key? key}) : super(key: key);
+  const CommerceDeliveryZonesPage({super.key});
 
   @override
   State<CommerceDeliveryZonesPage> createState() => _CommerceDeliveryZonesPageState();
@@ -264,7 +264,7 @@ class _CommerceDeliveryZonesPageState extends State<CommerceDeliveryZonesPage> w
                       labelText: 'Ordenar por',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortBy,
+                    initialValue: _sortBy,
                     items: const [
                       DropdownMenuItem(value: 'created_at', child: Text('Fecha')),
                       DropdownMenuItem(value: 'name', child: Text('Nombre')),
@@ -284,7 +284,7 @@ class _CommerceDeliveryZonesPageState extends State<CommerceDeliveryZonesPage> w
                       labelText: 'Orden',
                       border: OutlineInputBorder(),
                     ),
-                    value: _sortOrder,
+                    initialValue: _sortOrder,
                     items: const [
                       DropdownMenuItem(value: 'desc', child: Text('Descendente')),
                       DropdownMenuItem(value: 'asc', child: Text('Ascendente')),
@@ -370,7 +370,7 @@ class _CommerceDeliveryZonesPageState extends State<CommerceDeliveryZonesPage> w
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${deliveryTime} min',
+                    '$deliveryTime min',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,

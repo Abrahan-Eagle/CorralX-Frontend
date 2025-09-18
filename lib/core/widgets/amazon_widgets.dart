@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../theme/corral_x_theme.dart';
 
 /// Widgets estilo Amazon/Alibaba - DENSOS y FUNCIONALES
@@ -406,7 +405,7 @@ class AmazonList extends StatelessWidget {
                   ),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );

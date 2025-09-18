@@ -169,7 +169,7 @@ class _AdminSecurityPageState extends State<AdminSecurityPage> {
                   _twoFactorEnabled = value;
                 });
               },
-              activeColor: Colors.red[700],
+              activeThumbColor: Colors.red[700],
             ),
             SwitchListTile(
               title: const Text('Notificaciones de Login'),
@@ -180,7 +180,7 @@ class _AdminSecurityPageState extends State<AdminSecurityPage> {
                   _loginNotifications = value;
                 });
               },
-              activeColor: Colors.red[700],
+              activeThumbColor: Colors.red[700],
             ),
             SwitchListTile(
               title: const Text('Alertas de Actividad Sospechosa'),
@@ -191,7 +191,7 @@ class _AdminSecurityPageState extends State<AdminSecurityPage> {
                   _suspiciousActivityAlerts = value;
                 });
               },
-              activeColor: Colors.red[700],
+              activeThumbColor: Colors.red[700],
             ),
             SwitchListTile(
               title: const Text('Bloqueo Automático'),
@@ -202,7 +202,7 @@ class _AdminSecurityPageState extends State<AdminSecurityPage> {
                   _autoLockEnabled = value;
                 });
               },
-              activeColor: Colors.red[700],
+              activeThumbColor: Colors.red[700],
             ),
             ListTile(
               title: const Text('Tiempo de Sesión'),

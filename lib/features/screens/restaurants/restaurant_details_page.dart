@@ -18,6 +18,7 @@
 /// - Para agregar más datos del restaurante, amplía los parámetros del widget y el header.
 ///
 ///
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,8 +29,6 @@ import 'package:zonix/features/services/buyer_review_service.dart';
 import 'package:zonix/features/services/favorites_service.dart';
 import 'package:zonix/models/product.dart';
 import 'package:zonix/models/cart_item.dart';
-import 'package:zonix/models/restaurant.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:zonix/features/screens/cart/cart_page.dart';
 
 class RestaurantDetailsPage extends StatefulWidget {
@@ -46,7 +45,7 @@ class RestaurantDetailsPage extends StatefulWidget {
   final String? cedula;
 
   const RestaurantDetailsPage({
-    Key? key,
+    super.key,
     required this.commerceId,
     required this.nombreLocal,
     required this.direccion,
@@ -58,7 +57,7 @@ class RestaurantDetailsPage extends StatefulWidget {
     this.tiempoEntrega,
     this.banco,
     this.cedula,
-  }) : super(key: key);
+  });
 
   @override
   State<RestaurantDetailsPage> createState() => _RestaurantDetailsPageState();
@@ -124,7 +123,7 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
         (product.category) == _selectedCategory;
       final matchesSearch = _searchQuery.isEmpty || 
         product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        (product.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+        (product.description.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
       return matchesCategory && matchesSearch;
     }).toList();
   }
@@ -409,8 +408,8 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                                               ),
                                               TextButton(
                                                 onPressed: () => _showFullSchedule(widget.horario!, theme, widget.abierto, isDark),
-                                                child: const Text('Ver todos'),
                                                 style: TextButton.styleFrom(foregroundColor: Colors.white),
+                                                child: const Text('Ver todos'),
                                               ),
                                             ],
                                           ),
@@ -772,10 +771,10 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (product.description != null && product.description!.isNotEmpty) ...[
+                    if (product.description.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        product.description!,
+                        product.description,
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 14,
@@ -908,7 +907,7 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                           color: Colors.green.shade600,
                         ),
                       ),
-                      if (product.description != null && product.description!.isNotEmpty) ...[
+                      if (product.description.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(
                           'Descripción',
@@ -916,7 +915,7 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          product.description!,
+                          product.description,
                           style: theme.textTheme.bodyMedium,
                         ),
                       ],

@@ -33,11 +33,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<Restaurant?> _loadRestaurant() async {
-    if (widget.product.commerceId == null) return null;
-    
     try {
       final restaurantService = RestaurantService();
-      return await restaurantService.fetchRestaurantDetails2(widget.product.commerceId!);
+      return await restaurantService.fetchRestaurantDetails2(widget.product.commerceId);
     } catch (e, stack) {
       logger.e('Error loading restaurant', error: e, stackTrace: stack);
       return null;

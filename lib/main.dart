@@ -328,7 +328,6 @@ import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zonix/features/services/auth/api_service.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/features/utils/user_provider.dart';
 import 'package:flutter/services.dart';
@@ -337,7 +336,6 @@ import 'package:flutter/services.dart';
 // import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:zonix/features/screens/settings/settings_page_2.dart';
 import 'package:zonix/features/screens/auth/sign_in_screen.dart';
 
 import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
@@ -498,7 +496,6 @@ class MyApp extends StatelessWidget {
           primary: const Color(0xFF2E7D32),
           secondary: const Color(0xFF4CAF50),
           error: const Color(0xFFE53935),
-          background: const Color(0xFFF5F5F5),
           surface: Colors.white,
           onSurface: const Color(0xFF333333),
           onSurfaceVariant: const Color(0xFF666666),
@@ -533,7 +530,6 @@ class MyApp extends StatelessWidget {
           primary: const Color(0xFF4CAF50),
           secondary: const Color(0xFF66BB6A),
           error: const Color(0xFFEF5350),
-          background: const Color(0xFF121212),
           surface: const Color(0xFF1E1E1E),
           onSurface: Colors.white,
           onSurfaceVariant: Colors.white70,
