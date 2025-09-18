@@ -36,7 +36,7 @@ class FavoritesScreen extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                  final childAspectRatio = isTablet ? 1.3 : 1.2;
+                  final childAspectRatio = isTablet ? 1.4 : 1.3;
 
               return GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

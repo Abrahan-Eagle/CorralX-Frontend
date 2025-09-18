@@ -728,13 +728,14 @@ class SignInScreenState extends State<SignInScreen>
       backgroundColor:
           isDark ? const Color(0xFF0F0F0F) : const Color(0xFFFAFAFA),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: screenSize.width * 0.05,
-            vertical: screenSize.height * 0.03,
-          ),
-          child: Column(
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenSize.width * 0.05,
+              vertical: screenSize.height * 0.03,
+            ),
+            child: Column(
+              children: [
               // Espacio superior
               SizedBox(height: screenSize.height * 0.08),
 
