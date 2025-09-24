@@ -4,9 +4,9 @@ import 'welcome_page.dart';
 import 'onboarding_page1.dart';
 import 'onboarding_page2.dart';
 import 'onboarding_page3.dart';
-import 'onboarding_page4.dart';
-import 'onboarding_page5.dart';
-import 'onboarding_page6.dart';
+// import 'onboarding_page4.dart';
+// import 'onboarding_page5.dart';
+// import 'onboarding_page6.dart';
 import 'onboarding_service.dart';
 import 'package:zonix/main.dart';
 import '../../../core/widgets/amazon_widgets.dart';
@@ -31,9 +31,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       OnboardingPage1(),
       OnboardingPage2(),
       OnboardingPage3(),
-      OnboardingPage4(),
-      OnboardingPage5(),
-      OnboardingPage6(),
+      // OnboardingPage4(),
+      // OnboardingPage5(),
+      // OnboardingPage6(),
     ];
   }
 
@@ -120,7 +120,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
               right: 0,
               child: Container(
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
+                  color: Colors.transparent,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
