@@ -4,6 +4,39 @@ import '../services/onboarding_api_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+// InputFormatter personalizado para RIF venezolano
+class _RIFVenezuelaInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (newText.isEmpty) {
+      return newValue.copyWith(
+        text: 'J-',
+        selection: const TextSelection.collapsed(offset: 2),
+      );
+    }
+    if (newText.length > 9) {
+      newText = newText.substring(0, 9);
+    }
+
+    String formattedText;
+    if (newText.length <= 8) {
+      formattedText = 'J-$newText';
+    } else {
+      // Para 9 dígitos: J-12345678-9
+      formattedText = 'J-${newText.substring(0, 8)}-${newText.substring(8)}';
+    }
+
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
+
 class OnboardingPage2 extends StatefulWidget {
   const OnboardingPage2({super.key});
 
@@ -177,6 +210,9 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     super.initState();
     _apiService = OnboardingApiService();
 
+    // Inicializar campo RIF con prefijo J-
+    _rifController.text = 'J-';
+
     // Agregar listeners para validación en tiempo real
     _haciendaNameController.addListener(_validateForm);
     _razonSocialController.addListener(_validateForm);
@@ -267,10 +303,11 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         _descriptionController.text.trim().isNotEmpty;
     // _horarioController.text.trim().isNotEmpty;
 
-    // Validar formato del RIF (opcional pero si se llena debe tener formato correcto)
-    bool rifValid = true; // Por defecto válido si está vacío
-    if (_rifController.text.trim().isNotEmpty) {
-      final rifPattern = RegExp(r'^[A-Za-z]-\d{8}-\d$');
+    // Validar formato del RIF (obligatorio con formato correcto)
+    bool rifValid = false;
+    if (_rifController.text.trim().isNotEmpty &&
+        _rifController.text.trim() != 'J-') {
+      final rifPattern = RegExp(r'^J-\d{8}-\d$');
       rifValid = rifPattern.hasMatch(_rifController.text.trim());
     }
 
@@ -288,9 +325,12 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   double get formProgress {
     int completedFields = 0;
     // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
-    int totalFields = 2; // Total de campos obligatorios: nombre, descripción
+    int totalFields =
+        3; // Total de campos obligatorios: nombre, RIF, descripción
 
     if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
+    if (_rifController.text.trim().isNotEmpty &&
+        _rifController.text.trim() != 'J-') completedFields++;
     if (_descriptionController.text.trim().isNotEmpty) completedFields++;
     // if (_horarioController.text.trim().isNotEmpty) completedFields++;
 
@@ -333,14 +373,19 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   }
 
   String? _validateRIF(String? value) {
-    if (value == null || value.trim().isEmpty) {
+    if (value == null || value.trim().isEmpty || value.trim() == 'J-') {
       return 'El RIF es obligatorio';
     }
 
-    // Validar formato de RIF venezolano: J-12345678-9
-    final rifPattern = RegExp(r'^[A-Za-z]-\d{8}-\d$');
-    if (!rifPattern.hasMatch(value.trim())) {
-      return 'Formato inválido (ej: J-12345678-9)';
+    final rif = value.trim().toUpperCase();
+    final rifRegex = RegExp(r'^J-\d{8}-\d$');
+    if (!rifRegex.hasMatch(rif)) {
+      return 'Formato: J-12345678-9 (9 dígitos)';
+    }
+
+    final numbers = rif.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numbers.length != 9) {
+      return 'El RIF debe tener 9 dígitos';
     }
 
     return null;
@@ -396,35 +441,6 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     } else {
       controller.selection = selection;
     }
-  }
-
-  String _formatRif(String value) {
-    // Fuerza letra mayúscula y máscara J-########-#
-    final only = value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
-    final buffer = StringBuffer();
-    for (int i = 0; i < only.length && i < 10; i++) {
-      if (i == 0) {
-        buffer.write(only[i]);
-        buffer.write('-');
-      } else if (i == 9) {
-        buffer.write('-');
-        buffer.write(only[i]);
-      } else {
-        buffer.write(only[i]);
-      }
-    }
-    return buffer.toString().replaceAll(RegExp(r'-{2,}'), '-');
-  }
-
-  void _onRifChanged(String value) {
-    String formatted = _formatRif(value);
-    if (formatted != _rifController.text) {
-      _rifController.value = TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: formatted.length),
-      );
-    }
-    _validateForm();
   }
 
   Future<void> saveData() async {
@@ -590,7 +606,7 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${(formProgress * 100).round()}% completado (${(formProgress * 2).round()}/2 campos)',
+                                '${(formProgress * 100).round()}% completado (${(formProgress * 3).round()}/3 campos)',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: colorScheme.onSurfaceVariant,
@@ -684,15 +700,13 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                           // RIF
                           TextFormField(
                             controller: _rifController,
-                            keyboardType: TextInputType.text,
+                            keyboardType: TextInputType.number, // Solo números
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[A-Za-z0-9\-]')),
-                              LengthLimitingTextInputFormatter(12),
+                              _RIFVenezuelaInputFormatter(), // Formato J-
                             ],
-                            onChanged: _onRifChanged,
+                            onChanged: (_) => _validateForm(),
                             decoration: InputDecoration(
-                              labelText: 'RIF',
+                              labelText: 'RIF *',
                               hintText: 'J-12345678-9',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -704,8 +718,17 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                                   width: 2,
                                 ),
                               ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: colorScheme.error,
+                                  width: 2,
+                                ),
+                              ),
                             ),
                             validator: _validateRIF,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                           ),
 
                           const SizedBox(height: 16),
