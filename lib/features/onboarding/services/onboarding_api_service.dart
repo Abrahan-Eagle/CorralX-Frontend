@@ -203,8 +203,7 @@ class OnboardingApiService {
     required String firstName,
     required String lastName,
     required String dateOfBirth,
-    required String maritalStatus,
-    required String sex,
+    required String ciNumber,
     File? photoUsers,
   }) async {
     try {
@@ -223,8 +222,7 @@ class OnboardingApiService {
         request.fields['firstName'] = firstName;
         request.fields['lastName'] = lastName;
         request.fields['date_of_birth'] = dateOfBirth;
-        request.fields['maritalStatus'] = maritalStatus;
-        request.fields['sex'] = sex;
+        request.fields['ci_number'] = ciNumber;
 
         // Agregar archivo de imagen
         request.files.add(
@@ -254,8 +252,7 @@ class OnboardingApiService {
             'firstName': firstName,
             'lastName': lastName,
             'date_of_birth': dateOfBirth,
-            'maritalStatus': maritalStatus,
-            'sex': sex,
+            'ci_number': ciNumber,
           }),
         );
 
@@ -296,14 +293,17 @@ class OnboardingApiService {
   Future<Map<String, dynamic>> createPhone({
     required String number,
     required int operatorCodeId,
+    required int userId,
   }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/phones'),
         headers: _headers,
         body: json.encode({
+          'user_id': userId,
           'number': number,
           'operator_code_id': operatorCodeId,
+          'is_primary': true,
         }),
       );
 
@@ -327,10 +327,14 @@ class OnboardingApiService {
     double? longitude,
   }) async {
     try {
+      // Obtener el user_id del token almacenado
+      final userId = await _getUserIdFromToken();
+
       final response = await http.post(
         Uri.parse('$baseUrl/addresses'),
         headers: _headers,
         body: json.encode({
+          'profile_id': userId, // Enviar el user_id como profile_id
           'adressses': addresses, // Nota: manteniendo el typo del backend
           'city_id': cityId,
           if (latitude != null) 'latitude': latitude,
@@ -358,6 +362,7 @@ class OnboardingApiService {
     String? businessDescription,
     String? contactHours,
     int? addressId,
+    required int profileId,
   }) async {
     try {
       final response = await http.post(
@@ -365,6 +370,7 @@ class OnboardingApiService {
         headers: _headers,
         body: json.encode({
           'name': name,
+          'profile_id': profileId,
           if (legalName != null) 'legal_name': legalName,
           if (taxId != null) 'tax_id': taxId,
           if (businessDescription != null)
@@ -383,6 +389,24 @@ class OnboardingApiService {
       }
     } catch (e) {
       throw Exception('Error al crear hacienda: $e');
+    }
+  }
+
+  // Obtener usuario actual
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Error al obtener usuario actual: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener usuario actual: $e');
     }
   }
 

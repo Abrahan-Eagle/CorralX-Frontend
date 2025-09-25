@@ -272,7 +272,8 @@ class SignInScreenState extends State<SignInScreen>
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red, size: 20),
+                          Icon(Icons.error_outline,
+                              color: Colors.red, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(

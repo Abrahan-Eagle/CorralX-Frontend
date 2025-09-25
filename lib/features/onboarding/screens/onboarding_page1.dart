@@ -3,6 +3,7 @@ import '../../../core/theme/corral_x_theme.dart';
 import '../services/onboarding_api_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:geolocator/geolocator.dart';
 
 class OnboardingPage1 extends StatefulWidget {
   const OnboardingPage1({super.key});
@@ -18,14 +19,13 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _dateOfBirthController = TextEditingController();
+  final _ciController = TextEditingController();
 
   String? _selectedCountry;
   String? _selectedState;
   String? _selectedCity;
   String? _selectedParroquia;
   String? _selectedOperatorCode;
-  String? _selectedMaritalStatus;
-  String? _selectedSex;
 
   List<Map<String, dynamic>> _countries = [];
   List<Map<String, dynamic>> _states = [];
@@ -33,8 +33,10 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   List<Map<String, dynamic>> _parroquias = [];
   List<Map<String, dynamic>> _operatorCodes = [];
 
-  bool _isLoading = false;
   bool _isLoadingData = false;
+  double? _currentLatitude;
+  double? _currentLongitude;
+  bool _isGettingLocation = false;
 
   late OnboardingApiService _apiService;
 
@@ -49,6 +51,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     _phoneController.addListener(_validateForm);
     _dateOfBirthController.addListener(_validateForm);
     _addressController.addListener(_validateForm);
+    _ciController.addListener(_validateForm);
 
     _initializeData();
   }
@@ -57,6 +60,61 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   Future<void> _initializeData() async {
     await _loadAuthToken();
     _loadInitialData();
+    _getCurrentLocation();
+  }
+
+  // Obtener ubicación actual del usuario
+  Future<void> _getCurrentLocation() async {
+    if (mounted) {
+      setState(() => _isGettingLocation = true);
+    }
+
+    try {
+      // Verificar permisos de ubicación
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          debugPrint('⚠️ FRONTEND: Permisos de ubicación denegados');
+          _setDefaultLocation();
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint(
+            '⚠️ FRONTEND: Permisos de ubicación denegados permanentemente');
+        _setDefaultLocation();
+        return;
+      }
+
+      // Obtener ubicación actual
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      _currentLatitude = position.latitude;
+      _currentLongitude = position.longitude;
+
+      debugPrint(
+          '📍 FRONTEND: Ubicación obtenida - Lat: $_currentLatitude, Lng: $_currentLongitude');
+    } catch (e) {
+      debugPrint('❌ FRONTEND: Error obteniendo ubicación: $e');
+      _setDefaultLocation();
+    } finally {
+      if (mounted) {
+        setState(() => _isGettingLocation = false);
+      }
+    }
+  }
+
+  // Establecer ubicación por defecto (Caracas, Venezuela)
+  void _setDefaultLocation() {
+    _currentLatitude = 10.4806;
+    _currentLongitude = -66.9036;
+    debugPrint(
+        '📍 FRONTEND: Usando ubicación por defecto - Lat: $_currentLatitude, Lng: $_currentLongitude');
   }
 
   // Cargar token de autenticación
@@ -83,14 +141,16 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     _phoneController.removeListener(_validateForm);
     _dateOfBirthController.removeListener(_validateForm);
     _addressController.removeListener(_validateForm);
+    _ciController.removeListener(_validateForm);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _ciController.dispose();
     super.dispose();
   }
 
-  // Getter para verificar si el formulario es válido
+  // Getter público para verificar si el formulario es válido
   bool get isFormValid {
     // Validar que todos los campos tengan contenido
     bool hasContent = _firstNameController.text.trim().isNotEmpty &&
@@ -98,12 +158,11 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         _phoneController.text.trim().isNotEmpty &&
         _dateOfBirthController.text.trim().isNotEmpty &&
         _addressController.text.trim().isNotEmpty &&
+        _ciController.text.trim().isNotEmpty &&
         _selectedCountry != null &&
         _selectedState != null &&
         _selectedCity != null &&
-        _selectedOperatorCode != null &&
-        _selectedMaritalStatus != null &&
-        _selectedSex != null;
+        _selectedOperatorCode != null;
 
     // Validar formato del teléfono EXACTAMENTE 7 dígitos
     bool phoneValid = false;
@@ -141,25 +200,26 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   // Getter para obtener el progreso del formulario (0.0 a 1.0)
   double get formProgress {
     int completedFields = 0;
-    int totalFields = 11; // Total de campos requeridos
+    int totalFields = 10; // Total de campos requeridos
 
     if (_firstNameController.text.trim().isNotEmpty) completedFields++;
     if (_lastNameController.text.trim().isNotEmpty) completedFields++;
     if (_phoneController.text.trim().isNotEmpty) completedFields++;
     if (_dateOfBirthController.text.trim().isNotEmpty) completedFields++;
     if (_addressController.text.trim().isNotEmpty) completedFields++;
+    if (_ciController.text.trim().isNotEmpty) completedFields++;
     if (_selectedCountry != null) completedFields++;
     if (_selectedState != null) completedFields++;
     if (_selectedCity != null) completedFields++;
     if (_selectedOperatorCode != null) completedFields++;
-    if (_selectedMaritalStatus != null) completedFields++;
-    if (_selectedSex != null) completedFields++;
 
     return completedFields / totalFields;
   }
 
   Future<void> _loadInitialData() async {
-    setState(() => _isLoadingData = true);
+    if (mounted) {
+      setState(() => _isLoadingData = true);
+    }
 
     try {
       // Cargar países y códigos de operadora
@@ -178,7 +238,9 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         );
       }
     } finally {
-      setState(() => _isLoadingData = false);
+      if (mounted) {
+        setState(() => _isLoadingData = false);
+      }
     }
   }
 
@@ -195,33 +257,37 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         }
       }
 
-      setState(() {
-        _countries = uniqueCountries.values.toList();
+      if (mounted) {
+        setState(() {
+          _countries = uniqueCountries.values.toList();
 
-        // Buscar Venezuela como país predeterminado
-        final venezuela = _countries.firstWhere(
-          (country) =>
-              (country['name'] as String).toLowerCase().contains('venezuela'),
-          orElse: () => _countries.isNotEmpty ? _countries.first : {},
-        );
+          // Buscar Venezuela como país predeterminado
+          final venezuela = _countries.firstWhere(
+            (country) =>
+                (country['name'] as String).toLowerCase().contains('venezuela'),
+            orElse: () => _countries.isNotEmpty ? _countries.first : {},
+          );
 
-        if (venezuela.isNotEmpty) {
-          _selectedCountry = venezuela['name'] as String?;
-          // Cargar estados de Venezuela automáticamente
-          _onCountryChanged(_selectedCountry!);
-        }
-      });
+          if (venezuela.isNotEmpty) {
+            _selectedCountry = venezuela['name'] as String?;
+            // Cargar estados de Venezuela automáticamente
+            _onCountryChanged(_selectedCountry!);
+          }
+        });
+      }
     } catch (e) {
       debugPrint('Error loading countries: $e');
       // Fallback a datos mock en caso de error
-      setState(() {
-        _countries = [
-          {'id': 1, 'name': 'Venezuela'},
-          {'id': 2, 'name': 'Colombia'},
-          {'id': 3, 'name': 'Brasil'},
-        ];
-        _selectedCountry = 'Venezuela';
-      });
+      if (mounted) {
+        setState(() {
+          _countries = [
+            {'id': 1, 'name': 'Venezuela'},
+            {'id': 2, 'name': 'Colombia'},
+            {'id': 3, 'name': 'Brasil'},
+          ];
+          _selectedCountry = 'Venezuela';
+        });
+      }
     }
   }
 
@@ -242,19 +308,23 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       final states = await _apiService.getStates(countryId);
       debugPrint('Estados recibidos: ${states.length} estados');
 
-      setState(() {
-        _states = states;
-      });
+      if (mounted) {
+        setState(() {
+          _states = states;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading states: $e');
       // Fallback a datos mock
-      setState(() {
-        _states = [
-          {'id': 1, 'name': 'Caracas'},
-          {'id': 2, 'name': 'Miranda'},
-          {'id': 3, 'name': 'Zulia'},
-        ];
-      });
+      if (mounted) {
+        setState(() {
+          _states = [
+            {'id': 1, 'name': 'Caracas'},
+            {'id': 2, 'name': 'Miranda'},
+            {'id': 3, 'name': 'Zulia'},
+          ];
+        });
+      }
     }
   }
 
@@ -275,24 +345,28 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       final cities = await _apiService.getCities(stateId);
       debugPrint('Ciudades recibidas: ${cities.length} ciudades');
 
-      setState(() {
-        _cities = cities;
-        // Limpiar parroquias cuando cambia la ciudad
-        _parroquias = [];
-        _selectedParroquia = null;
-      });
+      if (mounted) {
+        setState(() {
+          _cities = cities;
+          // Limpiar parroquias cuando cambia la ciudad
+          _parroquias = [];
+          _selectedParroquia = null;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading cities: $e');
       // Fallback a datos mock
-      setState(() {
-        _cities = [
-          {'id': 1, 'name': 'Caracas'},
-          {'id': 2, 'name': 'Valencia'},
-          {'id': 3, 'name': 'Maracaibo'},
-        ];
-        _parroquias = [];
-        _selectedParroquia = null;
-      });
+      if (mounted) {
+        setState(() {
+          _cities = [
+            {'id': 1, 'name': 'Caracas'},
+            {'id': 2, 'name': 'Valencia'},
+            {'id': 3, 'name': 'Maracaibo'},
+          ];
+          _parroquias = [];
+          _selectedParroquia = null;
+        });
+      }
     }
   }
 
@@ -314,51 +388,61 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       final parroquias = await _apiService.getParroquias(cityId);
       debugPrint('Parroquias recibidas: ${parroquias.length} parroquias');
 
-      setState(() {
-        _parroquias = parroquias;
-      });
+      if (mounted) {
+        setState(() {
+          _parroquias = parroquias;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading parroquias: $e');
       // Fallback a datos mock (solo para ciudades venezolanas)
-      setState(() {
-        _parroquias = [];
-      });
+      if (mounted) {
+        setState(() {
+          _parroquias = [];
+        });
+      }
     }
   }
 
   Future<void> _loadOperatorCodes() async {
     // Códigos de operadoras venezolanas principales
-    setState(() {
-      _operatorCodes = [
-        {'id': 1, 'code': '0416'},
-        {'id': 2, 'code': '0426'},
-        {'id': 3, 'code': '0412'},
-        {'id': 4, 'code': '0422'},
-        {'id': 5, 'code': '0414'},
-        {'id': 6, 'code': '0424'},
-      ];
-    });
+    if (mounted) {
+      setState(() {
+        _operatorCodes = [
+          {'id': 1, 'code': '0416'},
+          {'id': 2, 'code': '0426'},
+          {'id': 3, 'code': '0412'},
+          {'id': 4, 'code': '0422'},
+          {'id': 5, 'code': '0414'},
+          {'id': 6, 'code': '0424'},
+        ];
+      });
+    }
   }
 
   void _onCountryChanged(String? value) {
-    setState(() {
-      _selectedCountry = value;
-      _selectedState = null;
-      _selectedCity = null;
-      _states.clear();
-      _cities.clear();
-    });
+    if (mounted) {
+      setState(() {
+        _selectedCountry = value;
+        _selectedState = null;
+        _selectedCity = null;
+        _states.clear();
+        _cities.clear();
+      });
+    }
     if (value != null) {
       _loadStates();
     }
   }
 
   void _onStateChanged(String? value) {
-    setState(() {
-      _selectedState = value;
-      _selectedCity = null;
-      _cities.clear();
-    });
+    if (mounted) {
+      setState(() {
+        _selectedState = value;
+        _selectedCity = null;
+        _cities.clear();
+      });
+    }
     if (value != null) {
       _loadCities();
     }
@@ -497,6 +581,30 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     return null;
   }
 
+  // Validación de CI (Cédula de Identidad)
+  String? _validateCI(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'El CI es obligatorio';
+    }
+
+    final ci = value.trim().toUpperCase();
+
+    // Validar formato de CI venezolano
+    // V-12345678 (Cédula de Identidad)
+    final ciRegex = RegExp(r'^V-?\d{7,8}$');
+    if (!ciRegex.hasMatch(ci)) {
+      return 'Formato: V-12345678 (7-8 dígitos)';
+    }
+
+    // Extraer solo los números para validar longitud
+    final numbers = ci.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numbers.length < 7 || numbers.length > 8) {
+      return 'El CI debe tener entre 7 y 8 dígitos';
+    }
+
+    return null;
+  }
+
   String? _validateAddress(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'La dirección es obligatoria';
@@ -513,20 +621,6 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   String? _validateOperatorCode(String? value) {
     if (value == null || value.isEmpty) {
       return 'Selecciona un código de operadora';
-    }
-    return null;
-  }
-
-  String? _validateMaritalStatus(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Selecciona tu estado civil';
-    }
-    return null;
-  }
-
-  String? _validateSex(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Selecciona tu sexo';
     }
     return null;
   }
@@ -552,58 +646,96 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     return null;
   }
 
-  Future<void> _saveData() async {
+  Future<void> saveData() async {
     // Forzar validación del formulario
     if (!_formKey.currentState!.validate()) {
-      debugPrint('Formulario no válido - no se puede guardar');
+      debugPrint('❌ FRONTEND: Formulario no válido - no se puede guardar');
       return;
     }
 
-    debugPrint('Formulario válido - iniciando guardado');
-    setState(() => _isLoading = true);
+    debugPrint('✅ FRONTEND: Formulario válido - iniciando guardado');
 
     try {
-      debugPrint('Guardando datos del onboarding página 1...');
+      debugPrint('🚀 FRONTEND: Guardando datos del onboarding página 1...');
+
+      // Debug: Mostrar datos que se van a enviar
+      debugPrint('📋 FRONTEND: Datos a enviar:');
+      debugPrint('  - firstName: ${_firstNameController.text.trim()}');
+      debugPrint('  - lastName: ${_lastNameController.text.trim()}');
+      debugPrint('  - dateOfBirth: ${_dateOfBirthController.text.trim()}');
+      debugPrint('  - ciNumber: ${_ciController.text.trim()}');
+      debugPrint('  - phone: ${_phoneController.text.trim()}');
+      debugPrint('  - address: ${_addressController.text.trim()}');
 
       // 1. Crear perfil
+      debugPrint('📝 FRONTEND: Enviando petición para crear perfil...');
       final profileResponse = await _apiService.createProfile(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         dateOfBirth: _dateOfBirthController.text.trim(),
-        maritalStatus: _selectedMaritalStatus ?? 'single',
-        sex: _selectedSex ?? 'M',
+        ciNumber: _ciController.text.trim(),
         photoUsers: null,
       );
 
+      debugPrint('✅ FRONTEND: Perfil creado exitosamente: $profileResponse');
+      // Guardar profile_id para usarlo en el formulario 2 (ranch)
+      try {
+        final createdProfile = profileResponse['profile'];
+        if (createdProfile is Map && createdProfile.containsKey('id')) {
+          final profileId = createdProfile['id'];
+          const storage = FlutterSecureStorage();
+          await storage.write(key: 'profile_id', value: profileId.toString());
+          debugPrint(
+              '🔐 FRONTEND: profile_id guardado de forma segura: $profileId');
+        }
+      } catch (e) {
+        debugPrint('⚠️ FRONTEND: No se pudo guardar profile_id: $e');
+      }
+
       // 2. Crear teléfono
+      debugPrint('📞 FRONTEND: Enviando petición para crear teléfono...');
       final operatorCodeId = _operatorCodes.firstWhere(
         (code) => code['code'] == _selectedOperatorCode,
         orElse: () => {'id': 1},
       )['id'];
 
+      debugPrint('🔢 FRONTEND: OperatorCode ID seleccionado: $operatorCodeId');
+
+      // Obtener el user_id del perfil creado
+      final userId = profileResponse['profile']['user_id'];
+      debugPrint('👤 FRONTEND: User ID obtenido: $userId');
+
       final phoneResponse = await _apiService.createPhone(
         number: _phoneController.text.trim(),
         operatorCodeId: operatorCodeId,
+        userId: userId,
       );
 
+      debugPrint('✅ FRONTEND: Teléfono creado exitosamente: $phoneResponse');
+
       // 3. Crear dirección
+      debugPrint('🏠 FRONTEND: Enviando petición para crear dirección...');
       final cityId = _cities.firstWhere(
         (city) => city['name'] == _selectedCity,
         orElse: () => {'id': 1},
       )['id'];
 
+      debugPrint('🏙️ FRONTEND: City ID seleccionado: $cityId');
       final addressResponse = await _apiService.createAddress(
         addresses: _addressController.text.trim(),
         cityId: cityId,
-        // TODO: Obtener coordenadas reales con geolocalización
-        latitude: 10.4806, // Caracas por defecto
-        longitude: -66.9036,
+        // Usar coordenadas reales obtenidas por GPS o por defecto
+        latitude: _currentLatitude ?? 10.4806, // GPS real o Caracas por defecto
+        longitude: _currentLongitude ?? -66.9036,
       );
 
-      debugPrint('Datos guardados exitosamente:');
-      debugPrint('Profile: $profileResponse');
-      debugPrint('Phone: $phoneResponse');
-      debugPrint('Address: $addressResponse');
+      debugPrint('✅ FRONTEND: Dirección creada exitosamente: $addressResponse');
+
+      debugPrint('🎉 FRONTEND: ¡TODOS LOS DATOS GUARDADOS EXITOSAMENTE!');
+      debugPrint('📊 FRONTEND: Resumen de respuestas:');
+      debugPrint('  - Profile: $profileResponse');
+      debugPrint('  - Phone: $phoneResponse');
+      debugPrint('  - Address: $addressResponse');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -617,14 +749,20 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         // Navigator.push(context, MaterialPageRoute(builder: (context) => OnboardingPage2()));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al guardar: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      debugPrint('❌ FRONTEND: Error al guardar datos: $e');
+      debugPrint('🔍 FRONTEND: Stack trace: ${StackTrace.current}');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al guardar: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      // No necesitamos setState aquí ya que el widget se va a destruir
     }
   }
 
@@ -982,9 +1120,11 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                     );
                                   }).toList(),
                                   onChanged: (value) {
-                                    setState(() {
-                                      _selectedOperatorCode = value;
-                                    });
+                                    if (mounted) {
+                                      setState(() {
+                                        _selectedOperatorCode = value;
+                                      });
+                                    }
                                   },
                                   validator: _validateOperatorCode,
                                 ),
@@ -1031,52 +1171,27 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
 
                           const SizedBox(height: 16),
 
-                          // Fecha de Nacimiento
-                          TextFormField(
-                            controller: _dateOfBirthController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9-]')),
-                              LengthLimitingTextInputFormatter(10),
-                            ],
-                            onChanged: _onDateChanged,
-                            decoration: InputDecoration(
-                              labelText: 'Fecha de Nacimiento *',
-                              hintText: 'YYYY-MM-DD',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: CorralXTheme.primarySolid,
-                                  width: 2,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: colorScheme.error,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            validator: _validateDateOfBirth,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Estado Civil y Sexo
+                          // CI y Fecha de Nacimiento en la misma línea
                           Row(
                             children: [
+                              // CI (Cédula de Identidad)
                               Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedMaritalStatus,
+                                flex: 1,
+                                child: TextFormField(
+                                  controller: _ciController,
+                                  keyboardType: TextInputType.text,
+                                  textCapitalization:
+                                      TextCapitalization.characters,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'[A-Za-z0-9-]')),
+                                    LengthLimitingTextInputFormatter(
+                                        10), // V-12345678 = 10 caracteres max
+                                  ],
+                                  onChanged: (_) => _validateForm(),
                                   decoration: InputDecoration(
-                                    labelText: 'Estado Civil',
+                                    labelText: 'CI *',
+                                    hintText: 'V-12345678',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -1087,32 +1202,37 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                         width: 2,
                                       ),
                                     ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: colorScheme.error,
+                                        width: 2,
+                                      ),
+                                    ),
                                   ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                        value: 'single',
-                                        child: Text('Soltero')),
-                                    DropdownMenuItem(
-                                        value: 'married',
-                                        child: Text('Casado')),
-                                    DropdownMenuItem(
-                                        value: 'divorced',
-                                        child: Text('Divorciado')),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedMaritalStatus = value;
-                                    });
-                                  },
-                                  validator: _validateMaritalStatus,
+                                  validator: _validateCI,
+                                  autovalidateMode:
+                                      AutovalidateMode.onUserInteraction,
                                 ),
                               ),
-                              const SizedBox(width: 16),
+
+                              const SizedBox(width: 12),
+
+                              // Fecha de Nacimiento
                               Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedSex,
+                                flex: 1,
+                                child: TextFormField(
+                                  controller: _dateOfBirthController,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'[0-9-]')),
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                  onChanged: _onDateChanged,
                                   decoration: InputDecoration(
-                                    labelText: 'Sexo',
+                                    labelText: 'Fecha de Nacimiento *',
+                                    hintText: 'YYYY-MM-DD',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -1123,19 +1243,17 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                         width: 2,
                                       ),
                                     ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: colorScheme.error,
+                                        width: 2,
+                                      ),
+                                    ),
                                   ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                        value: 'M', child: Text('Masculino')),
-                                    DropdownMenuItem(
-                                        value: 'F', child: Text('Femenino')),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedSex = value;
-                                    });
-                                  },
-                                  validator: _validateSex,
+                                  validator: _validateDateOfBirth,
+                                  autovalidateMode:
+                                      AutovalidateMode.onUserInteraction,
                                 ),
                               ),
                             ],
@@ -1329,6 +1447,62 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                             },
                           ),
 
+                          const SizedBox(height: 12),
+
+                          // Indicador de ubicación GPS
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color:
+                                  colorScheme.surfaceVariant.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: colorScheme.outline.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _isGettingLocation
+                                      ? Icons.gps_fixed
+                                      : Icons.location_on,
+                                  color: _isGettingLocation
+                                      ? colorScheme.primary
+                                      : (_currentLatitude != null
+                                          ? Colors.green
+                                          : Colors.orange),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _isGettingLocation
+                                        ? 'Obteniendo ubicación GPS...'
+                                        : (_currentLatitude != null
+                                            ? 'Ubicación GPS obtenida ✓'
+                                            : 'Usando ubicación por defecto'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                if (_currentLatitude != null &&
+                                    !_isGettingLocation)
+                                  Text(
+                                    '${_currentLatitude!.toStringAsFixed(4)}, ${_currentLongitude!.toStringAsFixed(4)}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: colorScheme.onSurfaceVariant
+                                          .withOpacity(0.7),
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+
                           const SizedBox(height: 16),
 
                           // Ciudad
@@ -1354,11 +1528,13 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                               );
                             }).toList(),
                             onChanged: (value) {
-                              setState(() {
-                                _selectedCity = value;
-                                _selectedParroquia =
-                                    null; // Limpiar parroquia seleccionada
-                              });
+                              if (mounted) {
+                                setState(() {
+                                  _selectedCity = value;
+                                  _selectedParroquia =
+                                      null; // Limpiar parroquia seleccionada
+                                });
+                              }
                               // Cargar parroquias para la ciudad seleccionada
                               _loadParroquias();
                             },
@@ -1393,9 +1569,11 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                 );
                               }).toList(),
                               onChanged: (value) {
-                                setState(() {
-                                  _selectedParroquia = value;
-                                });
+                                if (mounted) {
+                                  setState(() {
+                                    _selectedParroquia = value;
+                                  });
+                                }
                               },
                               validator: _selectedCountry
                                           ?.toLowerCase()
@@ -1405,57 +1583,6 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                   : null,
                             ),
                           ],
-
-                          const SizedBox(height: 24),
-
-                          // Botón guardar
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: (_isLoading || !isFormValid)
-                                  ? null
-                                  : () {
-                                      debugPrint(
-                                          'Botón presionado - validando formulario...');
-                                      _saveData();
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isFormValid
-                                    ? CorralXTheme.primarySolid
-                                    : Colors.grey,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    )
-                                  : Text(
-                                      isFormValid
-                                          ? 'Guardar y Continuar'
-                                          : 'Complete todos los campos',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: isFormValid
-                                            ? Colors.white
-                                            : Colors.grey[300],
-                                      ),
-                                    ),
-                            ),
-                          ),
                         ],
                       ),
 

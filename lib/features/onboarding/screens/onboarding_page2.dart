@@ -19,6 +19,9 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   final _descriptionController = TextEditingController();
   final _horarioController = TextEditingController();
 
+  // Variables para almacenar datos del usuario
+  int? _profileId;
+
   // Presets compactos
   final List<String> _schedulePresets = <String>[
     'Lun-Vie, 8:00 AM - 5:00 PM',
@@ -167,8 +170,6 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     );
   }
 
-  bool _isLoading = false;
-
   late OnboardingApiService _apiService;
 
   @override
@@ -186,7 +187,14 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     _loadAuthToken();
   }
 
-  // Cargar token de autenticación
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recargar profile_id cuando el usuario llega a esta página
+    _loadAuthToken();
+  }
+
+  // Cargar token de autenticación y obtener profile_id
   Future<void> _loadAuthToken() async {
     try {
       const storage = FlutterSecureStorage();
@@ -195,11 +203,44 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         _apiService.setAuthToken(token);
         debugPrint(
             'Token cargado para onboarding Page2: ${token.substring(0, 10)}...');
+
+        // Intentar leer profile_id guardado por el Formulario 1
+        final savedProfileId = await storage.read(key: 'profile_id');
+        debugPrint('🔍 PAGE2: Valor leído de SecureStorage: $savedProfileId');
+        if (savedProfileId != null) {
+          _profileId = int.tryParse(savedProfileId);
+          debugPrint(
+              '🔐 PAGE2: profile_id recuperado del SecureStorage: $_profileId');
+        } else {
+          debugPrint('⚠️ PAGE2: No se encontró profile_id en SecureStorage');
+        }
+        // Si no está, obtener el profile_id desde el backend
+        if (_profileId == null) {
+          debugPrint('🔄 PAGE2: Obteniendo profile_id desde backend...');
+          await _getProfileIdFromToken();
+        } else {
+          debugPrint('✅ PAGE2: profile_id disponible: $_profileId');
+        }
       } else {
         debugPrint('No se encontró token de autenticación en Page2');
       }
     } catch (e) {
       debugPrint('Error al cargar token en Page2: $e');
+    }
+  }
+
+  // Obtener profile_id del token
+  Future<void> _getProfileIdFromToken() async {
+    try {
+      final userResponse = await _apiService.getCurrentUser();
+
+      if (userResponse.containsKey('user')) {
+        final user = userResponse['user'];
+        _profileId = user['id'];
+        debugPrint('Profile ID obtenido para Page2: $_profileId');
+      }
+    } catch (e) {
+      debugPrint('Error obteniendo profile ID en Page2: $e');
     }
   }
 
@@ -218,23 +259,21 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     super.dispose();
   }
 
-  // Getter para verificar si el formulario es válido
+  // Getter público para verificar si el formulario es válido
   bool get isFormValid {
-    // Validar que todos los campos tengan contenido
-    bool hasContent = _haciendaNameController.text.trim().isNotEmpty &&
-        _razonSocialController.text.trim().isNotEmpty &&
-        _rifController.text.trim().isNotEmpty &&
+    // Validar que los campos obligatorios tengan contenido
+    bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty &&
         _descriptionController.text.trim().isNotEmpty &&
         _horarioController.text.trim().isNotEmpty;
 
-    // Validar formato del RIF
-    bool rifValid = false;
+    // Validar formato del RIF (opcional pero si se llena debe tener formato correcto)
+    bool rifValid = true; // Por defecto válido si está vacío
     if (_rifController.text.trim().isNotEmpty) {
       final rifPattern = RegExp(r'^[A-Za-z]-\d{8}-\d$');
       rifValid = rifPattern.hasMatch(_rifController.text.trim());
     }
 
-    return hasContent && rifValid;
+    return hasRequiredContent && rifValid;
   }
 
   // Método para validar el formulario en tiempo real
@@ -247,11 +286,10 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   // Getter para obtener el progreso del formulario (0.0 a 1.0)
   double get formProgress {
     int completedFields = 0;
-    int totalFields = 5; // Total de campos requeridos
+    int totalFields =
+        3; // Total de campos obligatorios: nombre, descripción, horario
 
     if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
-    if (_razonSocialController.text.trim().isNotEmpty) completedFields++;
-    if (_rifController.text.trim().isNotEmpty) completedFields++;
     if (_descriptionController.text.trim().isNotEmpty) completedFields++;
     if (_horarioController.text.trim().isNotEmpty) completedFields++;
 
@@ -388,22 +426,39 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     _validateForm();
   }
 
-  Future<void> _saveData() async {
+  Future<void> saveData() async {
     // Forzar validación del formulario
     if (!_formKey.currentState!.validate()) {
-      debugPrint('Formulario no válido - no se puede guardar');
+      debugPrint(
+          '❌ FRONTEND PAGE2: Formulario no válido - no se puede guardar');
       return;
     }
 
-    debugPrint('Formulario válido - iniciando guardado');
-    setState(() => _isLoading = true);
+    debugPrint('✅ FRONTEND PAGE2: Formulario válido - iniciando guardado');
+    setState(() {});
 
     try {
-      debugPrint('Guardando datos de la hacienda...');
+      debugPrint('🚀 FRONTEND PAGE2: Guardando datos de la hacienda...');
+
+      // Debug: Mostrar datos que se van a enviar
+      debugPrint('📋 FRONTEND PAGE2: Datos a enviar:');
+      debugPrint('  - haciendaName: ${_haciendaNameController.text.trim()}');
+      debugPrint('  - razonSocial: ${_razonSocialController.text.trim()}');
+      debugPrint('  - rif: ${_rifController.text.trim()}');
+      debugPrint('  - description: ${_descriptionController.text.trim()}');
+      debugPrint('  - horario: ${_horarioController.text.trim()}');
 
       // 1. Crear hacienda
+      debugPrint('🏠 FRONTEND PAGE2: Enviando petición para crear hacienda...');
+      debugPrint('🔑 FRONTEND PAGE2: Usando profile_id: $_profileId');
+
+      if (_profileId == null) {
+        throw Exception('No se pudo obtener el profile_id del usuario');
+      }
+
       final ranchResponse = await _apiService.createRanch(
         name: _haciendaNameController.text.trim(),
+        profileId: _profileId!,
         legalName: _razonSocialController.text.trim().isNotEmpty
             ? _razonSocialController.text.trim()
             : null,
@@ -416,12 +471,15 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         addressId: null,
       );
 
+      debugPrint(
+          '✅ FRONTEND PAGE2: Hacienda creada exitosamente: $ranchResponse');
+
       // 2. Completar onboarding
       // TODO: Obtener el ID del usuario actual
       // final userId = getCurrentUserId();
       // await _apiService.completeOnboarding(userId);
 
-      debugPrint('Hacienda creada exitosamente: $ranchResponse');
+      debugPrint('🎉 FRONTEND PAGE2: ¡TODOS LOS DATOS GUARDADOS EXITOSAMENTE!');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -439,14 +497,20 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         // );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al guardar: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      debugPrint('❌ FRONTEND PAGE2: Error al guardar datos: $e');
+      debugPrint('🔍 FRONTEND PAGE2: Stack trace: ${StackTrace.current}');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al guardar: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      setState(() {});
     }
   }
 
@@ -719,64 +783,6 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                             validator: _validateContactHours,
                             autovalidateMode:
                                 AutovalidateMode.onUserInteraction,
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Botón finalizar
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: (_isLoading || !isFormValid)
-                                  ? null
-                                  : () {
-                                      debugPrint(
-                                          'Botón presionado - validando formulario...');
-                                      _saveData();
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isFormValid
-                                    ? colorScheme.primary
-                                    : Colors.grey,
-                                foregroundColor: isFormValid
-                                    ? colorScheme.onPrimary
-                                    : Colors.grey[300],
-                                padding: EdgeInsets.symmetric(
-                                  vertical: isTablet ? 20 : 16,
-                                  horizontal: isTablet ? 24 : 20,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                                shadowColor:
-                                    colorScheme.shadow.withOpacity(0.2),
-                              ),
-                              child: _isLoading
-                                  ? SizedBox(
-                                      height: isTablet ? 24 : 20,
-                                      width: isTablet ? 24 : 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          colorScheme.onPrimary,
-                                        ),
-                                      ),
-                                    )
-                                  : Text(
-                                      isFormValid
-                                          ? 'Finalizar'
-                                          : 'Complete todos los campos',
-                                      style: TextStyle(
-                                        fontSize: isTablet ? 18 : 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: isFormValid
-                                            ? colorScheme.onPrimary
-                                            : Colors.grey[300],
-                                      ),
-                                    ),
-                            ),
                           ),
                         ],
                       ),
