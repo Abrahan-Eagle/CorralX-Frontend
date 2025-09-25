@@ -45,6 +45,9 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     super.initState();
     _apiService = OnboardingApiService();
 
+    // Inicializar campo CI con prefijo V-
+    _ciController.text = 'V-';
+
     // Agregar listeners para validación en tiempo real
     _firstNameController.addListener(_validateForm);
     _lastNameController.addListener(_validateForm);
@@ -583,15 +586,14 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
 
   // Validación de CI (Cédula de Identidad)
   String? _validateCI(String? value) {
-    if (value == null || value.trim().isEmpty) {
+    if (value == null || value.trim().isEmpty || value.trim() == 'V-') {
       return 'El CI es obligatorio';
     }
 
-    final ci = value.trim().toUpperCase();
+    final ci = value.trim();
 
-    // Validar formato de CI venezolano
-    // V-12345678 (Cédula de Identidad)
-    final ciRegex = RegExp(r'^V-?\d{7,8}$');
+    // Validar formato de CI venezolano V-12345678
+    final ciRegex = RegExp(r'^V-\d{7,8}$');
     if (!ciRegex.hasMatch(ci)) {
       return 'Formato: V-12345678 (7-8 dígitos)';
     }
@@ -1179,19 +1181,28 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                 flex: 1,
                                 child: TextFormField(
                                   controller: _ciController,
-                                  keyboardType: TextInputType.text,
-                                  textCapitalization:
-                                      TextCapitalization.characters,
+                                  keyboardType: TextInputType.number,
                                   inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[A-Za-z0-9-]')),
-                                    LengthLimitingTextInputFormatter(
-                                        10), // V-12345678 = 10 caracteres max
+                                    _CIVenezuelaInputFormatter(),
                                   ],
-                                  onChanged: (_) => _validateForm(),
+                                  onChanged: (value) {
+                                    _validateForm();
+                                    // Asegurar que siempre tenga el prefijo V-
+                                    if (!value.startsWith('V-')) {
+                                      _ciController.value = TextEditingValue(
+                                        text: 'V-',
+                                        selection: TextSelection.collapsed(offset: 2),
+                                      );
+                                    }
+                                  },
                                   decoration: InputDecoration(
                                     labelText: 'CI *',
                                     hintText: 'V-12345678',
+                                    prefixText: 'V-',
+                                    prefixStyle: TextStyle(
+                                      color: colorScheme.onSurface,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -1550,5 +1561,41 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       }
     }
     return null;
+  }
+}
+
+// InputFormatter personalizado para CI venezolano
+class _CIVenezuelaInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Permitir solo números
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // Limitar a 8 dígitos máximo
+    if (newText.length > 8) {
+      newText = newText.substring(0, 8);
+    }
+    
+    // Si está vacío, retornar V-
+    if (newText.isEmpty) {
+      return TextEditingValue(
+        text: 'V-',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+    }
+    
+    // Formatear como V-12345678
+    String formattedText = 'V-$newText';
+    
+    // Calcular la posición del cursor
+    int cursorPosition = formattedText.length;
+    
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorPosition),
+    );
   }
 }
