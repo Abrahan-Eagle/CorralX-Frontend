@@ -3,10 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../../core/config/app_config.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OnboardingApiService {
-  String get baseUrl => AppConfig.apiBaseUrl;
+  String get baseUrl {
+    final String apiUrl = const bool.fromEnvironment('dart.vm.product')
+        ? dotenv.env['API_URL_PROD']!
+        : dotenv.env['API_URL_LOCAL']!;
+    return '$apiUrl/api';
+  }
 
   String? _authToken;
 
@@ -45,7 +50,7 @@ class OnboardingApiService {
   // Helper para llamadas HTTP con timeout
   Future<http.Response> _makeRequest(
       Future<http.Response> Function() request) async {
-    return await request().timeout(AppConfig.connectionTimeoutDuration);
+    return await request().timeout(const Duration(seconds: 30));
   }
 
   // Obtener países
@@ -403,7 +408,8 @@ class OnboardingApiService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        throw Exception('Error al obtener usuario actual: ${response.statusCode}');
+        throw Exception(
+            'Error al obtener usuario actual: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error al obtener usuario actual: $e');
