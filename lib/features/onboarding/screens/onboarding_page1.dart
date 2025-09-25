@@ -19,6 +19,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _dateOfBirthController = TextEditingController();
+  DateTime? _selectedDate;
   final _ciController = TextEditingController();
 
   String? _selectedCountry;
@@ -479,25 +480,36 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     }
   }
 
-  String _formatDateYYYYMMDD(String value) {
-    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length && i < 8; i++) {
-      if (i == 4 || i == 6) buffer.write('-');
-      buffer.write(digits[i]);
+
+  // Método para abrir DatePicker
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now().subtract(const Duration(days: 365 * 20)), // 20 años atrás por defecto
+      firstDate: DateTime(1900), // Año mínimo
+      lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)), // Máximo: 18 años atrás
+      helpText: 'Seleccionar fecha de nacimiento',
+      cancelText: 'Cancelar',
+      confirmText: 'Confirmar',
+      fieldHintText: 'DD/MM/YYYY',
+      fieldLabelText: 'Fecha de nacimiento',
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      _selectedDate = picked;
+      // Formatear fecha como DD/MM/YYYY para mostrar
+      final formattedDate = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      
+      _dateOfBirthController.text = formattedDate;
+      _dateOfBirthController.value = TextEditingValue(
+        text: formattedDate,
+        selection: TextSelection.collapsed(offset: formattedDate.length),
+      );
+      
+      _validateForm();
     }
-    return buffer.toString();
   }
 
-  void _onDateChanged(String value) {
-    final formatted = _formatDateYYYYMMDD(value);
-    if (formatted != _dateOfBirthController.text) {
-      _dateOfBirthController.value = TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: formatted.length),
-      );
-    }
-  }
 
   // Métodos de validación
   String? _validateFirstName(String? value) {
@@ -557,14 +569,20 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       return 'La fecha de nacimiento es obligatoria';
     }
 
-    // Validar formato de fecha YYYY-MM-DD
-    final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+    // Validar formato de fecha DD/MM/YYYY
+    final dateRegex = RegExp(r'^\d{2}/\d{2}/\d{4}$');
     if (!dateRegex.hasMatch(value.trim())) {
-      return 'Formato: YYYY-MM-DD';
+      return 'Formato: DD/MM/YYYY';
     }
 
     try {
-      final date = DateTime.parse(value.trim());
+      // Parsear fecha DD/MM/YYYY
+      final parts = value.trim().split('/');
+      final day = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final year = int.parse(parts[2]);
+      
+      final date = DateTime(year, month, day);
       final now = DateTime.now();
       final age = now.year - date.year;
 
@@ -671,10 +689,17 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
 
       // 1. Crear perfil
       debugPrint('📝 FRONTEND: Enviando petición para crear perfil...');
+      
+      // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD para el backend
+      String backendDate = _dateOfBirthController.text.trim();
+      if (_selectedDate != null) {
+        backendDate = '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
+      }
+      
       final profileResponse = await _apiService.createProfile(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        dateOfBirth: _dateOfBirthController.text.trim(),
+        dateOfBirth: backendDate,
         ciNumber: _ciController.text.trim(),
         photoUsers: null,
       );
@@ -783,40 +808,40 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
             constraints: BoxConstraints(
               maxWidth: isTablet ? 600 : double.infinity,
             ),
-            child: Padding(
+        child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isTablet ? 32.0 : 16.0,
                 vertical: isTablet ? 24.0 : 16.0,
               ),
               child: Form(
                 key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
+          child: SingleChildScrollView(
+            child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
+              children: [
+                const SizedBox(height: 20),
 
                       // Indicador de carga de datos
                       if (_isLoadingData)
                         Container(
                           padding: EdgeInsets.all(isTablet ? 20 : 16),
-                          decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                             color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                      border: Border.all(
                               color: colorScheme.outline.withOpacity(0.2),
-                              width: 1,
-                            ),
+                        width: 1,
+                      ),
                             boxShadow: [
                               BoxShadow(
                                 color: colorScheme.shadow.withOpacity(0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
-                              ),
+                    ),
                             ],
                           ),
                           child: Row(
-                            children: [
+                      children: [
                               SizedBox(
                                 width: isTablet ? 24 : 20,
                                 height: isTablet ? 24 : 20,
@@ -828,15 +853,15 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                 ),
                               ),
                               SizedBox(width: isTablet ? 16 : 12),
-                              Text(
+                        Text(
                                 'Cargando datos...',
-                                style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
                                   fontSize: isTablet ? 16 : 14,
                                   fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          ),
+                        ),
+                      ],
                           ),
                         ),
 
@@ -845,17 +870,17 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                       // Indicador de progreso
                       if (!isFormValid) ...[
                         Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
                             color: colorScheme.surfaceVariant,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                      border: Border.all(
                               color: colorScheme.outline.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                               Row(
                                 children: [
                                   Icon(
@@ -864,17 +889,17 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
+                        Text(
                                     'Progreso del formulario',
-                                    style: TextStyle(
+                          style: TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                                       color: colorScheme.onSurfaceVariant,
-                                    ),
+                          ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 8),
+                        ),
+                        const SizedBox(height: 8),
                               LinearProgressIndicator(
                                 value: formProgress,
                                 backgroundColor:
@@ -886,10 +911,10 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
+                        Text(
                                 '${(formProgress * 100).round()}% completado (${(formProgress * 11).round()}/11 campos)',
-                                style: TextStyle(
-                                  fontSize: 12,
+                          style: TextStyle(
+                            fontSize: 12,
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
@@ -902,7 +927,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                       // Formulario
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          children: [
                           // Nombre y Apellido
                           LayoutBuilder(
                             builder: (context, constraints) {
@@ -1046,7 +1071,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                       ),
                                     ),
                                     SizedBox(width: isTablet ? 20 : 16),
-                                    Expanded(
+                            Expanded(
                                       child: TextFormField(
                                         controller: _lastNameController,
                                         decoration: InputDecoration(
@@ -1096,7 +1121,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
 
                           // Teléfono
                           Row(
-                            children: [
+                                  children: [
                               Expanded(
                                 flex: 1,
                                 child: DropdownButtonFormField<String>(
@@ -1166,10 +1191,10 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                   validator: _validatePhone,
                                   autovalidateMode:
                                       AutovalidateMode.onUserInteraction,
-                                ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
 
                           const SizedBox(height: 16),
 
@@ -1191,7 +1216,8 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                     if (!value.startsWith('V-')) {
                                       _ciController.value = TextEditingValue(
                                         text: 'V-',
-                                        selection: TextSelection.collapsed(offset: 2),
+                                        selection:
+                                            TextSelection.collapsed(offset: 2),
                                       );
                                     }
                                   },
@@ -1227,39 +1253,46 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                               // Fecha de Nacimiento
                               Expanded(
                                 flex: 1,
-                                child: TextFormField(
-                                  controller: _dateOfBirthController,
-                                  keyboardType: TextInputType.number,
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[0-9-]')),
-                                    LengthLimitingTextInputFormatter(10),
-                                  ],
-                                  onChanged: _onDateChanged,
-                                  decoration: InputDecoration(
-                                    labelText: 'Fecha de Nacimiento *',
-                                    hintText: 'YYYY-MM-DD',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: CorralXTheme.primarySolid,
-                                        width: 2,
+                                child: InkWell(
+                                  onTap: _selectDate,
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: 'Fecha de Nacimiento *',
+                                      hintText: 'DD/MM/YYYY',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: CorralXTheme.primarySolid,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: colorScheme.error,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      suffixIcon: Icon(
+                                        Icons.calendar_today,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      errorText: _validateDateOfBirth(_dateOfBirthController.text),
                                     ),
-                                    errorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: colorScheme.error,
-                                        width: 2,
+                                    child: Text(
+                                      _dateOfBirthController.text.isEmpty
+                                          ? 'Seleccionar fecha'
+                                          : _dateOfBirthController.text,
+                                      style: TextStyle(
+                                        color: _dateOfBirthController.text.isEmpty
+                                            ? colorScheme.onSurfaceVariant
+                                            : colorScheme.onSurface,
                                       ),
                                     ),
                                   ),
-                                  validator: _validateDateOfBirth,
-                                  autovalidateMode:
-                                      AutovalidateMode.onUserInteraction,
                                 ),
                               ),
                             ],
@@ -1301,7 +1334,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                 AutovalidateMode.onUserInteraction,
                           ),
 
-                          const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
                           // País y Estado
                           LayoutBuilder(
@@ -1309,8 +1342,8 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                               final isWide = constraints.maxWidth > 600;
                               if (isWide) {
                                 return Row(
-                                  children: [
-                                    Expanded(
+                          children: [
+                            Expanded(
                                       flex: 1,
                                       child: DropdownButtonFormField<String>(
                                         value: _selectedCountry,
@@ -1345,7 +1378,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                       ),
                                     ),
                                     const SizedBox(width: 16),
-                                    Expanded(
+                            Expanded(
                                       flex: 1,
                                       child: DropdownButtonFormField<String>(
                                         value: _selectedState,
@@ -1534,10 +1567,10 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                             ),
                           ],
                         ],
-                      ),
+                ),
 
-                      const SizedBox(height: 32),
-                    ],
+                const SizedBox(height: 32),
+              ],
                   ),
                 ),
               ),
@@ -1568,12 +1601,12 @@ class _CIVenezuelaInputFormatter extends TextInputFormatter {
   ) {
     // Permitir solo números
     String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     // Limitar a 8 dígitos máximo
     if (newText.length > 8) {
       newText = newText.substring(0, 8);
     }
-    
+
     // Si está vacío, retornar V-
     if (newText.isEmpty) {
       return TextEditingValue(
@@ -1581,13 +1614,13 @@ class _CIVenezuelaInputFormatter extends TextInputFormatter {
         selection: TextSelection.collapsed(offset: 2),
       );
     }
-    
+
     // Formatear como V-12345678
     String formattedText = 'V-$newText';
-    
+
     // Calcular la posición del cursor
     int cursorPosition = formattedText.length;
-    
+
     return TextEditingValue(
       text: formattedText,
       selection: TextSelection.collapsed(offset: cursorPosition),
