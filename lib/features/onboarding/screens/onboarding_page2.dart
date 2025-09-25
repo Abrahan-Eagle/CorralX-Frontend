@@ -261,13 +261,11 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
 
   // Getter público para verificar si el formulario es válido
   bool get isFormValid {
-    // DEBUG: Solo validar los campos básicos (name y legal_name)
-    bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty;
-
-    // TODO: Re-habilitar validaciones completas después del debug
-    // bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty &&
-    //     _descriptionController.text.trim().isNotEmpty &&
-    //     _horarioController.text.trim().isNotEmpty;
+    // Validar que los campos obligatorios tengan contenido
+    // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
+    bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty &&
+        _descriptionController.text.trim().isNotEmpty;
+    // _horarioController.text.trim().isNotEmpty;
 
     // Validar formato del RIF (opcional pero si se llena debe tener formato correcto)
     bool rifValid = true; // Por defecto válido si está vacío
@@ -289,14 +287,11 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   // Getter para obtener el progreso del formulario (0.0 a 1.0)
   double get formProgress {
     int completedFields = 0;
-    int totalFields = 1; // DEBUG: Solo nombre de hacienda es obligatorio
+    // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
+    int totalFields = 2; // Total de campos obligatorios: nombre, descripción
 
     if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
-
-    // TODO: Re-habilitar campos adicionales después del debug
-    // int totalFields = 3; // Total de campos obligatorios: nombre, descripción, horario
-    // if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
-    // if (_descriptionController.text.trim().isNotEmpty) completedFields++;
+    if (_descriptionController.text.trim().isNotEmpty) completedFields++;
     // if (_horarioController.text.trim().isNotEmpty) completedFields++;
 
     return completedFields / totalFields;
@@ -447,13 +442,12 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
       debugPrint('🚀 FRONTEND PAGE2: Guardando datos de la hacienda...');
 
       // Debug: Mostrar datos que se van a enviar
-      debugPrint(
-          '📋 FRONTEND PAGE2: Datos a enviar (DEBUG - Solo campos básicos):');
+      debugPrint('📋 FRONTEND PAGE2: Datos a enviar:');
       debugPrint('  - haciendaName: ${_haciendaNameController.text.trim()}');
       debugPrint('  - razonSocial: ${_razonSocialController.text.trim()}');
-      // TODO: Re-habilitar después del debug
-      // debugPrint('  - rif: ${_rifController.text.trim()}');
-      // debugPrint('  - description: ${_descriptionController.text.trim()}');
+      debugPrint('  - rif: ${_rifController.text.trim()}');
+      debugPrint('  - description: ${_descriptionController.text.trim()}');
+      // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
       // debugPrint('  - horario: ${_horarioController.text.trim()}');
 
       // 1. Crear hacienda
@@ -470,11 +464,11 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         legalName: _razonSocialController.text.trim().isNotEmpty
             ? _razonSocialController.text.trim()
             : null,
-        // TODO: Re-habilitar después del debug
-        // taxId: _rifController.text.trim().isNotEmpty
-        //     ? _rifController.text.trim()
-        //     : null,
-        // businessDescription: _descriptionController.text.trim(),
+        taxId: _rifController.text.trim().isNotEmpty
+            ? _rifController.text.trim()
+            : null,
+        businessDescription: _descriptionController.text.trim(),
+        // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
         // contactHours: _horarioController.text.trim(),
         // TODO: Usar la dirección creada en la página anterior
         addressId: null,
@@ -596,7 +590,7 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${(formProgress * 100).round()}% completado (${(formProgress * 5).round()}/5 campos)',
+                                '${(formProgress * 100).round()}% completado (${(formProgress * 2).round()}/2 campos)',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: colorScheme.onSurfaceVariant,
@@ -687,70 +681,70 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
 
                           const SizedBox(height: 16),
 
-                          // TODO: DEBUG - Campos temporalmente ocultos
                           // RIF
-                          // TextFormField(
-                          //   controller: _rifController,
-                          //   keyboardType: TextInputType.text,
-                          //   inputFormatters: [
-                          //     FilteringTextInputFormatter.allow(
-                          //         RegExp(r'[A-Za-z0-9\-]')),
-                          //     LengthLimitingTextInputFormatter(12),
-                          //   ],
-                          //   onChanged: _onRifChanged,
-                          //   decoration: InputDecoration(
-                          //     labelText: 'RIF',
-                          //     hintText: 'J-12345678-9',
-                          //     border: OutlineInputBorder(
-                          //       borderRadius: BorderRadius.circular(8),
-                          //     ),
-                          //     focusedBorder: OutlineInputBorder(
-                          //       borderRadius: BorderRadius.circular(8),
-                          //       borderSide: BorderSide(
-                          //         color: CorralXTheme.primarySolid,
-                          //         width: 2,
-                          //       ),
-                          //     ),
-                          //   ),
-                          //   validator: _validateRIF,
-                          // ),
+                          TextFormField(
+                            controller: _rifController,
+                            keyboardType: TextInputType.text,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'[A-Za-z0-9\-]')),
+                              LengthLimitingTextInputFormatter(12),
+                            ],
+                            onChanged: _onRifChanged,
+                            decoration: InputDecoration(
+                              labelText: 'RIF',
+                              hintText: 'J-12345678-9',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: CorralXTheme.primarySolid,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            validator: _validateRIF,
+                          ),
 
-                          // const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                          // // Descripción de la finca
-                          // TextFormField(
-                          //   controller: _descriptionController,
-                          //   maxLines: 4,
-                          //   decoration: InputDecoration(
-                          //     labelText: 'Descripción de la finca *',
-                          //     hintText:
-                          //         'Escriba toda la información que considere relevante',
-                          //     border: OutlineInputBorder(
-                          //       borderRadius: BorderRadius.circular(8),
-                          //     ),
-                          //     focusedBorder: OutlineInputBorder(
-                          //       borderRadius: BorderRadius.circular(8),
-                          //       borderSide: BorderSide(
-                          //         color: CorralXTheme.primarySolid,
-                          //         width: 2,
-                          //       ),
-                          //     ),
-                          //     errorBorder: OutlineInputBorder(
-                          //       borderRadius: BorderRadius.circular(8),
-                          //       borderSide: BorderSide(
-                          //         color: colorScheme.error,
-                          //         width: 2,
-                          //       ),
-                          //     ),
-                          //   ),
-                          //   validator: _validateDescription,
-                          //   autovalidateMode:
-                          //       AutovalidateMode.onUserInteraction,
-                          // ),
+                          // Descripción de la finca
+                          TextFormField(
+                            controller: _descriptionController,
+                            maxLines: 4,
+                            decoration: InputDecoration(
+                              labelText: 'Descripción de la finca *',
+                              hintText:
+                                  'Escriba toda la información que considere relevante',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: CorralXTheme.primarySolid,
+                                  width: 2,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: colorScheme.error,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            validator: _validateDescription,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                          ),
 
-                          // const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                          // // Horario
+                          // TODO: Re-habilitar campo horario en futuras versiones
+                          // Horario
                           // TextFormField(
                           //   controller: _horarioController,
                           //   readOnly: false,
