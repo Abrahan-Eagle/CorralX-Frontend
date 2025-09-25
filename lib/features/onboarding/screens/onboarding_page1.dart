@@ -1198,11 +1198,6 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                   decoration: InputDecoration(
                                     labelText: 'CI *',
                                     hintText: 'V-12345678',
-                                    prefixText: 'V-',
-                                    prefixStyle: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.w500,
-                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
