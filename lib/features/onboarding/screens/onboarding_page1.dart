@@ -177,13 +177,18 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
           cleanPhone.length == 7 && RegExp(r'^\d+$').hasMatch(cleanPhone);
     }
 
-    // Validar formato de la fecha
+    // Validar formato de la fecha (DD/MM/YYYY)
     bool dateValid = false;
     if (_dateOfBirthController.text.trim().isNotEmpty) {
-      final datePattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+      final datePattern = RegExp(r'^\d{2}/\d{2}/\d{4}$');
       if (datePattern.hasMatch(_dateOfBirthController.text.trim())) {
         try {
-          DateTime.parse(_dateOfBirthController.text.trim());
+          // Parsear fecha DD/MM/YYYY
+          final parts = _dateOfBirthController.text.trim().split('/');
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          DateTime(year, month, day);
           dateValid = true;
         } catch (e) {
           dateValid = false;
@@ -1261,7 +1266,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                   child: InputDecorator(
                                     decoration: InputDecoration(
                                       labelText: 'Fecha de Nacimiento *',
-                                      hintText: 'DD/MM/YYYY',
+                                      hintText: 'Fecha',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -1279,21 +1284,15 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                           width: 2,
                                         ),
                                       ),
-                                      suffixIcon: Icon(
-                                        Icons.calendar_today,
-                                        color: colorScheme.onSurfaceVariant,
-                                        size: 20,
-                                      ),
-                                      contentPadding: const EdgeInsets.symmetric(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
                                         horizontal: 12,
                                         vertical: 16,
                                       ),
-                                      errorText: _validateDateOfBirth(
-                                          _dateOfBirthController.text),
                                     ),
                                     child: Text(
                                       _dateOfBirthController.text.isEmpty
-                                          ? 'Seleccionar fecha'
+                                          ? 'DD/MM/YYYY'
                                           : _dateOfBirthController.text,
                                       style: TextStyle(
                                         color:
