@@ -36,7 +36,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   bool _isLoadingData = false;
   double? _currentLatitude;
   double? _currentLongitude;
-  bool _isGettingLocation = false;
+  bool _isGettingLocation = false; // Mantenido para funcionalidad GPS interna
 
   late OnboardingApiService _apiService;
 
@@ -1445,62 +1445,6 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                                 );
                               }
                             },
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // Indicador de ubicación GPS
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color:
-                                  colorScheme.surfaceVariant.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: colorScheme.outline.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _isGettingLocation
-                                      ? Icons.gps_fixed
-                                      : Icons.location_on,
-                                  color: _isGettingLocation
-                                      ? colorScheme.primary
-                                      : (_currentLatitude != null
-                                          ? Colors.green
-                                          : Colors.orange),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _isGettingLocation
-                                        ? 'Obteniendo ubicación GPS...'
-                                        : (_currentLatitude != null
-                                            ? 'Ubicación GPS obtenida ✓'
-                                            : 'Usando ubicación por defecto'),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                if (_currentLatitude != null &&
-                                    !_isGettingLocation)
-                                  Text(
-                                    '${_currentLatitude!.toStringAsFixed(4)}, ${_currentLongitude!.toStringAsFixed(4)}',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: colorScheme.onSurfaceVariant
-                                          .withOpacity(0.7),
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                              ],
-                            ),
                           ),
 
                           const SizedBox(height: 16),
