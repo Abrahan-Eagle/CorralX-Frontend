@@ -261,10 +261,13 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
 
   // Getter público para verificar si el formulario es válido
   bool get isFormValid {
-    // Validar que los campos obligatorios tengan contenido
-    bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty &&
-        _descriptionController.text.trim().isNotEmpty &&
-        _horarioController.text.trim().isNotEmpty;
+    // DEBUG: Solo validar los campos básicos (name y legal_name)
+    bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty;
+
+    // TODO: Re-habilitar validaciones completas después del debug
+    // bool hasRequiredContent = _haciendaNameController.text.trim().isNotEmpty &&
+    //     _descriptionController.text.trim().isNotEmpty &&
+    //     _horarioController.text.trim().isNotEmpty;
 
     // Validar formato del RIF (opcional pero si se llena debe tener formato correcto)
     bool rifValid = true; // Por defecto válido si está vacío
@@ -286,12 +289,15 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   // Getter para obtener el progreso del formulario (0.0 a 1.0)
   double get formProgress {
     int completedFields = 0;
-    int totalFields =
-        3; // Total de campos obligatorios: nombre, descripción, horario
+    int totalFields = 1; // DEBUG: Solo nombre de hacienda es obligatorio
 
     if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
-    if (_descriptionController.text.trim().isNotEmpty) completedFields++;
-    if (_horarioController.text.trim().isNotEmpty) completedFields++;
+
+    // TODO: Re-habilitar campos adicionales después del debug
+    // int totalFields = 3; // Total de campos obligatorios: nombre, descripción, horario
+    // if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
+    // if (_descriptionController.text.trim().isNotEmpty) completedFields++;
+    // if (_horarioController.text.trim().isNotEmpty) completedFields++;
 
     return completedFields / totalFields;
   }
@@ -441,12 +447,14 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
       debugPrint('🚀 FRONTEND PAGE2: Guardando datos de la hacienda...');
 
       // Debug: Mostrar datos que se van a enviar
-      debugPrint('📋 FRONTEND PAGE2: Datos a enviar:');
+      debugPrint(
+          '📋 FRONTEND PAGE2: Datos a enviar (DEBUG - Solo campos básicos):');
       debugPrint('  - haciendaName: ${_haciendaNameController.text.trim()}');
       debugPrint('  - razonSocial: ${_razonSocialController.text.trim()}');
-      debugPrint('  - rif: ${_rifController.text.trim()}');
-      debugPrint('  - description: ${_descriptionController.text.trim()}');
-      debugPrint('  - horario: ${_horarioController.text.trim()}');
+      // TODO: Re-habilitar después del debug
+      // debugPrint('  - rif: ${_rifController.text.trim()}');
+      // debugPrint('  - description: ${_descriptionController.text.trim()}');
+      // debugPrint('  - horario: ${_horarioController.text.trim()}');
 
       // 1. Crear hacienda
       debugPrint('🏠 FRONTEND PAGE2: Enviando petición para crear hacienda...');
@@ -462,11 +470,12 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         legalName: _razonSocialController.text.trim().isNotEmpty
             ? _razonSocialController.text.trim()
             : null,
-        taxId: _rifController.text.trim().isNotEmpty
-            ? _rifController.text.trim()
-            : null,
-        businessDescription: _descriptionController.text.trim(),
-        contactHours: _horarioController.text.trim(),
+        // TODO: Re-habilitar después del debug
+        // taxId: _rifController.text.trim().isNotEmpty
+        //     ? _rifController.text.trim()
+        //     : null,
+        // businessDescription: _descriptionController.text.trim(),
+        // contactHours: _horarioController.text.trim(),
         // TODO: Usar la dirección creada en la página anterior
         addressId: null,
       );
@@ -678,112 +687,113 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
 
                           const SizedBox(height: 16),
 
+                          // TODO: DEBUG - Campos temporalmente ocultos
                           // RIF
-                          TextFormField(
-                            controller: _rifController,
-                            keyboardType: TextInputType.text,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[A-Za-z0-9\-]')),
-                              LengthLimitingTextInputFormatter(12),
-                            ],
-                            onChanged: _onRifChanged,
-                            decoration: InputDecoration(
-                              labelText: 'RIF',
-                              hintText: 'J-12345678-9',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: CorralXTheme.primarySolid,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            validator: _validateRIF,
-                          ),
+                          // TextFormField(
+                          //   controller: _rifController,
+                          //   keyboardType: TextInputType.text,
+                          //   inputFormatters: [
+                          //     FilteringTextInputFormatter.allow(
+                          //         RegExp(r'[A-Za-z0-9\-]')),
+                          //     LengthLimitingTextInputFormatter(12),
+                          //   ],
+                          //   onChanged: _onRifChanged,
+                          //   decoration: InputDecoration(
+                          //     labelText: 'RIF',
+                          //     hintText: 'J-12345678-9',
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //     ),
+                          //     focusedBorder: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //       borderSide: BorderSide(
+                          //         color: CorralXTheme.primarySolid,
+                          //         width: 2,
+                          //       ),
+                          //     ),
+                          //   ),
+                          //   validator: _validateRIF,
+                          // ),
 
-                          const SizedBox(height: 16),
+                          // const SizedBox(height: 16),
 
-                          // Descripción de la finca
-                          TextFormField(
-                            controller: _descriptionController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              labelText: 'Descripción de la finca *',
-                              hintText:
-                                  'Escriba toda la información que considere relevante',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: CorralXTheme.primarySolid,
-                                  width: 2,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: colorScheme.error,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            validator: _validateDescription,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                          ),
+                          // // Descripción de la finca
+                          // TextFormField(
+                          //   controller: _descriptionController,
+                          //   maxLines: 4,
+                          //   decoration: InputDecoration(
+                          //     labelText: 'Descripción de la finca *',
+                          //     hintText:
+                          //         'Escriba toda la información que considere relevante',
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //     ),
+                          //     focusedBorder: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //       borderSide: BorderSide(
+                          //         color: CorralXTheme.primarySolid,
+                          //         width: 2,
+                          //       ),
+                          //     ),
+                          //     errorBorder: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //       borderSide: BorderSide(
+                          //         color: colorScheme.error,
+                          //         width: 2,
+                          //       ),
+                          //     ),
+                          //   ),
+                          //   validator: _validateDescription,
+                          //   autovalidateMode:
+                          //       AutovalidateMode.onUserInteraction,
+                          // ),
 
-                          const SizedBox(height: 16),
+                          // const SizedBox(height: 16),
 
-                          // Horario
-                          TextFormField(
-                            controller: _horarioController,
-                            readOnly: false,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r"[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ:.,\-\s/]")),
-                              LengthLimitingTextInputFormatter(100),
-                            ],
-                            onChanged: (_) {
-                              _normalizeText(_horarioController);
-                              _validateForm();
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Horario *',
-                              hintText: 'Elige un preset o personaliza',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: CorralXTheme.primarySolid,
-                                  width: 2,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.error,
-                                  width: 2,
-                                ),
-                              ),
-                              isDense: true,
-                              suffixIcon: IconButton(
-                                tooltip: 'Seleccionar horario',
-                                icon: const Icon(Icons.access_time),
-                                onPressed: _showScheduleSheet,
-                              ),
-                            ),
-                            validator: _validateContactHours,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                          ),
+                          // // Horario
+                          // TextFormField(
+                          //   controller: _horarioController,
+                          //   readOnly: false,
+                          //   inputFormatters: [
+                          //     FilteringTextInputFormatter.allow(
+                          //         RegExp(r"[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ:.,\-\s/]")),
+                          //     LengthLimitingTextInputFormatter(100),
+                          //   ],
+                          //   onChanged: (_) {
+                          //     _normalizeText(_horarioController);
+                          //     _validateForm();
+                          //   },
+                          //   decoration: InputDecoration(
+                          //     labelText: 'Horario *',
+                          //     hintText: 'Elige un preset o personaliza',
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //     ),
+                          //     focusedBorder: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //       borderSide: BorderSide(
+                          //         color: CorralXTheme.primarySolid,
+                          //         width: 2,
+                          //       ),
+                          //     ),
+                          //     errorBorder: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(8),
+                          //       borderSide: BorderSide(
+                          //         color: Theme.of(context).colorScheme.error,
+                          //         width: 2,
+                          //       ),
+                          //     ),
+                          //     isDense: true,
+                          //     suffixIcon: IconButton(
+                          //       tooltip: 'Seleccionar horario',
+                          //       icon: const Icon(Icons.access_time),
+                          //       onPressed: _showScheduleSheet,
+                          //     ),
+                          //   ),
+                          //   validator: _validateContactHours,
+                          //   autovalidateMode:
+                          //       AutovalidateMode.onUserInteraction,
+                          // ),
                         ],
                       ),
 
