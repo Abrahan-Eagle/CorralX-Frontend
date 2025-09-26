@@ -143,7 +143,7 @@ class OnboardingApiService {
   Future<List<Map<String, dynamic>>> getParroquias(int cityId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/parroquias?city_id=$cityId'),
+        Uri.parse('$baseUrl/parishes?city_id=$cityId'),
         headers: _headers,
       );
 
