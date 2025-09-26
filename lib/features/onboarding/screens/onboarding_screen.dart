@@ -7,6 +7,8 @@ import 'onboarding_page3.dart';
 // import 'onboarding_page4.dart';
 // import 'onboarding_page5.dart';
 // import 'onboarding_page6.dart';
+import 'package:provider/provider.dart';
+import 'package:zonix/shared/utils/user_provider.dart';
 import 'onboarding_service.dart';
 import 'package:zonix/main.dart';
 import '../../../core/widgets/amazon_widgets.dart';
@@ -46,14 +48,35 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     ];
   }
 
-  Future<void> _completeOnboarding() async {
-    if (_isLoading) return;
+  Future<void> _completeOnboarding(BuildContext context) async {
+    debugPrint("🚀 _completeOnboarding: INICIANDO...");
+
+    // Resetear el estado de carga para permitir la ejecución
+    setState(() => _isLoading = false);
+    debugPrint("✅ _completeOnboarding: Estado de carga reseteado");
 
     setState(() => _isLoading = true);
+    debugPrint("✅ _completeOnboarding: Estado de carga activado");
 
     try {
-      await _onboardingService.completeOnboarding(context);
+//ojoooooooooooooooooooooo
+      // Obtener el userId del UserProvider
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
 
+      // Asegurar que tenemos los detalles más recientes del usuario
+      final userDetails = await userProvider.getUserDetails();
+      final userId = userDetails['userId'];
+
+      if (userId == null || userId == 0) {
+        throw Exception("ID de usuario no encontrado");
+      }
+
+      await _onboardingService.completeOnboarding(userId);
+      if (!mounted) return;
+
+      // await _onboardingService.completeOnboarding(context);
+
+//ojoooooooooooooooooooooo
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainRouter()),
@@ -113,7 +136,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       if (_currentPage == onboardingPages.length - 1) {
         debugPrint(
             '🏁 ONBOARDING SCREEN: Última página, completando onboarding...');
-        _completeOnboarding();
+        await _completeOnboarding(context);
       } else {
         debugPrint('➡️ ONBOARDING SCREEN: Avanzando a la siguiente página...');
         _controller.nextPage(
