@@ -327,22 +327,22 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zonix/features/auth/services/api_service.dart';
+import 'package:zonix/auth/services/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/shared/utils/user_provider.dart';
+import 'package:zonix/config/user_provider.dart';
 import 'package:flutter/services.dart';
 
 // import 'dart:io';
 // import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:zonix/features/auth/screens/sign_in_screen.dart';
+import 'package:zonix/auth/screens/sign_in_screen.dart';
 
-import 'package:zonix/screens/marketplace_screen.dart';
-import 'package:zonix/screens/favorites_screen.dart';
-import 'package:zonix/screens/create_screen.dart';
-import 'package:zonix/screens/messages_screen.dart';
-import 'package:zonix/screens/profile_screen.dart';
+import 'package:zonix/products/screens/marketplace_screen.dart';
+import 'package:zonix/favorites/screens/favorites_screen.dart';
+import 'package:zonix/products/screens/create_screen.dart';
+import 'package:zonix/chat/screens/messages_screen.dart';
+import 'package:zonix/profiles/screens/profile_screen.dart';
 
 /*
  * ZONIX EATS - Aplicación Multi-Rol

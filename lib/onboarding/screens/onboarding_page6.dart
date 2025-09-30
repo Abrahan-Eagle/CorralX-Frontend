@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/corral_x_theme.dart';
-import '../../../core/widgets/amazon_widgets.dart';
+import '../../config/corral_x_theme.dart';
+import '../../shared/widgets/amazon_widgets.dart';
 
-class OnboardingPage4 extends StatefulWidget {
-  const OnboardingPage4({super.key});
+class OnboardingPage6 extends StatefulWidget {
+  const OnboardingPage6({super.key});
 
   @override
-  State<OnboardingPage4> createState() => _OnboardingPage4State();
+  State<OnboardingPage6> createState() => _OnboardingPage6State();
 }
 
-class _OnboardingPage4State extends State<OnboardingPage4>
+class _OnboardingPage6State extends State<OnboardingPage6>
     with TickerProviderStateMixin {
   late AnimationController _mainController;
   late Animation<double> _fadeAnimation;
@@ -76,13 +76,13 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                         Row(
                           children: [
                             Icon(
-                              Icons.favorite,
+                              Icons.person,
                               color: CorralXTheme.primarySolid,
                               size: 24,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Tus Favoritos',
+                              'Tu Perfil',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 color: CorralXTheme.primarySolid,
@@ -93,7 +93,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Guarda y compara opciones',
+                          'Construye tu reputación',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 14,
@@ -125,7 +125,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Gestión de Favoritos',
+                          'Perfil Profesional',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -134,7 +134,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Organiza y compara tus opciones favoritas',
+                          'Crea confianza con tu perfil completo',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 12,
@@ -142,7 +142,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Marca como favoritos los animales que te interesen. Compara precios, características y toma decisiones informadas.',
+                          'Crea un perfil profesional que genere confianza. Completa tu información, verifica tu identidad y construye tu reputación en la plataforma.',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -150,9 +150,49 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Funciones de favoritos
+                        // Características del perfil
                         Row(
                           children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: CorralXTheme.successSolid
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: CorralXTheme.successSolid
+                                        .withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      color: CorralXTheme.successSolid,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Verificación',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: CorralXTheme.successSolid,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    Text(
+                                      'ID Verificada',
+                                      style: TextStyle(
+                                        color: CorralXTheme.successSolid,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Container(
                                 padding: const EdgeInsets.all(8),
@@ -168,13 +208,13 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                                 child: Column(
                                   children: [
                                     Icon(
-                                      Icons.bookmark,
+                                      Icons.star,
                                       color: CorralXTheme.accentSolid,
                                       size: 20,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Guardar',
+                                      'Reputación',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: CorralXTheme.accentSolid,
@@ -182,7 +222,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                                       ),
                                     ),
                                     Text(
-                                      'Ilimitado',
+                                      '5 Estrellas',
                                       style: TextStyle(
                                         color: CorralXTheme.accentSolid,
                                         fontSize: 9,
@@ -208,13 +248,13 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                                 child: Column(
                                   children: [
                                     Icon(
-                                      Icons.compare,
+                                      Icons.business,
                                       color: CorralXTheme.secondarySolid,
                                       size: 20,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Comparar',
+                                      'Empresa',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: CorralXTheme.secondarySolid,
@@ -222,49 +262,9 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                                       ),
                                     ),
                                     Text(
-                                      'Side by Side',
+                                      'Profesional',
                                       style: TextStyle(
                                         color: CorralXTheme.secondarySolid,
-                                        fontSize: 9,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: CorralXTheme.successSolid
-                                      .withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(2),
-                                  border: Border.all(
-                                    color: CorralXTheme.successSolid
-                                        .withOpacity(0.2),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.notifications,
-                                      color: CorralXTheme.successSolid,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Alertas',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: CorralXTheme.successSolid,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Precios',
-                                      style: TextStyle(
-                                        color: CorralXTheme.successSolid,
                                         fontSize: 9,
                                       ),
                                     ),
@@ -281,7 +281,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
 
                 const SizedBox(height: 12),
 
-                // Funciones de favoritos
+                // Características del perfil
                 AmazonFadeIn(
                   delay: const Duration(milliseconds: 300),
                   child: Container(
@@ -312,7 +312,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                           child: Row(
                             children: [
                               Text(
-                                'Funciones de favoritos',
+                                'Características del perfil',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -323,32 +323,30 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                           ),
                         ),
                         AmazonListItem(
-                          title: 'Guardar Favoritos',
+                          title: 'Verificación de Identidad',
                           subtitle:
-                              'Marca como favorito cualquier animal que te interese',
-                          icon: Icons.favorite_border,
-                          trailing: '∞',
+                              'Verifica tu identidad con documentos oficiales',
+                          icon: Icons.verified_user,
+                          trailing: 'Certificado',
                         ),
                         AmazonListItem(
-                          title: 'Comparar Opciones',
+                          title: 'Sistema de Calificaciones',
                           subtitle:
-                              'Compara lado a lado características y precios',
-                          icon: Icons.compare_arrows,
-                          trailing: 'Side by Side',
+                              'Construye reputación con calificaciones confiables',
+                          icon: Icons.star_rate,
+                          trailing: '5★',
                         ),
                         AmazonListItem(
-                          title: 'Alertas de Precio',
-                          subtitle:
-                              'Recibe notificaciones cuando bajen los precios',
-                          icon: Icons.price_check,
-                          trailing: 'Smart',
+                          title: 'Perfil de Empresa',
+                          subtitle: 'Muestra tu empresa de forma profesional',
+                          icon: Icons.business_center,
+                          trailing: 'Pro',
                         ),
                         AmazonListItem(
-                          title: 'Listas Personalizadas',
-                          subtitle:
-                              'Organiza tus favoritos en listas temáticas',
-                          icon: Icons.list_alt,
-                          trailing: 'Custom',
+                          title: 'Historial de Transacciones',
+                          subtitle: 'Muestra tu historial exitoso de ventas',
+                          icon: Icons.history,
+                          trailing: 'Completo',
                         ),
                       ],
                     ),
@@ -357,7 +355,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
 
                 const SizedBox(height: 12),
 
-                // Ejemplos de favoritos
+                // Perfiles destacados
                 AmazonFadeIn(
                   delay: const Duration(milliseconds: 400),
                   child: Container(
@@ -376,7 +374,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mis Favoritos',
+                          'Perfiles Destacados',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -385,7 +383,7 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Ejemplo de tu lista de favoritos',
+                          'Ejemplos de perfiles exitosos',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 12,
@@ -396,25 +394,25 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                           children: [
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Holstein Premium',
-                                description: 'Vaca lechera de alta producción',
-                                price: '\$3,200',
-                                rating: '4.8',
-                                reviews: 'Favorito',
-                                accentColor: CorralXTheme.accentSolid,
-                                icon: Icons.favorite,
+                                title: 'Finca San José',
+                                description: 'Vendedor verificado 5★',
+                                price: '500+ Ventas',
+                                rating: '4.9',
+                                reviews: 'Verificado',
+                                accentColor: CorralXTheme.successSolid,
+                                icon: Icons.verified,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Angus Negro',
-                                description: 'Toro reproductor certificado',
-                                price: '\$4,500',
-                                rating: '4.9',
-                                reviews: 'Favorito',
+                                title: 'Rancho El Toro',
+                                description: 'Empresa certificada',
+                                price: '300+ Ventas',
+                                rating: '4.8',
+                                reviews: 'Empresa',
                                 accentColor: CorralXTheme.secondarySolid,
-                                icon: Icons.favorite,
+                                icon: Icons.business,
                               ),
                             ),
                           ],
@@ -424,25 +422,25 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                           children: [
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Brahman Joven',
-                                description: 'Novilla de 18 meses',
-                                price: '\$2,800',
+                                title: 'Granja Los Andes',
+                                description: 'Perfil completo 100%',
+                                price: '250+ Ventas',
                                 rating: '4.7',
-                                reviews: 'Favorito',
-                                accentColor: CorralXTheme.successSolid,
-                                icon: Icons.favorite,
+                                reviews: 'Completo',
+                                accentColor: CorralXTheme.accentSolid,
+                                icon: Icons.check_circle,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Limousin Elite',
-                                description: 'Excelente genética',
-                                price: '\$3,800',
-                                rating: '4.6',
-                                reviews: 'Favorito',
-                                accentColor: CorralXTheme.accentSolid,
-                                icon: Icons.favorite,
+                                title: 'Hacienda Verde',
+                                description: 'Especialista en orgánicos',
+                                price: '180+ Ventas',
+                                rating: '4.9',
+                                reviews: 'Especialista',
+                                accentColor: CorralXTheme.successSolid,
+                                icon: Icons.eco,
                               ),
                             ),
                           ],
@@ -461,26 +459,26 @@ class _OnboardingPage4State extends State<OnboardingPage4>
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? CorralXTheme.accentSolid.withOpacity(0.1)
-                          : CorralXTheme.accentSolid.withOpacity(0.05),
+                          ? CorralXTheme.successSolid.withOpacity(0.1)
+                          : CorralXTheme.successSolid.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(2),
                       border: Border.all(
-                        color: CorralXTheme.accentSolid.withOpacity(0.2),
+                        color: CorralXTheme.successSolid.withOpacity(0.2),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          Icons.favorite,
+                          Icons.person_add,
                           size: 16,
-                          color: CorralXTheme.accentSolid,
+                          color: CorralXTheme.successSolid,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Usuarios guardan en promedio 15 animales como favoritos',
+                            'Perfiles verificados tienen 3x más probabilidades de cerrar ventas',
                             style: TextStyle(
-                              color: CorralXTheme.accentSolid,
+                              color: CorralXTheme.successSolid,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),

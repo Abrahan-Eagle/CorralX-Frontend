@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/corral_x_theme.dart';
+import '../../config/corral_x_theme.dart';
 import '../services/onboarding_api_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

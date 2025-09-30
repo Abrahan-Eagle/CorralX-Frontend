@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/main.dart';
-import 'package:zonix/shared/utils/user_provider.dart';
+import 'package:zonix/config/user_provider.dart';
 
 void main() {
   group('App Integration Tests', () {

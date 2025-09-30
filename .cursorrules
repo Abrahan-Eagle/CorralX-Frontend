@@ -7,13 +7,17 @@ description: "Guía de desarrollo Frontend (Flutter) para el MVP de Corral X"
 alwaysApply: true
 ---
 
-## Estructura de Carpetas y Convenciones (Flutter)
-- Organizar el código en la carpeta `lib/` en módulos lógicos:
-  - **`lib/screens/`** – Pantallas principales de la app (ej: `marketplace_screen.dart`, `listing_detail_screen.dart`, `profile_screen.dart`, `chat_screen.dart`, `login_screen.dart`).
-  - **`lib/widgets/`** – Widgets reutilizables o componentes UI pequeños (ej: `listing_card.dart` para mostrar un anuncio en la lista, `user_avatar.dart` para la foto de perfil, etc.).
-  - **`lib/providers/`** – Clases de gestión de estado (usando Provider/ChangeNotifier) para separar la lógica de negocio de la UI (ej: `listing_provider.dart`, `auth_provider.dart`, `chat_provider.dart`).
-  - **`lib/services/`** – Servicios para comunicación con la API u otras utilidades (ej: `api_service.dart` para peticiones HTTP genéricas, o servicios por funcionalidad: `listing_service.dart`, `chat_service.dart`).
-  - *Opcional:* **`lib/models/`** – Clases modelo de datos que representen las estructuras JSON del backend (ej: `Listing.dart`, `User.dart`, `Message.dart`) con métodos factory `fromJson`/`toJson` para conversión.
+## Arquitectura Modular y Convenciones (Flutter)
+- Organizar el código en la carpeta `lib/` usando una arquitectura modular por features:
+  - **`lib/config/`** – Configuración central (app_config.dart, auth_utils.dart, corral_x_theme.dart, user_provider.dart).
+  - **`lib/shared/`** – Servicios y widgets compartidos entre módulos.
+  - **`lib/auth/`** – Módulo de autenticación (screens/, services/, models/, widgets/).
+  - **`lib/onboarding/`** – Módulo de onboarding (screens/, services/, models/, widgets/).
+  - **`lib/products/`** – Módulo de productos/marketplace (screens/, services/, models/, widgets/).
+  - **`lib/chat/`** – Módulo de chat (screens/, services/, models/, widgets/).
+  - **`lib/favorites/`** – Módulo de favoritos (screens/, services/, models/, widgets/).
+  - **`lib/profiles/`** – Módulo de perfiles (screens/, services/, models/, widgets/).
+  - Cada módulo contiene: `models/`, `screens/`, `services/`, `widgets/` específicos de esa funcionalidad.
 - Seguir convenciones de nombrado de Dart/Flutter:
   - Nombres de archivos y directorios en minúscula y con guiones bajos (snake_case), sin espacios ni mayúsculas:contentReference[oaicite:0]{index=0}.
   - Nombres de clases en PascalCase (capitalizando cada palabra, e.j. class `ListingProvider`).

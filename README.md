@@ -67,20 +67,66 @@ Chat: conversaciones + mensajes (WebSocket en tiempo real).
 
 Dashboard: mis publicaciones + métricas.
 
-2) Estructura de carpetas
+2) Estructura de carpetas (Arquitectura Modular)
 lib/
   main.dart
-  config/             (constantes: baseUrl, configuración WebSocket)
-  models/             (User, Listing, ListingImage, Review, Conversation, Message)
-  services/           (api_service.dart, auth_service.dart, listing_service.dart, chat_service.dart, websocket_service.dart, profile_service.dart)
-  providers/          (auth_provider.dart, listing_provider.dart, chat_provider.dart, profile_provider.dart)
-  screens/
-    auth/             (login_screen.dart, register_screen.dart)
-    marketplace/      (marketplace_screen.dart, listing_detail_screen.dart, listing_form_screen.dart)
-    chat/             (conversations_screen.dart, chat_screen.dart)
-    profile/          (my_profile_screen.dart, public_profile_screen.dart)
-    dashboard/        (my_listings_screen.dart, metrics_screen.dart)
-  widgets/            (listing_card.dart, filter_bar.dart, image_picker_grid.dart, chat_bubble.dart, metrics_tiles.dart)
+  config/                    # Configuración central
+    app_config.dart         # Configuración de la app
+    auth_utils.dart         # Utilidades de autenticación
+    corral_x_theme.dart     # Tema de la aplicación
+    user_provider.dart      # Provider de usuario global
+  shared/                   # Servicios y widgets compartidos
+    models/                 # Modelos compartidos
+    services/               # Servicios compartidos
+    widgets/                # Widgets compartidos
+      amazon_widgets.dart   # Widgets estilo Amazon/Alibaba
+  auth/                     # Módulo de autenticación
+    models/                 # Modelos de auth
+    screens/                # Pantallas de auth
+      sign_in_screen.dart   # Pantalla de inicio de sesión
+    services/               # Servicios de auth
+      api_service.dart      # Servicio de API
+      google_sign_in_service.dart # Google Sign-In
+    widgets/                # Widgets de auth
+  onboarding/               # Módulo de onboarding
+    models/                 # Modelos de onboarding
+    screens/                # Pantallas de onboarding
+      onboarding_screen.dart # Pantalla principal
+      onboarding_page1.dart # Datos personales
+      onboarding_page2.dart # Datos comerciales
+      onboarding_page3.dart # Selección de ubicación
+      onboarding_page4.dart # Configuración adicional
+      onboarding_page5.dart # Confirmación
+      onboarding_page6.dart # Finalización
+      welcome_page.dart     # Página de bienvenida
+    services/               # Servicios de onboarding
+      onboarding_api_service.dart # API de onboarding
+    widgets/                # Widgets de onboarding
+  products/                 # Módulo de productos
+    models/                 # Modelos de productos
+    screens/                # Pantallas de productos
+      marketplace_screen.dart # Marketplace principal
+      create_screen.dart     # Crear publicación
+    services/               # Servicios de productos
+    widgets/                # Widgets de productos
+  chat/                     # Módulo de chat
+    models/                 # Modelos de chat
+    screens/                # Pantallas de chat
+      messages_screen.dart  # Pantalla de mensajes
+    services/               # Servicios de chat
+    widgets/                # Widgets de chat
+  favorites/                # Módulo de favoritos
+    models/                 # Modelos de favoritos
+    screens/                # Pantallas de favoritos
+      favorites_screen.dart # Pantalla de favoritos
+    services/               # Servicios de favoritos
+    widgets/                # Widgets de favoritos
+  profiles/                 # Módulo de perfiles
+    models/                 # Modelos de perfiles
+    screens/                # Pantallas de perfiles
+      profile_screen.dart   # Pantalla de perfil
+    services/               # Servicios de perfiles
+    widgets/                # Widgets de perfiles
 
 3) Dependencias (pubspec.yaml sugeridas)
 dependencies:
@@ -163,15 +209,35 @@ No loggear token/PII.
 
 Cerrar sesión borra token/estado.
 
-10) Build y ejecución
-flutter pub get
-flutter run -d chrome   # o dispositvo/emulador
-# Producción
-flutter build apk       # Android
-flutter build ios       # iOS (requiere Xcode)
-flutter build web       # Web (si aplica)
+10) Arquitectura Modular
 
-11) Pruebas (sugeridas)
+La aplicación utiliza una arquitectura modular por features que facilita:
+- Escalabilidad: cada módulo es independiente
+- Mantenibilidad: código organizado por funcionalidad
+- Colaboración: múltiples desarrolladores pueden trabajar en paralelo
+- Testing: estructura clara para pruebas unitarias y de integración
+
+Cada módulo contiene:
+- models/: Modelos de datos específicos del módulo
+- screens/: Pantallas de la UI del módulo
+- services/: Lógica de negocio y comunicación con API
+- widgets/: Componentes reutilizables del módulo
+
+Configuración centralizada en config/:
+- app_config.dart: URLs de API, configuración WebSocket
+- auth_utils.dart: Utilidades de autenticación
+- corral_x_theme.dart: Tema y estilos de la aplicación
+- user_provider.dart: Estado global del usuario
+
+11) Build y ejecución
+flutter pub get
+flutter run -d 192.168.27.5:5555   # Dispositivo Android específico
+# Producción
+flutter build apk --release         # Android
+flutter build ios --release         # iOS (requiere Xcode)
+flutter build web --release         # Web (si aplica)
+
+12) Pruebas (sugeridas)
 
 Unit: parsing de modelos (fromJson/toJson), servicios con mocks de HTTP.
 
@@ -179,7 +245,7 @@ Widget: formularios (validaciones), lista de marketplace (estados loading/empty/
 
 Integración manual con Postman: validar flujos end-to-end (login → crear listing → ver → chatear).
 
-12) Parámetros y convenciones clave
+13) Parámetros y convenciones clave
 
 Fechas: ISO 8601 desde backend; formatear con intl.
 
@@ -189,7 +255,7 @@ Paginación: usar page en /listings; infinito o botones.
 
 Polling: 10–15s en Chat; pausar fuera de ChatScreen.
 
-13) Roadmap UI (post-MVP)
+14) Roadmap UI (post-MVP)
 
 Estados “Destacado”, banners de promoción.
 

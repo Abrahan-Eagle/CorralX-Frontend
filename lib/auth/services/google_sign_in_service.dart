@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:zonix/shared/utils/auth_utils.dart';
-import 'package:zonix/features/auth/services/api_service.dart';
+import 'package:zonix/config/auth_utils.dart';
+import 'package:zonix/auth/services/api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const FlutterSecureStorage _storage = FlutterSecureStorage();

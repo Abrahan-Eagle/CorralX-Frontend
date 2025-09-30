@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/corral_x_theme.dart';
+import '../../config/corral_x_theme.dart';
 
 /// Widgets estilo Amazon/Alibaba - DENSOS y FUNCIONALES
 /// Mucha información visible, layout denso, sin minimalismo

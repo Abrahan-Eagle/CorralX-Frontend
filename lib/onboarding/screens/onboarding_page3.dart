@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/corral_x_theme.dart';
-import '../../../core/widgets/amazon_widgets.dart';
+import '../../config/corral_x_theme.dart';
+import '../../shared/widgets/amazon_widgets.dart';
 
-class OnboardingPage6 extends StatefulWidget {
-  const OnboardingPage6({super.key});
+class OnboardingPage3 extends StatefulWidget {
+  const OnboardingPage3({super.key});
 
   @override
-  State<OnboardingPage6> createState() => _OnboardingPage6State();
+  State<OnboardingPage3> createState() => _OnboardingPage3State();
 }
 
-class _OnboardingPage6State extends State<OnboardingPage6>
+class _OnboardingPage3State extends State<OnboardingPage3>
     with TickerProviderStateMixin {
   late AnimationController _mainController;
   late Animation<double> _fadeAnimation;
@@ -76,13 +76,13 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                         Row(
                           children: [
                             Icon(
-                              Icons.person,
+                              Icons.add_business,
                               color: CorralXTheme.primarySolid,
                               size: 24,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Tu Perfil',
+                              'Publica tu Ganado',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 color: CorralXTheme.primarySolid,
@@ -93,7 +93,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Construye tu reputación',
+                          'Vende de forma profesional',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 14,
@@ -125,7 +125,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Perfil Profesional',
+                          'Herramientas de Publicación',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -134,7 +134,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Crea confianza con tu perfil completo',
+                          'Crea publicaciones detalladas y profesionales',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 12,
@@ -142,7 +142,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Crea un perfil profesional que genere confianza. Completa tu información, verifica tu identidad y construye tu reputación en la plataforma.',
+                          'Crea publicaciones detalladas con fotos, información completa y precios competitivos. Alcanza miles de compradores potenciales.',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -150,9 +150,49 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Características del perfil
+                        // Herramientas disponibles
                         Row(
                           children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: CorralXTheme.secondarySolid
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: CorralXTheme.secondarySolid
+                                        .withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.photo_camera,
+                                      color: CorralXTheme.secondarySolid,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Fotos HD',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: CorralXTheme.secondarySolid,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    Text(
+                                      '10+ Imágenes',
+                                      style: TextStyle(
+                                        color: CorralXTheme.secondarySolid,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Container(
                                 padding: const EdgeInsets.all(8),
@@ -168,13 +208,13 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                                 child: Column(
                                   children: [
                                     Icon(
-                                      Icons.verified,
+                                      Icons.description,
                                       color: CorralXTheme.successSolid,
                                       size: 20,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Verificación',
+                                      'Detalles',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: CorralXTheme.successSolid,
@@ -182,7 +222,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                                       ),
                                     ),
                                     Text(
-                                      'ID Verificada',
+                                      'Completo',
                                       style: TextStyle(
                                         color: CorralXTheme.successSolid,
                                         fontSize: 9,
@@ -208,13 +248,13 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                                 child: Column(
                                   children: [
                                     Icon(
-                                      Icons.star,
+                                      Icons.trending_up,
                                       color: CorralXTheme.accentSolid,
                                       size: 20,
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Reputación',
+                                      'Alcance',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: CorralXTheme.accentSolid,
@@ -222,49 +262,9 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                                       ),
                                     ),
                                     Text(
-                                      '5 Estrellas',
+                                      'Máximo',
                                       style: TextStyle(
                                         color: CorralXTheme.accentSolid,
-                                        fontSize: 9,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: CorralXTheme.secondarySolid
-                                      .withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(2),
-                                  border: Border.all(
-                                    color: CorralXTheme.secondarySolid
-                                        .withOpacity(0.2),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.business,
-                                      color: CorralXTheme.secondarySolid,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Empresa',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: CorralXTheme.secondarySolid,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Profesional',
-                                      style: TextStyle(
-                                        color: CorralXTheme.secondarySolid,
                                         fontSize: 9,
                                       ),
                                     ),
@@ -281,7 +281,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
 
                 const SizedBox(height: 12),
 
-                // Características del perfil
+                // Herramientas de publicación
                 AmazonFadeIn(
                   delay: const Duration(milliseconds: 300),
                   child: Container(
@@ -312,7 +312,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                           child: Row(
                             children: [
                               Text(
-                                'Características del perfil',
+                                'Herramientas de publicación',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -323,30 +323,31 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                           ),
                         ),
                         AmazonListItem(
-                          title: 'Verificación de Identidad',
+                          title: 'Fotos Profesionales',
                           subtitle:
-                              'Verifica tu identidad con documentos oficiales',
-                          icon: Icons.verified_user,
-                          trailing: 'Certificado',
+                              'Hasta 15 fotos de alta calidad por publicación',
+                          icon: Icons.camera_alt,
+                          trailing: 'HD',
                         ),
                         AmazonListItem(
-                          title: 'Sistema de Calificaciones',
-                          subtitle:
-                              'Construye reputación con calificaciones confiables',
-                          icon: Icons.star_rate,
-                          trailing: '5★',
-                        ),
-                        AmazonListItem(
-                          title: 'Perfil de Empresa',
-                          subtitle: 'Muestra tu empresa de forma profesional',
-                          icon: Icons.business_center,
-                          trailing: 'Pro',
-                        ),
-                        AmazonListItem(
-                          title: 'Historial de Transacciones',
-                          subtitle: 'Muestra tu historial exitoso de ventas',
-                          icon: Icons.history,
+                          title: 'Información Detallada',
+                          subtitle: 'Edad, peso, raza, salud, pedigrí y más',
+                          icon: Icons.info_outline,
                           trailing: 'Completo',
+                        ),
+                        AmazonListItem(
+                          title: 'Alcance Masivo',
+                          subtitle:
+                              'Tu publicación llega a miles de compradores',
+                          icon: Icons.visibility,
+                          trailing: '10K+',
+                        ),
+                        AmazonListItem(
+                          title: 'Gestión Fácil',
+                          subtitle:
+                              'Edita, actualiza y gestiona tus publicaciones',
+                          icon: Icons.edit,
+                          trailing: 'Simple',
                         ),
                       ],
                     ),
@@ -355,7 +356,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
 
                 const SizedBox(height: 12),
 
-                // Perfiles destacados
+                // Vendedores exitosos
                 AmazonFadeIn(
                   delay: const Duration(milliseconds: 400),
                   child: Container(
@@ -374,7 +375,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Perfiles Destacados',
+                          'Vendedores Exitosos',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -383,7 +384,7 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Ejemplos de perfiles exitosos',
+                          'Casos de éxito de nuestros vendedores',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 12,
@@ -394,25 +395,25 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                           children: [
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Finca San José',
-                                description: 'Vendedor verificado 5★',
-                                price: '500+ Ventas',
+                                title: 'Finca Los Pinos',
+                                description: 'Vendió 50 cabezas en 30 días',
+                                price: '\$125,000',
                                 rating: '4.9',
-                                reviews: 'Verificado',
+                                reviews: 'Vendido',
                                 accentColor: CorralXTheme.successSolid,
-                                icon: Icons.verified,
+                                icon: Icons.check_circle,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Rancho El Toro',
-                                description: 'Empresa certificada',
-                                price: '300+ Ventas',
+                                title: 'Rancho El Sol',
+                                description: '50 toros reproductores vendidos',
+                                price: '\$250,000',
                                 rating: '4.8',
-                                reviews: 'Empresa',
+                                reviews: 'Vendido',
                                 accentColor: CorralXTheme.secondarySolid,
-                                icon: Icons.business,
+                                icon: Icons.check_circle,
                               ),
                             ),
                           ],
@@ -422,11 +423,11 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                           children: [
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Granja Los Andes',
-                                description: 'Perfil completo 100%',
-                                price: '250+ Ventas',
-                                rating: '4.7',
-                                reviews: 'Completo',
+                                title: 'Hacienda Verde',
+                                description: '100 novillas vendidas este mes',
+                                price: '\$180,000',
+                                rating: '4.9',
+                                reviews: 'Vendido',
                                 accentColor: CorralXTheme.accentSolid,
                                 icon: Icons.check_circle,
                               ),
@@ -434,13 +435,13 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                             const SizedBox(width: 8),
                             Expanded(
                               child: AmazonFeature(
-                                title: 'Hacienda Verde',
-                                description: 'Especialista en orgánicos',
-                                price: '180+ Ventas',
-                                rating: '4.9',
-                                reviews: 'Especialista',
+                                title: 'Granja San José',
+                                description: 'Especialistas en Holstein',
+                                price: '\$95,000',
+                                rating: '4.7',
+                                reviews: 'Vendido',
                                 accentColor: CorralXTheme.successSolid,
-                                icon: Icons.eco,
+                                icon: Icons.check_circle,
                               ),
                             ),
                           ],
@@ -459,26 +460,26 @@ class _OnboardingPage6State extends State<OnboardingPage6>
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? CorralXTheme.successSolid.withOpacity(0.1)
-                          : CorralXTheme.successSolid.withOpacity(0.05),
+                          ? CorralXTheme.accentSolid.withOpacity(0.1)
+                          : CorralXTheme.accentSolid.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(2),
                       border: Border.all(
-                        color: CorralXTheme.successSolid.withOpacity(0.2),
+                        color: CorralXTheme.accentSolid.withOpacity(0.2),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          Icons.person_add,
+                          Icons.monetization_on,
                           size: 16,
-                          color: CorralXTheme.successSolid,
+                          color: CorralXTheme.accentSolid,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Perfiles verificados tienen 3x más probabilidades de cerrar ventas',
+                            'Vendedores activos generan \$2.5M mensuales en ventas',
                             style: TextStyle(
-                              color: CorralXTheme.successSolid,
+                              color: CorralXTheme.accentSolid,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/corral_x_theme.dart';
-import '../../../core/widgets/amazon_widgets.dart';
+import '../../config/corral_x_theme.dart';
+import '../../shared/widgets/amazon_widgets.dart';
 
-class OnboardingPage5 extends StatefulWidget {
-  const OnboardingPage5({super.key});
+class WelcomePage extends StatefulWidget {
+  const WelcomePage({super.key});
 
   @override
-  State<OnboardingPage5> createState() => _OnboardingPage5State();
+  State<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _OnboardingPage5State extends State<OnboardingPage5>
+class _WelcomePageState extends State<WelcomePage>
     with TickerProviderStateMixin {
   late AnimationController _mainController;
   late Animation<double> _fadeAnimation;
@@ -23,7 +23,10 @@ class _OnboardingPage5State extends State<OnboardingPage5>
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _mainController, curve: Curves.easeOut),
+      CurvedAnimation(
+        parent: _mainController,
+        curve: Curves.easeOut,
+      ),
     );
 
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -55,7 +58,7 @@ class _OnboardingPage5State extends State<OnboardingPage5>
               children: [
                 const SizedBox(height: 20),
 
-                // Header con título
+                // Header con logo y información
                 AmazonFadeIn(
                   delay: const Duration(milliseconds: 100),
                   child: Container(
@@ -71,33 +74,54 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                       ),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Logo y título en una fila
                         Row(
                           children: [
-                            Icon(
-                              Icons.chat,
-                              color: CorralXTheme.primarySolid,
-                              size: 24,
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: CorralXTheme.accentSolid,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'CX',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Chat y Negociación',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: CorralXTheme.primarySolid,
-                                fontSize: 20,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'CorralX',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: CorralXTheme.primarySolid,
+                                      fontSize: 28,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Marketplace Ganadero Profesional',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Comunícate directamente',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
                         ),
                       ],
                     ),
@@ -125,7 +149,7 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Comunicación Directa',
+                          'Bienvenido a CorralX',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
@@ -134,7 +158,7 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Chat instantáneo con vendedores y compradores',
+                          'La plataforma líder en comercio ganadero',
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 12,
@@ -142,57 +166,26 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Chatea directamente con vendedores y compradores. Negocia precios, programa visitas y cierra acuerdos de forma segura.',
+                          'Compra y vende ganado de forma segura y confiable',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: colorScheme.onSurface,
                             fontSize: 15,
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Conecta con ganaderos verificados, encuentra las mejores ofertas y gestiona tus transacciones de manera profesional.',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
                         const SizedBox(height: 16),
-                        // Funciones de comunicación
+                        // Estadísticas rápidas
                         Row(
                           children: [
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: CorralXTheme.secondarySolid
-                                      .withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(2),
-                                  border: Border.all(
-                                    color: CorralXTheme.secondarySolid
-                                        .withOpacity(0.2),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.message,
-                                      color: CorralXTheme.secondarySolid,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Chat',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: CorralXTheme.secondarySolid,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Instantáneo',
-                                      style: TextStyle(
-                                        color: CorralXTheme.secondarySolid,
-                                        fontSize: 9,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
                             Expanded(
                               child: Container(
                                 padding: const EdgeInsets.all(8),
@@ -207,25 +200,53 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                                 ),
                                 child: Column(
                                   children: [
-                                    Icon(
-                                      Icons.handshake,
-                                      color: CorralXTheme.successSolid,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(height: 4),
                                     Text(
-                                      'Negociación',
+                                      '1,200+',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                         color: CorralXTheme.successSolid,
-                                        fontSize: 11,
+                                        fontSize: 16,
                                       ),
                                     ),
                                     Text(
-                                      'Segura',
+                                      'Vendedores',
                                       style: TextStyle(
                                         color: CorralXTheme.successSolid,
-                                        fontSize: 9,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: CorralXTheme.secondarySolid
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: CorralXTheme.secondarySolid
+                                        .withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      '5,800+',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: CorralXTheme.secondarySolid,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Publicaciones',
+                                      style: TextStyle(
+                                        color: CorralXTheme.secondarySolid,
+                                        fontSize: 10,
                                       ),
                                     ),
                                   ],
@@ -247,25 +268,19 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                                 ),
                                 child: Column(
                                   children: [
-                                    Icon(
-                                      Icons.shield,
-                                      color: CorralXTheme.accentSolid,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(height: 4),
                                     Text(
-                                      'Seguridad',
+                                      '98%',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                         color: CorralXTheme.accentSolid,
-                                        fontSize: 11,
+                                        fontSize: 16,
                                       ),
                                     ),
                                     Text(
-                                      'Protegida',
+                                      'Satisfacción',
                                       style: TextStyle(
                                         color: CorralXTheme.accentSolid,
-                                        fontSize: 9,
+                                        fontSize: 10,
                                       ),
                                     ),
                                   ],
@@ -281,7 +296,7 @@ class _OnboardingPage5State extends State<OnboardingPage5>
 
                 const SizedBox(height: 12),
 
-                // Funciones de comunicación
+                // Características principales
                 AmazonFadeIn(
                   delay: const Duration(milliseconds: 300),
                   child: Container(
@@ -312,7 +327,7 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                           child: Row(
                             children: [
                               Text(
-                                'Funciones de comunicación',
+                                'Características principales',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -323,129 +338,29 @@ class _OnboardingPage5State extends State<OnboardingPage5>
                           ),
                         ),
                         AmazonListItem(
-                          title: 'Mensajes Instantáneos',
+                          title: 'Vendedores Verificados',
                           subtitle:
-                              'Chat en tiempo real con vendedores y compradores',
-                          icon: Icons.chat_bubble_outline,
-                          trailing: 'Real-time',
+                              'Todos los vendedores están certificados y verificados',
+                          icon: Icons.verified_user,
+                          trailing: '100% Seguro',
                         ),
                         AmazonListItem(
-                          title: 'Negociación Segura',
-                          subtitle:
-                              'Acuerda precios y condiciones de forma protegida',
-                          icon: Icons.gavel,
-                          trailing: 'Seguro',
+                          title: 'Transacciones Protegidas',
+                          subtitle: 'Sistema de pago seguro con garantías',
+                          icon: Icons.security,
+                          trailing: 'Garantizado',
                         ),
                         AmazonListItem(
-                          title: 'Programar Visitas',
-                          subtitle:
-                              'Coordina visitas a las fincas directamente',
-                          icon: Icons.calendar_today,
-                          trailing: 'Fácil',
+                          title: 'Soporte 24/7',
+                          subtitle: 'Atención al cliente disponible siempre',
+                          icon: Icons.support_agent,
+                          trailing: 'Disponible',
                         ),
                         AmazonListItem(
-                          title: 'Historial Completo',
-                          subtitle:
-                              'Mantén registro de todas tus conversaciones',
-                          icon: Icons.history,
-                          trailing: 'Completo',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Conversaciones de ejemplo
-                AmazonFadeIn(
-                  delay: const Duration(milliseconds: 400),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                      borderRadius: BorderRadius.circular(2),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.grey.withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Conversaciones Activas',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Ejemplo de conversaciones en curso',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AmazonFeature(
-                                title: 'Finca San José',
-                                description: 'Interesado en las Holstein',
-                                price: 'Último: \$3,200',
-                                rating: '4.9',
-                                reviews: 'Activo',
-                                accentColor: CorralXTheme.successSolid,
-                                icon: Icons.chat_bubble,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: AmazonFeature(
-                                title: 'Rancho El Toro',
-                                description: 'Negociando precio del toro',
-                                price: 'Último: \$4,500',
-                                rating: '4.8',
-                                reviews: 'Activo',
-                                accentColor: CorralXTheme.secondarySolid,
-                                icon: Icons.chat_bubble,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AmazonFeature(
-                                title: 'Granja Los Andes',
-                                description: 'Programando visita mañana',
-                                price: 'Último: \$1,800',
-                                rating: '4.7',
-                                reviews: 'Activo',
-                                accentColor: CorralXTheme.accentSolid,
-                                icon: Icons.chat_bubble,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: AmazonFeature(
-                                title: 'Hacienda Verde',
-                                description: 'Confirmando entrega',
-                                price: 'Último: \$3,200',
-                                rating: '4.9',
-                                reviews: 'Activo',
-                                accentColor: CorralXTheme.successSolid,
-                                icon: Icons.chat_bubble,
-                              ),
-                            ),
-                          ],
+                          title: 'Entrega Rápida',
+                          subtitle: 'Conexión directa con vendedores locales',
+                          icon: Icons.local_shipping,
+                          trailing: 'Inmediato',
                         ),
                       ],
                     ),
@@ -456,31 +371,31 @@ class _OnboardingPage5State extends State<OnboardingPage5>
 
                 // Información adicional
                 AmazonFadeIn(
-                  delay: const Duration(milliseconds: 500),
+                  delay: const Duration(milliseconds: 400),
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? CorralXTheme.secondarySolid.withOpacity(0.1)
-                          : CorralXTheme.secondarySolid.withOpacity(0.05),
+                          ? CorralXTheme.primarySolid.withOpacity(0.1)
+                          : CorralXTheme.primarySolid.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(2),
                       border: Border.all(
-                        color: CorralXTheme.secondarySolid.withOpacity(0.2),
+                        color: CorralXTheme.primarySolid.withOpacity(0.2),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          Icons.chat,
+                          Icons.info_outline,
                           size: 16,
-                          color: CorralXTheme.secondarySolid,
+                          color: CorralXTheme.primarySolid,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Más de 2,500 mensajes enviados diariamente en la plataforma',
+                            'Únete a miles de ganaderos que ya confían en CorralX para sus transacciones',
                             style: TextStyle(
-                              color: CorralXTheme.secondarySolid,
+                              color: CorralXTheme.primarySolid,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),

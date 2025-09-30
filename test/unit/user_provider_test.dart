@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zonix/shared/utils/user_provider.dart';
+import 'package:zonix/config/user_provider.dart';
 
 void main() {
   group('UserProvider Tests', () {
