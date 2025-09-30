@@ -1,16 +1,15 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
-  
-  // URL base desde .env
+
+  // URL base desde env_config.json
   static String get _baseUrl {
-    return const bool.fromEnvironment('dart.vm.product')
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
+    // Por ahora usamos la URL local directamente
+    return 'http://192.168.27.11:8000';
   }
 
   // Headers comunes con token de autenticación
@@ -30,6 +29,9 @@ class ProductService {
     int perPage = 20,
   }) async {
     try {
+      print('🌐 ProductService.getProducts iniciado');
+      print('🌐 URL base: $_baseUrl');
+
       final uri = Uri.parse('$_baseUrl/api/products').replace(
         queryParameters: {
           'page': page.toString(),
@@ -38,14 +40,25 @@ class ProductService {
         },
       );
 
-      final response = await http.get(
-        uri,
-        headers: await _getHeaders(),
-      ).timeout(const Duration(seconds: 30));
+      print('🌐 URL completa: $uri');
+      print('🌐 Headers: ${await _getHeaders()}');
+
+      final response = await http
+          .get(
+            uri,
+            headers: await _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      print('🌐 Status code: ${response.statusCode}');
+      print('🌐 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final decoded = json.decode(response.body);
+        print('🌐 Response decoded: $decoded');
+        return decoded;
       } else {
+        print('❌ Error response: ${response.statusCode} - ${response.body}');
         throw Exception('Error al obtener productos: ${response.statusCode}');
       }
     } catch (e) {
@@ -56,10 +69,12 @@ class ProductService {
   // GET /api/products/{id} - Obtener detalle de un producto
   static Future<Map<String, dynamic>> getProductDetail(int productId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/api/products/$productId'),
-        headers: await _getHeaders(),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/api/products/$productId'),
+            headers: await _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -131,11 +146,13 @@ class ProductService {
       // Remover valores null del body
       body.removeWhere((key, value) => value == null);
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/api/products'),
-        headers: await _getHeaders(),
-        body: json.encode(body),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/api/products'),
+            headers: await _getHeaders(),
+            body: json.encode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 201) {
         return json.decode(response.body);
@@ -183,7 +200,7 @@ class ProductService {
   }) async {
     try {
       final body = <String, dynamic>{};
-      
+
       // Solo incluir campos que no sean null
       if (ranchId != null) body['ranch_id'] = ranchId;
       if (title != null) body['title'] = title;
@@ -199,22 +216,28 @@ class ProductService {
       if (weightMax != null) body['weight_max'] = weightMax;
       if (sex != null) body['sex'] = sex;
       if (purpose != null) body['purpose'] = purpose;
-      if (healthCertificateUrl != null) body['health_certificate_url'] = healthCertificateUrl;
+      if (healthCertificateUrl != null)
+        body['health_certificate_url'] = healthCertificateUrl;
       if (vaccinesApplied != null) body['vaccines_applied'] = vaccinesApplied;
-      if (documentationIncluded != null) body['documentation_included'] = documentationIncluded;
-      if (geneticTestResults != null) body['genetic_test_results'] = geneticTestResults;
+      if (documentationIncluded != null)
+        body['documentation_included'] = documentationIncluded;
+      if (geneticTestResults != null)
+        body['genetic_test_results'] = geneticTestResults;
       if (isVaccinated != null) body['is_vaccinated'] = isVaccinated;
       if (deliveryMethod != null) body['delivery_method'] = deliveryMethod;
       if (deliveryCost != null) body['delivery_cost'] = deliveryCost;
-      if (deliveryRadiusKm != null) body['delivery_radius_km'] = deliveryRadiusKm;
+      if (deliveryRadiusKm != null)
+        body['delivery_radius_km'] = deliveryRadiusKm;
       if (negotiable != null) body['negotiable'] = negotiable;
       if (status != null) body['status'] = status;
 
-      final response = await http.put(
-        Uri.parse('$_baseUrl/api/products/$productId'),
-        headers: await _getHeaders(),
-        body: json.encode(body),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .put(
+            Uri.parse('$_baseUrl/api/products/$productId'),
+            headers: await _getHeaders(),
+            body: json.encode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -238,10 +261,12 @@ class ProductService {
   // DELETE /api/products/{id} - Eliminar producto
   static Future<bool> deleteProduct(int productId) async {
     try {
-      final response = await http.delete(
-        Uri.parse('$_baseUrl/api/products/$productId'),
-        headers: await _getHeaders(),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .delete(
+            Uri.parse('$_baseUrl/api/products/$productId'),
+            headers: await _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
@@ -285,8 +310,8 @@ class ProductService {
       }
 
       final streamedResponse = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -323,13 +348,15 @@ class ProductService {
     double? maxWeight,
   }) {
     final filters = <String, String>{};
-    
+
     if (type != null && type.isNotEmpty) filters['type'] = type;
     if (breed != null && breed.isNotEmpty) filters['breed'] = breed;
     if (sex != null && sex.isNotEmpty) filters['sex'] = sex;
     if (purpose != null && purpose.isNotEmpty) filters['purpose'] = purpose;
-    if (isVaccinated != null) filters['is_vaccinated'] = isVaccinated.toString();
-    if (deliveryMethod != null && deliveryMethod.isNotEmpty) filters['delivery_method'] = deliveryMethod;
+    if (isVaccinated != null)
+      filters['is_vaccinated'] = isVaccinated.toString();
+    if (deliveryMethod != null && deliveryMethod.isNotEmpty)
+      filters['delivery_method'] = deliveryMethod;
     if (negotiable != null) filters['negotiable'] = negotiable.toString();
     if (status != null && status.isNotEmpty) filters['status'] = status;
     if (minPrice != null) filters['min_price'] = minPrice.toString();

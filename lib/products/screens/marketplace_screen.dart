@@ -1,14 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/product_provider.dart';
+import '../widgets/product_card.dart';
 
-class MarketplaceScreen extends StatelessWidget {
+class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
+
+  @override
+  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedLocation = 'Todos';
+  String _selectedType = 'Todos';
+
+  @override
+  void initState() {
+    super.initState();
+    // Cargar productos al inicializar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().fetchProducts();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _applyFilters() {
+    final productProvider = context.read<ProductProvider>();
+    final filters = <String, String>{};
+
+    if (_selectedLocation != 'Todos') {
+      filters['location'] = _selectedLocation;
+    }
+
+    if (_selectedType != 'Todos') {
+      filters['type'] = _selectedType;
+    }
+
+    if (_searchController.text.isNotEmpty) {
+      filters['search'] = _searchController.text;
+    }
+
+    productProvider.applyFilters(filters);
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth > 600;
-    final isDesktop = screenWidth > 900;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
@@ -27,6 +71,7 @@ class MarketplaceScreen extends StatelessWidget {
               children: [
                 // Search bar
                 TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Buscar por raza, tipo o ubicación...',
                     filled: true,
@@ -36,11 +81,24 @@ class MarketplaceScreen extends StatelessWidget {
                       borderSide: BorderSide.none,
                     ),
                     prefixIcon: Icon(Icons.search, size: isTablet ? 24 : 20),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              _applyFilters();
+                            },
+                          )
+                        : null,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: isTablet ? 20 : 16,
                       vertical: isTablet ? 16 : 12,
                     ),
                   ),
+                  onChanged: (value) {
+                    setState(() {});
+                    _applyFilters();
+                  },
                 ),
                 SizedBox(height: isTablet ? 16 : 12),
                 // Location filter and market pulse button
@@ -61,16 +119,21 @@ class MarketplaceScreen extends StatelessWidget {
                             vertical: isTablet ? 12 : 8,
                           ),
                         ),
-                        value: 'all',
+                        value: _selectedLocation,
                         items: const [
                           DropdownMenuItem(
-                              value: 'all', child: Text('Toda Venezuela')),
+                              value: 'Todos', child: Text('Toda Venezuela')),
                           DropdownMenuItem(
                               value: 'carabobo', child: Text('Carabobo')),
                           DropdownMenuItem(
                               value: 'aragua', child: Text('Aragua')),
                         ],
-                        onChanged: (value) {},
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedLocation = value ?? 'Todos';
+                          });
+                          _applyFilters();
+                        },
                       ),
                     ),
                     SizedBox(width: isTablet ? 12 : 8),
@@ -102,13 +165,40 @@ class MarketplaceScreen extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: isTablet ? 4 : 2),
                     child: Row(
                       children: [
-                        _buildFilterChip('Todos', true, isTablet),
+                        _buildFilterChip(
+                            'Todos', _selectedType == 'Todos', isTablet, () {
+                          setState(() {
+                            _selectedType = 'Todos';
+                          });
+                          _applyFilters();
+                        }),
                         SizedBox(width: isTablet ? 12 : 8),
-                        _buildFilterChip('Lechero', false, isTablet),
+                        _buildFilterChip(
+                            'Lechero', _selectedType == 'lechero', isTablet,
+                            () {
+                          setState(() {
+                            _selectedType = 'lechero';
+                          });
+                          _applyFilters();
+                        }),
                         SizedBox(width: isTablet ? 12 : 8),
-                        _buildFilterChip('Engorde', false, isTablet),
+                        _buildFilterChip(
+                            'Engorde', _selectedType == 'engorde', isTablet,
+                            () {
+                          setState(() {
+                            _selectedType = 'engorde';
+                          });
+                          _applyFilters();
+                        }),
                         SizedBox(width: isTablet ? 12 : 8),
-                        _buildFilterChip('Padrote', false, isTablet),
+                        _buildFilterChip(
+                            'Padrote', _selectedType == 'padrote', isTablet,
+                            () {
+                          setState(() {
+                            _selectedType = 'padrote';
+                          });
+                          _applyFilters();
+                        }),
                       ],
                     ),
                   ),
@@ -118,72 +208,147 @@ class MarketplaceScreen extends StatelessWidget {
           ),
           // Content
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(isTablet ? 24 : 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Featured section
-                  Text(
-                    'Destacadas',
-                    style: TextStyle(
-                      fontSize: isTablet ? 28 : 24,
-                      fontWeight: FontWeight.bold,
+            child: Consumer<ProductProvider>(
+              builder: (context, productProvider, child) {
+                if (productProvider.isLoading &&
+                    productProvider.products.isEmpty) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (productProvider.errorMessage != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error al cargar productos',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          productProvider.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => productProvider.refreshProducts(),
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (productProvider.products.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.pets,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No se encontraron productos',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Intenta ajustar los filtros o busca algo diferente',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () => productProvider.refreshProducts(),
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(isTablet ? 24 : 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Featured section
+                        Text(
+                          'Productos Disponibles',
+                          style: TextStyle(
+                            fontSize: isTablet ? 28 : 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Lista de productos
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: productProvider.products.length,
+                          itemBuilder: (context, index) {
+                            final product = productProvider.products[index];
+                            return ProductCard(
+                              product: product,
+                              onTap: () {
+                                // TODO: Navegar a detalle del producto
+                                productProvider.fetchProductDetail(product.id);
+                              },
+                              onFavorite: () {
+                                // TODO: Implementar favoritos
+                                productProvider.toggleFavorite(product.id);
+                              },
+                            );
+                          },
+                        ),
+
+                        // Botón para cargar más productos
+                        if (productProvider.hasMorePages &&
+                            !productProvider.isLoading)
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: ElevatedButton(
+                              onPressed: () =>
+                                  productProvider.loadMoreProducts(),
+                              child: const Text('Cargar más productos'),
+                            ),
+                          ),
+
+                        if (productProvider.isLoading &&
+                            productProvider.products.isNotEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: isTablet ? 20 : 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                      final childAspectRatio = isTablet ? 1.4 : 1.3;
-
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                          crossAxisSpacing: isTablet ? 20 : 16,
-                          mainAxisSpacing: isTablet ? 20 : 16,
-                        ),
-                        itemCount: 2,
-                        itemBuilder: (context, index) =>
-                            _buildCattleCard(isTablet),
-                      );
-                    },
-                  ),
-                  SizedBox(height: isTablet ? 40 : 32),
-                  // Recent section
-                  Text(
-                    'Recientes',
-                    style: TextStyle(
-                      fontSize: isTablet ? 28 : 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: isTablet ? 20 : 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                      final childAspectRatio = isTablet ? 1.4 : 1.3;
-
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                          crossAxisSpacing: isTablet ? 20 : 16,
-                          mainAxisSpacing: isTablet ? 20 : 16,
-                        ),
-                        itemCount: 4,
-                        itemBuilder: (context, index) =>
-                            _buildCattleCard(isTablet),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -191,14 +356,15 @@ class MarketplaceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isActive, bool isTablet) {
+  Widget _buildFilterChip(
+      String label, bool isActive, bool isTablet, VoidCallback onTap) {
     return FilterChip(
       label: Text(
         label,
         style: TextStyle(fontSize: isTablet ? 16 : 14),
       ),
       selected: isActive,
-      onSelected: (selected) {},
+      onSelected: (selected) => onTap(),
       selectedColor: const Color(0xFFB7F399),
       checkmarkColor: const Color(0xFF082100),
       backgroundColor: const Color(0xFFF4F4ED),

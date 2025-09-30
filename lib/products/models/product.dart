@@ -2,7 +2,8 @@ class Product {
   final int id;
   final String title;
   final String description;
-  final String type; // 'engorde', 'lechero', 'padrote', 'equipment', 'feed', 'other'
+  final String
+      type; // 'engorde', 'lechero', 'padrote', 'equipment', 'feed', 'other'
   final String breed;
   final int age;
   final int quantity;
@@ -26,7 +27,7 @@ class Product {
   final int viewsCount;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // Relaciones
   final int ranchId;
   final Ranch? ranch;
@@ -74,31 +75,34 @@ class Product {
       breed: json['breed'] ?? '',
       age: json['age'] ?? 0,
       quantity: json['quantity'] ?? 0,
-      price: (json['price'] ?? 0.0).toDouble(),
+      price: _parseDouble(json['price']) ?? 0.0,
       currency: json['currency'] ?? 'USD',
-      weightAvg: json['weight_avg']?.toDouble(),
-      weightMin: json['weight_min']?.toDouble(),
-      weightMax: json['weight_max']?.toDouble(),
+      weightAvg: _parseDouble(json['weight_avg']),
+      weightMin: _parseDouble(json['weight_min']),
+      weightMax: _parseDouble(json['weight_max']),
       sex: json['sex'],
       purpose: json['purpose'],
       healthCertificateUrl: json['health_certificate_url'],
       vaccinesApplied: json['vaccines_applied'],
-      documentationIncluded: json['documentation_included'],
+      documentationIncluded: _parseBool(json['documentation_included']),
       geneticTestResults: json['genetic_test_results'],
-      isVaccinated: json['is_vaccinated'],
+      isVaccinated: _parseBool(json['is_vaccinated']),
       deliveryMethod: json['delivery_method'] ?? 'pickup',
-      deliveryCost: json['delivery_cost']?.toDouble(),
-      deliveryRadiusKm: json['delivery_radius_km']?.toDouble(),
-      negotiable: json['negotiable'] ?? false,
+      deliveryCost: _parseDouble(json['delivery_cost']),
+      deliveryRadiusKm: _parseDouble(json['delivery_radius_km']),
+      negotiable: _parseBool(json['negotiable']) ?? false,
       status: json['status'] ?? 'active',
       viewsCount: json['views_count'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse(
+          json['updated_at'] ?? DateTime.now().toIso8601String()),
       ranchId: json['ranch_id'] ?? 0,
       ranch: json['ranch'] != null ? Ranch.fromJson(json['ranch']) : null,
       images: (json['images'] as List<dynamic>?)
-          ?.map((image) => ProductImage.fromJson(image))
-          .toList() ?? [],
+              ?.map((image) => ProductImage.fromJson(image))
+              .toList() ??
+          [],
     );
   }
 
@@ -135,6 +139,30 @@ class Product {
       'ranch': ranch?.toJson(),
       'images': images.map((image) => image.toJson()).toList(),
     };
+  }
+
+  // Helper method para parsear doubles desde JSON
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
+  }
+
+  // Helper method para parsear booleans desde JSON
+  static bool? _parseBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is String) {
+      return value.toLowerCase() == 'true' || value == '1';
+    }
+    if (value is int) {
+      return value == 1;
+    }
+    return null;
   }
 
   // Métodos de conveniencia
@@ -212,7 +240,7 @@ class ProductImage {
       id: json['id'] ?? 0,
       fileUrl: json['file_url'] ?? '',
       fileType: json['file_type'] ?? 'image',
-      isPrimary: json['is_primary'] ?? false,
+      isPrimary: Product._parseBool(json['is_primary']) ?? false,
       sortOrder: json['sort_order'] ?? 0,
       duration: json['duration'],
       resolution: json['resolution'],
@@ -264,9 +292,9 @@ class Ranch {
       legalName: json['legal_name'],
       description: json['description'],
       specialization: json['specialization'],
-      avgRating: json['avg_rating']?.toDouble(),
+      avgRating: Product._parseDouble(json['avg_rating']),
       totalSales: json['total_sales'],
-      lastSaleAt: json['last_sale_at'] != null 
+      lastSaleAt: json['last_sale_at'] != null
           ? DateTime.parse(json['last_sale_at'])
           : null,
     );
