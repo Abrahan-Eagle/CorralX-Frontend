@@ -330,6 +330,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zonix/auth/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/config/user_provider.dart';
+import 'package:zonix/products/providers/product_provider.dart';
 import 'package:flutter/services.dart';
 
 // import 'dart:io';
@@ -395,6 +396,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
       child: MyApp(isIntegrationTest: isIntegrationTest),
     ),
