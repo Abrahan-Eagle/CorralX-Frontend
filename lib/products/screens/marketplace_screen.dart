@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/product_card.dart';
+import '../widgets/filters_modal.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -11,10 +12,6 @@ class MarketplaceScreen extends StatefulWidget {
 }
 
 class _MarketplaceScreenState extends State<MarketplaceScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _selectedLocation = 'Todos';
-  String _selectedType = 'Todos';
-
   @override
   void initState() {
     super.initState();
@@ -24,29 +21,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _applyFilters() {
-    final productProvider = context.read<ProductProvider>();
-    final filters = <String, String>{};
-
-    if (_selectedLocation != 'Todos') {
-      filters['location'] = _selectedLocation;
-    }
-
-    if (_selectedType != 'Todos') {
-      filters['type'] = _selectedType;
-    }
-
-    if (_searchController.text.isNotEmpty) {
-      filters['search'] = _searchController.text;
-    }
-
-    productProvider.applyFilters(filters);
+  void _showFiltersModal() {
+    showDialog(
+      context: context,
+      builder: (context) => FiltersModal(
+        currentFilters: context.read<ProductProvider>().currentFilters,
+        onApplyFilters: (filters) {
+          context.read<ProductProvider>().applyFilters(filters);
+        },
+      ),
+    );
   }
 
   @override
@@ -56,158 +40,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF7),
-      body: Column(
+      body: Stack(
         children: [
-          // Header
-          Container(
-            padding: EdgeInsets.all(isTablet ? 24 : 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFCFDF7),
-              border: Border(
-                bottom: BorderSide(color: Color(0xFF74796D), width: 0.5),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Search bar
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por raza, tipo o ubicación...',
-                    filled: true,
-                    fillColor: const Color(0xFFF4F4ED),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
-                      borderSide: BorderSide.none,
-                    ),
-                    prefixIcon: Icon(Icons.search, size: isTablet ? 24 : 20),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              _applyFilters();
-                            },
-                          )
-                        : null,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 20 : 16,
-                      vertical: isTablet ? 16 : 12,
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {});
-                    _applyFilters();
-                  },
-                ),
-                SizedBox(height: isTablet ? 16 : 12),
-                // Location filter and market pulse button
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: const Color(0xFFF4F4ED),
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(isTablet ? 12 : 8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: isTablet ? 16 : 12,
-                            vertical: isTablet ? 12 : 8,
-                          ),
-                        ),
-                        value: _selectedLocation,
-                        items: const [
-                          DropdownMenuItem(
-                              value: 'Todos', child: Text('Toda Venezuela')),
-                          DropdownMenuItem(
-                              value: 'carabobo', child: Text('Carabobo')),
-                          DropdownMenuItem(
-                              value: 'aragua', child: Text('Aragua')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedLocation = value ?? 'Todos';
-                          });
-                          _applyFilters();
-                        },
-                      ),
-                    ),
-                    SizedBox(width: isTablet ? 12 : 8),
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.insights, size: isTablet ? 20 : 16),
-                      label: Text('Mercado',
-                          style: TextStyle(fontSize: isTablet ? 16 : 14)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD9E7CA),
-                        foregroundColor: const Color(0xFF131F0D),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(isTablet ? 12 : 8),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isTablet ? 16 : 12,
-                          vertical: isTablet ? 12 : 8,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: isTablet ? 16 : 12),
-                // Filter buttons
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isTablet ? 4 : 2),
-                    child: Row(
-                      children: [
-                        _buildFilterChip(
-                            'Todos', _selectedType == 'Todos', isTablet, () {
-                          setState(() {
-                            _selectedType = 'Todos';
-                          });
-                          _applyFilters();
-                        }),
-                        SizedBox(width: isTablet ? 12 : 8),
-                        _buildFilterChip(
-                            'Lechero', _selectedType == 'lechero', isTablet,
-                            () {
-                          setState(() {
-                            _selectedType = 'lechero';
-                          });
-                          _applyFilters();
-                        }),
-                        SizedBox(width: isTablet ? 12 : 8),
-                        _buildFilterChip(
-                            'Engorde', _selectedType == 'engorde', isTablet,
-                            () {
-                          setState(() {
-                            _selectedType = 'engorde';
-                          });
-                          _applyFilters();
-                        }),
-                        SizedBox(width: isTablet ? 12 : 8),
-                        _buildFilterChip(
-                            'Padrote', _selectedType == 'padrote', isTablet,
-                            () {
-                          setState(() {
-                            _selectedType = 'padrote';
-                          });
-                          _applyFilters();
-                        }),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
           // Content
-          Expanded(
+          Positioned.fill(
             child: Consumer<ProductProvider>(
               builder: (context, productProvider, child) {
                 if (productProvider.isLoading &&
@@ -293,16 +129,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Featured section
-                        Text(
-                          'Productos Disponibles',
-                          style: TextStyle(
-                            fontSize: isTablet ? 28 : 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
                         // Lista de productos
                         ListView.builder(
                           shrinkWrap: true,
@@ -351,28 +177,178 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               },
             ),
           ),
+
+          // Botón de filtros minimalista
+          Positioned(
+            top: isTablet ? 24 : 20,
+            right: isTablet ? 24 : 20,
+            child: Consumer<ProductProvider>(
+              builder: (context, productProvider, child) {
+                final activeFiltersCount = productProvider.activeFiltersCount;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _showFiltersModal,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: EdgeInsets.all(isTablet ? 12 : 10),
+                        child: Stack(
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: isTablet ? 24 : 22,
+                              color: Colors.grey[700],
+                            ),
+                            if (activeFiltersCount > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  padding: EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF386A20),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    minWidth: 20,
+                                    minHeight: 20,
+                                  ),
+                                  child: Text(
+                                    '$activeFiltersCount',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(
-      String label, bool isActive, bool isTablet, VoidCallback onTap) {
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(fontSize: isTablet ? 16 : 14),
-      ),
-      selected: isActive,
-      onSelected: (selected) => onTap(),
-      selectedColor: const Color(0xFFB7F399),
-      checkmarkColor: const Color(0xFF082100),
-      backgroundColor: const Color(0xFFF4F4ED),
-      padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 16 : 12,
-        vertical: isTablet ? 8 : 4,
+  Widget _buildActiveFilterChip(
+      String label, VoidCallback onRemove, bool isTablet) {
+    return Container(
+      margin: EdgeInsets.only(right: isTablet ? 8 : 6),
+      child: Chip(
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: isTablet ? 12 : 10,
+            color: const Color(0xFF082100),
+          ),
+        ),
+        backgroundColor: const Color(0xFFB7F399),
+        deleteIcon: Icon(
+          Icons.close,
+          size: isTablet ? 16 : 14,
+          color: const Color(0xFF082100),
+        ),
+        onDeleted: onRemove,
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 8 : 6,
+          vertical: isTablet ? 4 : 2,
+        ),
       ),
     );
+  }
+
+  String _getTypeDisplayName(String type) {
+    switch (type) {
+      case 'Todos':
+        return 'Todos';
+      case 'lechero':
+        return 'Lechero';
+      case 'engorde':
+        return 'Engorde';
+      case 'padrote':
+        return 'Padrote';
+      case 'reproductor':
+        return 'Reproductor';
+      case 'mixto':
+        return 'Mixto';
+      default:
+        return type;
+    }
+  }
+
+  String _getLocationDisplayName(String location) {
+    switch (location) {
+      case 'Todos':
+        return 'Todos';
+      case 'Toda Venezuela':
+        return 'Toda Venezuela';
+      case 'carabobo':
+        return 'Carabobo';
+      case 'aragua':
+        return 'Aragua';
+      case 'miranda':
+        return 'Miranda';
+      case 'zulia':
+        return 'Zulia';
+      case 'merida':
+        return 'Mérida';
+      case 'tachira':
+        return 'Táchira';
+      case 'lara':
+        return 'Lara';
+      case 'falcon':
+        return 'Falcón';
+      case 'barinas':
+        return 'Barinas';
+      case 'portuguesa':
+        return 'Portuguesa';
+      case 'guarico':
+        return 'Guárico';
+      case 'cojedes':
+        return 'Cojedes';
+      case 'apure':
+        return 'Apure';
+      case 'anzoategui':
+        return 'Anzoátegui';
+      case 'monagas':
+        return 'Monagas';
+      case 'sucre':
+        return 'Sucre';
+      case 'delta_amacuro':
+        return 'Delta Amacuro';
+      case 'amazonas':
+        return 'Amazonas';
+      case 'bolivar':
+        return 'Bolívar';
+      case 'nueva_esparta':
+        return 'Nueva Esparta';
+      case 'vargas':
+        return 'Vargas';
+      case 'distrito_capital':
+        return 'Distrito Capital';
+      default:
+        return location;
+    }
   }
 
   Widget _buildCattleCard(bool isTablet) {

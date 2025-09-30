@@ -19,7 +19,7 @@ class ProductProvider with ChangeNotifier {
   Map<String, List<String>>? _validationErrors;
 
   // Filtros y paginación
-  Map<String, String> _currentFilters = {};
+  Map<String, dynamic> _currentFilters = {};
   int _currentPage = 1;
   bool _hasMorePages = true;
 
@@ -36,7 +36,7 @@ class ProductProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Map<String, List<String>>? get validationErrors => _validationErrors;
 
-  Map<String, String> get currentFilters => _currentFilters;
+  Map<String, dynamic> get currentFilters => _currentFilters;
   bool get hasMorePages => _hasMorePages;
 
   // Método para limpiar errores
@@ -47,7 +47,7 @@ class ProductProvider with ChangeNotifier {
 
   // Cargar productos con filtros
   Future<void> fetchProducts({
-    Map<String, String>? filters,
+    Map<String, dynamic>? filters,
     bool refresh = false,
   }) async {
     try {
@@ -407,12 +407,6 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
-  // Aplicar filtros
-  void applyFilters(Map<String, String> filters) {
-    _currentFilters = filters;
-    fetchProducts(refresh: true);
-  }
-
   // Limpiar filtros
   void clearFilters() {
     _currentFilters.clear();
@@ -422,6 +416,32 @@ class ProductProvider with ChangeNotifier {
   // Refrescar productos
   Future<void> refreshProducts() async {
     await fetchProducts(refresh: true);
+  }
+
+  // Método para aplicar filtros desde el modal
+  void applyFilters(Map<String, dynamic> filters) {
+    _currentFilters = filters;
+    fetchProducts(filters: filters, refresh: true);
+  }
+
+  // Método para obtener el conteo de filtros activos
+  int get activeFiltersCount {
+    int count = 0;
+    if (_currentFilters['search'] != null &&
+        _currentFilters['search'].toString().isNotEmpty) count++;
+    if (_currentFilters['type'] != null && _currentFilters['type'] != 'Todos')
+      count++;
+    if (_currentFilters['location'] != null &&
+        _currentFilters['location'] != 'Todos') count++;
+    if (_currentFilters['min_price'] != null &&
+        _currentFilters['min_price'] > 0) count++;
+    if (_currentFilters['max_price'] != null &&
+        _currentFilters['max_price'] < 100000) count++;
+    if (_currentFilters['sort_by'] != null &&
+        _currentFilters['sort_by'] != 'newest') count++;
+    if (_currentFilters['quantity'] != null && _currentFilters['quantity'] > 1)
+      count++;
+    return count;
   }
 
   // Limpiar estado

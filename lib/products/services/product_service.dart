@@ -24,7 +24,7 @@ class ProductService {
 
   // GET /api/products - Listar productos con filtros
   static Future<Map<String, dynamic>> getProducts({
-    Map<String, String>? filters,
+    Map<String, dynamic>? filters,
     int page = 1,
     int perPage = 20,
   }) async {
@@ -32,12 +32,22 @@ class ProductService {
       print('🌐 ProductService.getProducts iniciado');
       print('🌐 URL base: $_baseUrl');
 
+      // Convertir filtros a strings para la URL
+      Map<String, String> queryParams = {
+        'page': page.toString(),
+        'per_page': perPage.toString(),
+      };
+
+      if (filters != null) {
+        filters.forEach((key, value) {
+          if (value != null) {
+            queryParams[key] = value.toString();
+          }
+        });
+      }
+
       final uri = Uri.parse('$_baseUrl/api/products').replace(
-        queryParameters: {
-          'page': page.toString(),
-          'per_page': perPage.toString(),
-          ...?filters,
-        },
+        queryParameters: queryParams,
       );
 
       print('🌐 URL completa: $uri');
