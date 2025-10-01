@@ -55,7 +55,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final isTablet = screenWidth > 600;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFDF7),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Stack(
         children: [
           // Content
@@ -165,7 +165,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: const Color(0xFF386A20),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
                                         width: 2,
                                       ),
                                     ),
@@ -191,8 +193,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               ElevatedButton(
                                 onPressed: _performSearch,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF386A20),
-                                  foregroundColor: Colors.white,
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.onPrimary,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isTablet ? 20 : 16,
                                     vertical: isTablet ? 16 : 12,
@@ -306,7 +310,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                 child: Container(
                                   padding: EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF386A20),
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   constraints: BoxConstraints(
@@ -347,14 +352,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           label,
           style: TextStyle(
             fontSize: isTablet ? 12 : 10,
-            color: const Color(0xFF082100),
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
           ),
         ),
-        backgroundColor: const Color(0xFFB7F399),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         deleteIcon: Icon(
           Icons.close,
           size: isTablet ? 16 : 14,
-          color: const Color(0xFF082100),
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
         onDeleted: onRemove,
         padding: EdgeInsets.symmetric(

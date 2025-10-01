@@ -330,6 +330,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zonix/auth/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/config/user_provider.dart';
+import 'package:zonix/config/corral_x_theme.dart';
+import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:flutter/services.dart';
 
@@ -397,6 +399,8 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(
+            create: (_) => ThemeProvider()..loadThemePreference()),
       ],
       child: MyApp(isIntegrationTest: isIntegrationTest),
     ),
@@ -423,90 +427,28 @@ class MyApp extends StatelessWidget {
       userProvider.checkAuthentication();
     }
 
-    return MaterialApp(
-      title: 'CorralX',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primaryColor: const Color(0xFF2E7D32),
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF333333),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          titleTextStyle: TextStyle(
-            color: const Color(0xFF333333),
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            letterSpacing: 0.2,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'CorralX',
+          debugShowCheckedModeBanner: false,
+          theme: CorralXTheme.lightTheme,
+          darkTheme: CorralXTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: Consumer<UserProvider>(
+            builder: (context, userProvider, child) {
+              logger.i('isAuthenticated: ${userProvider.isAuthenticated}');
+              if (userProvider.isAuthenticated) {
+                return const MainRouter();
+              } else {
+                return const SignInScreen();
+              }
+            },
           ),
-        ),
-        colorScheme: ColorScheme.light(
-          primary: const Color(0xFF2E7D32),
-          secondary: const Color(0xFF4CAF50),
-          error: const Color(0xFFE53935),
-          surface: Colors.white,
-          onSurface: const Color(0xFF333333),
-          onSurfaceVariant: const Color(0xFF666666),
-        ),
-        cardColor: Colors.white,
-        buttonTheme: ButtonThemeData(
-          buttonColor: const Color(0xFF2E7D32),
-          textTheme: ButtonTextTheme.primary,
-        ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: const Color(0xFF2E7D32),
-          foregroundColor: Colors.white,
-        ),
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFF4CAF50),
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        appBarTheme: AppBarTheme(
-          backgroundColor: const Color(0xFF1E1E1E),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            letterSpacing: 0.2,
-          ),
-        ),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF4CAF50),
-          secondary: const Color(0xFF66BB6A),
-          error: const Color(0xFFEF5350),
-          surface: const Color(0xFF1E1E1E),
-          onSurface: Colors.white,
-          onSurfaceVariant: Colors.white70,
-        ),
-        cardColor: const Color(0xFF1E1E1E),
-        buttonTheme: ButtonThemeData(
-          buttonColor: const Color(0xFF4CAF50),
-          textTheme: ButtonTextTheme.primary,
-        ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: const Color(0xFF4CAF50),
-          foregroundColor: Colors.white,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      home: Consumer<UserProvider>(
-        builder: (context, userProvider, child) {
-          logger.i('isAuthenticated: ${userProvider.isAuthenticated}');
-          if (userProvider.isAuthenticated) {
-            return const MainRouter();
-          } else {
-            return const SignInScreen();
-          }
-        },
-      ),
-      routes: {
-        // Rutas básicas del MVP
+          routes: {
+            // Rutas básicas del MVP
+          },
+        );
       },
     );
   }
@@ -741,12 +683,11 @@ class MainRouterState extends State<MainRouter> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         shadowColor: Colors.transparent,
         leading: null,
         title: Image.asset(
@@ -845,12 +786,12 @@ class MainRouterState extends State<MainRouter> {
           ],
         ),
         child: BottomNavigationBar(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           items: _getBottomNavItems(_selectedLevel, userProvider.userRole),
           currentIndex: _bottomNavIndex,
-          selectedItemColor: const Color(0xFF2E7D32),
-          unselectedItemColor: Colors.grey[600],
+          selectedItemColor: theme.colorScheme.primary,
+          unselectedItemColor: theme.colorScheme.onSurfaceVariant,
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 12,

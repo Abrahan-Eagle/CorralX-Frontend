@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../config/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -206,6 +208,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Editar Perfil',
                     style: TextStyle(fontSize: isTablet ? 16 : 14),
                   ),
+                ),
+                SizedBox(height: isTablet ? 16 : 12),
+                // Botón para cambiar tema
+                Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    return ElevatedButton.icon(
+                      onPressed: () {
+                        themeProvider.toggleTheme();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: themeProvider.isDarkMode
+                            ? const Color(0xFF1F3314)
+                            : const Color(0xFF55624C),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 32 : 24,
+                          vertical: isTablet ? 16 : 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(isTablet ? 30 : 25),
+                        ),
+                      ),
+                      icon: Icon(
+                        themeProvider.isDarkMode
+                            ? Icons.light_mode
+                            : Icons.dark_mode,
+                        size: isTablet ? 20 : 18,
+                      ),
+                      label: Text(
+                        themeProvider.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
+                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

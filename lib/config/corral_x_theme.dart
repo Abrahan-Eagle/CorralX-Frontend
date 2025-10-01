@@ -5,28 +5,49 @@ import 'package:google_fonts/google_fonts.dart';
 /// Aplicando tendencias de diseño 2025: colores vibrantes, tipografías expresivas,
 /// neumorfismo sutil, glassmorphism y modo oscuro optimizado
 class CorralXTheme {
-  // Colores corporativos inspirados en Alibaba/Amazon
+  // Colores ganaderos inspirados en la naturaleza y la agricultura
   static const Color primarySeed =
-      Color(0xFF1976D2); // Azul corporativo principal
-  static const Color secondarySeed = Color(0xFF424242); // Gris corporativo
-  static const Color accentSeed =
-      Color(0xFFFF6F00); // Naranja corporativo para acentos
+      Color(0xFF386A20); // Verde principal ganadero
+  static const Color secondarySeed = Color(0xFF55624C); // Verde secundario
+  static const Color accentSeed = Color(0xFFB7F399); // Verde claro para acentos
 
-  // Paleta de colores corporativa profesional
-  static const Color corporateBlue = Color(0xFF1976D2); // Azul principal
-  static const Color corporateDark = Color(0xFF1565C0); // Azul oscuro
-  static const Color corporateLight = Color(0xFF42A5F5); // Azul claro
-  static const Color successGreen = Color(0xFF388E3C); // Verde éxito
+  // Paleta de colores ganadera profesional
+  static const Color primaryGreen = Color(0xFF386A20); // Verde principal
+  static const Color primaryContainer =
+      Color(0xFFB7F399); // Verde claro contenedor
+  static const Color onPrimaryContainer =
+      Color(0xFF082100); // Verde oscuro sobre contenedor
+  static const Color secondaryGreen = Color(0xFF55624C); // Verde secundario
+  static const Color secondaryContainer =
+      Color(0xFFD9E7CA); // Verde claro secundario
+  static const Color successGreen = Color(0xFF00A651); // Verde éxito
   static const Color warningOrange = Color(0xFFFF6F00); // Naranja advertencia
-  static const Color neutralGray = Color(0xFF757575); // Gris neutral
-  static const Color darkGray = Color(0xFF424242); // Gris oscuro
-  static const Color lightGray = Color(0xFFBDBDBD); // Gris claro
+  static const Color neutralGray = Color(0xFF74796D); // Gris neutral
+  static const Color darkGray = Color(0xFF43483E); // Gris oscuro
+  static const Color lightGray = Color(0xFFE0E4D7); // Gris claro
 
   /// Tema claro moderno con Material Design 3
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primarySeed,
       brightness: Brightness.light,
+      primary: const Color(0xFF386A20),
+      onPrimary: const Color(0xFFFFFFFF),
+      primaryContainer: const Color(0xFFB7F399),
+      onPrimaryContainer: const Color(0xFF082100),
+      secondary: const Color(0xFF55624C),
+      onSecondary: const Color(0xFFFFFFFF),
+      secondaryContainer: const Color(0xFFD9E7CA),
+      onSecondaryContainer: const Color(0xFF131F0D),
+      error: const Color(0xFFBA1A1A),
+      onError: const Color(0xFFFFFFFF),
+      background: const Color(0xFFFCFDF7),
+      onBackground: const Color(0xFF1A1C18),
+      surface: const Color(0xFFFCFDF7),
+      onSurface: const Color(0xFF1A1C18),
+      surfaceVariant: const Color(0xFFE0E4D7),
+      onSurfaceVariant: const Color(0xFF43483E),
+      outline: const Color(0xFF74796D),
     );
 
     return ThemeData(
@@ -169,6 +190,23 @@ class CorralXTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primarySeed,
       brightness: Brightness.dark,
+      primary: const Color(0xFF9CDA7F),
+      onPrimary: const Color(0xFF082100),
+      primaryContainer: const Color(0xFF1F3314),
+      onPrimaryContainer: const Color(0xFFB7F399),
+      secondary: const Color(0xFFBCCAB0),
+      onSecondary: const Color(0xFF263420),
+      secondaryContainer: const Color(0xFF3A4A2F),
+      onSecondaryContainer: const Color(0xFFD9E7CA),
+      error: const Color(0xFFFFB4AB),
+      onError: const Color(0xFF690005),
+      background: const Color(0xFF1A1C18),
+      onBackground: const Color(0xFFE0E4D7),
+      surface: const Color(0xFF2B2D28),
+      onSurface: const Color(0xFFE0E4D7),
+      surfaceVariant: const Color(0xFF43483E),
+      onSurfaceVariant: const Color(0xFFC4C8BB),
+      outline: const Color(0xFF8E9388),
     );
 
     return ThemeData(
@@ -307,12 +345,13 @@ class CorralXTheme {
     );
   }
 
-  /// Colores sólidos como Amazon/Alibaba (sin degradados)
-  static const Color primarySolid = Color(0xFF232F3E); // Azul Amazon oscuro
-  static const Color secondarySolid = Color(0xFF146EB4); // Azul Amazon
-  static const Color accentSolid = Color(0xFFFF9900); // Naranja Amazon
+  /// Colores sólidos ganaderos (sin degradados)
+  static const Color primarySolid =
+      Color(0xFF386A20); // Verde principal ganadero
+  static const Color secondarySolid = Color(0xFF55624C); // Verde secundario
+  static const Color accentSolid = Color(0xFFB7F399); // Verde claro acento
   static const Color successSolid = Color(0xFF00A651); // Verde éxito
-  static const Color neutralSolid = Color(0xFF767676); // Gris neutral
+  static const Color neutralSolid = Color(0xFF74796D); // Gris neutral
 
   /// Sombras neumórficas sutiles
   static List<BoxShadow> get neumorphicLight => [
