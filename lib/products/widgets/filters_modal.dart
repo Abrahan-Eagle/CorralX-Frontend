@@ -269,6 +269,8 @@ class _FiltersModalState extends State<FiltersModal> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -277,27 +279,29 @@ class _FiltersModalState extends State<FiltersModal> {
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? theme.colorScheme.background : Colors.white,
           borderRadius: BorderRadius.zero,
         ),
         child: Column(
           children: [
-            // Header minimalista
+            // Header mejorado con tema
             Container(
               padding: EdgeInsets.symmetric(
                 horizontal: isTablet ? 24 : 20,
                 vertical: isTablet ? 16 : 12,
               ),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF386A20),
-                    const Color(0xFF4A7C2A),
-                  ],
-                ),
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.zero,
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -305,7 +309,7 @@ class _FiltersModalState extends State<FiltersModal> {
                   Text(
                     '${_getActiveFiltersCount()} filtros activos',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: theme.colorScheme.onPrimary,
                       fontSize: isTablet ? 16 : 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -314,7 +318,7 @@ class _FiltersModalState extends State<FiltersModal> {
                     onTap: () => Navigator.of(context).pop(),
                     child: Icon(
                       Icons.close_rounded,
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                       size: isTablet ? 24 : 22,
                     ),
                   ),
@@ -329,36 +333,73 @@ class _FiltersModalState extends State<FiltersModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Cantidad minimalista
-                    TextField(
-                      controller: _quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Cantidad mínima',
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        prefixIcon: Icon(Icons.numbers,
-                            size: 20, color: Colors.grey[600]),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _quantity = int.tryParse(value) ?? 1;
-                        });
-                      },
-                    ),
+                    // Cantidad mejorada con tema - COMENTADO
+                    // Container(
+                    //   padding: EdgeInsets.all(16),
+                    //   decoration: BoxDecoration(
+                    //     color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.surface,
+                    //     borderRadius: BorderRadius.circular(12),
+                    //     border: Border.all(
+                    //       color: isDark ? theme.colorScheme.outline.withOpacity(0.3) : theme.colorScheme.outline.withOpacity(0.2),
+                    //       width: 1,
+                    //     ),
+                    //     boxShadow: [
+                    //       BoxShadow(
+                    //         color: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.05),
+                    //         blurRadius: 4,
+                    //         offset: const Offset(0, 1),
+                    //       ),
+                    //     ],
+                    //   ),
+                    //   child: TextField(
+                    //     controller: _quantityController,
+                    //     keyboardType: TextInputType.number,
+                    //     style: TextStyle(color: theme.colorScheme.onSurface),
+                    //     decoration: InputDecoration(
+                    //       hintText: 'Cantidad mínima',
+                    //       hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                    //       filled: false,
+                    //       border: InputBorder.none,
+                    //       prefixIcon: Icon(Icons.numbers,
+                    //           size: 20, color: theme.colorScheme.primary),
+                    //       contentPadding: EdgeInsets.zero,
+                    //     ),
+                    //     onChanged: (value) {
+                    //       setState(() {
+                    //         _quantity = int.tryParse(value) ?? 1;
+                    //       });
+                    //     },
+                    //   ),
+                    // ),
 
-                    SizedBox(height: 20),
+                    // SizedBox(height: 20),
 
                     // Tipo de animal
-                    Text('Tipo de Animal',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.pets,
+                            size: 18,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tipo de Animal',
+                          style: TextStyle(
+                            fontSize: isTablet ? 18 : 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -373,11 +414,15 @@ class _FiltersModalState extends State<FiltersModal> {
                               _selectedType = selected ? type : 'Todos';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: isDark
+                              ? theme.colorScheme.surfaceVariant
+                              : Colors.grey[100],
+                          selectedColor: theme.colorScheme.primary,
+                          checkmarkColor: theme.colorScheme.onPrimary,
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                           ),
                         );
@@ -387,22 +432,65 @@ class _FiltersModalState extends State<FiltersModal> {
                     SizedBox(height: 20),
 
                     // Ubicación
-                    Text('Ubicación',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.secondaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.location_on,
+                            size: 18,
+                            color: theme.colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Ubicación',
+                          style: TextStyle(
+                            fontSize: isTablet ? 18 : 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        color: isDark
+                            ? theme.colorScheme.surfaceContainerHigh
+                            : theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? theme.colorScheme.outline.withOpacity(0.3)
+                              : theme.colorScheme.outline.withOpacity(0.2),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.2)
+                                : Colors.grey.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: DropdownButtonFormField<String>(
                         value: _selectedLocation,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        dropdownColor:
+                            isDark ? theme.colorScheme.surface : Colors.white,
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          prefixIcon: Icon(Icons.location_on,
+                              color: theme.colorScheme.primary, size: 20),
                         ),
                         items: _locations.map((location) {
                           return DropdownMenuItem<String>(
@@ -421,16 +509,54 @@ class _FiltersModalState extends State<FiltersModal> {
                     SizedBox(height: 20),
 
                     // Rango de precios con RangeSlider
-                    Text('Rango de Precio',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.attach_money,
+                            size: 18,
+                            color: theme.colorScheme.onTertiaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Rango de Precio',
+                          style: TextStyle(
+                            fontSize: isTablet ? 18 : 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 8),
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        color: isDark
+                            ? theme.colorScheme.surfaceContainerHigh
+                            : theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? theme.colorScheme.outline.withOpacity(0.3)
+                              : theme.colorScheme.outline.withOpacity(0.2),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.2)
+                                : Colors.grey.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: Column(
                         children: [
@@ -443,8 +569,8 @@ class _FiltersModalState extends State<FiltersModal> {
                               '\$${_priceRange.start.round()}',
                               '\$${_priceRange.end.round()}',
                             ),
-                            activeColor: const Color(0xFF386A20),
-                            inactiveColor: Colors.grey[300],
+                            activeColor: theme.colorScheme.primary,
+                            inactiveColor: theme.colorScheme.surfaceVariant,
                             onChanged: (RangeValues values) {
                               setState(() {
                                 _priceRange = values;
@@ -454,12 +580,22 @@ class _FiltersModalState extends State<FiltersModal> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('\$${_priceRange.start.round()}',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.w500)),
-                              Text('\$${_priceRange.end.round()}',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.w500)),
+                              Text(
+                                '\$${_priceRange.start.round()}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                  fontSize: isTablet ? 16 : 14,
+                                ),
+                              ),
+                              Text(
+                                '\$${_priceRange.end.round()}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                  fontSize: isTablet ? 16 : 14,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -469,9 +605,31 @@ class _FiltersModalState extends State<FiltersModal> {
                     SizedBox(height: 20),
 
                     // Ordenamiento
-                    Text('Ordenar por',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.sort,
+                            size: 18,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Ordenar por',
+                          style: TextStyle(
+                            fontSize: isTablet ? 18 : 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -485,13 +643,15 @@ class _FiltersModalState extends State<FiltersModal> {
                               _sortBy = 'newest';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: isDark
+                              ? theme.colorScheme.surfaceVariant
+                              : Colors.grey[100],
+                          selectedColor: theme.colorScheme.primary,
+                          checkmarkColor: theme.colorScheme.onPrimary,
                           labelStyle: TextStyle(
                             color: _sortBy == 'newest'
-                                ? Colors.white
-                                : Colors.black87,
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -503,13 +663,15 @@ class _FiltersModalState extends State<FiltersModal> {
                               _sortBy = 'price_asc';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: isDark
+                              ? theme.colorScheme.surfaceVariant
+                              : Colors.grey[100],
+                          selectedColor: theme.colorScheme.primary,
+                          checkmarkColor: theme.colorScheme.onPrimary,
                           labelStyle: TextStyle(
                             color: _sortBy == 'price_asc'
-                                ? Colors.white
-                                : Colors.black87,
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -522,13 +684,15 @@ class _FiltersModalState extends State<FiltersModal> {
                               _sortBy = 'price_desc';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: isDark
+                              ? theme.colorScheme.surfaceVariant
+                              : Colors.grey[100],
+                          selectedColor: theme.colorScheme.primary,
+                          checkmarkColor: theme.colorScheme.onPrimary,
                           labelStyle: TextStyle(
                             color: _sortBy == 'price_desc'
-                                ? Colors.white
-                                : Colors.black87,
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -540,40 +704,47 @@ class _FiltersModalState extends State<FiltersModal> {
               ),
             ),
 
-            // Footer mejorado con botones
+            // Footer mejorado con tema
             Container(
               padding: EdgeInsets.all(isTablet ? 24 : 20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFFF8F9FA),
-                    const Color(0xFFF4F4ED),
-                  ],
-                ),
+                color: isDark
+                    ? theme.colorScheme.surfaceContainerHigh
+                    : theme.colorScheme.surface,
                 borderRadius: BorderRadius.zero,
                 border: Border(
                   top: BorderSide(
-                    color: const Color(0xFFE0E0E0).withOpacity(0.5),
+                    color: theme.colorScheme.outline.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color:
+                            isDark ? theme.colorScheme.surface : Colors.white,
                         borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
                         border: Border.all(
-                          color: const Color(0xFFE0E0E0),
+                          color: theme.colorScheme.outline.withOpacity(0.3),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: isDark
+                                ? Colors.black.withOpacity(0.2)
+                                : Colors.grey.withOpacity(0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -595,7 +766,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                 Icon(
                                   Icons.clear_all_rounded,
                                   size: isTablet ? 20 : 18,
-                                  color: const Color(0xFF74796D),
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                                 SizedBox(width: isTablet ? 8 : 6),
                                 Text(
@@ -603,7 +774,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                   style: TextStyle(
                                     fontSize: isTablet ? 16 : 14,
                                     fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF74796D),
+                                    color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -618,18 +789,11 @@ class _FiltersModalState extends State<FiltersModal> {
                     flex: 2,
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF386A20),
-                            const Color(0xFF4A7C2A),
-                          ],
-                        ),
+                        color: theme.colorScheme.primary,
                         borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF386A20).withOpacity(0.3),
+                            color: theme.colorScheme.primary.withOpacity(0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -651,7 +815,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                 Icon(
                                   Icons.check_rounded,
                                   size: isTablet ? 20 : 18,
-                                  color: Colors.white,
+                                  color: theme.colorScheme.onPrimary,
                                 ),
                                 SizedBox(width: isTablet ? 8 : 6),
                                 Text(
@@ -659,7 +823,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                   style: TextStyle(
                                     fontSize: isTablet ? 16 : 14,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: theme.colorScheme.onPrimary,
                                   ),
                                 ),
                               ],
