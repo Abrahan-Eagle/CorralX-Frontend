@@ -277,7 +277,7 @@ class _FiltersModalState extends State<FiltersModal> {
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.zero,
         ),
         child: Column(
@@ -293,8 +293,8 @@ class _FiltersModalState extends State<FiltersModal> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFF386A20),
-                    const Color(0xFF4A7C2A),
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primaryContainer,
                   ],
                 ),
                 borderRadius: BorderRadius.zero,
@@ -305,7 +305,7 @@ class _FiltersModalState extends State<FiltersModal> {
                   Text(
                     '${_getActiveFiltersCount()} filtros activos',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                       fontSize: isTablet ? 16 : 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -314,7 +314,7 @@ class _FiltersModalState extends State<FiltersModal> {
                     onTap: () => Navigator.of(context).pop(),
                     child: Icon(
                       Icons.close_rounded,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       size: isTablet ? 24 : 22,
                     ),
                   ),
@@ -336,13 +336,13 @@ class _FiltersModalState extends State<FiltersModal> {
                       decoration: InputDecoration(
                         hintText: 'Cantidad mínima',
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: Theme.of(context).colorScheme.surfaceVariant,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                         ),
                         prefixIcon: Icon(Icons.numbers,
-                            size: 20, color: Colors.grey[600]),
+                            size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         contentPadding:
                             EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
@@ -373,11 +373,11 @@ class _FiltersModalState extends State<FiltersModal> {
                               _selectedType = selected ? type : 'Todos';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         );
@@ -393,9 +393,9 @@ class _FiltersModalState extends State<FiltersModal> {
                     SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
+                        color: Theme.of(context).colorScheme.surfaceVariant,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline),
                       ),
                       child: DropdownButtonFormField<String>(
                         value: _selectedLocation,
@@ -428,9 +428,9 @@ class _FiltersModalState extends State<FiltersModal> {
                     Container(
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
+                        color: Theme.of(context).colorScheme.surfaceVariant,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline),
                       ),
                       child: Column(
                         children: [
@@ -443,8 +443,8 @@ class _FiltersModalState extends State<FiltersModal> {
                               '\$${_priceRange.start.round()}',
                               '\$${_priceRange.end.round()}',
                             ),
-                            activeColor: const Color(0xFF386A20),
-                            inactiveColor: Colors.grey[300],
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            inactiveColor: Theme.of(context).colorScheme.surfaceVariant,
                             onChanged: (RangeValues values) {
                               setState(() {
                                 _priceRange = values;
@@ -485,13 +485,13 @@ class _FiltersModalState extends State<FiltersModal> {
                               _sortBy = 'newest';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                           labelStyle: TextStyle(
                             color: _sortBy == 'newest'
-                                ? Colors.white
-                                : Colors.black87,
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -503,13 +503,13 @@ class _FiltersModalState extends State<FiltersModal> {
                               _sortBy = 'price_asc';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                           labelStyle: TextStyle(
                             color: _sortBy == 'price_asc'
-                                ? Colors.white
-                                : Colors.black87,
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -522,13 +522,13 @@ class _FiltersModalState extends State<FiltersModal> {
                               _sortBy = 'price_desc';
                             });
                           },
-                          backgroundColor: Colors.grey[100],
-                          selectedColor: const Color(0xFF386A20),
-                          checkmarkColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                           labelStyle: TextStyle(
                             color: _sortBy == 'price_desc'
-                                ? Colors.white
-                                : Colors.black87,
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -548,14 +548,14 @@ class _FiltersModalState extends State<FiltersModal> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFFF8F9FA),
-                    const Color(0xFFF4F4ED),
+                    Theme.of(context).colorScheme.surfaceContainerLow,
+                    Theme.of(context).colorScheme.surfaceContainerHigh,
                   ],
                 ),
                 borderRadius: BorderRadius.zero,
                 border: Border(
                   top: BorderSide(
-                    color: const Color(0xFFE0E0E0).withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
                     width: 1,
                   ),
                 ),
@@ -565,10 +565,10 @@ class _FiltersModalState extends State<FiltersModal> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
                         border: Border.all(
-                          color: const Color(0xFFE0E0E0),
+                          color: Theme.of(context).colorScheme.outline,
                           width: 1,
                         ),
                         boxShadow: [
@@ -593,9 +593,9 @@ class _FiltersModalState extends State<FiltersModal> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.clear_all_rounded,
-                                  size: isTablet ? 20 : 18,
-                                  color: const Color(0xFF74796D),
+                                Icons.clear_all_rounded,
+                                size: isTablet ? 20 : 18,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 SizedBox(width: isTablet ? 8 : 6),
                                 Text(
@@ -603,7 +603,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                   style: TextStyle(
                                     fontSize: isTablet ? 16 : 14,
                                     fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF74796D),
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -622,14 +622,14 @@ class _FiltersModalState extends State<FiltersModal> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            const Color(0xFF386A20),
-                            const Color(0xFF4A7C2A),
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.primaryContainer,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF386A20).withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -651,7 +651,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                 Icon(
                                   Icons.check_rounded,
                                   size: isTablet ? 20 : 18,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                 ),
                                 SizedBox(width: isTablet ? 8 : 6),
                                 Text(
@@ -659,7 +659,7 @@ class _FiltersModalState extends State<FiltersModal> {
                                   style: TextStyle(
                                     fontSize: isTablet ? 16 : 14,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                 ),
                               ],

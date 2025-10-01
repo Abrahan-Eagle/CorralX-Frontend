@@ -18,7 +18,7 @@ class ProductDetailWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Galería de imágenes
-          _buildImageGallery(),
+          _buildImageGallery(context),
 
           // Información principal
           Padding(
@@ -27,25 +27,25 @@ class ProductDetailWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Título y precio
-                _buildTitleAndPrice(),
+                _buildTitleAndPrice(context),
                 const SizedBox(height: 16),
 
                 // Información del rancho
                 if (product.ranch != null) ...[
-                  _buildRanchInfo(),
+                  _buildRanchInfo(context),
                   const SizedBox(height: 16),
                 ],
 
                 // Detalles del animal
-                _buildAnimalDetails(),
+                _buildAnimalDetails(context),
                 const SizedBox(height: 16),
 
                 // Información de salud
-                _buildHealthInfo(),
+                _buildHealthInfo(context),
                 const SizedBox(height: 16),
 
                 // Descripción
-                _buildDescription(),
+                _buildDescription(context),
                 const SizedBox(height: 24),
 
                 // Botones de acción
@@ -58,12 +58,12 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildImageGallery() {
+  Widget _buildImageGallery(BuildContext context) {
     if (product.images.isEmpty) {
       return Container(
         height: isTablet ? 400 : 300,
         width: double.infinity,
-        color: Colors.grey[100],
+        color: Theme.of(context).colorScheme.surfaceVariant,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -71,14 +71,14 @@ class ProductDetailWidget extends StatelessWidget {
               Icon(
                 Icons.pets,
                 size: isTablet ? 80 : 60,
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 16),
               Text(
                 'Sin imágenes disponibles',
                 style: TextStyle(
                   fontSize: isTablet ? 16 : 14,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -107,7 +107,7 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleAndPrice() {
+  Widget _buildTitleAndPrice(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -120,7 +120,7 @@ class ProductDetailWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: isTablet ? 24 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -147,13 +147,13 @@ class ProductDetailWidget extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       product.breed,
                       style: TextStyle(
-                        color: Colors.blue[700],
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                         fontSize: isTablet ? 14 : 12,
                       ),
@@ -172,7 +172,7 @@ class ProductDetailWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: isTablet ? 28 : 24,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF386A20),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             Text(
@@ -188,24 +188,24 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRanchInfo() {
+  Widget _buildRanchInfo(BuildContext context) {
     final ranch = product.ranch!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: isTablet ? 30 : 25,
-            backgroundColor: const Color(0xFF386A20),
+            backgroundColor: Theme.of(context).colorScheme.primary,
             child: Text(
               ranch.name.isNotEmpty ? ranch.name[0].toUpperCase() : 'R',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 fontSize: isTablet ? 18 : 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -221,7 +221,7 @@ class ProductDetailWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: isTablet ? 18 : 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 if (ranch.legalName != null) ...[
@@ -230,7 +230,7 @@ class ProductDetailWidget extends StatelessWidget {
                     ranch.legalName!,
                     style: TextStyle(
                       fontSize: isTablet ? 14 : 12,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -244,7 +244,7 @@ class ProductDetailWidget extends StatelessWidget {
                               ? Icons.star
                               : Icons.star_border,
                           size: 16,
-                          color: Colors.amber,
+                          color: Theme.of(context).colorScheme.primary,
                         );
                       }),
                       const SizedBox(width: 8),
@@ -252,7 +252,7 @@ class ProductDetailWidget extends StatelessWidget {
                         '${ranch.avgRating!.toStringAsFixed(1)}',
                         style: TextStyle(
                           fontSize: isTablet ? 14 : 12,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -266,13 +266,13 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildAnimalDetails() {
+  Widget _buildAnimalDetails(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,13 +304,13 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHealthInfo() {
+  Widget _buildHealthInfo(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,9 +324,9 @@ class ProductDetailWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildHealthRow('Vacunado', product.isVaccinated ?? false),
+          _buildHealthRow(context, 'Vacunado', product.isVaccinated ?? false),
           _buildHealthRow(
-              'Documentación incluida', product.documentationIncluded ?? false),
+              context, 'Documentación incluida', product.documentationIncluded ?? false),
           if (product.vaccinesApplied != null &&
               product.vaccinesApplied!.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -335,7 +335,7 @@ class ProductDetailWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: isTablet ? 14 : 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
@@ -343,14 +343,14 @@ class ProductDetailWidget extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
+                  Icon(Icons.check_circle, size: 16, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       product.vaccinesApplied!,
                       style: TextStyle(
                         fontSize: isTablet ? 14 : 12,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -363,13 +363,13 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,8 +408,8 @@ class ProductDetailWidget extends StatelessWidget {
               _showContactDialog(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF386A20),
-              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -435,8 +435,8 @@ class ProductDetailWidget extends StatelessWidget {
                     _showShareDialog(context);
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF386A20),
-                    side: const BorderSide(color: Color(0xFF386A20)),
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    side: BorderSide(color: Theme.of(context).colorScheme.primary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -461,8 +461,8 @@ class ProductDetailWidget extends StatelessWidget {
                     _showReportDialog(context);
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red[600],
-                    side: BorderSide(color: Colors.red[600]!),
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(color: Theme.of(context).colorScheme.error),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -514,7 +514,7 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHealthRow(String label, bool value) {
+  Widget _buildHealthRow(BuildContext context, String label, bool value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -522,14 +522,14 @@ class ProductDetailWidget extends StatelessWidget {
           Icon(
             value ? Icons.check_circle : Icons.cancel,
             size: 20,
-            color: value ? Colors.green[600] : Colors.red[600],
+            color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
           ),
           const SizedBox(width: 12),
           Text(
             label,
             style: TextStyle(
               fontSize: isTablet ? 14 : 12,
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const Spacer(),
@@ -538,7 +538,7 @@ class ProductDetailWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: isTablet ? 14 : 12,
               fontWeight: FontWeight.w600,
-              color: value ? Colors.green[600] : Colors.red[600],
+              color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
             ),
           ),
         ],
@@ -568,7 +568,7 @@ class ProductDetailWidget extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF386A20),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             child: const Text('Contactar'),
           ),
@@ -598,7 +598,7 @@ class ProductDetailWidget extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF386A20),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             child: const Text('Compartir'),
           ),
@@ -628,7 +628,7 @@ class ProductDetailWidget extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text('Reportar'),
           ),
