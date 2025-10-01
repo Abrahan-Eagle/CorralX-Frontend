@@ -171,8 +171,68 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                         width: 2,
                                       ),
                                     ),
-                                    prefixIcon: Icon(Icons.search,
-                                        color: Colors.grey[600]),
+                                    prefixIcon: Consumer<ProductProvider>(
+                                      builder:
+                                          (context, productProvider, child) {
+                                        final activeFiltersCount =
+                                            productProvider.activeFiltersCount;
+                                        return GestureDetector(
+                                          onTap: _showFiltersModal,
+                                          child: Container(
+                                            width: 24,
+                                            height: 24,
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.tune_rounded,
+                                                  color: Colors.grey[600],
+                                                  size: 20,
+                                                ),
+                                                if (activeFiltersCount > 0)
+                                                  Positioned(
+                                                    right: -2,
+                                                    top: -2,
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              2),
+                                                      decoration: BoxDecoration(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        border: Border.all(
+                                                          color: Colors.white,
+                                                          width: 1,
+                                                        ),
+                                                      ),
+                                                      constraints:
+                                                          const BoxConstraints(
+                                                        minWidth: 14,
+                                                        minHeight: 14,
+                                                      ),
+                                                      child: Text(
+                                                        '$activeFiltersCount',
+                                                        style: const TextStyle(
+                                                          fontSize: 9,
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                     contentPadding: EdgeInsets.symmetric(
                                       horizontal: isTablet ? 20 : 16,
                                       vertical: isTablet ? 16 : 12,
@@ -263,75 +323,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                             ),
                           ),
                       ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Botón de filtros minimalista (esquina superior izquierda)
-          Positioned(
-            top: isTablet ? 24 : 20,
-            left: isTablet ? 24 : 20,
-            child: Consumer<ProductProvider>(
-              builder: (context, productProvider, child) {
-                final activeFiltersCount = productProvider.activeFiltersCount;
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _showFiltersModal,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: EdgeInsets.all(isTablet ? 12 : 10),
-                        child: Stack(
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              size: isTablet ? 24 : 22,
-                              color: Colors.grey[700],
-                            ),
-                            if (activeFiltersCount > 0)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: Container(
-                                  padding: EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  constraints: BoxConstraints(
-                                    minWidth: 20,
-                                    minHeight: 20,
-                                  ),
-                                  child: Text(
-                                    '$activeFiltersCount',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
                 );
