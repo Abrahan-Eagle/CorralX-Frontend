@@ -13,6 +13,8 @@ class MarketplaceScreen extends StatefulWidget {
 }
 
 class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -20,6 +22,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().fetchProducts();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _performSearch() {
+    final currentFilters = context.read<ProductProvider>().currentFilters;
+    currentFilters['search'] =
+        _searchController.text.isEmpty ? null : _searchController.text;
+    context.read<ProductProvider>().applyFilters(currentFilters);
   }
 
   void _showFiltersModal() {
@@ -130,6 +145,71 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Campo de búsqueda con botón
+                        Container(
+                          margin: EdgeInsets.only(bottom: isTablet ? 20 : 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Buscar por raza, tipo...',
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: const Color(0xFF386A20),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    prefixIcon: Icon(Icons.search,
+                                        color: Colors.grey[600]),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: isTablet ? 20 : 16,
+                                      vertical: isTablet ? 16 : 12,
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    // Solo actualizar el estado local, no aplicar filtros inmediatamente
+                                    setState(() {
+                                      // El campo se actualiza automáticamente
+                                    });
+                                  },
+                                  onSubmitted: (value) {
+                                    _performSearch();
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: isTablet ? 12 : 8),
+                              ElevatedButton(
+                                onPressed: _performSearch,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF386A20),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 20 : 16,
+                                    vertical: isTablet ? 16 : 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.search,
+                                  size: isTablet ? 24 : 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         // Lista de productos
                         ListView.builder(
                           shrinkWrap: true,
@@ -186,10 +266,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             ),
           ),
 
-          // Botón de filtros minimalista
+          // Botón de filtros minimalista (esquina superior izquierda)
           Positioned(
             top: isTablet ? 24 : 20,
-            right: isTablet ? 24 : 20,
+            left: isTablet ? 24 : 20,
             child: Consumer<ProductProvider>(
               builder: (context, productProvider, child) {
                 final activeFiltersCount = productProvider.activeFiltersCount;

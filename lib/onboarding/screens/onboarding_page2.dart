@@ -424,7 +424,8 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
         .split(' ')
         .map((w) => w.isEmpty
             ? w
-            : (w[0].toUpperCase() + (w.length > 1 ? w.substring(1).toLowerCase() : '')))
+            : (w[0].toUpperCase() +
+                (w.length > 1 ? w.substring(1).toLowerCase() : '')))
         .join(' ');
   }
 

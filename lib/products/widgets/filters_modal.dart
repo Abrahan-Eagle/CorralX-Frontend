@@ -18,7 +18,6 @@ class FiltersModal extends StatefulWidget {
 
 class _FiltersModalState extends State<FiltersModal> {
   // Controllers
-  final TextEditingController _searchController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
   // Estado de los filtros
@@ -75,7 +74,6 @@ class _FiltersModalState extends State<FiltersModal> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     _quantityController.dispose();
     super.dispose();
   }
@@ -89,7 +87,6 @@ class _FiltersModalState extends State<FiltersModal> {
         final filters = json.decode(cachedFilters) as Map<String, dynamic>;
 
         setState(() {
-          _searchController.text = filters['search'] ?? '';
           _selectedType = filters['type'] ?? 'Todos';
           _selectedLocation = filters['location'] ?? 'Todos';
           _priceRange = RangeValues(
@@ -104,7 +101,6 @@ class _FiltersModalState extends State<FiltersModal> {
       } else {
         // Cargar filtros actuales si no hay cache
         setState(() {
-          _searchController.text = widget.currentFilters['search'] ?? '';
           _selectedType = widget.currentFilters['type'] ?? 'Todos';
           _selectedLocation = widget.currentFilters['location'] ?? 'Todos';
           _priceRange = RangeValues(
@@ -133,7 +129,6 @@ class _FiltersModalState extends State<FiltersModal> {
 
   void _clearAllFilters() {
     setState(() {
-      _searchController.clear();
       _selectedType = 'Todos';
       _selectedLocation = 'Todos';
       _priceRange = const RangeValues(0, 100000);
@@ -146,10 +141,6 @@ class _FiltersModalState extends State<FiltersModal> {
 
   void _applyFilters() {
     final filters = <String, dynamic>{};
-
-    if (_searchController.text.isNotEmpty) {
-      filters['search'] = _searchController.text;
-    }
 
     if (_selectedType != 'Todos') {
       filters['type'] = _selectedType;
@@ -187,7 +178,6 @@ class _FiltersModalState extends State<FiltersModal> {
 
   int _getActiveFiltersCount() {
     int count = 0;
-    if (_searchController.text.isNotEmpty) count++;
     if (_selectedType != 'Todos') count++;
     if (_selectedLocation != 'Todos') count++;
     if (_priceRange.start > 0) count++;
@@ -339,26 +329,6 @@ class _FiltersModalState extends State<FiltersModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Búsqueda minimalista
-                    TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por raza, tipo...',
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        prefixIcon: Icon(Icons.search,
-                            size: 20, color: Colors.grey[600]),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                    ),
-
-                    SizedBox(height: 16),
-
                     // Cantidad minimalista
                     TextField(
                       controller: _quantityController,
