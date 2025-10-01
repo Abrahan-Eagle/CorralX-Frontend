@@ -71,9 +71,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
                 if (productProvider.errorMessage != null) {
                   return Center(
-                    child: Column(
+            child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+              children: [
                         Icon(
                           Icons.error_outline,
                           size: 64,
@@ -131,10 +131,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+                  ],
+                ),
                   );
                 }
 
@@ -224,12 +224,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                                         ),
                                                         textAlign:
                                                             TextAlign.center,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
                                         );
                                       },
                                     ),
@@ -298,9 +298,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                 // TODO: Implementar favoritos
                                 productProvider.toggleFavorite(product.id);
                               },
-                            );
-                          },
-                        ),
+                      );
+                    },
+                  ),
 
                         // Botón para cargar más productos
                         if (productProvider.hasMorePages &&
@@ -339,8 +339,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     return Container(
       margin: EdgeInsets.only(right: isTablet ? 8 : 6),
       child: Chip(
-        label: Text(
-          label,
+      label: Text(
+        label,
           style: TextStyle(
             fontSize: isTablet ? 12 : 10,
             color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -353,7 +353,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           color: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
         onDeleted: onRemove,
-        padding: EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
           horizontal: isTablet ? 8 : 6,
           vertical: isTablet ? 4 : 2,
         ),

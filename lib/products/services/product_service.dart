@@ -2,15 +2,27 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class ProductService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  // URL base desde .env
+  // URL base desde .env con detección robusta del modo producción
   static String get _baseUrl {
-    return const bool.fromEnvironment('dart.vm.product')
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
+    // Detectar modo producción de forma más robusta
+    final bool isProduction = kReleaseMode ||
+        const bool.fromEnvironment('dart.vm.product') ||
+        dotenv.env['ENVIRONMENT'] == 'production';
+
+    final String baseUrl = isProduction
+        ? dotenv.env['API_URL_PROD'] ?? 'https://backend.corralx.com'
+        : dotenv.env['API_URL_LOCAL'] ?? 'http://192.168.27.11:8000';
+
+    print(
+        '🔧 ProductService - Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+    print('🔧 ProductService - URL Base: $baseUrl');
+
+    return baseUrl;
   }
 
   // Headers comunes con token de autenticación
