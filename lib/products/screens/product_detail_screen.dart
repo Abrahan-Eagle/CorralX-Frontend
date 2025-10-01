@@ -74,28 +74,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width > 600;
+    final theme = Theme.of(context);
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: Colors.grey[800]),
+            icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Cargando...',
             style: TextStyle(
-              color: Colors.grey[800],
+              color: theme.colorScheme.onBackground,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF386A20)),
+            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
           ),
         ),
       );
@@ -103,18 +104,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     if (_error != null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: Colors.grey[800]),
+            icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Error',
             style: TextStyle(
-              color: Colors.grey[800],
+              color: theme.colorScheme.onBackground,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -126,7 +127,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: Colors.red[400],
+                color: theme.colorScheme.error,
               ),
               const SizedBox(height: 16),
               Text(
@@ -134,15 +135,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[600],
+                  color: theme.colorScheme.onBackground,
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _loadProduct,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF386A20),
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 ),
@@ -156,41 +157,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     if (_product == null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: Colors.grey[800]),
+            icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Producto no encontrado',
             style: TextStyle(
-              color: Colors.grey[800],
+              color: theme.colorScheme.onBackground,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        body: const Center(
-          child: Text('El producto solicitado no existe.'),
+        body: Center(
+          child: Text(
+            'El producto solicitado no existe.',
+            style: TextStyle(color: theme.colorScheme.onBackground),
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.grey[800]),
+          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Detalles del Ganado',
           style: TextStyle(
-            color: Colors.grey[800],
+            color: theme.colorScheme.onBackground,
             fontWeight: FontWeight.w600,
             fontSize: isTablet ? 20 : 18,
           ),
@@ -203,7 +207,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               return IconButton(
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : Colors.grey[600],
+                  color: isFavorite ? Colors.red : theme.colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () {
                   productProvider.toggleFavorite(_product!.id);

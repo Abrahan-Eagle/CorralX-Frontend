@@ -120,7 +120,7 @@ class ProductDetailWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: isTablet ? 24 : 20,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Theme.of(context).colorScheme.onBackground,
                 ),
               ),
               const SizedBox(height: 8),
@@ -179,7 +179,7 @@ class ProductDetailWidget extends StatelessWidget {
               product.currency,
               style: TextStyle(
                 fontSize: isTablet ? 16 : 14,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -193,7 +193,7 @@ class ProductDetailWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
@@ -221,7 +221,7 @@ class ProductDetailWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: isTablet ? 18 : 16,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: Theme.of(context).colorScheme.onBackground,
                   ),
                 ),
                 if (ranch.legalName != null) ...[
@@ -244,7 +244,7 @@ class ProductDetailWidget extends StatelessWidget {
                               ? Icons.star
                               : Icons.star_border,
                           size: 16,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Colors.amber,
                         );
                       }),
                       const SizedBox(width: 8),
@@ -324,9 +324,9 @@ class ProductDetailWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildHealthRow(context, 'Vacunado', product.isVaccinated ?? false),
+          _buildHealthRow('Vacunado', product.isVaccinated ?? false),
           _buildHealthRow(
-              context, 'Documentación incluida', product.documentationIncluded ?? false),
+              'Documentación incluida', product.documentationIncluded ?? false),
           if (product.vaccinesApplied != null &&
               product.vaccinesApplied!.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -335,7 +335,7 @@ class ProductDetailWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: isTablet ? 14 : 12,
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -343,7 +343,7 @@ class ProductDetailWidget extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, size: 16, color: Theme.of(context).colorScheme.primary),
+                  Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -514,7 +514,7 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHealthRow(BuildContext context, String label, bool value) {
+  Widget _buildHealthRow(String label, bool value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -522,14 +522,14 @@ class ProductDetailWidget extends StatelessWidget {
           Icon(
             value ? Icons.check_circle : Icons.cancel,
             size: 20,
-            color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
+            color: value ? Colors.green[600] : Colors.red[600],
           ),
           const SizedBox(width: 12),
           Text(
             label,
             style: TextStyle(
               fontSize: isTablet ? 14 : 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: Colors.grey[600],
             ),
           ),
           const Spacer(),
@@ -538,7 +538,7 @@ class ProductDetailWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: isTablet ? 14 : 12,
               fontWeight: FontWeight.w600,
-              color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
+              color: value ? Colors.green[600] : Colors.red[600],
             ),
           ),
         ],
