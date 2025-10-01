@@ -307,3 +307,88 @@ Notas de integración Frontend Flutter:
 - Mapear estas vistas a pantallas Flutter equivalentes (Marketplace, Detalle, Formulario, Perfil, Favoritos, Chats, Dashboard, Admin opcional).
 - Reutilizar los nombres de acciones/estados (favoritos, verificado, reportes) y comportamientos (límite de imágenes, validación de certificado, limpieza de no leídos) en Providers/Services.
 - Para MVP, los módulos Admin pueden quedar detrás de flag/rol.
+
+## 🎨 Paleta de Colores - Sistema de Diseño
+
+### Modo Claro (Light Theme)
+```css
+:root {
+    --md-sys-color-primary: #386A20;                    /* Verde principal */
+    --md-sys-color-on-primary: #FFFFFF;                 /* Blanco sobre verde */
+    --md-sys-color-primary-container: #B7F399;          /* Verde claro contenedor */
+    --md-sys-color-on-primary-container: #082100;       /* Verde oscuro sobre contenedor */
+    --md-sys-color-secondary: #55624C;                  /* Verde secundario */
+    --md-sys-color-on-secondary: #FFFFFF;               /* Blanco sobre secundario */
+    --md-sys-color-secondary-container: #D9E7CA;        /* Verde claro secundario */
+    --md-sys-color-on-secondary-container: #131F0D;     /* Verde oscuro sobre secundario */
+    --md-sys-color-error: #BA1A1A;                      /* Rojo de error */
+    --md-sys-color-on-error: #FFFFFF;                   /* Blanco sobre error */
+    --md-sys-color-background: #FCFDF7;                 /* Fondo principal (crema) */
+    --md-sys-color-on-background: #1A1C18;              /* Texto sobre fondo */
+    --md-sys-color-surface: #FCFDF7;                    /* Superficie principal */
+    --md-sys-color-on-surface: #1A1C18;                 /* Texto sobre superficie */
+    --md-sys-color-surface-variant: #E0E4D7;            /* Variante de superficie */
+    --md-sys-color-on-surface-variant: #43483E;         /* Texto sobre variante */
+    --md-sys-color-outline: #74796D;                    /* Color de borde/outline */
+    --md-sys-color-surface-container-high: #E9E9E2;     /* Contenedor alto */
+    --md-sys-color-surface-container-low: #F4F4ED;      /* Contenedor bajo */
+}
+```
+
+### Modo Oscuro (Dark Theme)
+```css
+.dark-theme {
+    --md-sys-color-primary: #9CDA7F;                    /* Verde claro principal */
+    --md-sys-color-on-primary: #082100;                 /* Verde oscuro sobre principal */
+    --md-sys-color-primary-container: #1F3314;          /* Verde oscuro contenedor */
+    --md-sys-color-on-primary-container: #B7F399;       /* Verde claro sobre contenedor */
+    --md-sys-color-secondary: #BCCAB0;                  /* Verde claro secundario */
+    --md-sys-color-on-secondary: #263420;               /* Verde oscuro sobre secundario */
+    --md-sys-color-secondary-container: #3A4A2F;        /* Verde medio contenedor */
+    --md-sys-color-on-secondary-container: #D9E7CA;     /* Verde claro sobre contenedor */
+    --md-sys-color-error: #FFB4AB;                      /* Rojo claro de error */
+    --md-sys-color-on-error: #690005;                   /* Rojo oscuro sobre error */
+    --md-sys-color-background: #1A1C18;                 /* Fondo principal (negro verdoso) */
+    --md-sys-color-on-background: #E0E4D7;              /* Texto claro sobre fondo */
+    --md-sys-color-surface: #2B2D28;                    /* Superficie principal */
+    --md-sys-color-on-surface: #E0E4D7;                 /* Texto claro sobre superficie */
+    --md-sys-color-surface-variant: #43483E;            /* Variante de superficie */
+    --md-sys-color-on-surface-variant: #C4C8BB;         /* Texto sobre variante */
+    --md-sys-color-outline: #8E9388;                    /* Color de borde/outline */
+    --md-sys-color-surface-container-high: #2F312C;     /* Contenedor alto */
+    --md-sys-color-surface-container-low: #1F211C;      /* Contenedor bajo */
+}
+```
+
+### Uso en CSS
+```css
+/* Ejemplo de uso */
+.my-component {
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    border: 1px solid var(--md-sys-color-outline);
+}
+
+.my-button {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.my-button:hover {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+```
+
+### Implementación JavaScript
+```javascript
+// Aplicar tema oscuro
+document.documentElement.classList.add('dark-theme');
+
+// Aplicar tema claro
+document.documentElement.classList.remove('dark-theme');
+
+// Persistencia en localStorage
+localStorage.setItem('theme', 'dark'); // o 'light'
+const savedTheme = localStorage.getItem('theme') || 'light';
+```

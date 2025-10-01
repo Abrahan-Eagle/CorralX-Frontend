@@ -14,6 +14,7 @@
 
     <!-- Sección de estilos CSS personalizados -->
     <style>
+        /* === MODO CLARO (LIGHT THEME) === */
         :root {
             --md-sys-color-primary: #386A20;
             --md-sys-color-on-primary: #FFFFFF;
@@ -34,6 +35,54 @@
             --md-sys-color-outline: #74796D;
             --md-sys-color-surface-container-high: #E9E9E2;
             --md-sys-color-surface-container-low: #F4F4ED;
+        }
+
+        /* === MODO OSCURO (DARK THEME) === */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --md-sys-color-primary: #9CDA7F;
+                --md-sys-color-on-primary: #082100;
+                --md-sys-color-primary-container: #1F3314;
+                --md-sys-color-on-primary-container: #B7F399;
+                --md-sys-color-secondary: #BCCAB0;
+                --md-sys-color-on-secondary: #263420;
+                --md-sys-color-secondary-container: #3A4A2F;
+                --md-sys-color-on-secondary-container: #D9E7CA;
+                --md-sys-color-error: #FFB4AB;
+                --md-sys-color-on-error: #690005;
+                --md-sys-color-background: #1A1C18;
+                --md-sys-color-on-background: #E0E4D7;
+                --md-sys-color-surface: #2B2D28;
+                --md-sys-color-on-surface: #E0E4D7;
+                --md-sys-color-surface-variant: #43483E;
+                --md-sys-color-on-surface-variant: #C4C8BB;
+                --md-sys-color-outline: #8E9388;
+                --md-sys-color-surface-container-high: #2F312C;
+                --md-sys-color-surface-container-low: #1F211C;
+            }
+        }
+
+        /* === CLASE PARA MODO OSCURO MANUAL === */
+        .dark-theme {
+            --md-sys-color-primary: #9CDA7F;
+            --md-sys-color-on-primary: #082100;
+            --md-sys-color-primary-container: #1F3314;
+            --md-sys-color-on-primary-container: #B7F399;
+            --md-sys-color-secondary: #BCCAB0;
+            --md-sys-color-on-secondary: #263420;
+            --md-sys-color-secondary-container: #3A4A2F;
+            --md-sys-color-on-secondary-container: #D9E7CA;
+            --md-sys-color-error: #FFB4AB;
+            --md-sys-color-on-error: #690005;
+            --md-sys-color-background: #1A1C18;
+            --md-sys-color-on-background: #E0E4D7;
+            --md-sys-color-surface: #2B2D28;
+            --md-sys-color-on-surface: #E0E4D7;
+            --md-sys-color-surface-variant: #43483E;
+            --md-sys-color-on-surface-variant: #C4C8BB;
+            --md-sys-color-outline: #8E9388;
+            --md-sys-color-surface-container-high: #2F312C;
+            --md-sys-color-surface-container-low: #1F211C;
         }
         body { font-family: 'Roboto', sans-serif; background-color: var(--md-sys-color-background); color: var(--md-sys-color-on-background); }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: bottom; }
@@ -104,8 +153,27 @@
             transition: all 0.3s ease-in-out;
         }
     </style>
+    
+    <!-- Script para aplicar tema inmediatamente -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            console.log('Script inline: tema detectado:', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+                console.log('Script inline: clase dark-theme aplicada');
+            }
+        })();
+    </script>
 </head>
 <body class="antialiased">
+
+    <!-- Botón de prueba de tema (temporal) -->
+    <div style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: var(--md-sys-color-surface); padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <button id="testThemeToggle" style="padding: 8px 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; border-radius: 4px; cursor: pointer;">
+            <span id="testThemeIcon">🌙</span> Test Tema
+        </button>
+    </div>
 
     <div id="app-container" class="relative min-h-screen">
         <!-- Vistas se inyectarán aquí dinámicamente -->
@@ -229,6 +297,15 @@
             { timestamp: Date.now() - 60000, userId: 'localUser123', action: 'inicio_sesion', details: 'Acceso a la plataforma' },
             { timestamp: Date.now() - 50000, userId: 'anotherUser456', action: 'visita_publicacion', details: 'mock1' },
         ];
+        
+        // === GESTIÓN DE TEMAS ===
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let isDarkMode = currentTheme === 'dark';
+        
+        // Aplicar tema inmediatamente al cargar la página
+        if (currentTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
 
 
         const appContainer = document.getElementById('app-container');
@@ -380,7 +457,97 @@
 
 
         // --- CORE APP LOGIC ---
+        // === FUNCIONES DE GESTIÓN DE TEMAS ===
+        function initializeTheme() {
+            console.log('Inicializando tema...'); // Debug
+            
+            // Aplicar tema guardado
+            applyTheme(currentTheme);
+            
+            // Detectar preferencia del sistema si no hay tema guardado
+            if (!localStorage.getItem('theme')) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                console.log('Preferencia del sistema:', prefersDark ? 'dark' : 'light'); // Debug
+                currentTheme = prefersDark ? 'dark' : 'light';
+                isDarkMode = prefersDark;
+                applyTheme(currentTheme);
+            }
+        }
+
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            
+            console.log('Aplicando tema:', theme); // Debug
+            
+            if (theme === 'dark') {
+                html.classList.add('dark-theme');
+                currentTheme = 'dark';
+                isDarkMode = true;
+            } else {
+                html.classList.remove('dark-theme');
+                currentTheme = 'light';
+                isDarkMode = false;
+            }
+            
+            // Actualizar todos los iconos de tema
+            updateAllThemeIcons();
+            
+            // Guardar preferencia
+            localStorage.setItem('theme', theme);
+            console.log('Tema guardado:', theme); // Debug
+        }
+
+        function toggleTheme() {
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            console.log('Cambiando de', currentTheme, 'a', newTheme); // Debug
+            applyTheme(newTheme);
+            
+            // Actualizar todos los iconos de tema en la página
+            updateAllThemeIcons();
+            
+            // Log de actividad
+            activityLog.push({ 
+                timestamp: Date.now(), 
+                userId: currentUserId, 
+                action: 'tema_cambiado', 
+                details: `Cambió a modo ${newTheme}` 
+            });
+        }
+
+        // Función de toggle simple para el botón de prueba
+        function testToggleTheme() {
+            const html = document.documentElement;
+            const testIcon = document.getElementById('testThemeIcon');
+            
+            console.log('testToggleTheme llamado');
+            console.log('Clase actual:', html.className);
+            
+            if (html.classList.contains('dark-theme')) {
+                html.classList.remove('dark-theme');
+                testIcon.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+                console.log('✅ Cambiado a modo claro');
+                console.log('Clase después:', html.className);
+            } else {
+                html.classList.add('dark-theme');
+                testIcon.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+                console.log('✅ Cambiado a modo oscuro');
+                console.log('Clase después:', html.className);
+            }
+        }
+
+        function updateAllThemeIcons() {
+            const themeIcons = document.querySelectorAll('.theme-icon');
+            themeIcons.forEach(icon => {
+                icon.textContent = currentTheme === 'dark' ? 'light_mode' : 'dark_mode';
+            });
+        }
+
         function initializeApp() {
+            // Inicializar tema antes que todo
+            initializeTheme();
+            
             // PENSAMIENTO DEL INGENIERO:
             // Eliminamos la vista del dashboard y la reemplazamos con las vistas
             // que ahora formarán parte del perfil.
@@ -548,11 +715,20 @@
         }
 
         function getCommonHeader(title, showBackButton = true) {
+            const isAdmin = currentUserId === 'localUser123';
             return `
                 <header class="bg-[var(--md-sys-color-surface)]/80 backdrop-blur-sm sticky top-0 z-10 border-b">
-                    <div class="container mx-auto px-4 h-16 flex items-center">
-                        ${showBackButton ? `<button class="back-btn p-2 -ml-2 rounded-full hover:bg-gray-200"><span class="material-symbols-outlined">arrow_back</span></button>` : ''}
-                        <h2 class="text-xl font-medium ${showBackButton ? 'ml-4' : ''}">${title}</h2>
+                    <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+                        <div class="flex items-center">
+                            ${showBackButton ? `<button class="back-btn p-2 -ml-2 rounded-full hover:bg-gray-200"><span class="material-symbols-outlined">arrow_back</span></button>` : ''}
+                            <h2 class="text-xl font-medium ${showBackButton ? 'ml-4' : ''}">${title}</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="themeToggleBtn" class="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]" title="Cambiar tema">
+                                <span class="material-symbols-outlined theme-icon">${currentTheme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+                            </button>
+                            ${isAdmin && title.includes('Administrador') ? `<button id="adminNavBtn" class="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]" title="Panel de Administrador"><span class="material-symbols-outlined">admin_panel_settings</span></button>` : ''}
+                        </div>
                     </div>
                 </header>`;
         }
@@ -566,6 +742,9 @@
                         <div class="h-16 flex justify-between items-center">
                             <img src="https://aiblockweb.com/img/img_renny/2.png" alt="Corral X" class="h-48">
                             <div class="flex items-center gap-2">
+                                <button id="themeToggleBtn" class="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]" title="Cambiar tema">
+                                    <span class="material-symbols-outlined theme-icon">dark_mode</span>
+                                </button>
                                 ${isAdmin ? `<button id="adminNavBtn" class="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]" title="Panel de Administrador"><span class="material-symbols-outlined">admin_panel_settings</span></button>` : ''}
                             </div>
                         </div>
@@ -1492,6 +1671,7 @@
                 else if (classList.contains('edit-farm-btn')) navigateTo('editFarm', { farmId: target.dataset.farmId });
                 else if (classList.contains('delete-farm-btn')) showDeleteFarmModal(target.dataset.farmId);
                 else if (id === 'marketPulseBtn') navigateTo('marketPulse');
+                else if (id === 'themeToggleBtn') toggleTheme();
                 else if (id === 'adminNavBtn') navigateTo('adminDashboard');
                 else if (id === 'summaryTabBtn') navigateTo('adminDashboard');
                 else if (id === 'listingsTabBtn') navigateTo('adminListings');
@@ -2060,6 +2240,34 @@
         }
         
         document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // Event listener para el botón de prueba
+        document.addEventListener('DOMContentLoaded', function() {
+            const testBtn = document.getElementById('testThemeToggle');
+            console.log('DOMContentLoaded: buscando botón de prueba...');
+            console.log('Botón encontrado:', testBtn);
+            
+            if (testBtn) {
+                testBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🖱️ Click en botón de prueba detectado');
+                    testToggleTheme();
+                });
+                console.log('✅ Botón de prueba de tema conectado');
+            } else {
+                console.log('❌ No se encontró el botón de prueba');
+            }
+        });
+        
+        // Escuchar cambios en las preferencias del sistema
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            // Solo cambiar si no hay preferencia guardada manualmente
+            if (!localStorage.getItem('theme')) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                applyTheme(newTheme);
+            }
+        });
     </script>
 </body>
 </html>

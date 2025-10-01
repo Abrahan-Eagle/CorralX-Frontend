@@ -179,8 +179,141 @@ alwaysApply: true
 - Admin (mock): dashboard, publicaciones, usuarios, actividad, soporte a usuario y reportes.
 
 ### Comportamientos clave
-- Botón favorito con animación “pop” y estado.
+- Botón favorito con animación "pop" y estado.
 - Modal de certificado con bloqueo de scroll y cierre por overlay o botón.
 - Límite 5 imágenes y ocultar caja de subida al alcanzar límite.
 - Chips de filtro con estado activo y select de ubicación.
 - Badge de no leídos en nav y limpieza al abrir `messages`.
+
+## Sistema de Colores y Temas
+
+### Paleta de Colores - Modo Claro
+```css
+/* Variables CSS para Flutter (usar en corral_x_theme.dart) */
+const Color primaryColor = Color(0xFF386A20);                    // Verde principal
+const Color onPrimaryColor = Color(0xFFFFFFFF);                 // Blanco sobre verde
+const Color primaryContainerColor = Color(0xFFB7F399);          // Verde claro contenedor
+const Color onPrimaryContainerColor = Color(0xFF082100);       // Verde oscuro sobre contenedor
+const Color secondaryColor = Color(0xFF55624C);                 // Verde secundario
+const Color onSecondaryColor = Color(0xFFFFFFFF);               // Blanco sobre secundario
+const Color secondaryContainerColor = Color(0xFFD9E7CA);        // Verde claro secundario
+const Color onSecondaryContainerColor = Color(0xFF131F0D);     // Verde oscuro sobre secundario
+const Color errorColor = Color(0xFFBA1A1A);                     // Rojo de error
+const Color onErrorColor = Color(0xFFFFFFFF);                   // Blanco sobre error
+const Color backgroundColor = Color(0xFFFCFDF7);                // Fondo principal (crema)
+const Color onBackgroundColor = Color(0xFF1A1C18);              // Texto sobre fondo
+const Color surfaceColor = Color(0xFFFCFDF7);                   // Superficie principal
+const Color onSurfaceColor = Color(0xFF1A1C18);                 // Texto sobre superficie
+const Color surfaceVariantColor = Color(0xFFE0E4D7);           // Variante de superficie
+const Color onSurfaceVariantColor = Color(0xFF43483E);          // Texto sobre variante
+const Color outlineColor = Color(0xFF74796D);                   // Color de borde/outline
+const Color surfaceContainerHighColor = Color(0xFFE9E9E2);     // Contenedor alto
+const Color surfaceContainerLowColor = Color(0xFFF4F4ED);      // Contenedor bajo
+```
+
+### Paleta de Colores - Modo Oscuro
+```css
+/* Variables CSS para Flutter (usar en corral_x_theme.dart) */
+const Color primaryColorDark = Color(0xFF9CDA7F);              // Verde claro principal
+const Color onPrimaryColorDark = Color(0xFF082100);            // Verde oscuro sobre principal
+const Color primaryContainerColorDark = Color(0xFF1F3314);     // Verde oscuro contenedor
+const Color onPrimaryContainerColorDark = Color(0xFFB7F399);   // Verde claro sobre contenedor
+const Color secondaryColorDark = Color(0xFFBCCAB0);            // Verde claro secundario
+const Color onSecondaryColorDark = Color(0xFF263420);          // Verde oscuro sobre secundario
+const Color secondaryContainerColorDark = Color(0xFF3A4A2F);   // Verde medio contenedor
+const Color onSecondaryContainerColorDark = Color(0xFFD9E7CA); // Verde claro sobre contenedor
+const Color errorColorDark = Color(0xFFFFB4AB);                // Rojo claro de error
+const Color onErrorColorDark = Color(0xFF690005);              // Rojo oscuro sobre error
+const Color backgroundColorDark = Color(0xFF1A1C18);           // Fondo principal (negro verdoso)
+const Color onBackgroundColorDark = Color(0xFFE0E4D7);         // Texto claro sobre fondo
+const Color surfaceColorDark = Color(0xFF2B2D28);              // Superficie principal
+const Color onSurfaceColorDark = Color(0xFFE0E4D7);            // Texto claro sobre superficie
+const Color surfaceVariantColorDark = Color(0xFF43483E);       // Variante de superficie
+const Color onSurfaceVariantColorDark = Color(0xFFC4C8BB);     // Texto sobre variante
+const Color outlineColorDark = Color(0xFF8E9388);              // Color de borde/outline
+const Color surfaceContainerHighColorDark = Color(0xFF2F312C); // Contenedor alto
+const Color surfaceContainerLowColorDark = Color(0xFF1F211C);  // Contenedor bajo
+```
+
+### Implementación en Flutter
+```dart
+// En corral_x_theme.dart
+class CorralXTheme {
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF386A20),
+        brightness: Brightness.light,
+        primary: const Color(0xFF386A20),
+        onPrimary: const Color(0xFFFFFFFF),
+        primaryContainer: const Color(0xFFB7F399),
+        onPrimaryContainer: const Color(0xFF082100),
+        secondary: const Color(0xFF55624C),
+        onSecondary: const Color(0xFFFFFFFF),
+        secondaryContainer: const Color(0xFFD9E7CA),
+        onSecondaryContainer: const Color(0xFF131F0D),
+        error: const Color(0xFFBA1A1A),
+        onError: const Color(0xFFFFFFFF),
+        background: const Color(0xFFFCFDF7),
+        onBackground: const Color(0xFF1A1C18),
+        surface: const Color(0xFFFCFDF7),
+        onSurface: const Color(0xFF1A1C18),
+        surfaceVariant: const Color(0xFFE0E4D7),
+        onSurfaceVariant: const Color(0xFF43483E),
+        outline: const Color(0xFF74796D),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF9CDA7F),
+        brightness: Brightness.dark,
+        primary: const Color(0xFF9CDA7F),
+        onPrimary: const Color(0xFF082100),
+        primaryContainer: const Color(0xFF1F3314),
+        onPrimaryContainer: const Color(0xFFB7F399),
+        secondary: const Color(0xFFBCCAB0),
+        onSecondary: const Color(0xFF263420),
+        secondaryContainer: const Color(0xFF3A4A2F),
+        onSecondaryContainer: const Color(0xFFD9E7CA),
+        error: const Color(0xFFFFB4AB),
+        onError: const Color(0xFF690005),
+        background: const Color(0xFF1A1C18),
+        onBackground: const Color(0xFFE0E4D7),
+        surface: const Color(0xFF2B2D28),
+        onSurface: const Color(0xFFE0E4D7),
+        surfaceVariant: const Color(0xFF43483E),
+        onSurfaceVariant: const Color(0xFFC4C8BB),
+        outline: const Color(0xFF8E9388),
+      ),
+    );
+  }
+}
+```
+
+### Persistencia de Tema
+```dart
+// Usar SharedPreferences para guardar preferencia de tema
+class ThemeProvider extends ChangeNotifier {
+  bool _isDarkMode = false;
+  bool get isDarkMode => _isDarkMode;
+
+  Future<void> toggleTheme() async {
+    _isDarkMode = !_isDarkMode;
+    await SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool('isDarkMode', _isDarkMode);
+    });
+    notifyListeners();
+  }
+
+  Future<void> loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    notifyListeners();
+  }
+}
+```
