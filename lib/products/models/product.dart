@@ -68,13 +68,13 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['id'] ?? 0,
+      id: _parseInt(json['id']) ?? 0,
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       type: json['type'] ?? '',
       breed: json['breed'] ?? '',
-      age: json['age'] ?? 0,
-      quantity: json['quantity'] ?? 0,
+      age: _parseInt(json['age']) ?? 0,
+      quantity: _parseInt(json['quantity']) ?? 0,
       price: _parseDouble(json['price']) ?? 0.0,
       currency: json['currency'] ?? 'USD',
       weightAvg: _parseDouble(json['weight_avg']),
@@ -92,12 +92,12 @@ class Product {
       deliveryRadiusKm: _parseDouble(json['delivery_radius_km']),
       negotiable: _parseBool(json['negotiable']) ?? false,
       status: json['status'] ?? 'active',
-      viewsCount: json['views_count'] ?? 0,
+      viewsCount: _parseInt(json['views_count']) ?? 0,
       createdAt: DateTime.parse(
           json['created_at'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(
           json['updated_at'] ?? DateTime.now().toIso8601String()),
-      ranchId: json['ranch_id'] ?? 0,
+      ranchId: _parseInt(json['ranch_id']) ?? 0,
       ranch: json['ranch'] != null ? Ranch.fromJson(json['ranch']) : null,
       images: (json['images'] as List<dynamic>?)
               ?.map((image) => ProductImage.fromJson(image))
@@ -139,6 +139,17 @@ class Product {
       'ranch': ranch?.toJson(),
       'images': images.map((image) => image.toJson()).toList(),
     };
+  }
+
+  // Helper method para parsear enteros desde JSON
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      return int.tryParse(value);
+    }
+    return null;
   }
 
   // Helper method para parsear doubles desde JSON
@@ -237,15 +248,15 @@ class ProductImage {
 
   factory ProductImage.fromJson(Map<String, dynamic> json) {
     return ProductImage(
-      id: json['id'] ?? 0,
+      id: Product._parseInt(json['id']) ?? 0,
       fileUrl: json['file_url'] ?? '',
       fileType: json['file_type'] ?? 'image',
       isPrimary: Product._parseBool(json['is_primary']) ?? false,
-      sortOrder: json['sort_order'] ?? 0,
+      sortOrder: Product._parseInt(json['sort_order']) ?? 0,
       duration: json['duration'],
       resolution: json['resolution'],
       format: json['format'],
-      fileSize: json['file_size'],
+      fileSize: Product._parseInt(json['file_size']),
     );
   }
 
@@ -287,13 +298,13 @@ class Ranch {
 
   factory Ranch.fromJson(Map<String, dynamic> json) {
     return Ranch(
-      id: json['id'] ?? 0,
+      id: Product._parseInt(json['id']) ?? 0,
       name: json['name'] ?? '',
       legalName: json['legal_name'],
       description: json['description'],
       specialization: json['specialization'],
       avgRating: Product._parseDouble(json['avg_rating']),
-      totalSales: json['total_sales'],
+      totalSales: Product._parseInt(json['total_sales']),
       lastSaleAt: json['last_sale_at'] != null
           ? DateTime.parse(json['last_sale_at'])
           : null,

@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProductService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  // URL base desde env_config.json
+  // URL base desde .env
   static String get _baseUrl {
-    // Por ahora usamos la URL local directamente
-    return 'http://192.168.27.11:8000';
+    return const bool.fromEnvironment('dart.vm.product')
+        ? dotenv.env['API_URL_PROD']!
+        : dotenv.env['API_URL_LOCAL']!;
   }
 
   // Headers comunes con token de autenticación
