@@ -418,13 +418,13 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   }
 
   String _capitalizeWords(String input) {
-    final normalized =
-        input.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
+    // Normalizar espacios múltiples pero preservar espacios al principio y final
+    final normalized = input.replaceAll(RegExp(r'\s+'), ' ');
     return normalized
         .split(' ')
         .map((w) => w.isEmpty
             ? w
-            : (w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : '')))
+            : (w[0].toUpperCase() + (w.length > 1 ? w.substring(1).toLowerCase() : '')))
         .join(' ');
   }
 
@@ -433,13 +433,12 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     final selection = controller.selection;
     final normalized = _capitalizeWords(original);
     if (original != normalized) {
+      // Preservar la posición del cursor lo mejor posible
+      final newOffset = selection.baseOffset.clamp(0, normalized.length);
       controller.value = TextEditingValue(
         text: normalized,
-        selection: TextSelection.collapsed(
-            offset: normalized.length.clamp(0, normalized.length)),
+        selection: TextSelection.collapsed(offset: newOffset),
       );
-    } else {
-      controller.selection = selection;
     }
   }
 
