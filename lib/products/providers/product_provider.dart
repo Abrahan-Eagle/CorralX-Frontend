@@ -23,6 +23,9 @@ class ProductProvider with ChangeNotifier {
   int _currentPage = 1;
   bool _hasMorePages = true;
 
+  // Favoritos
+  Set<int> _favorites = {};
+
   // Getters
   List<Product> get products => _products;
   Product? get selectedProduct => _selectedProduct;
@@ -38,6 +41,7 @@ class ProductProvider with ChangeNotifier {
 
   Map<String, dynamic> get currentFilters => _currentFilters;
   bool get hasMorePages => _hasMorePages;
+  Set<int> get favorites => _favorites;
 
   // Método para limpiar errores
   void _clearErrors() {
@@ -479,9 +483,13 @@ class ProductProvider with ChangeNotifier {
     return _products.where((p) => p.isAvailable).toList();
   }
 
-  // Método para manejar favoritos (cuando se implemente)
+  // Método para manejar favoritos
   void toggleFavorite(int productId) {
-    // TODO: Implementar cuando se agregue el módulo de favoritos
+    if (_favorites.contains(productId)) {
+      _favorites.remove(productId);
+    } else {
+      _favorites.add(productId);
+    }
     notifyListeners();
   }
 }

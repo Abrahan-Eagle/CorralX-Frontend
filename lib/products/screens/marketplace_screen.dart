@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/product_card.dart';
 import '../widgets/filters_modal.dart';
+import 'product_detail_screen.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -139,8 +140,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                             return ProductCard(
                               product: product,
                               onTap: () {
-                                // TODO: Navegar a detalle del producto
-                                productProvider.fetchProductDetail(product.id);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductDetailScreen(
+                                      productId: product.id,
+                                      product: product,
+                                    ),
+                                  ),
+                                );
                               },
                               onFavorite: () {
                                 // TODO: Implementar favoritos
