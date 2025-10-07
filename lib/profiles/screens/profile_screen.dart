@@ -4,6 +4,7 @@ import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/config/user_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:zonix/profiles/screens/edit_profile_screen.dart';
+import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/products/widgets/product_card.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -1091,12 +1092,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             );
 
                             if (confirm == true && mounted) {
-                              // TODO: Implementar eliminación
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Eliminar Publicación - Próximamente'),
-                                ),
-                              );
+                              // Eliminar producto
+                              final productProvider = context.read<ProductProvider>();
+                              final success = await productProvider.deleteProduct(product.id);
+                              
+                              if (success && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('✅ Publicación eliminada exitosamente'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                // Refrescar lista
+                                profileProvider.fetchMyProducts(refresh: true);
+                              } else if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(productProvider.errorMessage ?? 'Error al eliminar publicación'),
+                                    backgroundColor: theme.colorScheme.error,
+                                  ),
+                                );
+                              }
                             }
                           },
                           icon: Icon(
