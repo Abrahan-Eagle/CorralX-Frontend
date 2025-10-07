@@ -218,30 +218,30 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ],
                         ),
                         
-                        SizedBox(height: isTablet ? 20 : 16),
-                        
-                        // Ubicación (si existe)
-                        if (profile.address != null) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: isTablet ? 20 : 16,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              SizedBox(width: isTablet ? 6 : 4),
-                              Text(
-                                profile.address!.formattedLocation,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontSize: isTablet ? 16 : 14,
-                                ),
-                              ),
-                            ],
+                    SizedBox(height: isTablet ? 20 : 16),
+                    
+                    // Ubicación (si existe)
+                    if (profile.primaryAddress != null) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: isTablet ? 20 : 16,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          SizedBox(height: isTablet ? 12 : 8),
+                          SizedBox(width: isTablet ? 6 : 4),
+                          Text(
+                            profile.primaryAddress!.formattedLocation,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: isTablet ? 16 : 14,
+                            ),
+                          ),
                         ],
+                      ),
+                      SizedBox(height: isTablet ? 12 : 8),
+                    ],
                         
                         // Miembro desde
                         Text(

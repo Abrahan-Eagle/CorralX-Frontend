@@ -35,8 +35,8 @@ class Profile {
   final DateTime updatedAt;
 
   // Relaciones (opcional, dependiendo de la respuesta del backend)
-  final Ranch? ranch;
-  final Address? address;
+  final List<Ranch>? ranches;
+  final List<Address>? addresses;
 
   Profile({
     required this.id,
@@ -65,8 +65,8 @@ class Profile {
     this.premiumExpiresAt,
     required this.createdAt,
     required this.updatedAt,
-    this.ranch,
-    this.address,
+    this.ranches,
+    this.addresses,
   });
 
   /// Nombre completo del usuario
@@ -80,12 +80,27 @@ class Profile {
     return parts.join(' ');
   }
 
-  /// Nombre comercial (para vendedores, usa el nombre del ranch si existe)
+  /// Nombre comercial (para vendedores, usa el nombre del ranch principal si existe)
   String get displayName {
-    if (ranch != null && ranch!.name.isNotEmpty) {
-      return ranch!.name;
+    if (ranches != null && ranches!.isNotEmpty) {
+      // Buscar ranch principal, o usar el primero
+      final primaryRanch = ranches!.firstWhere(
+        (r) => r.isPrimary,
+        orElse: () => ranches!.first,
+      );
+      if (primaryRanch.name.isNotEmpty) {
+        return primaryRanch.name;
+      }
     }
     return fullName;
+  }
+  
+  /// Primera dirección (dirección principal)
+  Address? get primaryAddress {
+    if (addresses != null && addresses!.isNotEmpty) {
+      return addresses!.first;
+    }
+    return null;
   }
 
   /// Factory para crear una instancia desde JSON
@@ -117,9 +132,12 @@ class Profile {
       premiumExpiresAt: _parseDateTime(json['premium_expires_at']),
       createdAt: _parseDateTime(json['created_at']) ?? DateTime.now(),
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
-      ranch: json['ranch'] != null ? Ranch.fromJson(json['ranch']) : null,
-      address:
-          json['address'] != null ? Address.fromJson(json['address']) : null,
+      ranches: json['ranches'] != null
+          ? (json['ranches'] as List).map((r) => Ranch.fromJson(r)).toList()
+          : null,
+      addresses: json['addresses'] != null
+          ? (json['addresses'] as List).map((a) => Address.fromJson(a)).toList()
+          : null,
     );
   }
 
@@ -152,8 +170,8 @@ class Profile {
       'premium_expires_at': premiumExpiresAt?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
-      if (ranch != null) 'ranch': ranch!.toJson(),
-      if (address != null) 'address': address!.toJson(),
+      if (ranches != null) 'ranches': ranches!.map((r) => r.toJson()).toList(),
+      if (addresses != null) 'addresses': addresses!.map((a) => a.toJson()).toList(),
     };
   }
 
@@ -228,8 +246,8 @@ class Profile {
     DateTime? premiumExpiresAt,
     DateTime? createdAt,
     DateTime? updatedAt,
-    Ranch? ranch,
-    Address? address,
+    List<Ranch>? ranches,
+    List<Address>? addresses,
   }) {
     return Profile(
       id: id ?? this.id,
@@ -258,8 +276,8 @@ class Profile {
       premiumExpiresAt: premiumExpiresAt ?? this.premiumExpiresAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      ranch: ranch ?? this.ranch,
-      address: address ?? this.address,
+      ranches: ranches ?? this.ranches,
+      addresses: addresses ?? this.addresses,
     );
   }
 }

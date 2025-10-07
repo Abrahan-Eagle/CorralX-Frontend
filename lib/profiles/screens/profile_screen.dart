@@ -352,9 +352,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
 
                     SizedBox(height: isTablet ? 20 : 16),
-
+                    
                     // Ubicación
-                    if (profile.address != null) ...[
+                    if (profile.primaryAddress != null) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -365,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(width: isTablet ? 6 : 4),
                           Text(
-                            profile.address!.formattedLocation,
+                            profile.primaryAddress!.formattedLocation,
                             style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
                               fontSize: isTablet ? 16 : 14,
