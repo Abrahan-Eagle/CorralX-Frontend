@@ -18,7 +18,7 @@ class EditRanchScreen extends StatefulWidget {
 
 class _EditRanchScreenState extends State<EditRanchScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _nameController;
   late TextEditingController _legalNameController;
   late TextEditingController _taxIdController;
@@ -26,23 +26,28 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
   late TextEditingController _contactHoursController;
   late TextEditingController _deliveryPolicyController;
   late TextEditingController _returnPolicyController;
-  
+
   late bool _isPrimary;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Inicializar controladores con datos existentes
     _nameController = TextEditingController(text: widget.ranch.name);
-    _legalNameController = TextEditingController(text: widget.ranch.legalName ?? '');
+    _legalNameController =
+        TextEditingController(text: widget.ranch.legalName ?? '');
     _taxIdController = TextEditingController(text: widget.ranch.taxId ?? '');
-    _descriptionController = TextEditingController(text: widget.ranch.businessDescription ?? '');
-    _contactHoursController = TextEditingController(text: widget.ranch.contactHours ?? '');
-    _deliveryPolicyController = TextEditingController(text: widget.ranch.deliveryPolicy ?? '');
-    _returnPolicyController = TextEditingController(text: widget.ranch.returnPolicy ?? '');
-    
+    _descriptionController =
+        TextEditingController(text: widget.ranch.businessDescription ?? '');
+    _contactHoursController =
+        TextEditingController(text: widget.ranch.contactHours ?? '');
+    _deliveryPolicyController =
+        TextEditingController(text: widget.ranch.deliveryPolicy ?? '');
+    _returnPolicyController =
+        TextEditingController(text: widget.ranch.returnPolicy ?? '');
+
     _isPrimary = widget.ranch.isPrimary;
   }
 
@@ -69,13 +74,23 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
       final result = await RanchService.updateRanch(
         ranchId: widget.ranch.id,
         name: _nameController.text,
-        legalName: _legalNameController.text.isNotEmpty ? _legalNameController.text : null,
+        legalName: _legalNameController.text.isNotEmpty
+            ? _legalNameController.text
+            : null,
         taxId: _taxIdController.text.isNotEmpty ? _taxIdController.text : null,
-        businessDescription: _descriptionController.text.isNotEmpty ? _descriptionController.text : null,
-        contactHours: _contactHoursController.text.isNotEmpty ? _contactHoursController.text : null,
+        businessDescription: _descriptionController.text.isNotEmpty
+            ? _descriptionController.text
+            : null,
+        contactHours: _contactHoursController.text.isNotEmpty
+            ? _contactHoursController.text
+            : null,
         isPrimary: _isPrimary,
-        deliveryPolicy: _deliveryPolicyController.text.isNotEmpty ? _deliveryPolicyController.text : null,
-        returnPolicy: _returnPolicyController.text.isNotEmpty ? _returnPolicyController.text : null,
+        deliveryPolicy: _deliveryPolicyController.text.isNotEmpty
+            ? _deliveryPolicyController.text
+            : null,
+        returnPolicy: _returnPolicyController.text.isNotEmpty
+            ? _returnPolicyController.text
+            : null,
       );
 
       setState(() => _isSubmitting = false);
@@ -87,10 +102,12 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Refrescar ranches en ProfileProvider
-        await context.read<ProfileProvider>().fetchMyRanches(forceRefresh: true);
-        
+        await context
+            .read<ProfileProvider>()
+            .fetchMyRanches(forceRefresh: true);
+
         if (mounted) {
           Navigator.pop(context, true);
         }
@@ -119,7 +136,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Hacienda'),
@@ -246,7 +263,8 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
                     )
                   : const Text(
                       'Guardar Cambios',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             ),
             const SizedBox(height: 16),
@@ -300,4 +318,3 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     );
   }
 }
-

@@ -1444,7 +1444,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     );
                                     
                                     // Refrescar lista
-                                    profileProvider.fetchMyRanches(refresh: true);
+                                    profileProvider.fetchMyRanches(forceRefresh: true);
                                   } else if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

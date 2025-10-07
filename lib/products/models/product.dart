@@ -277,6 +277,7 @@ class ProductImage {
 
 class Ranch {
   final int id;
+  final int? profileId; // Agregado para compatibilidad
   final String name;
   final String? legalName;
   final String? description;
@@ -287,6 +288,7 @@ class Ranch {
 
   Ranch({
     required this.id,
+    this.profileId,
     required this.name,
     this.legalName,
     this.description,
@@ -299,9 +301,10 @@ class Ranch {
   factory Ranch.fromJson(Map<String, dynamic> json) {
     return Ranch(
       id: Product._parseInt(json['id']) ?? 0,
+      profileId: Product._parseInt(json['profile_id']),
       name: json['name'] ?? '',
       legalName: json['legal_name'],
-      description: json['description'],
+      description: json['description'] ?? json['business_description'],
       specialization: json['specialization'],
       avgRating: Product._parseDouble(json['avg_rating']),
       totalSales: Product._parseInt(json['total_sales']),
@@ -314,6 +317,7 @@ class Ranch {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'profile_id': profileId,
       'name': name,
       'legal_name': legalName,
       'description': description,
