@@ -60,13 +60,23 @@ class GoogleSignInService {
         final response = await _apiService.sendTokenToBackend(processedResult);
 
         if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          await AuthUtils.saveToken(data['token'],
-              data['expires_in']); // Guardar el token devuelto por el backend
-          await _storage.write(
-              key: 'role', value: data['user']['role']); // Guardar el rol
-          logger.i('Token guardado correctamente con su expiración.');
-          return user; // Retorna el usuario autenticado
+          final responseData = jsonDecode(response.body);
+          
+          // Handle the nested response structure
+          final data = responseData['data'] ?? responseData;
+          final token = data['token'] ?? responseData['token'];
+          final userRole = data['user']?['role'] ?? 'users';
+          final expiresIn = data['expires_in'] ?? 3600;
+          
+          if (token != null) {
+            await AuthUtils.saveToken(token, expiresIn);
+            await _storage.write(key: 'role', value: userRole);
+            logger.i('Token guardado correctamente con su expiración.');
+            return user; // Retorna el usuario autenticado
+          } else {
+            logger.e('Token no encontrado en la respuesta del backend');
+            return null;
+          }
         } else {
           logger
               .e('Error al enviar el token al backend: ${response.statusCode}');
