@@ -6,6 +6,7 @@ import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:zonix/profiles/screens/edit_profile_screen.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
+import 'package:zonix/products/screens/edit_product_screen.dart';
 import 'package:zonix/products/widgets/product_card.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
@@ -1046,12 +1047,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
                         // Botón Editar
               IconButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Editar Publicación - Próximamente'),
+                          onPressed: () async {
+                            // Navegar a pantalla de edición
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditProductScreen(product: product),
                               ),
                             );
+                            
+                            // Si se editó exitosamente, refrescar lista
+                            if (result == true && mounted) {
+                              profileProvider.fetchMyProducts(refresh: true);
+                            }
                           },
                           icon: Icon(
                             Icons.edit,
