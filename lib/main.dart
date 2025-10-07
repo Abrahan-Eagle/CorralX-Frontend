@@ -339,6 +339,7 @@ import 'package:flutter/services.dart';
 // import 'dart:io';
 // import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:zonix/auth/screens/sign_in_screen.dart';
 
@@ -389,6 +390,9 @@ Future<void> main() async {
   ]);
 
   await dotenv.load();
+
+  // Inicializar locales para DateFormat (español)
+  await initializeDateFormatting('es', null);
 
   // Bypass de login para tests de integración
   final bool isIntegrationTest =

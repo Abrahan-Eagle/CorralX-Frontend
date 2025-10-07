@@ -180,7 +180,7 @@ class ProfileService {
     }
   }
 
-  /// POST /api/profile (multipart) - Subir foto de perfil
+  /// PUT /api/profile (multipart) - Subir foto de perfil
   static Future<Map<String, dynamic>> uploadProfilePhoto(File photoFile) async {
     try {
       print('🌐 ProfileService.uploadProfilePhoto iniciado');
@@ -188,7 +188,7 @@ class ProfileService {
       final token = await _storage.read(key: 'token');
       final uri = Uri.parse('$_baseUrl/api/profile');
 
-      var request = http.MultipartRequest('POST', uri);
+      var request = http.MultipartRequest('PUT', uri);
 
       // Agregar headers
       if (token != null) {

@@ -458,11 +458,177 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+
+              SizedBox(height: isTablet ? 32 : 24),
+
+              // Métricas del vendedor
+              Consumer<ProfileProvider>(
+                builder: (context, metricsProvider, child) {
+                  // Cargar métricas si no están cargadas
+                  if (metricsProvider.metrics == null && 
+                      !metricsProvider.isLoadingMetrics &&
+                      metricsProvider.metricsError == null) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      metricsProvider.fetchMetrics();
+                    });
+                  }
+
+                  // Mostrar loading
+                  if (metricsProvider.isLoadingMetrics) {
+                    return Container(
+                      padding: EdgeInsets.all(isTablet ? 32 : 24),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Mostrar error
+                  if (metricsProvider.metricsError != null) {
+                    return SizedBox.shrink();
+                  }
+
+                  final metrics = metricsProvider.metrics;
+                  if (metrics == null) return SizedBox.shrink();
+
+                  return Container(
+                    padding: EdgeInsets.all(isTablet ? 24 : 20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Título
+                        Text(
+                          'Estadísticas',
+                          style: TextStyle(
+                            fontSize: isTablet ? 22 : 20,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        SizedBox(height: isTablet ? 20 : 16),
+
+                        // Grid de métricas
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: isTablet ? 16 : 12,
+                          crossAxisSpacing: isTablet ? 16 : 12,
+                          childAspectRatio: isTablet ? 1.5 : 1.3,
+                          children: [
+                            _buildMetricCard(
+                              icon: Icons.inventory_2,
+                              iconColor: theme.colorScheme.primary,
+                              label: 'Publicaciones',
+                              value: metrics['total_products']?.toString() ?? '0',
+                              theme: theme,
+                              isTablet: isTablet,
+                            ),
+                            _buildMetricCard(
+                              icon: Icons.check_circle,
+                              iconColor: Colors.green,
+                              label: 'Activas',
+                              value: metrics['active_products']?.toString() ?? '0',
+                              theme: theme,
+                              isTablet: isTablet,
+                            ),
+                            _buildMetricCard(
+                              icon: Icons.visibility,
+                              iconColor: Colors.blue,
+                              label: 'Vistas',
+                              value: _formatNumber(metrics['total_views'] ?? 0),
+                              theme: theme,
+                              isTablet: isTablet,
+                            ),
+                            _buildMetricCard(
+                              icon: Icons.favorite,
+                              iconColor: Colors.red,
+                              label: 'Favoritos',
+                              value: metrics['total_favorites']?.toString() ?? '0',
+                              theme: theme,
+                              isTablet: isTablet,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         );
       },
     );
+  }
+
+  Widget _buildMetricCard({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    required ThemeData theme,
+    required bool isTablet,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 16 : 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: iconColor,
+            size: isTablet ? 32 : 28,
+          ),
+          SizedBox(height: isTablet ? 12 : 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isTablet ? 24 : 20,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          SizedBox(height: isTablet ? 4 : 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isTablet ? 14 : 12,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatNumber(int number) {
+    if (number >= 1000000) {
+      return '${(number / 1000000).toStringAsFixed(1)}M';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}K';
+    }
+    return number.toString();
   }
 
   Widget _buildMyListingsContent(bool isTablet, ThemeData theme) {

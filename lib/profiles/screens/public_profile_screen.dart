@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:zonix/products/providers/product_provider.dart';
+import 'package:zonix/products/widgets/product_card.dart';
+import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
@@ -334,34 +337,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   
                   SizedBox(height: isTablet ? 16 : 12),
                   
-                  // TODO: Mostrar productos del vendedor
-                  // Por ahora mostramos un placeholder
-                  Container(
-                    padding: EdgeInsets.all(isTablet ? 32 : 24),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-                    ),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: isTablet ? 64 : 48,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          SizedBox(height: isTablet ? 16 : 12),
-                          Text(
-                            'Cargando publicaciones del vendedor...',
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: isTablet ? 16 : 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Productos del vendedor
+                  _buildVendorProducts(profile.userId, isTablet, theme),
                 ],
               ),
             ),
@@ -404,5 +381,139 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildVendorProducts(int userId, bool isTablet, ThemeData theme) {
+    return Consumer<ProductProvider>(
+      builder: (context, productProvider, child) {
+        // Cargar productos del vendedor si no están cargados
+        // Nota: Esto es una solución temporal. Idealmente deberíamos tener un 
+        // método específico para obtener productos por usuario en ProductProvider
+        
+        return FutureBuilder(
+          future: _loadVendorProducts(context, userId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                ),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Container(
+                padding: EdgeInsets.all(isTablet ? 32 : 24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: isTablet ? 48 : 40,
+                        color: theme.colorScheme.error,
+                      ),
+                      SizedBox(height: isTablet ? 12 : 8),
+                      Text(
+                        'Error al cargar publicaciones',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: isTablet ? 14 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final vendorProducts = snapshot.data as List<dynamic>? ?? [];
+
+            if (vendorProducts.isEmpty) {
+              return Container(
+                padding: EdgeInsets.all(isTablet ? 32 : 24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: isTablet ? 64 : 48,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      SizedBox(height: isTablet ? 16 : 12),
+                      Text(
+                        'Este vendedor no tiene publicaciones aún',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Mostrar grid de productos
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isTablet ? 2 : 1,
+                mainAxisSpacing: isTablet ? 20 : 16,
+                crossAxisSpacing: isTablet ? 20 : 16,
+                childAspectRatio: isTablet ? 1.2 : 1.5,
+              ),
+              itemCount: vendorProducts.length,
+              itemBuilder: (context, index) {
+                final product = vendorProducts[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(
+                          productId: product.id,
+                        ),
+                      ),
+                    );
+                  },
+                  child: ProductCard(product: product),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<List<dynamic>> _loadVendorProducts(BuildContext context, int userId) async {
+    final productProvider = context.read<ProductProvider>();
+    
+    // Cargar todos los productos y filtrar por el userId (basado en ranch.profileId)
+    await productProvider.fetchProducts(refresh: true);
+    
+    // Filtrar productos que pertenezcan al vendedor
+    return productProvider.products.where((product) {
+      return product.ranch?.profileId == userId;
+    }).toList();
   }
 }
