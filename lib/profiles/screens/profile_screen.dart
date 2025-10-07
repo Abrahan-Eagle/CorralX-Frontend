@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../config/theme_provider.dart';
+import 'package:zonix/config/theme_provider.dart';
+import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:zonix/products/screens/product_detail_screen.dart';
+import 'package:zonix/products/widgets/product_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,22 +18,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _activeTab = 'profile';
 
   @override
+  void initState() {
+    super.initState();
+    // Cargar datos del perfil al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileProvider = context.read<ProfileProvider>();
+      profileProvider.fetchMyProfile();
+      if (_activeTab == 'myListings') {
+        profileProvider.fetchMyProducts();
+      } else if (_activeTab == 'farms') {
+        profileProvider.fetchMyRanches();
+      }
+    });
+  }
+
+  Future<void> _handleRefresh() async {
+    final profileProvider = context.read<ProfileProvider>();
+    if (_activeTab == 'profile') {
+      await profileProvider.fetchMyProfile(forceRefresh: true);
+    } else if (_activeTab == 'myListings') {
+      await profileProvider.fetchMyProducts(refresh: true);
+    } else if (_activeTab == 'farms') {
+      await profileProvider.fetchMyRanches(forceRefresh: true);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isDesktop = screenWidth > 900;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFDF7),
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFCFDF7),
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         title: Text(
           'Mi Perfil',
           style: TextStyle(
             fontSize: isTablet ? 24 : 20,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF1A1C18),
+            color: theme.colorScheme.onBackground,
           ),
         ),
         centerTitle: true,
@@ -48,18 +80,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     SizedBox(
                       width: isTablet ? 120 : 100,
-                      child: _buildTabButton('profile', 'Perfil', isTablet),
+                      child:
+                          _buildTabButton('profile', 'Perfil', isTablet, theme),
                     ),
                     SizedBox(width: isTablet ? 20 : 16),
                     SizedBox(
                       width: isTablet ? 160 : 140,
                       child: _buildTabButton(
-                          'myListings', 'Mis Publicaciones', isTablet),
+                          'myListings', 'Mis Publicaciones', isTablet, theme),
                     ),
                     SizedBox(width: isTablet ? 20 : 16),
                     SizedBox(
                       width: isTablet ? 120 : 100,
-                      child: _buildTabButton('farms', 'Mis Fincas', isTablet),
+                      child: _buildTabButton(
+                          'farms', 'Mis Fincas', isTablet, theme),
                     ),
                   ],
                 ),
@@ -68,7 +102,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SizedBox(height: isTablet ? 32 : 24),
             // Content
             Expanded(
-              child: _buildTabContent(isTablet),
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                color: theme.colorScheme.primary,
+                child: _buildTabContent(isTablet, theme),
+              ),
             ),
           ],
         ),
@@ -76,13 +114,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTabButton(String tab, String label, bool isTablet) {
+  Widget _buildTabButton(
+      String tab, String label, bool isTablet, ThemeData theme) {
     final isActive = _activeTab == tab;
     return GestureDetector(
       onTap: () {
         setState(() {
           _activeTab = tab;
         });
+        // Cargar datos del tab seleccionado si aún no están cargados
+        final profileProvider = context.read<ProfileProvider>();
+        if (tab == 'myListings' && profileProvider.myProducts.isEmpty) {
+          profileProvider.fetchMyProducts();
+        } else if (tab == 'farms' && profileProvider.myRanches.isEmpty) {
+          profileProvider.fetchMyRanches();
+        }
       },
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -90,14 +136,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           horizontal: isTablet ? 20 : 16,
         ),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFB7F399) : const Color(0xFFF4F4ED),
+          color: isActive
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isActive ? const Color(0xFF082100) : const Color(0xFF1A1C18),
+            color: isActive
+                ? theme.colorScheme.onPrimaryContainer
+                : theme.colorScheme.onSurface,
             fontSize: isTablet ? 16 : 14,
             fontWeight: FontWeight.w500,
           ),
@@ -106,122 +156,249 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTabContent(bool isTablet) {
+  Widget _buildTabContent(bool isTablet, ThemeData theme) {
     switch (_activeTab) {
       case 'myListings':
-        return _buildMyListingsContent(isTablet);
+        return _buildMyListingsContent(isTablet, theme);
       case 'farms':
-        return _buildFarmsContent(isTablet);
+        return _buildFarmsContent(isTablet, theme);
       case 'profile':
       default:
-        return _buildProfileContent(isTablet);
+        return _buildProfileContent(isTablet, theme);
     }
   }
 
-  Widget _buildProfileContent(bool isTablet) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isTablet ? 24 : 16),
-      child: Column(
-        children: [
-          // Profile info card
-          Container(
-            padding: EdgeInsets.all(isTablet ? 32 : 24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4F4ED),
-              borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+  Widget _buildProfileContent(bool isTablet, ThemeData theme) {
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, child) {
+        // Estado de carga
+        if (profileProvider.isLoadingMyProfile) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
+          );
+        }
+
+        // Estado de error
+        if (profileProvider.myProfileError != null) {
+          return Center(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: isTablet ? 80 : 64,
-                  backgroundColor: Colors.grey,
-                  child: Icon(
-                    Icons.person,
-                    size: isTablet ? 80 : 64,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 20 : 16),
-                Text(
-                  'Juan Pérez',
-                  style: TextStyle(
-                    fontSize: isTablet ? 28 : 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 10 : 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: isTablet ? 24 : 20,
-                    ),
-                    SizedBox(width: isTablet ? 6 : 4),
-                    Text(
-                      '4.5',
-                      style: TextStyle(fontSize: isTablet ? 20 : 18),
-                    ),
-                    SizedBox(width: isTablet ? 10 : 8),
-                    Text(
-                      '(2 opiniones)',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: isTablet ? 16 : 14,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: isTablet ? 20 : 16),
-                Text(
-                  'Este usuario no ha agregado una biografía.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: isTablet ? 16 : 14,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 20 : 16),
-                Text(
-                  'Miembro desde: mayo 2023',
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
-                    color: Colors.grey,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 32 : 24),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF386A20),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 32 : 24,
-                      vertical: isTablet ? 16 : 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
-                    ),
-                  ),
-                  child: Text(
-                    'Editar Perfil',
-                    style: TextStyle(fontSize: isTablet ? 16 : 14),
-                  ),
+                Icon(
+                  Icons.error_outline,
+                  size: isTablet ? 64 : 48,
+                  color: theme.colorScheme.error,
                 ),
                 SizedBox(height: isTablet ? 16 : 12),
-                // Botón para cambiar tema
-                Consumer<ThemeProvider>(
-                  builder: (context, themeProvider, child) {
-                    return ElevatedButton.icon(
+                Text(
+                  profileProvider.myProfileError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onBackground,
+                    fontSize: isTablet ? 16 : 14,
+                  ),
+                ),
+                SizedBox(height: isTablet ? 24 : 16),
+                ElevatedButton(
+                  onPressed: () {
+                    profileProvider.fetchMyProfile(forceRefresh: true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final profile = profileProvider.myProfile;
+
+        // Estado sin perfil
+        if (profile == null) {
+          return Center(
+            child: Text(
+              'No se pudo cargar el perfil',
+              style: TextStyle(
+                color: theme.colorScheme.onBackground,
+                fontSize: isTablet ? 16 : 14,
+              ),
+            ),
+          );
+        }
+
+        // Renderizar perfil
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(isTablet ? 24 : 16),
+          child: Column(
+            children: [
+              // Profile info card
+              Container(
+                padding: EdgeInsets.all(isTablet ? 32 : 24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                ),
+                child: Column(
+                  children: [
+                    // Avatar
+                    CircleAvatar(
+                      radius: isTablet ? 80 : 64,
+                      backgroundColor: theme.colorScheme.surfaceVariant,
+                      backgroundImage: profile.photoUsers != null
+                          ? CachedNetworkImageProvider(profile.photoUsers!)
+                          : null,
+                      child: profile.photoUsers == null
+                          ? Icon(
+                              Icons.person,
+                              size: isTablet ? 80 : 64,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            )
+                          : null,
+                    ),
+                    SizedBox(height: isTablet ? 20 : 16),
+
+                    // Nombre
+                    Text(
+                      profile.fullName,
+                      style: TextStyle(
+                        fontSize: isTablet ? 28 : 24,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: isTablet ? 10 : 8),
+
+                    // Rating y verificado
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (profile.isVerified) ...[
+                          Icon(
+                            Icons.verified,
+                            color: theme.colorScheme.primary,
+                            size: isTablet ? 24 : 20,
+                          ),
+                          SizedBox(width: isTablet ? 8 : 6),
+                        ],
+                        Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: isTablet ? 24 : 20,
+                        ),
+                        SizedBox(width: isTablet ? 6 : 4),
+                        Text(
+                          profile.rating.toStringAsFixed(1),
+                          style: TextStyle(
+                            fontSize: isTablet ? 20 : 18,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        SizedBox(width: isTablet ? 10 : 8),
+                        Text(
+                          '(${profile.ratingsCount} ${profile.ratingsCount == 1 ? "opinión" : "opiniones"})',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: isTablet ? 16 : 14,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Premium badge
+                    if (profile.isPremiumSeller) ...[
+                      SizedBox(height: isTablet ? 12 : 8),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 16 : 12,
+                          vertical: isTablet ? 8 : 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.amber.shade400,
+                              Colors.amber.shade700
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.workspace_premium,
+                              color: Colors.white,
+                              size: isTablet ? 20 : 16,
+                            ),
+                            SizedBox(width: isTablet ? 6 : 4),
+                            Text(
+                              'Premium',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isTablet ? 14 : 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    SizedBox(height: isTablet ? 20 : 16),
+
+                    // Ubicación
+                    if (profile.address != null) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: isTablet ? 20 : 16,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          SizedBox(width: isTablet ? 6 : 4),
+                          Text(
+                            profile.address!.formattedLocation,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: isTablet ? 16 : 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isTablet ? 12 : 8),
+                    ],
+
+                    // Miembro desde
+                    Text(
+                      'Miembro desde: ${DateFormat('MMMM yyyy', 'es').format(profile.createdAt)}',
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+
+                    SizedBox(height: isTablet ? 32 : 24),
+
+                    // Botón Editar Perfil
+                    ElevatedButton(
                       onPressed: () {
-                        themeProvider.toggleTheme();
+                        // TODO: Navegar a EditProfileScreen
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Editar Perfil - Próximamente'),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: themeProvider.isDarkMode
-                            ? const Color(0xFF1F3314)
-                            : const Color(0xFF55624C),
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         padding: EdgeInsets.symmetric(
                           horizontal: isTablet ? 32 : 24,
                           vertical: isTablet ? 16 : 12,
@@ -231,235 +408,407 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               BorderRadius.circular(isTablet ? 30 : 25),
                         ),
                       ),
-                      icon: Icon(
-                        themeProvider.isDarkMode
-                            ? Icons.light_mode
-                            : Icons.dark_mode,
-                        size: isTablet ? 20 : 18,
-                      ),
-                      label: Text(
-                        themeProvider.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
+                      child: Text(
+                        'Editar Perfil',
                         style: TextStyle(fontSize: isTablet ? 16 : 14),
                       ),
-                    );
+                    ),
+
+                    SizedBox(height: isTablet ? 16 : 12),
+
+                    // Botón para cambiar tema
+                    Consumer<ThemeProvider>(
+                      builder: (context, themeProvider, child) {
+                        return ElevatedButton.icon(
+                          onPressed: () {
+                            themeProvider.toggleTheme();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.secondary,
+                            foregroundColor: theme.colorScheme.onSecondary,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isTablet ? 32 : 24,
+                              vertical: isTablet ? 16 : 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(isTablet ? 30 : 25),
+                            ),
+                          ),
+                          icon: Icon(
+                            themeProvider.isDarkMode
+                                ? Icons.light_mode
+                                : Icons.dark_mode,
+                            size: isTablet ? 20 : 18,
+                          ),
+                          label: Text(
+                            themeProvider.isDarkMode
+                                ? 'Modo Claro'
+                                : 'Modo Oscuro',
+                            style: TextStyle(fontSize: isTablet ? 16 : 14),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMyListingsContent(bool isTablet, ThemeData theme) {
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, child) {
+        // Estado de carga
+        if (profileProvider.isLoadingMyProducts) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          );
+        }
+
+        // Estado de error
+        if (profileProvider.myProductsError != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: isTablet ? 64 : 48,
+                  color: theme.colorScheme.error,
+                ),
+                SizedBox(height: isTablet ? 16 : 12),
+                Text(
+                  profileProvider.myProductsError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onBackground,
+                    fontSize: isTablet ? 16 : 14,
+                  ),
+                ),
+                SizedBox(height: isTablet ? 24 : 16),
+                ElevatedButton(
+                  onPressed: () {
+                    profileProvider.fetchMyProducts(refresh: true);
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
+                  child: const Text('Reintentar'),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          );
+        }
 
-  Widget _buildMyListingsContent(bool isTablet) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isTablet ? 24 : 16),
-      child: Column(
-        children: [
-          _buildListingItem(
-              'Brahman Rojo', 'Agropecuaria El Futuro', '124 vistas', isTablet),
-          SizedBox(height: isTablet ? 20 : 16),
-          _buildListingItem(
-              'Guzerat', 'Agropecuaria El Futuro', '210 vistas', isTablet),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFarmsContent(bool isTablet) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isTablet ? 24 : 16),
-      child: Column(
-        children: [
-          ElevatedButton.icon(
-            onPressed: () {},
-            icon: Icon(Icons.add, size: isTablet ? 24 : 20),
-            label: Text(
-              'Agregar Nueva Finca',
-              style: TextStyle(fontSize: isTablet ? 16 : 14),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF386A20),
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
-              ),
-            ),
-          ),
-          SizedBox(height: isTablet ? 32 : 24),
-          _buildFarmItem(
-              'Agropecuaria El Futuro', 'Valencia, Carabobo', isTablet),
-          SizedBox(height: isTablet ? 20 : 16),
-          _buildFarmItem('Hato La Esperanza', 'San Carlos, Cojedes', isTablet),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildListingItem(
-      String breed, String farm, String views, bool isTablet) {
-    return Container(
-      padding: EdgeInsets.all(isTablet ? 20 : 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: isTablet ? 6 : 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: isTablet ? 80 : 64,
-            height: isTablet ? 80 : 64,
-            decoration: BoxDecoration(
-              color: Colors.grey,
-              borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-            ),
-            child: Icon(
-              Icons.image,
-              color: Colors.white,
-              size: isTablet ? 40 : 32,
-            ),
-          ),
-          SizedBox(width: isTablet ? 20 : 16),
-          Expanded(
+        // Estado vacío
+        if (profileProvider.myProducts.isEmpty) {
+          return Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: isTablet ? 80 : 64,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(height: isTablet ? 16 : 12),
                 Text(
-                  breed,
+                  'No tienes publicaciones aún',
                   style: TextStyle(
-                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onBackground,
                     fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: isTablet ? 6 : 4),
+                SizedBox(height: isTablet ? 8 : 6),
                 Text(
-                  'De la finca: $farm',
+                  'Crea tu primera publicación para empezar',
                   style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
-                    color: Colors.grey,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 6 : 4),
-                Text(
-                  views,
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
-                    color: Colors.grey,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: isTablet ? 14 : 12,
                   ),
                 ),
               ],
             ),
+          );
+        }
+
+        // Lista de productos
+        return GridView.builder(
+          padding: EdgeInsets.all(isTablet ? 24 : 16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isTablet ? 2 : 1,
+            mainAxisSpacing: isTablet ? 20 : 16,
+            crossAxisSpacing: isTablet ? 20 : 16,
+            childAspectRatio: isTablet ? 1.2 : 1.5,
           ),
-          Row(
+          itemCount: profileProvider.myProducts.length,
+          itemBuilder: (context, index) {
+            final product = profileProvider.myProducts[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ProductDetailScreen(productId: product.id),
+                  ),
+                );
+              },
+              child: ProductCard(product: product),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFarmsContent(bool isTablet, ThemeData theme) {
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, child) {
+        // Estado de carga
+        if (profileProvider.isLoadingMyRanches) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          );
+        }
+
+        // Estado de error
+        if (profileProvider.myRanchesError != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: isTablet ? 64 : 48,
+                  color: theme.colorScheme.error,
+                ),
+                SizedBox(height: isTablet ? 16 : 12),
+                Text(
+                  profileProvider.myRanchesError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onBackground,
+                    fontSize: isTablet ? 16 : 14,
+                  ),
+                ),
+                SizedBox(height: isTablet ? 24 : 16),
+                ElevatedButton(
+                  onPressed: () {
+                    profileProvider.fetchMyRanches(forceRefresh: true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Contenido
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(isTablet ? 24 : 16),
+          child: Column(
             children: [
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.grey.withOpacity(0.2),
-                  padding: EdgeInsets.all(isTablet ? 12 : 8),
+              // Botón agregar nueva finca
+              ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Agregar Finca - Próximamente'),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.add, size: isTablet ? 24 : 20),
+                label: Text(
+                  'Agregar Nueva Finca',
+                  style: TextStyle(fontSize: isTablet ? 16 : 14),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  padding: EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                  ),
                 ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.delete,
-                    color: Colors.red, size: isTablet ? 24 : 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.withOpacity(0.1),
-                  padding: EdgeInsets.all(isTablet ? 12 : 8),
+
+              SizedBox(height: isTablet ? 32 : 24),
+
+              // Estado vacío
+              if (profileProvider.myRanches.isEmpty)
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.home_outlined,
+                        size: isTablet ? 80 : 64,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      SizedBox(height: isTablet ? 16 : 12),
+                      Text(
+                        'No tienes fincas registradas',
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
+                          fontSize: isTablet ? 18 : 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: isTablet ? 8 : 6),
+                      Text(
+                        'Agrega tu primera finca para comenzar',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: isTablet ? 14 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+
+              // Lista de fincas
+              ...profileProvider.myRanches.map((ranch) {
+                return Container(
+                  margin: EdgeInsets.only(bottom: isTablet ? 20 : 16),
+                  padding: EdgeInsets.all(isTablet ? 20 : 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: isTablet ? 6 : 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Icono
+                      Container(
+                        width: isTablet ? 80 : 64,
+                        height: isTablet ? 80 : 64,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceVariant,
+                          borderRadius:
+                              BorderRadius.circular(isTablet ? 12 : 8),
+                        ),
+                        child: Icon(
+                          Icons.home,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          size: isTablet ? 40 : 32,
+                        ),
+                      ),
+                      SizedBox(width: isTablet ? 20 : 16),
+
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    ranch.name,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: isTablet ? 18 : 16,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                                if (ranch.isPrimary)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isTablet ? 10 : 8,
+                                      vertical: isTablet ? 4 : 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      'Principal',
+                                      style: TextStyle(
+                                        fontSize: isTablet ? 12 : 10,
+                                        color: theme
+                                            .colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: isTablet ? 6 : 4),
+                            Text(
+                              'RIF: ${ranch.taxId}',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (ranch.description != null) ...[
+                              SizedBox(height: isTablet ? 6 : 4),
+                              Text(
+                                ranch.description!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: isTablet ? 14 : 12,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Botones
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Editar Finca - Próximamente'),
+                                ),
+                              );
+                            },
+                            icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
+                            style: IconButton.styleFrom(
+                              backgroundColor: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.5),
+                              padding: EdgeInsets.all(isTablet ? 12 : 8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFarmItem(String name, String location, bool isTablet) {
-    return Container(
-      padding: EdgeInsets.all(isTablet ? 20 : 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: isTablet ? 6 : 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: isTablet ? 80 : 64,
-            height: isTablet ? 80 : 64,
-            decoration: BoxDecoration(
-              color: Colors.grey,
-              borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-            ),
-            child: Icon(
-              Icons.home,
-              color: Colors.white,
-              size: isTablet ? 40 : 32,
-            ),
-          ),
-          SizedBox(width: isTablet ? 20 : 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: isTablet ? 18 : 16,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 6 : 4),
-                Text(
-                  location,
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            children: [
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.grey.withOpacity(0.2),
-                  padding: EdgeInsets.all(isTablet ? 12 : 8),
-                ),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.delete,
-                    color: Colors.red, size: isTablet ? 24 : 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.withOpacity(0.1),
-                  padding: EdgeInsets.all(isTablet ? 12 : 8),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

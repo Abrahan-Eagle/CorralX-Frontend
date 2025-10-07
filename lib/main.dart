@@ -333,6 +333,7 @@ import 'package:zonix/config/user_provider.dart';
 import 'package:zonix/config/corral_x_theme.dart';
 import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
+import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:flutter/services.dart';
 
 // import 'dart:io';
@@ -399,6 +400,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(
             create: (_) => ThemeProvider()..loadThemePreference()),
       ],
