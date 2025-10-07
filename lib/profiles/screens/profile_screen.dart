@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:zonix/profiles/screens/edit_profile_screen.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/products/widgets/product_card.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -388,13 +389,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // Botón Editar Perfil
                     ElevatedButton(
-                      onPressed: () {
-                        // TODO: Navegar a EditProfileScreen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Editar Perfil - Próximamente'),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfileScreen(),
                           ),
                         );
+                        // Refrescar perfil después de editar
+                        if (mounted) {
+                          profileProvider.fetchMyProfile(forceRefresh: true);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
