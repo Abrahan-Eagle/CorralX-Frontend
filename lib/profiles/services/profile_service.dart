@@ -30,10 +30,7 @@ class ProfileService {
 
   /// Headers comunes con token de autenticación
   static Future<Map<String, String>> _getHeaders() async {
-    final token =
-        await _storage.read(key: 'token'); // Cambiado de 'auth_token' a 'token'
-    print(
-        '🔑 Token leído del storage: ${token != null ? "✅ Existe" : "❌ No existe"}');
+    final token = await _storage.read(key: 'token');
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -188,7 +185,7 @@ class ProfileService {
     try {
       print('🌐 ProfileService.uploadProfilePhoto iniciado');
 
-      final token = await _storage.read(key: 'auth_token');
+      final token = await _storage.read(key: 'token');
       final uri = Uri.parse('$_baseUrl/api/profile');
 
       var request = http.MultipartRequest('POST', uri);
@@ -277,9 +274,7 @@ class ProfileService {
     }
   }
 
-  /// GET /api/products - Obtener productos del perfil (mis publicaciones)
-  /// Nota: Por ahora usamos /api/products sin filtro específico
-  /// TODO: Cuando el backend implemente /api/me/products, cambiar a ese endpoint
+  /// GET /api/me/products - Obtener productos del perfil (mis publicaciones)
   static Future<Map<String, dynamic>> getProfileProducts({
     int page = 1,
     int perPage = 20,
@@ -288,8 +283,7 @@ class ProfileService {
       print('🌐 ProfileService.getProfileProducts iniciado');
 
       final headers = await _getHeaders();
-      // Temporalmente usamos /api/products hasta que el backend implemente /api/me/products
-      final uri = Uri.parse('$_baseUrl/api/products').replace(
+      final uri = Uri.parse('$_baseUrl/api/me/products').replace(
         queryParameters: {
           'page': page.toString(),
           'per_page': perPage.toString(),
@@ -319,29 +313,21 @@ class ProfileService {
     }
   }
 
-  /// GET /api/ranches - Obtener ranches/haciendas del perfil
-  /// Nota: Endpoint temporal hasta que el backend implemente /api/me/ranches
-  /// Por ahora retorna lista vacía para no romper la funcionalidad
+  /// GET /api/me/ranches - Obtener ranches/haciendas del perfil
   static Future<List<Ranch>> getProfileRanches() async {
     try {
       print('🌐 ProfileService.getProfileRanches iniciado');
-      print('⚠️ Endpoint /api/me/ranches no implementado en el backend');
-      print('📝 Retornando lista vacía temporalmente');
 
-      // Temporalmente retornamos lista vacía hasta que el backend implemente el endpoint
-      return [];
-
-      /* TODO: Descomentar cuando el backend implemente /api/me/ranches
       final headers = await _getHeaders();
       final uri = Uri.parse('$_baseUrl/api/me/ranches');
-      
+
       print('🌐 URL: $uri');
-      
+
       final response = await http.get(uri, headers: headers);
-      
+
       print('🌐 Status code: ${response.statusCode}');
       print('🌐 Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => Ranch.fromJson(json)).toList();
@@ -350,10 +336,9 @@ class ProfileService {
       } else {
         throw Exception('Error al cargar haciendas: ${response.statusCode}');
       }
-      */
     } catch (e) {
       print('❌ Error en getProfileRanches: $e');
-      return []; // Retornar lista vacía en caso de error
+      rethrow;
     }
   }
 }
