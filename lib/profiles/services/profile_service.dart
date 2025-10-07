@@ -347,7 +347,8 @@ class ProfileService {
   /// GET /api/profiles/{profileId}/ranches - Obtener ranches de un perfil específico
   static Future<List<Ranch>> getRanchesByProfile(int profileId) async {
     try {
-      print('🌐 ProfileService.getRanchesByProfile iniciado - profileId: $profileId');
+      print(
+          '🌐 ProfileService.getRanchesByProfile iniciado - profileId: $profileId');
 
       final headers = await _getHeaders();
       final uri = Uri.parse('$_baseUrl/api/profiles/$profileId/ranches');

@@ -419,10 +419,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         children: [
                           // Email
-                          Consumer<ProfileProvider>(
-                            builder: (context, profileProvider, child) {
-                              final email = profileProvider.myProfile?.userId != null 
-                                ? context.read<UserProvider>().email ?? 'No disponible'
+                          Consumer<UserProvider>(
+                            builder: (context, userProvider, child) {
+                              final email = userProvider.userEmail.isNotEmpty
+                                ? userProvider.userEmail
                                 : 'No disponible';
                               return Row(
                                 children: [
@@ -913,7 +913,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: product.images.isNotEmpty
                           ? CachedNetworkImage(
-                              imageUrl: product.images.first.imageUrl,
+                              imageUrl: product.images.first.fileUrl,
                               width: isTablet ? 120 : 100,
                               height: isTablet ? 120 : 100,
                               fit: BoxFit.cover,
