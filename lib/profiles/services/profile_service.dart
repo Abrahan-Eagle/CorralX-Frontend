@@ -111,6 +111,7 @@ class ProfileService {
     String? middleName,
     String? lastName,
     String? secondLastName,
+    String? bio,
     DateTime? dateOfBirth,
     String? maritalStatus,
     String? sex,
@@ -133,6 +134,7 @@ class ProfileService {
       if (middleName != null) body['middleName'] = middleName;
       if (lastName != null) body['lastName'] = lastName;
       if (secondLastName != null) body['secondLastName'] = secondLastName;
+      if (bio != null) body['bio'] = bio;
       if (dateOfBirth != null)
         body['date_of_birth'] = dateOfBirth.toIso8601String();
       if (maritalStatus != null) body['maritalStatus'] = maritalStatus;
@@ -338,6 +340,35 @@ class ProfileService {
       }
     } catch (e) {
       print('❌ Error en getProfileRanches: $e');
+      rethrow;
+    }
+  }
+
+  /// GET /api/profiles/{profileId}/ranches - Obtener ranches de un perfil específico
+  static Future<List<Ranch>> getRanchesByProfile(int profileId) async {
+    try {
+      print('🌐 ProfileService.getRanchesByProfile iniciado - profileId: $profileId');
+
+      final headers = await _getHeaders();
+      final uri = Uri.parse('$_baseUrl/api/profiles/$profileId/ranches');
+
+      print('🌐 URL: $uri');
+
+      final response = await http.get(uri, headers: headers);
+
+      print('🌐 Status code: ${response.statusCode}');
+      print('🌐 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Ranch.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        return []; // No tiene ranches
+      } else {
+        throw Exception('Error al cargar haciendas: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error en getRanchesByProfile: $e');
       rethrow;
     }
   }

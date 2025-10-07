@@ -20,6 +20,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _secondLastNameController = TextEditingController();
   final _ciNumberController = TextEditingController();
   final _whatsappNumberController = TextEditingController();
+  final _bioController = TextEditingController();
 
   DateTime? _selectedDate;
   String? _selectedMaritalStatus;
@@ -46,6 +47,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _secondLastNameController.text = profile.secondLastName ?? '';
         _ciNumberController.text = profile.ciNumber;
         _whatsappNumberController.text = profile.whatsappNumber ?? '';
+        _bioController.text = profile.bio ?? '';
         _selectedDate = profile.dateOfBirth;
         _selectedMaritalStatus = profile.maritalStatus;
         _selectedSex = profile.sex;
@@ -65,6 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _secondLastNameController.dispose();
     _ciNumberController.dispose();
     _whatsappNumberController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -139,6 +142,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       lastName: _lastNameController.text.trim(),
       secondLastName: _secondLastNameController.text.trim().isNotEmpty
           ? _secondLastNameController.text.trim()
+          : null,
+      bio: _bioController.text.trim().isNotEmpty
+          ? _bioController.text.trim()
           : null,
       dateOfBirth: _selectedDate,
       maritalStatus: _selectedMaritalStatus,
@@ -358,6 +364,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                    ),
+                  ),
+
+                  SizedBox(height: isTablet ? 20 : 16),
+
+                  // Biografía
+                  TextFormField(
+                    controller: _bioController,
+                    maxLines: 4,
+                    maxLength: 500,
+                    decoration: InputDecoration(
+                      labelText: 'Biografía',
+                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      hintText: 'Cuéntanos sobre ti...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      helperText: 'Máximo 500 caracteres',
                     ),
                   ),
 

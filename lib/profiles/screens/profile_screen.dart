@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/config/theme_provider.dart';
+import 'package:zonix/config/user_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:zonix/profiles/screens/edit_profile_screen.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
@@ -276,6 +277,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     SizedBox(height: isTablet ? 10 : 8),
 
+                    // Bio
+                    if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+                      SizedBox(height: isTablet ? 16 : 12),
+                      Text(
+                        profile.bio!,
+                        style: TextStyle(
+                          fontSize: isTablet ? 16 : 14,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+
+                    SizedBox(height: isTablet ? 16 : 12),
+
                     // Rating y verificado
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -385,7 +404,153 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                    SizedBox(height: isTablet ? 32 : 24),
+                    SizedBox(height: isTablet ? 24 : 20),
+
+                    // Información de contacto (solo perfil propio)
+                    Container(
+                      padding: EdgeInsets.all(isTablet ? 20 : 16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Email
+                          Consumer<ProfileProvider>(
+                            builder: (context, profileProvider, child) {
+                              final email = profileProvider.myProfile?.userId != null 
+                                ? context.read<UserProvider>().email ?? 'No disponible'
+                                : 'No disponible';
+                              return Row(
+                                children: [
+                                  Icon(
+                                    Icons.email,
+                                    size: isTablet ? 20 : 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  SizedBox(width: isTablet ? 12 : 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Email',
+                                          style: TextStyle(
+                                            fontSize: isTablet ? 12 : 11,
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        Text(
+                                          email,
+                                          style: TextStyle(
+                                            fontSize: isTablet ? 16 : 14,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+
+                          if (profile.whatsappNumber != null && profile.whatsappNumber!.isNotEmpty) ...[
+                            SizedBox(height: isTablet ? 16 : 12),
+                            Divider(color: theme.colorScheme.outline.withOpacity(0.2)),
+                            SizedBox(height: isTablet ? 16 : 12),
+                            // WhatsApp
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone,
+                                  size: isTablet ? 20 : 18,
+                                  color: Colors.green,
+                                ),
+                                SizedBox(width: isTablet ? 12 : 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'WhatsApp',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 12 : 11,
+                                          color: theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                      Text(
+                                        profile.whatsappNumber!,
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 16 : 14,
+                                          color: theme.colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: isTablet ? 24 : 20),
+
+                    // Notificación de cuenta no verificada
+                    if (!profile.isVerified) ...[
+                      Container(
+                        padding: EdgeInsets.all(isTablet ? 16 : 14),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                          border: Border.all(
+                            color: Colors.orange.withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.orange,
+                              size: isTablet ? 28 : 24,
+                            ),
+                            SizedBox(width: isTablet ? 12 : 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Cuenta no verificada',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 16 : 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange.shade900,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Verifica tu cuenta para aumentar tu credibilidad y acceder a más funciones.',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 14 : 12,
+                                      color: Colors.orange.shade800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: isTablet ? 24 : 20),
+                    ],
+
+                    SizedBox(height: isTablet ? 8 : 6),
 
                     // Botón Editar Perfil
                     ElevatedButton(
@@ -713,29 +878,241 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
-        // Lista de productos
-        return GridView.builder(
+        // Lista de productos con métricas y acciones
+        return ListView.builder(
           padding: EdgeInsets.all(isTablet ? 24 : 16),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isTablet ? 2 : 1,
-            mainAxisSpacing: isTablet ? 20 : 16,
-            crossAxisSpacing: isTablet ? 20 : 16,
-            childAspectRatio: isTablet ? 1.2 : 1.5,
-          ),
           itemCount: profileProvider.myProducts.length,
           itemBuilder: (context, index) {
             final product = profileProvider.myProducts[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ProductDetailScreen(productId: product.id),
+            return Container(
+              margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Imagen del producto
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ProductDetailScreen(productId: product.id),
+                        ),
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(isTablet ? 16 : 12),
+                        bottomLeft: Radius.circular(isTablet ? 16 : 12),
+                      ),
+                      child: product.images.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: product.images.first.imageUrl,
+                              width: isTablet ? 120 : 100,
+                              height: isTablet ? 120 : 100,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: theme.colorScheme.surfaceVariant,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: theme.colorScheme.surfaceVariant,
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              width: isTablet ? 120 : 100,
+                              height: isTablet ? 120 : 100,
+                              color: theme.colorScheme.surfaceVariant,
+                              child: Icon(
+                                Icons.image,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                    ),
                   ),
-                );
-              },
-              child: ProductCard(product: product),
+                  
+                  // Información del producto
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(isTablet ? 16 : 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Título
+                          Text(
+                            product.title,
+                            style: TextStyle(
+                              fontSize: isTablet ? 18 : 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: isTablet ? 8 : 6),
+                          
+                          // Raza y tipo
+                          Text(
+                            '${product.breed} · ${product.type}',
+                            style: TextStyle(
+                              fontSize: isTablet ? 14 : 12,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          SizedBox(height: isTablet ? 12 : 10),
+                          
+                          // Métricas
+                          Wrap(
+                            spacing: isTablet ? 16 : 12,
+                            runSpacing: isTablet ? 8 : 6,
+                            children: [
+                              // Vistas
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.visibility,
+                                    size: isTablet ? 18 : 16,
+                                    color: Colors.blue,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '${product.viewsCount}',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 14 : 12,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              
+                              // Estado
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 10 : 8,
+                                  vertical: isTablet ? 4 : 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: product.status == 'active'
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: product.status == 'active'
+                                        ? Colors.green.withOpacity(0.3)
+                                        : Colors.grey.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  product.status == 'active' ? 'Activo' : 'Vendido',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 12 : 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: product.status == 'active'
+                                        ? Colors.green.shade700
+                                        : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // Acciones (Editar/Eliminar)
+                  Padding(
+                    padding: EdgeInsets.all(isTablet ? 12 : 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Botón Editar
+                        IconButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Editar Publicación - Próximamente'),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit,
+                            size: isTablet ? 24 : 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        
+                        // Botón Eliminar
+                        IconButton(
+                          onPressed: () async {
+                            // Mostrar confirmación
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Eliminar Publicación'),
+                                content: const Text(
+                                  '¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: Text(
+                                      'Eliminar',
+                                      style: TextStyle(color: theme.colorScheme.error),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true && mounted) {
+                              // TODO: Implementar eliminación
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Eliminar Publicación - Próximamente'),
+                                ),
+                              );
+                            }
+                          },
+                          icon: Icon(
+                            Icons.delete,
+                            size: isTablet ? 24 : 20,
+                            color: theme.colorScheme.error,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.3),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );

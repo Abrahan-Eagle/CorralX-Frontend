@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:zonix/profiles/services/profile_service.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/widgets/product_card.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
@@ -177,6 +178,27 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         ),
                         SizedBox(height: isTablet ? 10 : 8),
                         
+                        // Bio
+                        if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+                          SizedBox(height: isTablet ? 16 : 12),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+                            child: Text(
+                              profile.bio!,
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 6,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+
+                        SizedBox(height: isTablet ? 16 : 12),
+                        
                         // Rating, verificado y premium
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -322,6 +344,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ],
                     ),
                   ),
+                  
+                  SizedBox(height: isTablet ? 32 : 24),
+                  
+                  // Fincas del vendedor
+                  _buildVendorRanches(profile.id, isTablet, theme),
                   
                   SizedBox(height: isTablet ? 32 : 24),
                   
@@ -515,5 +542,147 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return productProvider.products.where((product) {
       return product.ranch?.profileId == userId;
     }).toList();
+  }
+
+  Widget _buildVendorRanches(int profileId, bool isTablet, ThemeData theme) {
+    return FutureBuilder(
+      future: _loadVendorRanches(profileId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox.shrink();
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return SizedBox.shrink();
+        }
+
+        final ranches = snapshot.data as List<dynamic>? ?? [];
+
+        if (ranches.isEmpty) {
+          return SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Fincas Registradas',
+              style: TextStyle(
+                fontSize: isTablet ? 20 : 18,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onBackground,
+              ),
+            ),
+            SizedBox(height: isTablet ? 16 : 12),
+            
+            // Lista de fincas
+            ...ranches.map((ranch) {
+              return Container(
+                margin: EdgeInsets.only(bottom: isTablet ? 12 : 10),
+                padding: EdgeInsets.all(isTablet ? 16 : 14),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Icono
+                    Container(
+                      width: isTablet ? 60 : 50,
+                      height: isTablet ? 60 : 50,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+                      ),
+                      child: Icon(
+                        Icons.home,
+                        color: theme.colorScheme.primary,
+                        size: isTablet ? 32 : 28,
+                      ),
+                    ),
+                    SizedBox(width: isTablet ? 16 : 12),
+                    
+                    // Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  ranch.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isTablet ? 16 : 14,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (ranch.isPrimary)
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 8 : 6,
+                                    vertical: isTablet ? 3 : 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Principal',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 11 : 10,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (ranch.address != null) ...[
+                            SizedBox(height: isTablet ? 6 : 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: isTablet ? 16 : 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    ranch.address!.formattedLocation,
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 14 : 12,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<List<dynamic>> _loadVendorRanches(int profileId) async {
+    return await ProfileService.getRanchesByProfile(profileId);
   }
 }

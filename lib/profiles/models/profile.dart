@@ -14,6 +14,7 @@ class Profile {
   final String lastName;
   final String? secondLastName;
   final String? photoUsers; // URL de la foto
+  final String? bio; // Biografía del usuario
   final DateTime? dateOfBirth;
   final String? maritalStatus; // married, divorced, single
   final String? sex; // F, M
@@ -46,6 +47,7 @@ class Profile {
     required this.lastName,
     this.secondLastName,
     this.photoUsers,
+    this.bio,
     this.dateOfBirth,
     this.maritalStatus,
     this.sex,
@@ -113,6 +115,7 @@ class Profile {
       lastName: json['lastName'] ?? '',
       secondLastName: json['secondLastName'],
       photoUsers: json['photo_users'],
+      bio: json['bio'],
       dateOfBirth: _parseDateTime(json['date_of_birth']),
       maritalStatus: json['maritalStatus'],
       sex: json['sex'],
@@ -151,6 +154,7 @@ class Profile {
       'lastName': lastName,
       'secondLastName': secondLastName,
       'photo_users': photoUsers,
+      'bio': bio,
       'date_of_birth': dateOfBirth?.toIso8601String(),
       'maritalStatus': maritalStatus,
       'sex': sex,
@@ -227,6 +231,7 @@ class Profile {
     String? lastName,
     String? secondLastName,
     String? photoUsers,
+    String? bio,
     DateTime? dateOfBirth,
     String? maritalStatus,
     String? sex,
@@ -257,6 +262,7 @@ class Profile {
       lastName: lastName ?? this.lastName,
       secondLastName: secondLastName ?? this.secondLastName,
       photoUsers: photoUsers ?? this.photoUsers,
+      bio: bio ?? this.bio,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       maritalStatus: maritalStatus ?? this.maritalStatus,
       sex: sex ?? this.sex,
