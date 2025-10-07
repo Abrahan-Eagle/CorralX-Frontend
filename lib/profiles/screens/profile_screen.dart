@@ -236,47 +236,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         // Renderizar perfil
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(isTablet ? 24 : 16),
-          child: Column(
-            children: [
-              // Profile info card
-              Container(
-                padding: EdgeInsets.all(isTablet ? 32 : 24),
-                decoration: BoxDecoration(
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      child: Column(
+        children: [
+          // Profile info card
+          Container(
+            padding: EdgeInsets.all(isTablet ? 32 : 24),
+            decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
-                ),
-                child: Column(
-                  children: [
+              borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+            ),
+            child: Column(
+              children: [
                     // Avatar
-                    CircleAvatar(
-                      radius: isTablet ? 80 : 64,
+                CircleAvatar(
+                  radius: isTablet ? 80 : 64,
                       backgroundColor: theme.colorScheme.surfaceVariant,
                       backgroundImage: profile.photoUsers != null
                           ? CachedNetworkImageProvider(profile.photoUsers!)
                           : null,
                       child: profile.photoUsers == null
                           ? Icon(
-                              Icons.person,
-                              size: isTablet ? 80 : 64,
+                    Icons.person,
+                    size: isTablet ? 80 : 64,
                               color: theme.colorScheme.onSurfaceVariant,
                             )
                           : null,
-                    ),
-                    SizedBox(height: isTablet ? 20 : 16),
+                ),
+                SizedBox(height: isTablet ? 20 : 16),
 
                     // Nombre
-                    Text(
+                Text(
                       profile.fullName,
-                      style: TextStyle(
-                        fontSize: isTablet ? 28 : 24,
-                        fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    fontSize: isTablet ? 28 : 24,
+                    fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurface,
-                      ),
+                  ),
                       textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: isTablet ? 10 : 8),
+                ),
+                SizedBox(height: isTablet ? 10 : 8),
 
                     // Bio
                     if (profile.bio != null && profile.bio!.isNotEmpty) ...[
@@ -297,9 +297,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(height: isTablet ? 16 : 12),
 
                     // Rating y verificado
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                         if (profile.isVerified) ...[
                           Icon(
                             Icons.verified,
@@ -308,29 +308,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(width: isTablet ? 8 : 6),
                         ],
-                        Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                          size: isTablet ? 24 : 20,
-                        ),
-                        SizedBox(width: isTablet ? 6 : 4),
-                        Text(
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: isTablet ? 24 : 20,
+                    ),
+                    SizedBox(width: isTablet ? 6 : 4),
+                    Text(
                           profile.rating.toStringAsFixed(1),
                           style: TextStyle(
                             fontSize: isTablet ? 20 : 18,
                             color: theme.colorScheme.onSurface,
                           ),
-                        ),
-                        SizedBox(width: isTablet ? 10 : 8),
-                        Text(
-                          '(${profile.ratingsCount} ${profile.ratingsCount == 1 ? "opinión" : "opiniones"})',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: isTablet ? 16 : 14,
-                          ),
-                        ),
-                      ],
                     ),
+                    SizedBox(width: isTablet ? 10 : 8),
+                    Text(
+                          '(${profile.ratingsCount} ${profile.ratingsCount == 1 ? "opinión" : "opiniones"})',
+                      style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: isTablet ? 16 : 14,
+                      ),
+                    ),
+                  ],
+                ),
 
                     // Premium badge
                     if (profile.isPremiumSeller) ...[
@@ -371,7 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
 
-                    SizedBox(height: isTablet ? 20 : 16),
+                SizedBox(height: isTablet ? 20 : 16),
                     
                     // Ubicación
                     if (profile.primaryAddress != null) ...[
@@ -384,23 +384,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           SizedBox(width: isTablet ? 6 : 4),
-                          Text(
+                Text(
                             profile.primaryAddress!.formattedLocation,
-                            style: TextStyle(
+                  style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: isTablet ? 16 : 14,
-                            ),
-                          ),
+                    fontSize: isTablet ? 16 : 14,
+                  ),
+                ),
                         ],
                       ),
                       SizedBox(height: isTablet ? 12 : 8),
                     ],
 
                     // Miembro desde
-                    Text(
+                Text(
                       'Miembro desde: ${DateFormat('MMMM yyyy', 'es').format(profile.createdAt)}',
-                      style: TextStyle(
-                        fontSize: isTablet ? 16 : 14,
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -554,7 +554,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(height: isTablet ? 8 : 6),
 
                     // Botón Editar Perfil
-                    ElevatedButton(
+                ElevatedButton(
                       onPressed: () async {
                         await Navigator.push(
                           context,
@@ -567,23 +567,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           profileProvider.fetchMyProfile(forceRefresh: true);
                         }
                       },
-                      style: ElevatedButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isTablet ? 32 : 24,
-                          vertical: isTablet ? 16 : 12,
-                        ),
-                        shape: RoundedRectangleBorder(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 32 : 24,
+                      vertical: isTablet ? 16 : 12,
+                    ),
+                    shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(isTablet ? 30 : 25),
-                        ),
-                      ),
-                      child: Text(
-                        'Editar Perfil',
-                        style: TextStyle(fontSize: isTablet ? 16 : 14),
-                      ),
                     ),
+                  ),
+                  child: Text(
+                    'Editar Perfil',
+                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                  ),
+                ),
 
                     SizedBox(height: isTablet ? 16 : 12),
 
@@ -653,9 +653,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             theme.colorScheme.primary,
                           ),
                         ),
-                      ),
-                    );
-                  }
+      ),
+    );
+  }
 
                   // Mostrar error
                   if (metricsProvider.metricsError != null) {
@@ -671,9 +671,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: theme.colorScheme.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
                     ),
-                    child: Column(
+      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+        children: [
                         // Título
                         Text(
                           'Estadísticas',
@@ -683,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: theme.colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(height: isTablet ? 20 : 16),
+          SizedBox(height: isTablet ? 20 : 16),
 
                         // Grid de métricas
                         GridView.count(
@@ -835,7 +835,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () {
                     profileProvider.fetchMyProducts(refresh: true);
                   },
-                  style: ElevatedButton.styleFrom(
+            style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
                   ),
@@ -874,10 +874,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontSize: isTablet ? 14 : 12,
                   ),
                 ),
-              ],
-            ),
-          );
-        }
+        ],
+      ),
+    );
+  }
 
         // Lista de productos con métricas y acciones
         return ListView.builder(
@@ -885,17 +885,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           itemCount: profileProvider.myProducts.length,
           itemBuilder: (context, index) {
             final product = profileProvider.myProducts[index];
-            return Container(
+    return Container(
               margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
-              decoration: BoxDecoration(
+      decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
                 border: Border.all(
                   color: theme.colorScheme.outline.withOpacity(0.2),
                 ),
-              ),
-              child: Row(
-                children: [
+      ),
+      child: Row(
+        children: [
                   // Imagen del producto
                   GestureDetector(
                     onTap: () {
@@ -940,38 +940,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: isTablet ? 120 : 100,
                               height: isTablet ? 120 : 100,
                               color: theme.colorScheme.surfaceVariant,
-                              child: Icon(
-                                Icons.image,
+            child: Icon(
+              Icons.image,
                                 color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
+            ),
+          ),
                     ),
                   ),
                   
                   // Información del producto
-                  Expanded(
+          Expanded(
                     child: Padding(
                       padding: EdgeInsets.all(isTablet ? 16 : 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                           // Título
-                          Text(
+                Text(
                             product.title,
-                            style: TextStyle(
-                              fontSize: isTablet ? 18 : 16,
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.onSurface,
-                            ),
+                  ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                          ),
+                ),
                           SizedBox(height: isTablet ? 8 : 6),
                           
                           // Raza y tipo
-                          Text(
+                Text(
                             '${product.breed} · ${product.type}',
-                            style: TextStyle(
+                  style: TextStyle(
                               fontSize: isTablet ? 14 : 12,
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -993,15 +993,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Colors.blue,
                                   ),
                                   SizedBox(width: 4),
-                                  Text(
+                Text(
                                     '${product.viewsCount}',
-                                    style: TextStyle(
+                  style: TextStyle(
                                       fontSize: isTablet ? 14 : 12,
                                       color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                  ),
+                ),
+              ],
+            ),
                               
                               // Estado
                               Container(
@@ -1043,9 +1043,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: EdgeInsets.all(isTablet ? 12 : 8),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
+            children: [
                         // Botón Editar
-                        IconButton(
+              IconButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -1058,14 +1058,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             size: isTablet ? 24 : 20,
                             color: theme.colorScheme.primary,
                           ),
-                          style: IconButton.styleFrom(
+                style: IconButton.styleFrom(
                             backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.5),
-                          ),
-                        ),
+                ),
+              ),
                         SizedBox(height: 8),
                         
                         // Botón Eliminar
-                        IconButton(
+              IconButton(
                           onPressed: () async {
                             // Mostrar confirmación
                             final confirm = await showDialog<bool>(
@@ -1120,15 +1120,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             size: isTablet ? 24 : 20,
                             color: theme.colorScheme.error,
                           ),
-                          style: IconButton.styleFrom(
+                style: IconButton.styleFrom(
                             backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.3),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
+            ],
+                    ),
+          ),
+        ],
+      ),
             );
           },
         );
@@ -1249,52 +1249,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Lista de fincas
               ...profileProvider.myRanches.map((ranch) {
-                return Container(
+    return Container(
                   margin: EdgeInsets.only(bottom: isTablet ? 20 : 16),
-                  padding: EdgeInsets.all(isTablet ? 20 : 16),
-                  decoration: BoxDecoration(
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
+      decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: isTablet ? 6 : 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
+        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: isTablet ? 6 : 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
                       // Icono
-                      Container(
-                        width: isTablet ? 80 : 64,
-                        height: isTablet ? 80 : 64,
-                        decoration: BoxDecoration(
+          Container(
+            width: isTablet ? 80 : 64,
+            height: isTablet ? 80 : 64,
+            decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceVariant,
                           borderRadius:
                               BorderRadius.circular(isTablet ? 12 : 8),
-                        ),
-                        child: Icon(
-                          Icons.home,
+            ),
+            child: Icon(
+              Icons.home,
                           color: theme.colorScheme.onSurfaceVariant,
-                          size: isTablet ? 40 : 32,
-                        ),
-                      ),
-                      SizedBox(width: isTablet ? 20 : 16),
+              size: isTablet ? 40 : 32,
+            ),
+          ),
+          SizedBox(width: isTablet ? 20 : 16),
 
                       // Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                             Row(
                               children: [
                                 Expanded(
                                   child: Text(
                                     ranch.name,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: isTablet ? 18 : 16,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: isTablet ? 18 : 16,
                                       color: theme.colorScheme.onSurface,
                                     ),
                                   ),
@@ -1320,12 +1320,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                   ),
                               ],
-                            ),
-                            SizedBox(height: isTablet ? 6 : 4),
-                            Text(
+                ),
+                SizedBox(height: isTablet ? 6 : 4),
+                Text(
                               'RIF: ${ranch.taxId}',
-                              style: TextStyle(
-                                fontSize: isTablet ? 16 : 14,
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
@@ -1341,14 +1341,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                             ],
-                          ],
-                        ),
-                      ),
+              ],
+            ),
+          ),
 
                       // Botones
-                      Row(
-                        children: [
-                          IconButton(
+          Row(
+            children: [
+              IconButton(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -1356,21 +1356,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               );
                             },
-                            icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
-                            style: IconButton.styleFrom(
+                icon: Icon(Icons.edit, size: isTablet ? 24 : 20),
+                style: IconButton.styleFrom(
                               backgroundColor: theme.colorScheme.surfaceVariant
                                   .withOpacity(0.5),
-                              padding: EdgeInsets.all(isTablet ? 12 : 8),
-                            ),
-                          ),
+                  padding: EdgeInsets.all(isTablet ? 12 : 8),
+                ),
+              ),
                         ],
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+              ),
             ],
           ),
+                );
+              }).toList(),
+        ],
+      ),
         );
       },
     );
