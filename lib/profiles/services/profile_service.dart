@@ -188,9 +188,9 @@ class ProfileService {
       print('🌐 ProfileService.uploadProfilePhoto iniciado');
 
       final token = await _storage.read(key: 'token');
-      final uri = Uri.parse('$_baseUrl/api/profile');
+      final uri = Uri.parse('$_baseUrl/api/profile/photo');
 
-      var request = http.MultipartRequest('PUT', uri);
+      var request = http.MultipartRequest('POST', uri);
 
       // Agregar headers
       if (token != null) {
