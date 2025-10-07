@@ -17,14 +17,14 @@ class EditProductScreen extends StatefulWidget {
 
 class _EditProductScreenState extends State<EditProductScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _quantityController;
   late TextEditingController _ageController;
   late TextEditingController _weightAvgController;
-  
+
   late String _selectedType;
   late String _selectedBreed;
   late String _selectedCurrency;
@@ -41,15 +41,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Inicializar controladores con datos existentes
     _titleController = TextEditingController(text: widget.product.title);
-    _descriptionController = TextEditingController(text: widget.product.description);
-    _priceController = TextEditingController(text: widget.product.price.toString());
-    _quantityController = TextEditingController(text: widget.product.quantity.toString());
+    _descriptionController =
+        TextEditingController(text: widget.product.description);
+    _priceController =
+        TextEditingController(text: widget.product.price.toString());
+    _quantityController =
+        TextEditingController(text: widget.product.quantity.toString());
     _ageController = TextEditingController(text: widget.product.age.toString());
-    _weightAvgController = TextEditingController(text: widget.product.weightAvg?.toString() ?? '');
-    
+    _weightAvgController =
+        TextEditingController(text: widget.product.weightAvg?.toString() ?? '');
+
     _selectedType = widget.product.type;
     _selectedBreed = widget.product.breed;
     _selectedCurrency = widget.product.currency;
@@ -115,7 +119,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.errorMessage ?? 'Error al actualizar producto'),
+          content:
+              Text(provider.errorMessage ?? 'Error al actualizar producto'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -125,7 +130,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Producto'),
@@ -352,8 +357,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(value: 'pickup', child: Text('Recoger en sitio')),
-                DropdownMenuItem(value: 'delivery', child: Text('Entrega a domicilio')),
+                DropdownMenuItem(
+                    value: 'pickup', child: Text('Recoger en sitio')),
+                DropdownMenuItem(
+                    value: 'delivery', child: Text('Entrega a domicilio')),
                 DropdownMenuItem(value: 'both', child: Text('Ambos')),
               ],
               onChanged: (value) {
@@ -399,7 +406,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
             SwitchListTile(
               title: const Text('Incluye Documentación'),
               value: _documentationIncluded,
-              onChanged: (value) => setState(() => _documentationIncluded = value),
+              onChanged: (value) =>
+                  setState(() => _documentationIncluded = value),
             ),
             const SizedBox(height: 24),
 
@@ -422,7 +430,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     )
                   : const Text(
                       'Guardar Cambios',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             ),
           ],
@@ -431,4 +440,3 @@ class _EditProductScreenState extends State<EditProductScreen> {
     );
   }
 }
-

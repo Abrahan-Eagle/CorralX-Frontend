@@ -1,3 +1,5 @@
+import 'package:zonix/profiles/models/address.dart';
+
 /// Modelo Ranch - Hacienda/Finca en el marketplace
 ///
 /// Representa una hacienda o finca asociada a un perfil de vendedor.
@@ -6,27 +8,41 @@ class Ranch {
   final int id;
   final int profileId;
   final String name; // Nombre de la hacienda
-  final String legalName; // Razón social
-  final String taxId; // RIF
-  final String? description;
+  final String? legalName; // Razón social
+  final String? taxId; // RIF
+  final String? businessDescription;
   final String? contactHours;
   final int? addressId;
   final bool isPrimary; // Hacienda principal del usuario
+  final String? deliveryPolicy;
+  final String? returnPolicy;
+  final double avgRating;
+  final int totalSales;
+  final DateTime? lastSaleAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  
+  // Relaciones
+  final Address? address;
 
   Ranch({
     required this.id,
     required this.profileId,
     required this.name,
-    required this.legalName,
-    required this.taxId,
-    this.description,
+    this.legalName,
+    this.taxId,
+    this.businessDescription,
     this.contactHours,
     this.addressId,
     required this.isPrimary,
+    this.deliveryPolicy,
+    this.returnPolicy,
+    required this.avgRating,
+    required this.totalSales,
+    this.lastSaleAt,
     required this.createdAt,
     required this.updatedAt,
+    this.address,
   });
 
   /// Factory para crear una instancia desde JSON
@@ -35,14 +51,20 @@ class Ranch {
       id: _parseInt(json['id']) ?? 0,
       profileId: _parseInt(json['profile_id']) ?? 0,
       name: json['name'] ?? '',
-      legalName: json['legal_name'] ?? '',
-      taxId: json['tax_id'] ?? '',
-      description: json['description'],
+      legalName: json['legal_name'],
+      taxId: json['tax_id'],
+      businessDescription: json['business_description'],
       contactHours: json['contact_hours'],
       addressId: _parseInt(json['address_id']),
       isPrimary: _parseBool(json['is_primary']) ?? false,
+      deliveryPolicy: json['delivery_policy'],
+      returnPolicy: json['return_policy'],
+      avgRating: _parseDouble(json['avg_rating']) ?? 0.0,
+      totalSales: _parseInt(json['total_sales']) ?? 0,
+      lastSaleAt: _parseDateTime(json['last_sale_at']),
       createdAt: _parseDateTime(json['created_at']) ?? DateTime.now(),
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
+      address: json['address'] != null ? Address.fromJson(json['address']) : null,
     );
   }
 
@@ -54,13 +76,28 @@ class Ranch {
       'name': name,
       'legal_name': legalName,
       'tax_id': taxId,
-      'description': description,
+      'business_description': businessDescription,
       'contact_hours': contactHours,
       'address_id': addressId,
       'is_primary': isPrimary,
+      'delivery_policy': deliveryPolicy,
+      'return_policy': returnPolicy,
+      'avg_rating': avgRating,
+      'total_sales': totalSales,
+      'last_sale_at': lastSaleAt?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      if (address != null) 'address': address!.toJson(),
     };
+  }
+
+  /// Helper: Parsear double desde dynamic
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   /// Helper: Parsear int desde dynamic
@@ -104,12 +141,18 @@ class Ranch {
     String? name,
     String? legalName,
     String? taxId,
-    String? description,
+    String? businessDescription,
     String? contactHours,
     int? addressId,
     bool? isPrimary,
+    String? deliveryPolicy,
+    String? returnPolicy,
+    double? avgRating,
+    int? totalSales,
+    DateTime? lastSaleAt,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Address? address,
   }) {
     return Ranch(
       id: id ?? this.id,
@@ -117,12 +160,21 @@ class Ranch {
       name: name ?? this.name,
       legalName: legalName ?? this.legalName,
       taxId: taxId ?? this.taxId,
-      description: description ?? this.description,
+      businessDescription: businessDescription ?? this.businessDescription,
       contactHours: contactHours ?? this.contactHours,
       addressId: addressId ?? this.addressId,
       isPrimary: isPrimary ?? this.isPrimary,
+      deliveryPolicy: deliveryPolicy ?? this.deliveryPolicy,
+      returnPolicy: returnPolicy ?? this.returnPolicy,
+      avgRating: avgRating ?? this.avgRating,
+      totalSales: totalSales ?? this.totalSales,
+      lastSaleAt: lastSaleAt ?? this.lastSaleAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      address: address ?? this.address,
     );
   }
+
+  /// Descripción corta de la hacienda (para compatibilidad)
+  String? get description => businessDescription;
 }
