@@ -89,7 +89,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
         );
         
         // Refrescar ranches en ProfileProvider
-        await context.read<ProfileProvider>().fetchMyRanches(refresh: true);
+        await context.read<ProfileProvider>().fetchMyRanches(forceRefresh: true);
         
         if (mounted) {
           Navigator.pop(context, true);
