@@ -335,6 +335,7 @@ import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // import 'dart:io';
 // import 'package:http/http.dart' as http;
@@ -441,6 +442,16 @@ class MyApp extends StatelessWidget {
           theme: CorralXTheme.lightTheme,
           darkTheme: CorralXTheme.darkTheme,
           themeMode: themeProvider.themeMode,
+          locale: const Locale('es', 'ES'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('es', 'ES'),
+            Locale('en', 'US'),
+          ],
           home: Consumer<UserProvider>(
             builder: (context, userProvider, child) {
               logger.i('isAuthenticated: ${userProvider.isAuthenticated}');
