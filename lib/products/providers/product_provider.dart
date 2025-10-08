@@ -159,7 +159,7 @@ class ProductProvider with ChangeNotifier {
     required String currency,
     double? weightAvg,
     double? weightMin,
-    double? maxWeight,
+    double? weightMax, // ✅ Corregido de maxWeight a weightMax
     String? sex,
     String? purpose,
     String? healthCertificateUrl,
@@ -167,6 +167,7 @@ class ProductProvider with ChangeNotifier {
     bool? documentationIncluded,
     String? geneticTestResults,
     bool? isVaccinated,
+    bool? isFeatured, // ✅ NUEVO: destacado
     required String deliveryMethod,
     double? deliveryCost,
     double? deliveryRadiusKm,
@@ -192,7 +193,7 @@ class ProductProvider with ChangeNotifier {
         currency: currency,
         weightAvg: weightAvg,
         weightMin: weightMin,
-        weightMax: maxWeight,
+        weightMax: weightMax, // ✅ Corregido
         sex: sex,
         purpose: purpose,
         healthCertificateUrl: healthCertificateUrl,
@@ -200,6 +201,7 @@ class ProductProvider with ChangeNotifier {
         documentationIncluded: documentationIncluded,
         geneticTestResults: geneticTestResults,
         isVaccinated: isVaccinated,
+        isFeatured: isFeatured, // ✅ NUEVO
         deliveryMethod: deliveryMethod,
         deliveryCost: deliveryCost,
         deliveryRadiusKm: deliveryRadiusKm,

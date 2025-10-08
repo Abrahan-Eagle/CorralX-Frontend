@@ -24,6 +24,8 @@ class _CreateScreenState extends State<CreateScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _weightAvgController;
+  late TextEditingController _weightMinController; // ✅ NUEVO
+  late TextEditingController _weightMaxController; // ✅ NUEVO
   late TextEditingController _deliveryCostController;
   late TextEditingController _deliveryRadiusController;
 
@@ -35,7 +37,12 @@ class _CreateScreenState extends State<CreateScreen> {
   String _registrationType = 'sin-registro';
   bool _isFeatured = false;
   bool _negotiable = false;
+  bool _documentationIncluded = false; // ✅ NUEVO: documentación incluida
   int? _selectedRanchId;
+
+  // ✅ NUEVOS: campos opcionales críticos
+  String? _selectedSex; // male, female, mixed
+  String? _selectedPurpose; // breeding, meat, dairy, mixed
 
   // Lista de razas según backend (ProductController línea 69)
   static const List<String> _breedOptions = [
@@ -91,6 +98,8 @@ class _CreateScreenState extends State<CreateScreen> {
     _descriptionController = TextEditingController();
     _priceController = TextEditingController();
     _weightAvgController = TextEditingController();
+    _weightMinController = TextEditingController(); // ✅ NUEVO
+    _weightMaxController = TextEditingController(); // ✅ NUEVO
     _deliveryCostController = TextEditingController();
     _deliveryRadiusController = TextEditingController();
 
@@ -108,6 +117,8 @@ class _CreateScreenState extends State<CreateScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _weightAvgController.dispose();
+    _weightMinController.dispose(); // ✅ NUEVO
+    _weightMaxController.dispose(); // ✅ NUEVO
     _deliveryCostController.dispose();
     _deliveryRadiusController.dispose();
     super.dispose();
@@ -284,6 +295,14 @@ class _CreateScreenState extends State<CreateScreen> {
         weightAvg: _weightAvgController.text.trim().isNotEmpty
             ? double.parse(_weightAvgController.text.trim())
             : null,
+        weightMin: _weightMinController.text.trim().isNotEmpty
+            ? double.parse(_weightMinController.text.trim())
+            : null, // ✅ NUEVO
+        weightMax: _weightMaxController.text.trim().isNotEmpty
+            ? double.parse(_weightMaxController.text.trim())
+            : null, // ✅ NUEVO
+        sex: _selectedSex, // ✅ NUEVO: male, female, mixed
+        purpose: _selectedPurpose, // ✅ NUEVO: breeding, meat, dairy, mixed
         deliveryMethod: _selectedDeliveryMethod,
         deliveryCost: _deliveryCostController.text.trim().isNotEmpty
             ? double.parse(_deliveryCostController.text.trim())
@@ -292,23 +311,92 @@ class _CreateScreenState extends State<CreateScreen> {
             ? double.parse(_deliveryRadiusController.text.trim())
             : null,
         negotiable: _negotiable,
+        isFeatured: _isFeatured, // ✅ NUEVO: checkbox destacado
+        documentationIncluded:
+            _documentationIncluded, // ✅ NUEVO: checkbox documentación
         status:
             'active', // ✅ Backend solo acepta: active, paused, sold, expired
         imagePaths: _selectedImages.map((img) => img.path).toList(),
       );
 
       print('✅ CreateScreen: Resultado de creación: $success');
+      print('🔍 mounted: $mounted');
 
       if (success && mounted) {
+        print('🎯 ENTRANDO a bloque de limpieza (success=true, mounted=true)');
+
+        // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('¡Producto publicado exitosamente!'),
             backgroundColor: theme.colorScheme.primary,
+            duration: const Duration(seconds: 3),
           ),
         );
 
-        // Navegar de regreso al marketplace
-        Navigator.of(context).pop();
+        // Refrescar la lista de productos en background
+        productProvider.fetchProducts(refresh: true);
+
+        print('🧹 Iniciando limpieza del formulario...');
+        print('📸 Imágenes ANTES de limpiar: ${_selectedImages.length}');
+        print('📝 Título ANTES de limpiar: "${_titleController.text}"');
+
+        // ✅ LIMPIAR FORMULARIO para crear otro producto
+        setState(() {
+          print('⚡ DENTRO DE setState - LIMPIANDO...');
+          // 1. PRIMERO: Limpiar imágenes
+          print('🔄 Limpiando imágenes: ${_selectedImages.length} imágenes');
+          _selectedImages.clear();
+
+          // 2. Limpiar controladores de texto (usando .text = '' dentro de setState)
+          print('🔄 Limpiando controladores de texto...');
+          _titleController.text = '';
+          _descriptionController.text = '';
+          _ageController.text = '';
+          _quantityController.text = '';
+          _priceController.text = '';
+          _weightAvgController.text = '';
+          _weightMinController.text = '';
+          _weightMaxController.text = '';
+          _deliveryCostController.text = '';
+          _deliveryRadiusController.text = '';
+
+          // 3. Resetear dropdowns
+          print('🔄 Reseteando dropdowns...');
+          _selectedType = 'lechero';
+          _selectedBreed = 'Brahman';
+          _selectedCurrency = 'USD';
+          _selectedDeliveryMethod = 'pickup';
+          _selectedSex = null;
+          _selectedPurpose = null;
+
+          // 4. Resetear checkboxes
+          print('🔄 Reseteando checkboxes...');
+          _isFeatured = false;
+          _negotiable = false;
+          _documentationIncluded = false;
+        });
+
+        // 5. Resetear validaciones del formulario con delay
+        // Logs después de setState
+        print('📸 Imágenes DESPUÉS de limpiar: ${_selectedImages.length}');
+        print('📝 Título DESPUÉS de limpiar: "${_titleController.text}"');
+        print(
+            '📝 Descripción DESPUÉS de limpiar: "${_descriptionController.text}"');
+        print(
+            '📊 Dropdowns: Tipo=$_selectedType | Raza=$_selectedBreed | Sexo=$_selectedSex');
+        print(
+            '✅ Checkboxes: Destacado=$_isFeatured | Negociable=$_negotiable | Doc=$_documentationIncluded');
+
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _formKey.currentState?.reset();
+            print('✅ Validaciones reseteadas');
+          }
+        });
+
+        print(
+            '✅ Formulario completamente limpiado y listo para crear otro producto');
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -816,6 +904,174 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ],
                       ),
+                      SizedBox(height: isTablet ? 20 : 16),
+
+                      // ✅ NUEVOS: Sexo y Propósito
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedSex,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(isTablet ? 12 : 8),
+                                ),
+                                labelText: 'Sexo (opcional)',
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 16 : 12,
+                                  vertical: isTablet ? 12 : 8,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                    value: null, child: Text('No especificar')),
+                                DropdownMenuItem(
+                                    value: 'male', child: Text('Macho')),
+                                DropdownMenuItem(
+                                    value: 'female', child: Text('Hembra')),
+                                DropdownMenuItem(
+                                    value: 'mixed', child: Text('Mixto')),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedSex = value;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: isTablet ? 20 : 16),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedPurpose,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(isTablet ? 12 : 8),
+                                ),
+                                labelText: 'Propósito (opcional)',
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 16 : 12,
+                                  vertical: isTablet ? 12 : 8,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                    value: null, child: Text('No especificar')),
+                                DropdownMenuItem(
+                                    value: 'breeding',
+                                    child: Text('Reproducción')),
+                                DropdownMenuItem(
+                                    value: 'meat', child: Text('Carne')),
+                                DropdownMenuItem(
+                                    value: 'dairy', child: Text('Lechería')),
+                                DropdownMenuItem(
+                                    value: 'mixed', child: Text('Mixto')),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedPurpose = value;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isTablet ? 20 : 16),
+
+                      // ✅ NUEVO: Peso Promedio (campo principal)
+                      TextFormField(
+                        controller: _weightAvgController,
+                        keyboardType:
+                            TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(isTablet ? 12 : 8),
+                          ),
+                          labelText: 'Peso Promedio (kg)',
+                          hintText: 'Opcional - Peso promedio del lote',
+                          prefixIcon: Icon(Icons.monitor_weight_outlined),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 16 : 12,
+                            vertical: isTablet ? 12 : 8,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: isTablet ? 20 : 16),
+
+                      // ✅ NUEVOS: Rango de Peso (Mínimo y Máximo)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _weightMinController,
+                              keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d+\.?\d{0,2}')),
+                              ],
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(isTablet ? 12 : 8),
+                                ),
+                                labelText: 'Peso Mínimo (kg)',
+                                hintText: 'Opcional',
+                                prefixIcon: Icon(Icons.arrow_downward_rounded,
+                                    size: 20),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 16 : 12,
+                                  vertical: isTablet ? 12 : 8,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: isTablet ? 20 : 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _weightMaxController,
+                              keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d+\.?\d{0,2}')),
+                              ],
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(isTablet ? 12 : 8),
+                                ),
+                                labelText: 'Peso Máximo (kg)',
+                                hintText: 'Opcional',
+                                prefixIcon:
+                                    Icon(Icons.arrow_upward_rounded, size: 20),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isTablet ? 16 : 12,
+                                  vertical: isTablet ? 12 : 8,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   isTablet: isTablet,
@@ -1003,6 +1259,25 @@ class _CreateScreenState extends State<CreateScreen> {
                           Flexible(
                             child: Text(
                               'Marcar como Publicación Destacada',
+                              style: TextStyle(fontSize: isTablet ? 16 : 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // ✅ NUEVO: Documentación Incluida
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _documentationIncluded,
+                            onChanged: (value) {
+                              setState(() {
+                                _documentationIncluded = value ?? false;
+                              });
+                            },
+                          ),
+                          Flexible(
+                            child: Text(
+                              'Incluye Documentación (certificados, vacunas, etc.)',
                               style: TextStyle(fontSize: isTablet ? 16 : 14),
                             ),
                           ),

@@ -135,6 +135,7 @@ class ProductService {
     bool? documentationIncluded,
     String? geneticTestResults,
     bool? isVaccinated,
+    bool? isFeatured, // ✅ NUEVO: destacado
     required String deliveryMethod,
     double? deliveryCost,
     double? deliveryRadiusKm,
@@ -163,6 +164,7 @@ class ProductService {
         'genetic_test_results': geneticTestResults,
         'is_vaccinated':
             isVaccinated ?? false, // ✅ Default false si no se especifica
+        'is_featured': isFeatured ?? false, // ✅ NUEVO: destacado
         'delivery_method': deliveryMethod,
         'delivery_cost': deliveryCost,
         'delivery_radius_km': deliveryRadiusKm,
