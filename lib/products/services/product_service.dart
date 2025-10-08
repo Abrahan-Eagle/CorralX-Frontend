@@ -27,7 +27,10 @@ class ProductService {
 
   // Headers comunes con token de autenticación
   static Future<Map<String, String>> _getHeaders() async {
-    final token = await _storage.read(key: 'auth_token');
+    final token = await _storage.read(
+        key: 'token'); // ✅ CORREGIDO: usar 'token' no 'auth_token'
+    print(
+        '🔑 Token recuperado: ${token != null ? "✅ SI (${token.substring(0, 20)}...)" : "❌ NO"}');
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -143,9 +146,9 @@ class ProductService {
         'ranch_id': ranchId,
         'title': title,
         'description': description,
-        'type': type,
+        'type': type, // Backend espera: engorde, lechero, padrote
         'breed': breed,
-        'age': age,
+        'age': age, // ✅ Backend espera "age" (no "age_months")
         'quantity': quantity,
         'price': price,
         'currency': currency,
@@ -158,7 +161,8 @@ class ProductService {
         'vaccines_applied': vaccinesApplied,
         'documentation_included': documentationIncluded,
         'genetic_test_results': geneticTestResults,
-        'is_vaccinated': isVaccinated,
+        'is_vaccinated':
+            isVaccinated ?? false, // ✅ Default false si no se especifica
         'delivery_method': deliveryMethod,
         'delivery_cost': deliveryCost,
         'delivery_radius_km': deliveryRadiusKm,
@@ -169,6 +173,11 @@ class ProductService {
       // Remover valores null del body
       body.removeWhere((key, value) => value == null);
 
+      // Log del body antes de enviar
+      print('🌐 ProductService: POST $_baseUrl/api/products');
+      print('📦 Body enviado al backend:');
+      print(json.encode(body));
+
       final response = await http
           .post(
             Uri.parse('$_baseUrl/api/products'),
@@ -176,6 +185,9 @@ class ProductService {
             body: json.encode(body),
           )
           .timeout(const Duration(seconds: 30));
+
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
 
       if (response.statusCode == 201) {
         return json.decode(response.body);
@@ -319,7 +331,8 @@ class ProductService {
       );
 
       // Agregar headers de autenticación
-      final token = await _storage.read(key: 'auth_token');
+      final token = await _storage.read(
+          key: 'token'); // ✅ CORREGIDO: usar 'token' no 'auth_token'
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }

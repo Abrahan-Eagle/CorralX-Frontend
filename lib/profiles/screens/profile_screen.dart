@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/config/user_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:zonix/profiles/screens/edit_profile_screen.dart';
@@ -613,48 +612,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                    SizedBox(height: isTablet ? 12 : 10),
-
-                    // Botón para cambiar tema - Estilo minimalista
-                    Consumer<ThemeProvider>(
-                      builder: (context, themeProvider, child) {
-                        return SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              themeProvider.toggleTheme();
-                            },
-                            icon: Icon(
-                              themeProvider.isDarkMode
-                                  ? Icons.light_mode
-                                  : Icons.dark_mode,
-                              size: isTablet ? 20 : 18,
-                            ),
-                            label: Text(
-                              themeProvider.isDarkMode
-                                  ? 'Modo Claro'
-                                  : 'Modo Oscuro',
-                              style: TextStyle(
-                                fontSize: isTablet ? 16 : 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: theme.colorScheme.primary,
-                              side: BorderSide(
-                                color: theme.colorScheme.primary,
-                                width: 2,
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                  vertical: isTablet ? 16 : 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                    // Botón de cambiar tema eliminado - El tema ahora se ajusta automáticamente según el sistema
                   ],
                 ),
               ),

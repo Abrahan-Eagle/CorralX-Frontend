@@ -207,22 +207,47 @@ class ProductProvider with ChangeNotifier {
         status: status,
       );
 
-      if (response['data'] != null) {
-        final newProduct = Product.fromJson(response['data']);
+      // ✅ Backend devuelve el producto directamente (no en 'data')
+      print('📦 ProductProvider: Response recibida');
+
+      // Intentar obtener el producto desde 'data' o directamente
+      final productData = response['data'] ?? response;
+      print('📦 ProductProvider: productData obtenido');
+
+      print('📦 ProductProvider: Intentando parsear producto...');
+      try {
+        final newProduct = Product.fromJson(productData);
+        print(
+            '✅ ProductProvider: Producto parseado correctamente - ID: ${newProduct.id}');
         _products.insert(0, newProduct); // Agregar al inicio
 
-        // Subir imágenes si existen
+        // ✅ Subir imágenes si existen (endpoint implementado en backend)
         if (imagePaths != null && imagePaths.isNotEmpty) {
-          await ProductService.uploadImages(
-            productId: newProduct.id,
-            imagePaths: imagePaths,
-          );
+          print(
+              '📸 ProductProvider: Subiendo ${imagePaths.length} imágenes...');
+          try {
+            await ProductService.uploadImages(
+              productId: newProduct.id,
+              imagePaths: imagePaths,
+            );
+            print('✅ ProductProvider: Imágenes subidas exitosamente');
+
+            // Refrescar el producto para obtener las imágenes actualizadas
+            notifyListeners();
+          } catch (imageError) {
+            print(
+                '⚠️ ProductProvider: Error al subir imágenes (no crítico): $imageError');
+            // NO retornar false, el producto ya se creó exitosamente
+          }
         }
 
+        print('✅ ProductProvider: ¡Producto creado exitosamente!');
         return true;
+      } catch (parseError) {
+        print('❌ ProductProvider: Error al parsear producto: $parseError');
+        _errorMessage = 'Error al procesar respuesta del servidor';
+        return false;
       }
-
-      return false;
     } catch (e) {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
 

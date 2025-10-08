@@ -59,7 +59,18 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> loadThemePreference() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      // Si no hay preferencia guardada, forzar modo sistema
+      if (!prefs.containsKey(_themeKey)) {
+        _themeMode = ThemeMode.system;
+        await prefs.setString(_themeKey, 'system');
+        notifyListeners();
+        debugPrint('🎨 ThemeProvider: Modo sistema establecido por defecto');
+        return;
+      }
+
       final savedTheme = prefs.getString(_themeKey);
+      debugPrint('🎨 ThemeProvider: Tema guardado encontrado: $savedTheme');
 
       switch (savedTheme) {
         case 'light':
@@ -73,8 +84,11 @@ class ThemeProvider extends ChangeNotifier {
           _themeMode = ThemeMode.system;
           break;
       }
+      debugPrint('🎨 ThemeProvider: ThemeMode aplicado: $_themeMode');
       notifyListeners();
     } catch (e) {
+      debugPrint(
+          '⚠️ ThemeProvider: Error al cargar tema, usando modo sistema: $e');
       // En caso de error, usar modo sistema por defecto
       _themeMode = ThemeMode.system;
     }

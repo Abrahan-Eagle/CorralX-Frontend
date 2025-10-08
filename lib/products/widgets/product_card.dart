@@ -32,7 +32,7 @@ class ProductCard extends StatelessWidget {
           children: [
             // Imagen del producto
             _buildProductImage(),
-            
+
             // Información del producto
             Padding(
               padding: const EdgeInsets.all(12.0),
@@ -63,9 +63,9 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Tipo y raza
                   Row(
                     children: [
@@ -101,9 +101,9 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Detalles adicionales
                   Row(
                     children: [
@@ -136,14 +136,17 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   if (product.sex != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(
-                          product.sex == 'male' ? Icons.male : 
-                          product.sex == 'female' ? Icons.female : Icons.transgender,
+                          product.sex == 'male'
+                              ? Icons.male
+                              : product.sex == 'female'
+                                  ? Icons.female
+                                  : Icons.transgender,
                           size: 16,
                           color: Colors.grey[600],
                         ),
@@ -158,9 +161,9 @@ class ProductCard extends StatelessWidget {
                       ],
                     ),
                   ],
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Información del vendedor
                   Row(
                     children: [
@@ -168,7 +171,8 @@ class ProductCard extends StatelessWidget {
                         radius: 12,
                         backgroundColor: Colors.grey[300],
                         child: Text(
-                          product.ranch?.name.substring(0, 1).toUpperCase() ?? '?',
+                          product.ranch?.name.substring(0, 1).toUpperCase() ??
+                              '?',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -204,9 +208,9 @@ class ProductCard extends StatelessWidget {
                       ],
                     ],
                   ),
-                  
+
                   const SizedBox(height: 4),
-                  
+
                   // Fecha de publicación y vistas
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,9 +251,8 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildProductImage() {
-    final primaryImage = product.images.isNotEmpty 
-        ? product.images.first 
-        : null;
+    final primaryImage =
+        product.images.isNotEmpty ? product.images.first : null;
 
     return Stack(
       children: [
@@ -295,7 +298,7 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
         ),
-        
+
         // Badge de estado
         Positioned(
           top: 8,
@@ -319,7 +322,7 @@ class ProductCard extends StatelessWidget {
             ),
           ),
         ),
-        
+
         // Botón de favorito
         if (onFavorite != null)
           Positioned(
@@ -348,7 +351,7 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ),
-        
+
         // Indicador de múltiples imágenes
         if (product.images.length > 1)
           Positioned(
@@ -427,7 +430,7 @@ class ProductCard extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 7) {
       return '${date.day}/${date.month}/${date.year}';
     } else if (difference.inDays > 0) {
@@ -505,9 +508,9 @@ class ProductCardCompact extends StatelessWidget {
                         color: Colors.grey,
                       ),
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Información
               Expanded(
                 child: Column(
@@ -522,9 +525,7 @@ class ProductCardCompact extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
                     const SizedBox(height: 4),
-                    
                     Row(
                       children: [
                         Container(
@@ -554,9 +555,7 @@ class ProductCardCompact extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
                     const SizedBox(height: 4),
-                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -580,7 +579,7 @@ class ProductCardCompact extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Botón de favorito
               if (onFavorite != null)
                 IconButton(
