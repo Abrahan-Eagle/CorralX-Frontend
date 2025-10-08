@@ -61,7 +61,7 @@ void main() {
     });
 
     group('Filter Management', () {
-      test('should apply filters correctly', () {
+      test('should apply filters correctly', () async {
         final filters = {
           'type': 'lechero',
           'location': 'carabobo',
@@ -70,34 +70,39 @@ void main() {
         };
 
         provider.applyFilters(filters);
+        await Future.delayed(Duration(milliseconds: 100)); // Wait for async operations
 
         expect(provider.currentFilters, equals(filters));
       });
 
-      test('should clear filters correctly', () {
+      test('should clear filters correctly', () async {
         // First apply some filters
         final filters = {
           'type': 'lechero',
           'location': 'carabobo',
         };
         provider.applyFilters(filters);
+        await Future.delayed(Duration(milliseconds: 100)); // Wait for async operations
         expect(provider.currentFilters, isNotEmpty);
 
         // Then clear them
         provider.clearFilters();
+        await Future.delayed(Duration(milliseconds: 100)); // Wait for async operations
         expect(provider.currentFilters, isEmpty);
       });
 
-      test('should calculate active filters count correctly', () {
+      test('should calculate active filters count correctly', () async {
         // No filters
         expect(provider.activeFiltersCount, equals(0));
 
         // Search filter
         provider.applyFilters({'search': 'vacas'});
+        await Future.delayed(Duration(milliseconds: 50));
         expect(provider.activeFiltersCount, equals(1));
 
         // Type filter
         provider.applyFilters({'search': 'vacas', 'type': 'lechero'});
+        await Future.delayed(Duration(milliseconds: 50));
         expect(provider.activeFiltersCount, equals(2));
 
         // Location filter
@@ -106,6 +111,7 @@ void main() {
           'type': 'lechero',
           'location': 'carabobo',
         });
+        await Future.delayed(Duration(milliseconds: 50));
         expect(provider.activeFiltersCount, equals(3));
 
         // Price range filter (min_price and max_price count as 2 separate filters)
@@ -116,6 +122,7 @@ void main() {
           'min_price': 1000,
           'max_price': 5000,
         });
+        await Future.delayed(Duration(milliseconds: 50));
         expect(provider.activeFiltersCount, equals(5)); // search + type + location + min_price + max_price = 5
 
         // Sort filter (sort_by also counts as a filter)
@@ -127,9 +134,10 @@ void main() {
           'max_price': 5000,
           'sort_by': 'price_asc',
         });
+        await Future.delayed(Duration(milliseconds: 50));
         expect(provider.activeFiltersCount, equals(6)); // search + type + location + min_price + max_price + sort_by = 6
 
-        // Quantity filter
+        // Quantity filter (quantity also counts as a filter)
         provider.applyFilters({
           'search': 'vacas',
           'type': 'lechero',
@@ -139,10 +147,11 @@ void main() {
           'sort_by': 'price_asc',
           'quantity': 3,
         });
-        expect(provider.activeFiltersCount, equals(6));
+        await Future.delayed(Duration(milliseconds: 50));
+        expect(provider.activeFiltersCount, equals(7)); // search + type + location + min_price + max_price + sort_by + quantity = 7
       });
 
-      test('should not count default values as active filters', () {
+      test('should not count default values as active filters', () async {
         // These should not count as active filters
         provider.applyFilters({
           'type': 'Todos',
@@ -151,10 +160,12 @@ void main() {
           'sort_by': 'newest', // Default sort
           'quantity': 1, // Minimum quantity
         });
+        await Future.delayed(Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(0));
 
         // Empty search should not count
         provider.applyFilters({'search': ''});
+        await Future.delayed(Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(0));
       });
     });
