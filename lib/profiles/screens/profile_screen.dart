@@ -242,45 +242,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: EdgeInsets.all(isTablet ? 24 : 16),
           child: Column(
             children: [
-              // Profile info card con gradiente
+              // Profile info card - Diseño Minimalista Moderno
               Container(
                 padding: EdgeInsets.all(isTablet ? 32 : 24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primaryContainer.withOpacity(0.3),
-                      theme.colorScheme.surface,
-                      theme.colorScheme.surfaceContainerLow,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    // Avatar con sombra
+                    // Avatar con borde sólido
                     Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                        border: Border.all(
+                          color: theme.colorScheme.primary,
+                          width: 3,
+                        ),
                       ),
                       child: CircleAvatar(
-                        radius: isTablet ? 80 : 64,
+                        radius: isTablet ? 76 : 60,
                         backgroundColor: theme.colorScheme.surfaceVariant,
                         backgroundImage: profile.photoUsers != null
                             ? CachedNetworkImageProvider(profile.photoUsers!)
@@ -288,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: profile.photoUsers == null
                             ? Icon(
                                 Icons.person,
-                                size: isTablet ? 80 : 64,
+                                size: isTablet ? 76 : 60,
                                 color: theme.colorScheme.onSurfaceVariant,
                               )
                             : null,
@@ -362,7 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
 
-                    // Premium badge
+                    // Premium badge - Sólido
                     if (profile.isPremiumSeller) ...[
                       SizedBox(height: isTablet ? 12 : 8),
                       Container(
@@ -371,12 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           vertical: isTablet ? 8 : 6,
                         ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.amber.shade400,
-                              Colors.amber.shade700
-                            ],
-                          ),
+                          color: Colors.amber.shade600,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -437,14 +421,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     SizedBox(height: isTablet ? 24 : 20),
 
-                    // Información de contacto (solo perfil propio)
+                    // Información de contacto (solo perfil propio) - Card limpia
                     Container(
                       padding: EdgeInsets.all(isTablet ? 20 : 16),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                        color: theme.colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: theme.colorScheme.outline.withOpacity(0.2),
+                          color: theme.colorScheme.outline.withOpacity(0.1),
+                          width: 1,
                         ),
                       ),
                       child: Column(
@@ -591,26 +576,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     SizedBox(height: isTablet ? 8 : 6),
 
-                    // Botón Editar Perfil con gradiente
-                    Container(
+                    // Botones de acción - Estilo minimalista
+                    SizedBox(
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.primary.withOpacity(0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.4),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: () async {
                           await Navigator.push(
                             context,
@@ -623,68 +592,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             profileProvider.fetchMyProfile(forceRefresh: true);
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          shadowColor: Colors.transparent,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isTablet ? 32 : 24,
-                            vertical: isTablet ? 18 : 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(isTablet ? 30 : 25),
+                        icon: Icon(Icons.edit, size: isTablet ? 20 : 18),
+                        label: Text(
+                          'Editar Perfil',
+                          style: TextStyle(
+                            fontSize: isTablet ? 16 : 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.edit, size: isTablet ? 22 : 18),
-                            SizedBox(width: 8),
-                            Text(
-                              'Editar Perfil',
-                              style: TextStyle(
-                                fontSize: isTablet ? 16 : 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: EdgeInsets.symmetric(
+                              vertical: isTablet ? 16 : 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
 
-                    SizedBox(height: isTablet ? 16 : 12),
+                    SizedBox(height: isTablet ? 12 : 10),
 
-                    // Botón para cambiar tema
+                    // Botón para cambiar tema - Estilo minimalista
                     Consumer<ThemeProvider>(
                       builder: (context, themeProvider, child) {
-                        return ElevatedButton.icon(
-                          onPressed: () {
-                            themeProvider.toggleTheme();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.secondary,
-                            foregroundColor: theme.colorScheme.onSecondary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isTablet ? 32 : 24,
-                              vertical: isTablet ? 16 : 12,
+                        return SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              themeProvider.toggleTheme();
+                            },
+                            icon: Icon(
+                              themeProvider.isDarkMode
+                                  ? Icons.light_mode
+                                  : Icons.dark_mode,
+                              size: isTablet ? 20 : 18,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(isTablet ? 30 : 25),
+                            label: Text(
+                              themeProvider.isDarkMode
+                                  ? 'Modo Claro'
+                                  : 'Modo Oscuro',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          icon: Icon(
-                            themeProvider.isDarkMode
-                                ? Icons.light_mode
-                                : Icons.dark_mode,
-                            size: isTablet ? 20 : 18,
-                          ),
-                          label: Text(
-                            themeProvider.isDarkMode
-                                ? 'Modo Claro'
-                                : 'Modo Oscuro',
-                            style: TextStyle(fontSize: isTablet ? 16 : 14),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                              side: BorderSide(
+                                color: theme.colorScheme.primary,
+                                width: 2,
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: isTablet ? 16 : 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -736,8 +702,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return Container(
                     padding: EdgeInsets.all(isTablet ? 24 : 20),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -820,34 +793,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required bool isTablet,
   }) {
     return Container(
-      padding: EdgeInsets.all(isTablet ? 20 : 16),
+      padding: EdgeInsets.all(isTablet ? 16 : 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            iconColor.withOpacity(0.1),
-            theme.colorScheme.surface,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: iconColor.withOpacity(0.2),
-          width: 2,
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: iconColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Icono circular con fondo de color
           Container(
-            padding: EdgeInsets.all(isTablet ? 12 : 10),
+            padding: EdgeInsets.all(isTablet ? 10 : 8),
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.15),
               shape: BoxShape.circle,
@@ -855,27 +816,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Icon(
               icon,
               color: iconColor,
-              size: isTablet ? 32 : 28,
+              size: isTablet ? 24 : 20,
             ),
           ),
-          SizedBox(height: isTablet ? 12 : 10),
+          SizedBox(height: isTablet ? 8 : 6),
           Text(
             value,
             style: TextStyle(
-              fontSize: isTablet ? 26 : 22,
+              fontSize: isTablet ? 22 : 18,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
             ),
           ),
-          SizedBox(height: isTablet ? 4 : 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTablet ? 14 : 12,
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+          SizedBox(height: 2),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isTablet ? 12 : 10,
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -982,23 +947,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return Container(
               margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    theme.colorScheme.surfaceContainerLow,
-                    theme.colorScheme.surface,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-                border: Border.all(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
-                ),
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withOpacity(0.04),
                     blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -1154,102 +1109,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Botón Editar
-                        IconButton(
-                          onPressed: () async {
-                            // Navegar a pantalla de edición
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    EditProductScreen(product: product),
-                              ),
-                            );
-
-                            // Si se editó exitosamente, refrescar lista
-                            if (result == true && mounted) {
-                              profileProvider.fetchMyProducts(refresh: true);
-                            }
-                          },
-                          icon: Icon(
-                            Icons.edit,
-                            size: isTablet ? 24 : 20,
-                            color: theme.colorScheme.primary,
+                        // Botón Editar - Estilo minimalista
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primaryContainer
-                                .withOpacity(0.5),
+                          child: IconButton(
+                            onPressed: () async {
+                              // Navegar a pantalla de edición
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EditProductScreen(product: product),
+                                ),
+                              );
+
+                              // Si se editó exitosamente, refrescar lista
+                              if (result == true && mounted) {
+                                profileProvider.fetchMyProducts(refresh: true);
+                              }
+                            },
+                            icon: Icon(
+                              Icons.edit_outlined,
+                              size: isTablet ? 22 : 20,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
                         SizedBox(height: 8),
 
-                        // Botón Eliminar
-                        IconButton(
-                          onPressed: () async {
-                            // Mostrar confirmación
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Eliminar Publicación'),
-                                content: const Text(
-                                  '¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: Text(
-                                      'Eliminar',
-                                      style: TextStyle(
-                                          color: theme.colorScheme.error),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (confirm == true && mounted) {
-                              // Eliminar producto
-                              final productProvider =
-                                  context.read<ProductProvider>();
-                              final success = await productProvider
-                                  .deleteProduct(product.id);
-
-                              if (success && mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                        '✅ Publicación eliminada exitosamente'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                                // Refrescar lista
-                                profileProvider.fetchMyProducts(refresh: true);
-                              } else if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        productProvider.errorMessage ??
-                                            'Error al eliminar publicación'),
-                                    backgroundColor: theme.colorScheme.error,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: Icon(
-                            Icons.delete,
-                            size: isTablet ? 24 : 20,
-                            color: theme.colorScheme.error,
+                        // Botón Eliminar - Estilo minimalista
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: theme.colorScheme.errorContainer
-                                .withOpacity(0.3),
+                          child: IconButton(
+                            onPressed: () async {
+                              // Mostrar confirmación
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Eliminar Publicación'),
+                                  content: const Text(
+                                    '¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: Text(
+                                        'Eliminar',
+                                        style: TextStyle(
+                                            color: theme.colorScheme.error),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true && mounted) {
+                                // Eliminar producto
+                                final productProvider =
+                                    context.read<ProductProvider>();
+                                final success = await productProvider
+                                    .deleteProduct(product.id);
+
+                                if (success && mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          '✅ Publicación eliminada exitosamente'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  // Refrescar lista
+                                  profileProvider.fetchMyProducts(
+                                      refresh: true);
+                                } else if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          productProvider.errorMessage ??
+                                              'Error al eliminar publicación'),
+                                      backgroundColor: theme.colorScheme.error,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            icon: Icon(
+                              Icons.delete_outline,
+                              size: isTablet ? 22 : 20,
+                              color: theme.colorScheme.error,
+                            ),
                           ),
                         ),
                       ],
@@ -1378,34 +1338,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Lista de fincas
               ...profileProvider.myRanches.map((ranch) {
                 return Container(
-                  margin: EdgeInsets.only(bottom: isTablet ? 20 : 16),
-                  padding: EdgeInsets.all(isTablet ? 20 : 16),
+                  margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
+                  padding: EdgeInsets.all(isTablet ? 18 : 14),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: isTablet ? 6 : 4,
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Row(
                     children: [
-                      // Icono
+                      // Icono minimalista
                       Container(
-                        width: isTablet ? 80 : 64,
-                        height: isTablet ? 80 : 64,
+                        width: isTablet ? 70 : 56,
+                        height: isTablet ? 70 : 56,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant,
-                          borderRadius:
-                              BorderRadius.circular(isTablet ? 12 : 8),
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Icon(
-                          Icons.home,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          size: isTablet ? 40 : 32,
+                          Icons.home_outlined,
+                          color: theme.colorScheme.primary,
+                          size: isTablet ? 34 : 28,
                         ),
                       ),
                       SizedBox(width: isTablet ? 20 : 16),
@@ -1473,96 +1432,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
 
-                      // Botones
+                      // Botones - Estilo minimalista
                       Row(
                         children: [
                           // Botón Editar
-                          IconButton(
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditRanchScreen(ranch: ranch),
-                                ),
-                              );
-                              
-                              if (result == true && mounted) {
-                                // Ya se refrescó en EditRanchScreen
-                              }
-                            },
-                            icon: Icon(Icons.edit, size: isTablet ? 24 : 20, color: theme.colorScheme.primary),
-                            style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.5),
-                              padding: EdgeInsets.all(isTablet ? 12 : 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              onPressed: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EditRanchScreen(ranch: ranch),
+                                  ),
+                                );
+
+                                if (result == true && mounted) {
+                                  // Ya se refrescó en EditRanchScreen
+                                }
+                              },
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                size: isTablet ? 22 : 20,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                           ),
                           SizedBox(width: 8),
-                          
-                          // Botón Eliminar
-                          IconButton(
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Eliminar Hacienda'),
-                                  content: const Text(
-                                    '¿Estás seguro de eliminar esta hacienda?\n\n'
-                                    'No podrás eliminarla si tiene productos activos o es la única hacienda.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: theme.colorScheme.error,
-                                      ),
-                                      child: const Text('Eliminar'),
-                                    ),
-                                  ],
-                                ),
-                              );
 
-                              if (confirm == true && mounted) {
-                                try {
-                                  final result = await RanchService.deleteRanch(ranch.id);
-                                  
-                                  if (result['success'] == true && mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('✅ Hacienda eliminada exitosamente'),
-                                        backgroundColor: Colors.green,
+                          // Botón Eliminar
+                          Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Eliminar Hacienda'),
+                                    content: const Text(
+                                      '¿Estás seguro de eliminar esta hacienda?\n\n'
+                                      'No podrás eliminarla si tiene productos activos o es la única hacienda.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Cancelar'),
                                       ),
-                                    );
-                                    
-                                    // Refrescar lista
-                                    profileProvider.fetchMyRanches(forceRefresh: true);
-                                  } else if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(result['message'] ?? 'Error al eliminar hacienda'),
-                                        backgroundColor: theme.colorScheme.error,
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor:
+                                              theme.colorScheme.error,
+                                        ),
+                                        child: const Text('Eliminar'),
                                       ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(e.toString().replaceFirst('Exception: ', '')),
-                                        backgroundColor: theme.colorScheme.error,
-                                      ),
-                                    );
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm == true && mounted) {
+                                  try {
+                                    final result =
+                                        await RanchService.deleteRanch(
+                                            ranch.id);
+
+                                    if (result['success'] == true && mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              '✅ Hacienda eliminada exitosamente'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+
+                                      // Refrescar lista
+                                      profileProvider.fetchMyRanches(
+                                          forceRefresh: true);
+                                    } else if (mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(result['message'] ??
+                                              'Error al eliminar hacienda'),
+                                          backgroundColor:
+                                              theme.colorScheme.error,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(e
+                                              .toString()
+                                              .replaceFirst('Exception: ', '')),
+                                          backgroundColor:
+                                              theme.colorScheme.error,
+                                        ),
+                                      );
+                                    }
                                   }
                                 }
-                              }
-                            },
-                            icon: Icon(Icons.delete, size: isTablet ? 24 : 20, color: theme.colorScheme.error),
-                            style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.3),
-                              padding: EdgeInsets.all(isTablet ? 12 : 8),
+                              },
+                              icon: Icon(
+                                Icons.delete_outline,
+                                size: isTablet ? 22 : 20,
+                                color: theme.colorScheme.error,
+                              ),
                             ),
                           ),
                         ],

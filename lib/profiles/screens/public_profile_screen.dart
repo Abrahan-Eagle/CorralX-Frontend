@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 /// Pantalla de perfil público de un vendedor/usuario
 class PublicProfileScreen extends StatefulWidget {
   final int userId;
-  
+
   const PublicProfileScreen({
     super.key,
     required this.userId,
@@ -56,7 +56,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
+          icon: Icon(Icons.arrow_back_ios,
+              color: theme.colorScheme.onSurfaceVariant),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -74,7 +75,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           if (profileProvider.isLoadingPublicProfile) {
             return Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
               ),
             );
           }
@@ -102,7 +104,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   SizedBox(height: isTablet ? 24 : 16),
                   ElevatedButton(
                     onPressed: () {
-                      profileProvider.fetchPublicProfile(widget.userId, forceRefresh: true);
+                      profileProvider.fetchPublicProfile(widget.userId,
+                          forceRefresh: true);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
@@ -140,60 +143,50 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header del perfil con gradiente
+                  // Header del perfil - Diseño Minimalista
                   Container(
                     padding: EdgeInsets.all(isTablet ? 32 : 24),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          theme.colorScheme.primaryContainer.withOpacity(0.2),
-                          theme.colorScheme.surface,
-                          theme.colorScheme.surfaceContainerLow,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.15),
-                          blurRadius: 25,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Column(
                       children: [
-                        // Avatar con sombra elegante
+                        // Avatar con borde sólido
                         Container(
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 25,
-                                spreadRadius: 5,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: theme.colorScheme.primary,
+                              width: 3,
+                            ),
                           ),
                           child: CircleAvatar(
-                            radius: isTablet ? 80 : 64,
+                            radius: isTablet ? 76 : 60,
                             backgroundColor: theme.colorScheme.surfaceVariant,
                             backgroundImage: profile.photoUsers != null
-                                ? CachedNetworkImageProvider(profile.photoUsers!)
+                                ? CachedNetworkImageProvider(
+                                    profile.photoUsers!)
                                 : null,
                             child: profile.photoUsers == null
                                 ? Icon(
                                     Icons.person,
-                                    size: isTablet ? 80 : 64,
+                                    size: isTablet ? 76 : 60,
                                     color: theme.colorScheme.onSurfaceVariant,
                                   )
                                 : null,
                           ),
                         ),
                         SizedBox(height: isTablet ? 20 : 16),
-                        
+
                         // Nombre (comercial si existe, sino nombre completo)
                         Text(
                           profile.displayName,
@@ -205,12 +198,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: isTablet ? 10 : 8),
-                        
+
                         // Bio
                         if (profile.bio != null && profile.bio!.isNotEmpty) ...[
                           SizedBox(height: isTablet ? 16 : 12),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: isTablet ? 32 : 16),
                             child: Text(
                               profile.bio!,
                               style: TextStyle(
@@ -226,7 +220,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         ],
 
                         SizedBox(height: isTablet ? 16 : 12),
-                        
+
                         // Rating, verificado y premium
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -270,32 +264,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             ),
                           ],
                         ),
-                        
-                    SizedBox(height: isTablet ? 20 : 16),
-                    
-                    // Ubicación (si existe)
-                    if (profile.primaryAddress != null) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: isTablet ? 20 : 16,
-                            color: theme.colorScheme.onSurfaceVariant,
+
+                        SizedBox(height: isTablet ? 20 : 16),
+
+                        // Ubicación (si existe)
+                        if (profile.primaryAddress != null) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                size: isTablet ? 20 : 16,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              SizedBox(width: isTablet ? 6 : 4),
+                              Text(
+                                profile.primaryAddress!.formattedLocation,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: isTablet ? 16 : 14,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: isTablet ? 6 : 4),
-                          Text(
-                            profile.primaryAddress!.formattedLocation,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: isTablet ? 16 : 14,
-                            ),
-                          ),
+                          SizedBox(height: isTablet ? 12 : 8),
                         ],
-                      ),
-                      SizedBox(height: isTablet ? 12 : 8),
-                    ],
-                        
+
                         // Miembro desde
                         Text(
                           'Miembro desde: ${DateFormat('MMMM yyyy', 'es').format(profile.createdAt)}',
@@ -304,9 +298,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        
+
                         SizedBox(height: isTablet ? 24 : 16),
-                        
+
                         // Métodos de contacto preferidos
                         Wrap(
                           spacing: isTablet ? 16 : 12,
@@ -339,28 +333,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               ),
                           ],
                         ),
-                        
+
                         SizedBox(height: isTablet ? 32 : 24),
-                        
-                        // Botón Contactar con gradiente
-                        Container(
+
+                        // Botón Contactar - Estilo minimalista
+                        SizedBox(
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primary.withOpacity(0.7),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.4),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
                           child: ElevatedButton.icon(
                             onPressed: () {
                               // TODO: Abrir chat con este vendedor
@@ -370,24 +348,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 ),
                               );
                             },
-                            icon: Icon(Icons.chat_bubble, size: isTablet ? 24 : 20),
+                            icon: Icon(Icons.chat_bubble_outline,
+                                size: isTablet ? 22 : 20),
                             label: Text(
                               'Contactar Vendedor',
                               style: TextStyle(
-                                fontSize: isTablet ? 18 : 16,
-                                fontWeight: FontWeight.bold,
+                                fontSize: isTablet ? 17 : 15,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
+                              backgroundColor: theme.colorScheme.primary,
                               foregroundColor: theme.colorScheme.onPrimary,
-                              shadowColor: Colors.transparent,
                               padding: EdgeInsets.symmetric(
-                                horizontal: isTablet ? 32 : 24,
-                                vertical: isTablet ? 18 : 14,
-                              ),
+                                  vertical: isTablet ? 16 : 14),
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
@@ -395,14 +372,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ],
                     ),
                   ),
-                  
+
                   SizedBox(height: isTablet ? 32 : 24),
-                  
+
                   // Fincas del vendedor
                   _buildVendorRanches(profile.id, isTablet, theme),
-                  
+
                   SizedBox(height: isTablet ? 32 : 24),
-                  
+
                   // Título de publicaciones
                   Text(
                     'Publicaciones de ${profile.displayName}',
@@ -412,9 +389,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       color: theme.colorScheme.onBackground,
                     ),
                   ),
-                  
+
                   SizedBox(height: isTablet ? 16 : 12),
-                  
+
                   // Productos del vendedor
                   _buildVendorProducts(profile.userId, isTablet, theme),
                 ],
@@ -465,9 +442,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return Consumer<ProductProvider>(
       builder: (context, productProvider, child) {
         // Cargar productos del vendedor si no están cargados
-        // Nota: Esto es una solución temporal. Idealmente deberíamos tener un 
+        // Nota: Esto es una solución temporal. Idealmente deberíamos tener un
         // método específico para obtener productos por usuario en ProductProvider
-        
+
         return FutureBuilder(
           future: _loadVendorProducts(context, userId),
           builder: (context, snapshot) {
@@ -517,7 +494,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               );
             }
 
-            final vendorProducts = snapshot.data as List<dynamic>? ?? [];
+            final vendorProducts = snapshot.data ?? [];
 
             if (vendorProducts.isEmpty) {
               return Container(
@@ -583,12 +560,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 
-  Future<List<dynamic>> _loadVendorProducts(BuildContext context, int userId) async {
+  Future<List<dynamic>> _loadVendorProducts(
+      BuildContext context, int userId) async {
     final productProvider = context.read<ProductProvider>();
-    
+
     // Cargar todos los productos y filtrar por el userId (basado en ranch.profileId)
     await productProvider.fetchProducts(refresh: true);
-    
+
     // Filtrar productos que pertenezcan al vendedor
     return productProvider.products.where((product) {
       return product.ranch?.profileId == userId;
@@ -607,7 +585,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           return SizedBox.shrink();
         }
 
-        final ranches = snapshot.data as List<dynamic>? ?? [];
+        final ranches = snapshot.data ?? [];
 
         if (ranches.isEmpty) {
           return SizedBox.shrink();
@@ -625,37 +603,41 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
             ),
             SizedBox(height: isTablet ? 16 : 12),
-            
+
             // Lista de fincas
             ...ranches.map((ranch) {
               return Container(
                 margin: EdgeInsets.only(bottom: isTablet ? 12 : 10),
                 padding: EdgeInsets.all(isTablet ? 16 : 14),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(0.2),
-                  ),
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    // Icono
+                    // Icono minimalista
                     Container(
-                      width: isTablet ? 60 : 50,
-                      height: isTablet ? 60 : 50,
+                      width: isTablet ? 56 : 48,
+                      height: isTablet ? 56 : 48,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        Icons.home,
+                        Icons.home_outlined,
                         color: theme.colorScheme.primary,
-                        size: isTablet ? 32 : 28,
+                        size: isTablet ? 28 : 24,
                       ),
                     ),
                     SizedBox(width: isTablet ? 16 : 12),
-                    
+
                     // Info
                     Expanded(
                       child: Column(
@@ -689,7 +671,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                     'Principal',
                                     style: TextStyle(
                                       fontSize: isTablet ? 11 : 10,
-                                      color: theme.colorScheme.onPrimaryContainer,
+                                      color:
+                                          theme.colorScheme.onPrimaryContainer,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),

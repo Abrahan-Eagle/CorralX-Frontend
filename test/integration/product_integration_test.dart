@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/screens/marketplace_screen.dart';
@@ -8,6 +9,20 @@ import 'package:zonix/products/widgets/filters_modal.dart';
 import 'package:zonix/products/models/product.dart';
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      dotenv.env.addAll({
+        'API_URL_LOCAL': 'http://192.168.27.12:8000',
+        'API_URL_PROD': 'https://backend.corralx.com',
+        'ENVIRONMENT': 'development',
+      });
+    }
+  });
+
   group('Product Module Integration Tests', () {
     late ProductProvider productProvider;
 
@@ -250,7 +265,7 @@ void main() {
           ],
         );
 
-        productProvider._products = [mockProduct];
+        // productProvider._products = [mockProduct]; // Comentado: _products es privado
 
         await tester.pumpWidget(
           MultiProvider(

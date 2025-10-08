@@ -1,7 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:zonix/products/services/product_service.dart';
 
 void main() {
+  // Inicializar dotenv antes de todos los tests
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      dotenv.env.addAll({
+        'API_URL_LOCAL': 'http://192.168.27.12:8000',
+        'API_URL_PROD': 'https://backend.corralx.com',
+        'ENVIRONMENT': 'development',
+      });
+    }
+  });
+
   group('ProductService Tests', () {
     group('URL Construction', () {
       test('should have correct base URL configuration', () {

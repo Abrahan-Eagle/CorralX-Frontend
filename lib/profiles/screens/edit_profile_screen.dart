@@ -213,62 +213,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Foto de perfil con diseño moderno
+                  // Foto de perfil
                   Center(
                     child: Stack(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: CircleAvatar(
-                            radius: isTablet ? 80 : 64,
-                            backgroundColor: theme.colorScheme.surfaceVariant,
-                            backgroundImage: _selectedImage != null
-                                ? FileImage(_selectedImage!)
-                                : (profile?.photoUsers != null
-                                    ? NetworkImage(profile!.photoUsers!)
-                                    : null) as ImageProvider?,
-                            child: _selectedImage == null && profile?.photoUsers == null
-                                ? Icon(
-                                    Icons.person,
-                                    size: isTablet ? 80 : 64,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  )
-                                : null,
-                          ),
+                        CircleAvatar(
+                          radius: isTablet ? 80 : 64,
+                          backgroundColor: theme.colorScheme.surfaceVariant,
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (profile?.photoUsers != null
+                                  ? NetworkImage(profile!.photoUsers!)
+                                  : null) as ImageProvider?,
+                          child: _selectedImage == null && profile?.photoUsers == null
+                              ? Icon(
+                                  Icons.person,
+                                  size: isTablet ? 80 : 64,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                )
+                              : null,
                         ),
                         Positioned(
                           bottom: 0,
                           right: 0,
                           child: Container(
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  theme.colorScheme.primary,
-                                  theme.colorScheme.primary.withOpacity(0.8),
-                                ],
-                              ),
+                              color: theme.colorScheme.primary,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: theme.colorScheme.surface,
                                 width: 3,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: theme.colorScheme.primary.withOpacity(0.4),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
                             child: IconButton(
                               icon: Icon(
@@ -686,63 +661,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     SizedBox(height: isTablet ? 20 : 16),
                   ],
 
-                  // Botón guardar con gradiente
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary,
-                          theme.colorScheme.primary.withOpacity(0.8),
-                        ],
+                  // Botón guardar
+                  ElevatedButton(
+                    onPressed: profileProvider.isUpdating ? null : _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.4),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                      elevation: 0,
                     ),
-                    child: ElevatedButton(
-                      onPressed: profileProvider.isUpdating ? null : _saveProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        shadowColor: Colors.transparent,
-                        padding: EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: profileProvider.isUpdating
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  theme.colorScheme.onPrimary,
-                                ),
+                    child: profileProvider.isUpdating
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.onPrimary,
                               ),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.save, size: isTablet ? 22 : 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Guardar Cambios',
-                                  style: TextStyle(
-                                    fontSize: isTablet ? 18 : 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
                             ),
-                    ),
+                          )
+                        : Text(
+                            'Guardar Cambios',
+                            style: TextStyle(
+                              fontSize: isTablet ? 18 : 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
 
                   SizedBox(height: isTablet ? 16 : 12),

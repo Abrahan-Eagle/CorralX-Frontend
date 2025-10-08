@@ -18,8 +18,8 @@ class ProfileService {
         dotenv.env['ENVIRONMENT'] == 'production';
 
     final String baseUrl = isProduction
-        ? dotenv.env['API_URL_PROD'] ?? 'https://backend.corralx.com'
-        : dotenv.env['API_URL_LOCAL'] ?? 'http://192.168.27.11:8000';
+        ? dotenv.env['API_URL_PROD']!
+        : dotenv.env['API_URL_LOCAL']!;
 
     print(
         '🔧 ProfileService - Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
