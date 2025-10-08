@@ -140,29 +140,57 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header del perfil
+                  // Header del perfil con gradiente
                   Container(
                     padding: EdgeInsets.all(isTablet ? 32 : 24),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLow,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          theme.colorScheme.primaryContainer.withOpacity(0.2),
+                          theme.colorScheme.surface,
+                          theme.colorScheme.surfaceContainerLow,
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withOpacity(0.15),
+                          blurRadius: 25,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
-                        // Avatar
-                        CircleAvatar(
-                          radius: isTablet ? 80 : 64,
-                          backgroundColor: theme.colorScheme.surfaceVariant,
-                          backgroundImage: profile.photoUsers != null
-                              ? CachedNetworkImageProvider(profile.photoUsers!)
-                              : null,
-                          child: profile.photoUsers == null
-                              ? Icon(
-                                  Icons.person,
-                                  size: isTablet ? 80 : 64,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                )
-                              : null,
+                        // Avatar con sombra elegante
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withOpacity(0.3),
+                                blurRadius: 25,
+                                spreadRadius: 5,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: isTablet ? 80 : 64,
+                            backgroundColor: theme.colorScheme.surfaceVariant,
+                            backgroundImage: profile.photoUsers != null
+                                ? CachedNetworkImageProvider(profile.photoUsers!)
+                                : null,
+                            child: profile.photoUsers == null
+                                ? Icon(
+                                    Icons.person,
+                                    size: isTablet ? 80 : 64,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  )
+                                : null,
+                          ),
                         ),
                         SizedBox(height: isTablet ? 20 : 16),
                         
@@ -314,30 +342,53 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         
                         SizedBox(height: isTablet ? 32 : 24),
                         
-                        // Botón Contactar
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Abrir chat con este vendedor
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Chat - Próximamente'),
-                              ),
-                            );
-                          },
-                          icon: Icon(Icons.chat_bubble, size: isTablet ? 24 : 20),
-                          label: Text(
-                            'Contactar Vendedor',
-                            style: TextStyle(fontSize: isTablet ? 18 : 16),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isTablet ? 32 : 24,
-                              vertical: isTablet ? 16 : 12,
+                        // Botón Contactar con gradiente
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primary.withOpacity(0.7),
+                              ],
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                            borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withOpacity(0.4),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              // TODO: Abrir chat con este vendedor
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Chat - Próximamente'),
+                                ),
+                              );
+                            },
+                            icon: Icon(Icons.chat_bubble, size: isTablet ? 24 : 20),
+                            label: Text(
+                              'Contactar Vendedor',
+                              style: TextStyle(
+                                fontSize: isTablet ? 18 : 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              shadowColor: Colors.transparent,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isTablet ? 32 : 24,
+                                vertical: isTablet ? 18 : 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                              ),
                             ),
                           ),
                         ),

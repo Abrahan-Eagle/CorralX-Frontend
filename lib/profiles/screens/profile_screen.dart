@@ -9,7 +9,6 @@ import 'package:zonix/profiles/services/ranch_service.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/products/screens/edit_product_screen.dart';
-import 'package:zonix/products/widgets/product_card.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
@@ -243,29 +242,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: EdgeInsets.all(isTablet ? 24 : 16),
           child: Column(
             children: [
-              // Profile info card
+              // Profile info card con gradiente
               Container(
                 padding: EdgeInsets.all(isTablet ? 32 : 24),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.primaryContainer.withOpacity(0.3),
+                      theme.colorScheme.surface,
+                      theme.colorScheme.surfaceContainerLow,
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(isTablet ? 28 : 24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: isTablet ? 80 : 64,
-                      backgroundColor: theme.colorScheme.surfaceVariant,
-                      backgroundImage: profile.photoUsers != null
-                          ? CachedNetworkImageProvider(profile.photoUsers!)
-                          : null,
-                      child: profile.photoUsers == null
-                          ? Icon(
-                              Icons.person,
-                              size: isTablet ? 80 : 64,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            )
-                          : null,
+                    // Avatar con sombra
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: isTablet ? 80 : 64,
+                        backgroundColor: theme.colorScheme.surfaceVariant,
+                        backgroundImage: profile.photoUsers != null
+                            ? CachedNetworkImageProvider(profile.photoUsers!)
+                            : null,
+                        child: profile.photoUsers == null
+                            ? Icon(
+                                Icons.person,
+                                size: isTablet ? 80 : 64,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              )
+                            : null,
+                      ),
                     ),
                     SizedBox(height: isTablet ? 20 : 16),
 
@@ -564,35 +591,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     SizedBox(height: isTablet ? 8 : 6),
 
-                    // Botón Editar Perfil
-                    ElevatedButton(
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EditProfileScreen(),
+                    // Botón Editar Perfil con gradiente
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.primary.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.4),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
-                        );
-                        // Refrescar perfil después de editar
-                        if (mounted) {
-                          profileProvider.fetchMyProfile(forceRefresh: true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isTablet ? 32 : 24,
-                          vertical: isTablet ? 16 : 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(isTablet ? 30 : 25),
-                        ),
+                        ],
                       ),
-                      child: Text(
-                        'Editar Perfil',
-                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EditProfileScreen(),
+                            ),
+                          );
+                          // Refrescar perfil después de editar
+                          if (mounted) {
+                            profileProvider.fetchMyProfile(forceRefresh: true);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          shadowColor: Colors.transparent,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 32 : 24,
+                            vertical: isTablet ? 18 : 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(isTablet ? 30 : 25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.edit, size: isTablet ? 22 : 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'Editar Perfil',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -763,27 +820,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required bool isTablet,
   }) {
     return Container(
-      padding: EdgeInsets.all(isTablet ? 16 : 12),
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            iconColor.withOpacity(0.1),
+            theme.colorScheme.surface,
+          ],
         ),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
+        border: Border.all(
+          color: iconColor.withOpacity(0.2),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: iconColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: isTablet ? 32 : 28,
+          Container(
+            padding: EdgeInsets.all(isTablet ? 12 : 10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: isTablet ? 32 : 28,
+            ),
           ),
-          SizedBox(height: isTablet ? 12 : 8),
+          SizedBox(height: isTablet ? 12 : 10),
           Text(
             value,
             style: TextStyle(
-              fontSize: isTablet ? 24 : 20,
+              fontSize: isTablet ? 26 : 22,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
             ),
@@ -794,6 +873,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(
               fontSize: isTablet ? 14 : 12,
               color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
           ),
@@ -902,11 +982,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return Container(
               margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    theme.colorScheme.surfaceContainerLow,
+                    theme.colorScheme.surface,
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
                 border: Border.all(
                   color: theme.colorScheme.outline.withOpacity(0.2),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
