@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
@@ -39,7 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileProvider = context.read<ProfileProvider>();
       final profile = profileProvider.myProfile;
-      
+
       if (profile != null) {
         _firstNameController.text = profile.firstName;
         _middleNameController.text = profile.middleName ?? '';
@@ -99,7 +100,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       initialDate: _selectedDate ?? DateTime(2000),
       firstDate: DateTime(1900),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)), // Mayor de 18
+      lastDate: DateTime.now()
+          .subtract(const Duration(days: 365 * 18)), // Mayor de 18
       locale: const Locale('es', 'ES'),
     );
 
@@ -108,6 +110,161 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _selectedDate = picked;
       });
     }
+  }
+
+  // Métodos de normalización de texto (copiados del onboarding)
+  String _capitalizeWords(String input) {
+    final normalized =
+        input.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
+    return normalized
+        .split(' ')
+        .map((w) => w.isEmpty
+            ? w
+            : (w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : '')))
+        .join(' ');
+  }
+
+  void _normalizeName(TextEditingController controller) {
+    final original = controller.text;
+    final selection = controller.selection;
+    final normalized = _capitalizeWords(
+        original.replaceAll(RegExp(r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]'), ''));
+    if (original != normalized) {
+      controller.value = TextEditingValue(
+        text: normalized,
+        selection: TextSelection.collapsed(
+            offset: normalized.length.clamp(0, normalized.length)),
+      );
+    } else {
+      // keep selection
+      controller.selection = selection;
+    }
+  }
+
+  // Métodos de validación (copiados del onboarding)
+  String? _validateFirstName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'El primer nombre es obligatorio';
+    }
+    if (value.trim().length < 2) {
+      return 'Mínimo 2 caracteres';
+    }
+    if (value.trim().length > 50) {
+      return 'Máximo 50 caracteres';
+    }
+    // Validar que solo contenga letras y espacios
+    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+      return 'Solo se permiten letras';
+    }
+    return null;
+  }
+
+  String? _validateLastName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'El apellido es obligatorio';
+    }
+    if (value.trim().length < 2) {
+      return 'Mínimo 2 caracteres';
+    }
+    if (value.trim().length > 50) {
+      return 'Máximo 50 caracteres';
+    }
+    // Validar que solo contenga letras y espacios
+    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+      return 'Solo se permiten letras';
+    }
+    return null;
+  }
+
+  String? _validateMiddleName(String? value) {
+    if (value != null && value.trim().isNotEmpty) {
+      if (value.trim().length < 2) {
+        return 'Mínimo 2 caracteres';
+      }
+      if (value.trim().length > 50) {
+        return 'Máximo 50 caracteres';
+      }
+      // Validar que solo contenga letras y espacios
+      if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+        return 'Solo se permiten letras';
+      }
+    }
+    return null;
+  }
+
+  String? _validateSecondLastName(String? value) {
+    if (value != null && value.trim().isNotEmpty) {
+      if (value.trim().length < 2) {
+        return 'Mínimo 2 caracteres';
+      }
+      if (value.trim().length > 50) {
+        return 'Máximo 50 caracteres';
+      }
+      // Validar que solo contenga letras y espacios
+      if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+        return 'Solo se permiten letras';
+      }
+    }
+    return null;
+  }
+
+  // Validaciones adicionales
+  String? _validateBio(String? value) {
+    if (value != null && value.trim().isNotEmpty) {
+      if (value.trim().length > 500) {
+        return 'Máximo 500 caracteres';
+      }
+    }
+    return null;
+  }
+
+  String? _validateCI(String? value) {
+    if (value == null || value.trim().isEmpty || value.trim() == 'V-') {
+      return 'El CI es obligatorio';
+    }
+
+    final ci = value.trim();
+
+    // Validar formato de CI venezolano V-12345678
+    final ciRegex = RegExp(r'^V-\d{7,8}$');
+    if (!ciRegex.hasMatch(ci)) {
+      return 'Formato: V-12345678 (7-8 dígitos)';
+    }
+
+    // Extraer solo los números para validar longitud
+    final numbers = ci.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numbers.length < 7 || numbers.length > 8) {
+      return 'El CI debe tener entre 7 y 8 dígitos';
+    }
+
+    return null;
+  }
+
+  String? _validateWhatsApp(String? value) {
+    if (value != null && value.trim().isNotEmpty) {
+      // Remover espacios y guiones para validar solo números
+      String cleanValue = value.trim().replaceAll(RegExp(r'[\s\-]'), '');
+
+      // Validar que tenga al menos 10 dígitos (formato venezolano)
+      if (cleanValue.length < 10) {
+        return 'Mínimo 10 dígitos';
+      }
+      if (cleanValue.length > 15) {
+        return 'Máximo 15 dígitos';
+      }
+      // Validar que solo contenga números
+      if (!RegExp(r'^\d+$').hasMatch(cleanValue)) {
+        return 'Solo se permiten números';
+      }
+    }
+    return null;
+  }
+
+  // Método para validar el formulario en tiempo real
+  void _validateForm() {
+    setState(() {
+      // Forzar rebuild para actualizar el estado de validación
+    });
   }
 
   Future<void> _saveProfile() async {
@@ -124,7 +281,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(profileProvider.updateError ?? 'Error al subir foto'),
+              content:
+                  Text(profileProvider.updateError ?? 'Error al subir foto'),
               backgroundColor: Colors.red,
             ),
           );
@@ -153,9 +311,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       acceptsCalls: _acceptsCalls,
       acceptsWhatsapp: _acceptsWhatsapp,
       acceptsEmails: _acceptsEmails,
-      whatsappNumber: _acceptsWhatsapp && _whatsappNumberController.text.trim().isNotEmpty
-          ? _whatsappNumberController.text.trim()
-          : null,
+      whatsappNumber:
+          _acceptsWhatsapp && _whatsappNumberController.text.trim().isNotEmpty
+              ? _whatsappNumberController.text.trim()
+              : null,
     );
 
     if (mounted) {
@@ -170,7 +329,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(profileProvider.updateError ?? 'Error al actualizar perfil'),
+            content: Text(
+                profileProvider.updateError ?? 'Error al actualizar perfil'),
             backgroundColor: Colors.red,
           ),
         );
@@ -190,7 +350,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
+          icon: Icon(Icons.arrow_back_ios,
+              color: theme.colorScheme.onSurfaceVariant),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -225,7 +386,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               : (profile?.photoUsers != null
                                   ? NetworkImage(profile!.photoUsers!)
                                   : null) as ImageProvider?,
-                          child: _selectedImage == null && profile?.photoUsers == null
+                          child: _selectedImage == null &&
+                                  profile?.photoUsers == null
                               ? Icon(
                                   Icons.person,
                                   size: isTablet ? 80 : 64,
@@ -264,29 +426,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Nombre
                   TextFormField(
                     controller: _firstNameController,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                      LengthLimitingTextInputFormatter(50),
+                    ],
+                    onChanged: (_) {
+                      _normalizeName(_firstNameController);
+                      _validateForm();
+                    },
                     decoration: InputDecoration(
-                      labelText: 'Nombre *',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelText: 'Primer Nombre *',
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 20 : 16,
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'El nombre es obligatorio';
-                      }
-                      return null;
-                    },
+                    validator: _validateFirstName,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
 
                   SizedBox(height: isTablet ? 20 : 16),
@@ -294,23 +473,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Segundo nombre
                   TextFormField(
                     controller: _middleNameController,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                      LengthLimitingTextInputFormatter(50),
+                    ],
+                    onChanged: (_) {
+                      _normalizeName(_middleNameController);
+                      _validateForm();
+                    },
                     decoration: InputDecoration(
                       labelText: 'Segundo nombre',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 20 : 16,
+                      ),
                     ),
+                    validator: _validateMiddleName,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
 
                   SizedBox(height: isTablet ? 20 : 16),
@@ -318,29 +520,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Apellido
                   TextFormField(
                     controller: _lastNameController,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                      LengthLimitingTextInputFormatter(50),
+                    ],
+                    onChanged: (_) {
+                      _normalizeName(_lastNameController);
+                      _validateForm();
+                    },
                     decoration: InputDecoration(
                       labelText: 'Apellido *',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 20 : 16,
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'El apellido es obligatorio';
-                      }
-                      return null;
-                    },
+                    validator: _validateLastName,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
 
                   SizedBox(height: isTablet ? 20 : 16),
@@ -348,23 +567,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Segundo apellido
                   TextFormField(
                     controller: _secondLastNameController,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                      LengthLimitingTextInputFormatter(50),
+                    ],
+                    onChanged: (_) {
+                      _normalizeName(_secondLastNameController);
+                      _validateForm();
+                    },
                     decoration: InputDecoration(
                       labelText: 'Segundo apellido',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 20 : 16,
+                      ),
                     ),
+                    validator: _validateSecondLastName,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
 
                   SizedBox(height: isTablet ? 20 : 16),
@@ -374,25 +616,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _bioController,
                     maxLines: 4,
                     maxLength: 500,
+                    onChanged: (_) {
+                      _validateForm();
+                    },
                     decoration: InputDecoration(
                       labelText: 'Biografía',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       hintText: 'Cuéntanos sobre ti...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 20 : 16,
+                      ),
                       helperText: 'Máximo 500 caracteres',
                     ),
+                    validator: _validateBio,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
 
                   SizedBox(height: isTablet ? 20 : 16),
@@ -400,31 +659,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // CI
                   TextFormField(
                     controller: _ciNumberController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      _CIVenezuelaInputFormatter(),
+                    ],
+                    onChanged: (value) {
+                      _validateForm();
+                      // Asegurar que siempre tenga el prefijo V-
+                      if (!value.startsWith('V-')) {
+                        _ciNumberController.value = TextEditingValue(
+                          text: 'V-',
+                          selection: TextSelection.collapsed(offset: 2),
+                        );
+                      }
+                    },
                     decoration: InputDecoration(
                       labelText: 'Cédula de Identidad *',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       hintText: 'V-12345678',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 20 : 16,
+                      ),
                     ),
-                    enabled: profile?.isVerified != true, // No editable si está verificado
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'La cédula es obligatoria';
-                      }
-                      return null;
-                    },
+                    enabled: profile?.isVerified !=
+                        true, // No editable si está verificado
+                    validator: _validateCI,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
 
                   SizedBox(height: isTablet ? 20 : 16),
@@ -435,21 +717,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: InputDecorator(
                       decoration: InputDecoration(
                         labelText: 'Fecha de nacimiento *',
-                        labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                        labelStyle: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: theme.colorScheme.outline),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.outline),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.primary, width: 2),
                         ),
                         filled: true,
                         fillColor: theme.colorScheme.surface,
-                        suffixIcon: Icon(Icons.calendar_today, color: theme.colorScheme.primary),
+                        suffixIcon: Icon(Icons.calendar_today,
+                            color: theme.colorScheme.primary),
                       ),
                       child: Text(
                         _selectedDate != null
@@ -471,25 +757,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     value: _selectedMaritalStatus,
                     decoration: InputDecoration(
                       labelText: 'Estado civil',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'single', child: Text('Soltero/a')),
-                      DropdownMenuItem(value: 'married', child: Text('Casado/a')),
-                      DropdownMenuItem(value: 'divorced', child: Text('Divorciado/a')),
+                      DropdownMenuItem(
+                          value: 'single', child: Text('Soltero/a')),
+                      DropdownMenuItem(
+                          value: 'married', child: Text('Casado/a')),
+                      DropdownMenuItem(
+                          value: 'divorced', child: Text('Divorciado/a')),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -505,17 +797,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     value: _selectedSex,
                     decoration: InputDecoration(
                       labelText: 'Sexo',
-                      labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      labelStyle:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.outline),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
@@ -583,25 +878,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     TextFormField(
                       controller: _whatsappNumberController,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d\s\-]')),
+                        LengthLimitingTextInputFormatter(15),
+                      ],
+                      onChanged: (_) {
+                        _validateForm();
+                      },
                       decoration: InputDecoration(
                         labelText: 'Número de WhatsApp',
-                        labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                        labelStyle: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant),
                         hintText: '04121234567',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: theme.colorScheme.outline),
+                          borderSide:
+                              BorderSide(color: theme.colorScheme.outline),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.primary, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: theme.colorScheme.error, width: 2),
                         ),
                         filled: true,
                         fillColor: theme.colorScheme.surface,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 20 : 16,
+                          vertical: isTablet ? 20 : 16,
+                        ),
                         prefixIcon: Icon(Icons.phone, color: Colors.green),
                       ),
+                      validator: _validateWhatsApp,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                   ],
 
@@ -644,7 +960,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          ...profileProvider.validationErrors!.entries.map((entry) {
+                          ...profileProvider.validationErrors!.entries
+                              .map((entry) {
                             return Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
@@ -667,7 +984,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
-                      padding: EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
+                      padding:
+                          EdgeInsets.symmetric(vertical: isTablet ? 20 : 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -700,7 +1018,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Container(
                       padding: EdgeInsets.all(isTablet ? 16 : 12),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                        color: theme.colorScheme.secondaryContainer
+                            .withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: theme.colorScheme.outline.withOpacity(0.3),
@@ -732,6 +1051,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+// Formatter para CI venezolano (copiado del onboarding)
+class _CIVenezuelaInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Permitir solo números
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Limitar a 8 dígitos máximo
+    if (newText.length > 8) {
+      newText = newText.substring(0, 8);
+    }
+
+    // Si está vacío, retornar V-
+    if (newText.isEmpty) {
+      return TextEditingValue(
+        text: 'V-',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+    }
+
+    // Formatear como V-12345678
+    String formattedText = 'V-$newText';
+
+    // Calcular la posición del cursor
+    int cursorPosition = formattedText.length;
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorPosition),
     );
   }
 }

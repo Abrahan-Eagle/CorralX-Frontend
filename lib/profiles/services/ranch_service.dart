@@ -12,14 +12,15 @@ class RanchService {
     final bool isProduction = kReleaseMode ||
         const bool.fromEnvironment('dart.vm.product') ||
         dotenv.env['ENVIRONMENT'] == 'production';
-    
+
     final String baseUrl = isProduction
         ? dotenv.env['API_URL_PROD']!
         : dotenv.env['API_URL_LOCAL']!;
-    
-    print('🔧 RanchService - Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+
+    print(
+        '🔧 RanchService - Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
     print('🔧 RanchService - URL Base: $baseUrl');
-    
+
     return baseUrl;
   }
 
@@ -57,7 +58,8 @@ class RanchService {
       if (name != null) body['name'] = name;
       if (legalName != null) body['legal_name'] = legalName;
       if (taxId != null) body['tax_id'] = taxId;
-      if (businessDescription != null) body['business_description'] = businessDescription;
+      if (businessDescription != null)
+        body['business_description'] = businessDescription;
       if (contactHours != null) body['contact_hours'] = contactHours;
       if (addressId != null) body['address_id'] = addressId;
       if (isPrimary != null) body['is_primary'] = isPrimary;
@@ -149,6 +151,8 @@ class RanchService {
     String? businessDescription,
     String? contactHours,
     int? addressId,
+    String? deliveryPolicy,
+    String? returnPolicy,
   }) async {
     try {
       print('🌐 RanchService.createRanch iniciado');
@@ -160,9 +164,12 @@ class RanchService {
         'name': name,
         if (legalName != null) 'legal_name': legalName,
         if (taxId != null) 'tax_id': taxId,
-        if (businessDescription != null) 'business_description': businessDescription,
+        if (businessDescription != null)
+          'business_description': businessDescription,
         if (contactHours != null) 'contact_hours': contactHours,
         if (addressId != null) 'address_id': addressId,
+        if (deliveryPolicy != null) 'delivery_policy': deliveryPolicy,
+        if (returnPolicy != null) 'return_policy': returnPolicy,
       };
 
       print('🌐 URL: $uri');
@@ -201,4 +208,3 @@ class RanchService {
     }
   }
 }
-

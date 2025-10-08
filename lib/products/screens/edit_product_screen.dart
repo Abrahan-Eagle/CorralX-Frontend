@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/product_provider.dart';
@@ -127,6 +128,121 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
   }
 
+  // Métodos de validación
+  String? _validateTitle(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'El título es obligatorio';
+    }
+    if (value.trim().length < 5) {
+      return 'Mínimo 5 caracteres';
+    }
+    if (value.trim().length > 100) {
+      return 'Máximo 100 caracteres';
+    }
+    return null;
+  }
+
+  String? _validateDescription(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'La descripción es obligatoria';
+    }
+    if (value.trim().length < 10) {
+      return 'Mínimo 10 caracteres';
+    }
+    if (value.trim().length > 500) {
+      return 'Máximo 500 caracteres';
+    }
+    return null;
+  }
+
+  String? _validateBreed(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'La raza es obligatoria';
+    }
+    if (value.trim().length < 2) {
+      return 'Mínimo 2 caracteres';
+    }
+    if (value.trim().length > 50) {
+      return 'Máximo 50 caracteres';
+    }
+    // Validar que solo contenga letras y espacios
+    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+      return 'Solo se permiten letras';
+    }
+    return null;
+  }
+
+  String? _validateAge(String? value) {
+    if (value != null && value.trim().isNotEmpty) {
+      final age = int.tryParse(value.trim());
+      if (age == null) {
+        return 'Ingrese un número válido';
+      }
+      if (age < 0) {
+        return 'La edad no puede ser negativa';
+      }
+      if (age > 360) {
+        // máximo 30 años en meses
+        return 'La edad no puede ser mayor a 360 meses';
+      }
+    }
+    return null;
+  }
+
+  String? _validateQuantity(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'La cantidad es obligatoria';
+    }
+    final quantity = int.tryParse(value.trim());
+    if (quantity == null) {
+      return 'Ingrese un número válido';
+    }
+    if (quantity < 1) {
+      return 'La cantidad debe ser mayor a 0';
+    }
+    if (quantity > 1000) {
+      return 'La cantidad no puede ser mayor a 1000';
+    }
+    return null;
+  }
+
+  String? _validatePrice(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'El precio es obligatorio';
+    }
+    final price = double.tryParse(value.trim());
+    if (price == null) {
+      return 'Ingrese un número válido';
+    }
+    if (price < 0) {
+      return 'El precio no puede ser negativo';
+    }
+    return null;
+  }
+
+  String? _validateWeight(String? value) {
+    if (value != null && value.trim().isNotEmpty) {
+      final weight = double.tryParse(value.trim());
+      if (weight == null) {
+        return 'Ingrese un número válido';
+      }
+      if (weight < 0) {
+        return 'El peso no puede ser negativo';
+      }
+      if (weight > 10000) {
+        return 'El peso no puede ser mayor a 10,000 kg';
+      }
+    }
+    return null;
+  }
+
+  // Método para validar el formulario en tiempo real
+  void _validateForm() {
+    setState(() {
+      // Forzar rebuild para actualizar el estado de validación
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -144,33 +260,77 @@ class _EditProductScreenState extends State<EditProductScreen> {
             // Título
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Título *',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'El título es obligatorio';
-                }
-                return null;
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(100),
+              ],
+              onChanged: (_) {
+                _validateForm();
               },
+              decoration: InputDecoration(
+                labelText: 'Título *',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.primary, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.error, width: 2),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                helperText: 'Mínimo 5 caracteres, máximo 100',
+              ),
+              validator: _validateTitle,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
             const SizedBox(height: 16),
 
             // Descripción
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Descripción *',
-                border: OutlineInputBorder(),
-              ),
               maxLines: 4,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'La descripción es obligatoria';
-                }
-                return null;
+              maxLength: 500,
+              onChanged: (_) {
+                _validateForm();
               },
+              decoration: InputDecoration(
+                labelText: 'Descripción *',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.primary, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.error, width: 2),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                helperText: 'Mínimo 10 caracteres, máximo 500',
+              ),
+              validator: _validateDescription,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
             const SizedBox(height: 16),
 
@@ -200,17 +360,42 @@ class _EditProductScreenState extends State<EditProductScreen> {
             // Raza
             TextFormField(
               initialValue: _selectedBreed,
-              decoration: const InputDecoration(
-                labelText: 'Raza *',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) => _selectedBreed = value,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'La raza es obligatoria';
-                }
-                return null;
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                    RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                LengthLimitingTextInputFormatter(50),
+              ],
+              onChanged: (value) {
+                _selectedBreed = value;
+                _validateForm();
               },
+              decoration: InputDecoration(
+                labelText: 'Raza *',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.primary, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.error, width: 2),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                helperText: 'Solo letras, máximo 50 caracteres',
+              ),
+              validator: _validateBreed,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
             const SizedBox(height: 16),
 
@@ -220,31 +405,84 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _ageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Edad (meses)',
-                      border: OutlineInputBorder(),
-                    ),
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(3),
+                    ],
+                    onChanged: (_) {
+                      _validateForm();
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Edad (meses)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      helperText: 'Máximo 360 meses',
+                    ),
+                    validator: _validateAge,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
                     controller: _quantityController,
-                    decoration: const InputDecoration(
-                      labelText: 'Cantidad *',
-                      border: OutlineInputBorder(),
-                    ),
                     keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Requerido';
-                      }
-                      if (int.tryParse(value) == null || int.parse(value) < 1) {
-                        return 'Mínimo 1';
-                      }
-                      return null;
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(4),
+                    ],
+                    onChanged: (_) {
+                      _validateForm();
                     },
+                    decoration: InputDecoration(
+                      labelText: 'Cantidad *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      helperText: 'Máximo 1000',
+                    ),
+                    validator: _validateQuantity,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                 ),
               ],
@@ -258,20 +496,42 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   flex: 2,
                   child: TextFormField(
                     controller: _priceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Precio *',
-                      border: OutlineInputBorder(),
-                    ),
                     keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Requerido';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Inválido';
-                      }
-                      return null;
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    onChanged: (_) {
+                      _validateForm();
                     },
+                    decoration: InputDecoration(
+                      labelText: 'Precio *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      helperText: 'Solo números',
+                    ),
+                    validator: _validatePrice,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -300,11 +560,41 @@ class _EditProductScreenState extends State<EditProductScreen> {
             // Peso promedio
             TextFormField(
               controller: _weightAvgController,
-              decoration: const InputDecoration(
-                labelText: 'Peso Promedio (kg)',
-                border: OutlineInputBorder(),
-              ),
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                LengthLimitingTextInputFormatter(8),
+              ],
+              onChanged: (_) {
+                _validateForm();
+              },
+              decoration: InputDecoration(
+                labelText: 'Peso Promedio (kg)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.primary, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: theme.colorScheme.error, width: 2),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                helperText: 'Máximo 10,000 kg',
+              ),
+              validator: _validateWeight,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
             const SizedBox(height: 16),
 

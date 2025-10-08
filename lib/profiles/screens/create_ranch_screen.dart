@@ -1,30 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../models/ranch.dart';
 import '../providers/profile_provider.dart';
 import '../services/ranch_service.dart';
 
-class EditRanchScreen extends StatefulWidget {
-  final Ranch ranch;
-
-  const EditRanchScreen({
-    super.key,
-    required this.ranch,
-  });
+class CreateRanchScreen extends StatefulWidget {
+  const CreateRanchScreen({super.key});
 
   @override
-  State<EditRanchScreen> createState() => _EditRanchScreenState();
+  State<CreateRanchScreen> createState() => _CreateRanchScreenState();
 }
 
-class _EditRanchScreenState extends State<EditRanchScreen> {
+class _CreateRanchScreenState extends State<CreateRanchScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameController;
   late TextEditingController _legalNameController;
   late TextEditingController _taxIdController;
   late TextEditingController _descriptionController;
-  late TextEditingController _contactHoursController;
 
   // Horarios predefinidos
   final List<String> _predefinedSchedules = [
@@ -34,39 +27,23 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     '24/7 Disponible',
   ];
 
-  String? _selectedSchedule; // Cambiar a selección única
+  String? _selectedSchedule; // Selección única
   late TextEditingController _deliveryPolicyController;
   late TextEditingController _returnPolicyController;
 
-  late bool _isPrimary;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Inicializar controladores con datos existentes
-    _nameController = TextEditingController(text: widget.ranch.name);
-    _legalNameController =
-        TextEditingController(text: widget.ranch.legalName ?? '');
-    _taxIdController = TextEditingController(text: widget.ranch.taxId ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.ranch.businessDescription ?? '');
-    _contactHoursController =
-        TextEditingController(text: widget.ranch.contactHours ?? '');
-
-    // Cargar horario seleccionado si existe
-    if (widget.ranch.contactHours != null &&
-        widget.ranch.contactHours!.isNotEmpty) {
-      _selectedSchedule = widget.ranch.contactHours;
-    }
-
-    _deliveryPolicyController =
-        TextEditingController(text: widget.ranch.deliveryPolicy ?? '');
-    _returnPolicyController =
-        TextEditingController(text: widget.ranch.returnPolicy ?? '');
-
-    _isPrimary = widget.ranch.isPrimary;
+    // Inicializar controladores vacíos
+    _nameController = TextEditingController();
+    _legalNameController = TextEditingController();
+    _taxIdController = TextEditingController(text: 'J-');
+    _descriptionController = TextEditingController();
+    _deliveryPolicyController = TextEditingController();
+    _returnPolicyController = TextEditingController();
   }
 
   @override
@@ -75,7 +52,6 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     _legalNameController.dispose();
     _taxIdController.dispose();
     _descriptionController.dispose();
-    _contactHoursController.dispose();
     _deliveryPolicyController.dispose();
     _returnPolicyController.dispose();
     super.dispose();
@@ -89,18 +65,18 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final result = await RanchService.updateRanch(
-        ranchId: widget.ranch.id,
+      final result = await RanchService.createRanch(
         name: _nameController.text,
         legalName: _legalNameController.text.isNotEmpty
             ? _legalNameController.text
             : null,
-        taxId: _taxIdController.text.isNotEmpty ? _taxIdController.text : null,
+        taxId: _taxIdController.text.isNotEmpty && _taxIdController.text != 'J-'
+            ? _taxIdController.text
+            : null,
         businessDescription: _descriptionController.text.isNotEmpty
             ? _descriptionController.text
             : null,
         contactHours: _selectedSchedule,
-        isPrimary: _isPrimary,
         deliveryPolicy: _deliveryPolicyController.text.isNotEmpty
             ? _deliveryPolicyController.text
             : null,
@@ -114,7 +90,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
       if (result['success'] == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Hacienda actualizada exitosamente'),
+            content: Text('✅ Hacienda creada exitosamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -130,11 +106,10 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? 'Error al actualizar hacienda'),
+            content: Text(result['message'] ?? 'Error al crear hacienda'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-        setState(() => _isSubmitting = false);
       }
     } catch (e) {
       setState(() => _isSubmitting = false);
@@ -149,15 +124,16 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     }
   }
 
-  // Métodos de normalización de texto (copiados del onboarding)
+  // Métodos de normalización de texto
   String _capitalizeWords(String input) {
-    final normalized =
-        input.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
+    // NO eliminar espacios múltiples, solo normalizar espacios excesivos
+    final normalized = input.trim().replaceAll(RegExp(r'\s{2,}'), ' ');
     return normalized
         .split(' ')
         .map((w) => w.isEmpty
             ? w
-            : (w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : '')))
+            : (w[0].toUpperCase() +
+                (w.length > 1 ? w.substring(1).toLowerCase() : '')))
         .join(' ');
   }
 
@@ -210,12 +186,12 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
   }
 
   String? _validateTaxId(String? value) {
-    if (value != null && value.trim().isNotEmpty) {
-      if (value.trim().length < 5) {
-        return 'Mínimo 5 caracteres';
+    if (value != null && value.trim().isNotEmpty && value.trim() != 'J-') {
+      if (value.trim().length < 7) {
+        return 'Mínimo 7 caracteres';
       }
-      if (value.trim().length > 20) {
-        return 'Máximo 20 caracteres';
+      if (value.trim().length > 12) {
+        return 'Máximo 12 caracteres';
       }
     }
     return null;
@@ -230,20 +206,8 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     return null;
   }
 
-  String? _validatePolicy(String? value) {
-    if (value != null && value.trim().isNotEmpty) {
-      if (value.trim().length > 300) {
-        return 'Máximo 300 caracteres';
-      }
-    }
-    return null;
-  }
-
-  // Método para validar el formulario en tiempo real
   void _validateForm() {
-    setState(() {
-      // Forzar rebuild para actualizar el estado de validación
-    });
+    setState(() {});
   }
 
   // Modal para seleccionar horarios
@@ -670,7 +634,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Editar Hacienda'),
+        title: const Text('Nueva Hacienda'),
         backgroundColor: theme.colorScheme.surface,
         centerTitle: true,
       ),
@@ -772,7 +736,6 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
               ],
               onChanged: (value) {
                 _validateForm();
-                // Asegurar que siempre tenga el prefijo J-
                 if (!value.startsWith('J-')) {
                   _taxIdController.value = TextEditingValue(
                     text: 'J-',
@@ -803,7 +766,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
                 fillColor: theme.colorScheme.surface,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                helperText: 'Identificación fiscal',
+                helperText: 'Identificación fiscal (Ej: J-12345678-9)',
               ),
               validator: _validateTaxId,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -926,8 +889,6 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 helperText: 'Máximo 300 caracteres',
               ),
-              validator: _validatePolicy,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
             const SizedBox(height: 16),
 
@@ -964,25 +925,10 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 helperText: 'Máximo 300 caracteres',
               ),
-              validator: _validatePolicy,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-            ),
-            const SizedBox(height: 16),
-
-            // Switch: Hacienda principal
-            SwitchListTile(
-              title: const Text('Marcar como Hacienda Principal'),
-              subtitle: const Text(
-                'Solo una hacienda puede ser principal',
-                style: TextStyle(fontSize: 12),
-              ),
-              value: _isPrimary,
-              onChanged: (value) => setState(() => _isPrimary = value),
-              activeColor: theme.colorScheme.primary,
             ),
             const SizedBox(height: 24),
 
-            // Botón Guardar
+            // Botón Crear
             ElevatedButton(
               onPressed: _isSubmitting ? null : _handleSubmit,
               style: ElevatedButton.styleFrom(
@@ -1006,9 +952,11 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
                       ),
                     )
                   : const Text(
-                      'Guardar Cambios',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      'Crear Hacienda',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
             ),
           ],
