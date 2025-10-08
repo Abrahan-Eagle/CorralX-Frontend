@@ -108,7 +108,7 @@ void main() {
         });
         expect(provider.activeFiltersCount, equals(3));
 
-        // Price range filter
+        // Price range filter (min_price and max_price count as 2 separate filters)
         provider.applyFilters({
           'search': 'vacas',
           'type': 'lechero',
@@ -116,9 +116,9 @@ void main() {
           'min_price': 1000,
           'max_price': 5000,
         });
-        expect(provider.activeFiltersCount, equals(4));
+        expect(provider.activeFiltersCount, equals(5)); // search + type + location + min_price + max_price = 5
 
-        // Sort filter
+        // Sort filter (sort_by also counts as a filter)
         provider.applyFilters({
           'search': 'vacas',
           'type': 'lechero',
@@ -127,7 +127,7 @@ void main() {
           'max_price': 5000,
           'sort_by': 'price_asc',
         });
-        expect(provider.activeFiltersCount, equals(5));
+        expect(provider.activeFiltersCount, equals(6)); // search + type + location + min_price + max_price + sort_by = 6
 
         // Quantity filter
         provider.applyFilters({
