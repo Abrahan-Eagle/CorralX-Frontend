@@ -71,93 +71,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          // Icono Perfil
+          _buildHeaderIcon(
+            icon: Icons.person_outline,
+            isActive: _activeTab == 'profile',
+            onTap: () => _switchTab('profile'),
+            theme: theme,
+            isTablet: isTablet,
+          ),
+          SizedBox(width: isTablet ? 12 : 8),
+          // Icono Mis Publicaciones
+          _buildHeaderIcon(
+            icon: Icons.inventory_2_outlined,
+            isActive: _activeTab == 'myListings',
+            onTap: () => _switchTab('myListings'),
+            theme: theme,
+            isTablet: isTablet,
+          ),
+          SizedBox(width: isTablet ? 12 : 8),
+          // Icono Mis Fincas
+          _buildHeaderIcon(
+            icon: Icons.home_outlined,
+            isActive: _activeTab == 'farms',
+            onTap: () => _switchTab('farms'),
+            theme: theme,
+            isTablet: isTablet,
+          ),
+          SizedBox(width: isTablet ? 16 : 12),
+        ],
       ),
       body: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: isDesktop ? 800 : double.infinity,
         ),
-        child: Column(
-          children: [
-            // Tabs
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: isTablet ? 24 : 16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: isTablet ? 120 : 100,
-                      child:
-                          _buildTabButton('profile', 'Perfil', isTablet, theme),
-                    ),
-                    SizedBox(width: isTablet ? 20 : 16),
-                    SizedBox(
-                      width: isTablet ? 160 : 140,
-                      child: _buildTabButton(
-                          'myListings', 'Mis Publicaciones', isTablet, theme),
-                    ),
-                    SizedBox(width: isTablet ? 20 : 16),
-                    SizedBox(
-                      width: isTablet ? 120 : 100,
-                      child: _buildTabButton(
-                          'farms', 'Mis Fincas', isTablet, theme),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: isTablet ? 32 : 24),
-            // Content
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _handleRefresh,
-                color: theme.colorScheme.primary,
-                child: _buildTabContent(isTablet, theme),
-              ),
-            ),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          color: theme.colorScheme.primary,
+          child: _buildTabContent(isTablet, theme),
         ),
       ),
     );
   }
 
-  Widget _buildTabButton(
-      String tab, String label, bool isTablet, ThemeData theme) {
-    final isActive = _activeTab == tab;
+  void _switchTab(String tab) {
+    setState(() {
+      _activeTab = tab;
+    });
+    // Cargar datos del tab seleccionado si aún no están cargados
+    final profileProvider = context.read<ProfileProvider>();
+    if (tab == 'myListings' && profileProvider.myProducts.isEmpty) {
+      profileProvider.fetchMyProducts();
+    } else if (tab == 'farms' && profileProvider.myRanches.isEmpty) {
+      profileProvider.fetchMyRanches();
+    }
+  }
+
+  Widget _buildHeaderIcon({
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required bool isTablet,
+  }) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _activeTab = tab;
-        });
-        // Cargar datos del tab seleccionado si aún no están cargados
-        final profileProvider = context.read<ProfileProvider>();
-        if (tab == 'myListings' && profileProvider.myProducts.isEmpty) {
-          profileProvider.fetchMyProducts();
-        } else if (tab == 'farms' && profileProvider.myRanches.isEmpty) {
-          profileProvider.fetchMyRanches();
-        }
-      },
+      onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(
-          vertical: isTablet ? 12 : 8,
-          horizontal: isTablet ? 20 : 16,
-        ),
+        padding: EdgeInsets.all(isTablet ? 12 : 10),
         decoration: BoxDecoration(
           color: isActive
               ? theme.colorScheme.primaryContainer
               : theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(isTablet ? 30 : 25),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
+          borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+          border: Border.all(
             color: isActive
-                ? theme.colorScheme.onPrimaryContainer
-                : theme.colorScheme.onSurface,
-            fontSize: isTablet ? 16 : 14,
-            fontWeight: FontWeight.w500,
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withOpacity(0.2),
+            width: isActive ? 2 : 1,
           ),
+        ),
+        child: Icon(
+          icon,
+          size: isTablet ? 28 : 24,
+          color: isActive
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
