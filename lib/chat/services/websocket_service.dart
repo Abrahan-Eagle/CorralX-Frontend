@@ -257,19 +257,8 @@ class WebSocketService {
 
       print('📡 WebSocket: Suscribiendo a $channelName');
 
-      // ✅ SUSCRIBIRSE AL CANAL PRIVADO
-      // Laravel Echo requiere autenticación para canales privados
-      _socket!.emit('subscribe', {
-        'channel': channelName,
-        'auth': {
-          'headers': {
-            'Authorization': 'Bearer $token',
-          }
-        }
-      });
-
-      // ✅ ESCUCHAR EVENTOS DEL CANAL ESPECÍFICO
-      // Laravel Echo envía eventos con el formato: "private-conversation.687:MessageSent"
+      // ✅ ESCUCHAR EVENTOS DEL CANAL ESPECÍFICO PRIMERO
+      // Deben registrarse ANTES de suscribirse
       _socket!.on('$channelName:MessageSent', (data) {
         print('📨 WebSocket: MessageSent recibido en canal $channelName');
         print('📦 Data: $data');
@@ -286,9 +275,25 @@ class WebSocketService {
         _processTypingEvent(data, false);
       });
 
-      print('✅ WebSocket: Suscrito a canal $channelName');
+      // ✅ SUSCRIBIRSE AL CANAL PRIVADO
+      // Laravel Echo Server necesita auth con socket_id
+      final socketId = _socket!.id;
+      
+      _socket!.emit('subscribe', {
+        'channel': channelName,
+        'auth': {
+          'headers': {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          }
+        }
+      });
+
+      print('✅ WebSocket: Suscripción enviada para $channelName');
+      print('🆔 Socket ID: $socketId');
     } catch (e) {
       print('💥 Error suscribiéndose a canal: $e');
+      print('📋 Stack trace: ${e.toString()}');
     }
   }
 
