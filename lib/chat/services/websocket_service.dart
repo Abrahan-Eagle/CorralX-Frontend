@@ -42,7 +42,8 @@ class WebSocketService {
       }
 
       // Obtener configuración del servidor
-      final apiUrl = AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
+      final apiUrl =
+          AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
       final host = apiUrl.split(':')[0]; // 192.168.27.12
 
       print('🔌 WebSocket: Inicializando Pusher Channels...');
@@ -59,28 +60,29 @@ class WebSocketService {
         await pusher.init(
           apiKey: 'corralx-secret-key-2025', // PUSHER_APP_KEY del backend
           cluster: 'mt1', // PUSHER_APP_CLUSTER
-          
+
           // ✅ Callback de autorización para canales privados
           onAuthorizer: (channelName, socketId, options) async {
-            print('🔐 Pusher: Autorizando $channelName con socketId: $socketId');
-            
+            print(
+                '🔐 Pusher: Autorizando $channelName con socketId: $socketId');
+
             // Laravel espera el token en el header Authorization
             return {
               'Authorization': 'Bearer $token',
             };
           },
-          
+
           // ✅ Eventos globales de Pusher
           onEvent: (event) {
             _handlePusherEvent(event);
           },
-          
+
           // ✅ Cambios de estado de conexión
           onConnectionStateChange: (currentState, previousState) {
             print('🔄 Pusher: $previousState → $currentState');
             _handleConnectionStateChange(currentState, previousState);
           },
-          
+
           // ✅ Manejo de errores
           onError: (message, code, error) {
             print('❌ Pusher Error: $message (code: $code)');
