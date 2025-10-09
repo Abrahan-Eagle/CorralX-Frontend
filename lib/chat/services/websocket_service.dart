@@ -151,59 +151,80 @@ class WebSocketService {
       print('❌ WebSocket: Reconexión fallida después de todos los intentos');
     });
 
+    // ✅ EVENTOS GLOBALES DE LARAVEL ECHO
+    // Laravel Echo envía eventos con prefijo del namespace
+    // Formato: "App\\Events\\EventName" o simplemente el nombre del evento
+
     // Evento: MessageSent (broadcast desde backend)
-    _socket!.on('MessageSent', (data) {
-      print('📨 WebSocket: MessageSent recibido');
+    _socket!.on('.MessageSent', (data) {
+      print('📨 WebSocket: MessageSent recibido (con punto)');
       print('📦 Data: $data');
+      _processMessageSent(data);
+    });
 
-      try {
-        final messageData = data['message'] as Map<String, dynamic>;
-        final message = Message.fromJson(messageData);
-
-        // Notificar al callback
-        if (_onMessageCallback != null) {
-          _onMessageCallback!(message);
-        }
-
-        print('✅ Mensaje procesado: ${message.id}');
-      } catch (e) {
-        print('💥 Error procesando MessageSent: $e');
-      }
+    // También escuchar sin punto por si acaso
+    _socket!.on('MessageSent', (data) {
+      print('📨 WebSocket: MessageSent recibido (sin punto)');
+      print('📦 Data: $data');
+      _processMessageSent(data);
     });
 
     // Evento: TypingStarted
+    _socket!.on('.TypingStarted', (data) {
+      print('⌨️ WebSocket: TypingStarted recibido (con punto)');
+      _processTypingEvent(data, true);
+    });
+
     _socket!.on('TypingStarted', (data) {
-      print('⌨️ WebSocket: TypingStarted recibido');
-
-      try {
-        final convId = data['conversation_id'] as int;
-        final userId = data['user_id'] as int;
-
-        if (_onTypingCallback != null) {
-          _onTypingCallback!(convId, userId, true);
-        }
-      } catch (e) {
-        print('💥 Error procesando TypingStarted: $e');
-      }
+      print('⌨️ WebSocket: TypingStarted recibido (sin punto)');
+      _processTypingEvent(data, true);
     });
 
     // Evento: TypingStopped
+    _socket!.on('.TypingStopped', (data) {
+      print('⌨️ WebSocket: TypingStopped recibido (con punto)');
+      _processTypingEvent(data, false);
+    });
+
     _socket!.on('TypingStopped', (data) {
-      print('⌨️ WebSocket: TypingStopped recibido');
-
-      try {
-        final convId = data['conversation_id'] as int;
-        final userId = data['user_id'] as int;
-
-        if (_onTypingCallback != null) {
-          _onTypingCallback!(convId, userId, false);
-        }
-      } catch (e) {
-        print('💥 Error procesando TypingStopped: $e');
-      }
+      print('⌨️ WebSocket: TypingStopped recibido (sin punto)');
+      _processTypingEvent(data, false);
     });
 
     print('🎧 WebSocket: Listeners configurados');
+  }
+
+  /// Procesar evento MessageSent
+  void _processMessageSent(dynamic data) {
+    try {
+      final messageData = data['message'] as Map<String, dynamic>;
+      final message = Message.fromJson(messageData);
+
+      // Notificar al callback
+      if (_onMessageCallback != null) {
+        _onMessageCallback!(message);
+      }
+
+      print('✅ Mensaje procesado: ${message.id}');
+    } catch (e) {
+      print('💥 Error procesando MessageSent: $e');
+      print('📦 Data recibida: $data');
+    }
+  }
+
+  /// Procesar evento de Typing
+  void _processTypingEvent(dynamic data, bool isTyping) {
+    try {
+      final convId = data['conversation_id'] as int;
+      final userId = data['user_id'] as int;
+
+      if (_onTypingCallback != null) {
+        _onTypingCallback!(convId, userId, isTyping);
+      }
+    } catch (e) {
+      print('💥 Error procesando Typing: $e');
+      print('📦 Data recibida: $data');
+    }
   }
 
   /// DESCONECTAR
@@ -231,22 +252,19 @@ class WebSocketService {
     }
 
     try {
-      final token = await storage.read(key: 'token');
+      final channelName = 'private-conversation.$conversationId';
 
-      print('📡 WebSocket: Suscribiendo a conversation.$conversationId');
+      print('📡 WebSocket: Suscribiendo a $channelName');
 
-      _socket!.emit('subscribe', {
-        'channel': 'private-conversation.$conversationId',
-        'auth': {
-          'headers': {
-            'Authorization': 'Bearer $token',
-          }
-        }
-      });
+      // ✅ Laravel Echo Server escucha eventos directamente del canal
+      // NO necesita .emit('subscribe') en Socket.IO v1.x
+      // Los eventos MessageSent, TypingStarted ya están configurados globalmente
+      // Solo registramos el canal para referencia
 
-      print('✅ WebSocket: Suscrito a conversation.$conversationId');
+      print(
+          '✅ WebSocket: Canal $channelName configurado (eventos ya registrados globalmente)');
     } catch (e) {
-      print('💥 Error suscribiéndose a canal: $e');
+      print('💥 Error configurando canal: $e');
     }
   }
 
