@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/product.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:zonix/chat/screens/chat_screen.dart';
+import 'package:zonix/config/user_provider.dart'; // ✅ Para verificar si es el propio usuario
 
 class ProductDetailWidget extends StatelessWidget {
   final Product product;
@@ -507,33 +508,42 @@ class ProductDetailWidget extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context) {
+    // ✅ Verificar si el producto es del usuario actual
+    final userProvider = context.read<UserProvider>();
+    final currentProfileId = userProvider.profileId ?? 0;
+    final isOwnProduct = product.ranch?.profileId == currentProfileId;
+    
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: isTablet ? 56 : 48,
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: Implementar contacto con vendedor
-              _showContactDialog(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        // ✅ Solo mostrar botón "Contactar" si NO es el propio producto
+        if (!isOwnProduct)
+          SizedBox(
+            width: double.infinity,
+            height: isTablet ? 56 : 48,
+            child: ElevatedButton(
+              onPressed: () {
+                _showContactDialog(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-            child: Text(
-              'Contactar Vendedor',
-              style: TextStyle(
-                fontSize: isTablet ? 18 : 16,
-                fontWeight: FontWeight.w600,
+              child: Text(
+                'Contactar Vendedor',
+                style: TextStyle(
+                  fontSize: isTablet ? 18 : 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
+        
+        // ✅ Espaciado condicional
+        if (!isOwnProduct) const SizedBox(height: 12),
+        
         Row(
           children: [
             Expanded(

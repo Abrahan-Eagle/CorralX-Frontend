@@ -7,6 +7,7 @@ import 'package:zonix/chat/widgets/chat_input.dart';
 import 'package:zonix/chat/widgets/typing_indicator.dart';
 import 'package:zonix/chat/services/websocket_service.dart';
 import 'package:zonix/config/app_config.dart';
+import 'package:zonix/config/user_provider.dart'; // ✅ Para obtener el ID del usuario
 
 /// Pantalla de chat 1:1 con un usuario
 /// Muestra mensajes en tiempo real con WebSocket
@@ -110,11 +111,14 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: _buildAppBar(theme),
-      body: Consumer<ChatProvider>(
-        builder: (context, chatProvider, child) {
+      body: Consumer2<ChatProvider, UserProvider>(
+        builder: (context, chatProvider, userProvider, child) {
           final messages = chatProvider.getMessages(widget.conversationId);
           final isTyping =
               chatProvider.isTypingInConversation(widget.conversationId);
+          
+          // ✅ Obtener el profile ID del usuario actual
+          final currentProfileId = userProvider.profileId ?? 0;
 
           return Column(
             children: [
@@ -134,7 +138,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           // Invertir orden para reverse: true
                           final message = messages[messages.length - 1 - index];
                           final isOwnMessage = message
-                              .isOwnMessage(0); // TODO: Get current user ID
+                              .isOwnMessage(currentProfileId); // ✅ Usar el ID real del perfil
 
                           // Separador de fecha si cambia el día
                           Widget? dateSeparator;
