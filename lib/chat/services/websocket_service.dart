@@ -56,7 +56,7 @@ class WebSocketService {
       _updateConnectionState(WebSocketConnectionState.connecting);
 
       _socket = IO.io(
-        echoServerUrl,
+        '$echoServerUrl/socket.io/',
         IO.OptionBuilder()
             .setTransports(
                 ['polling', 'websocket']) // ✅ Polling primero, luego upgrade a WebSocket
@@ -65,6 +65,11 @@ class WebSocketService {
             .setReconnectionAttempts(10) // ✅ Máximo 10 intentos
             .setReconnectionDelay(2000) // ✅ 2 segundos entre intentos
             .setTimeout(30000) // ✅ Timeout de 30 segundos
+            .setQuery({
+              'appId': 'corralx-app',
+              'key': 'corralx-secret-key-2025',
+              'EIO': '4', // Engine.IO version 4
+            })
             .setAuth({
               'token': 'Bearer $token',
             })
