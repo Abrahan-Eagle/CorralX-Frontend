@@ -125,12 +125,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
           // ✅ Obtener el profile ID del usuario actual
           final currentProfileId = profileProvider.myProfile?.id ?? 0;
-          
-          // 🔍 Debug log
-          if (messages.isNotEmpty) {
-            final firstMsg = messages.first;
-            print('🔍 Debug - CurrentProfileID: $currentProfileId, FirstMsg.senderID: ${firstMsg.senderId}, isOwn: ${firstMsg.isOwnMessage(currentProfileId)}');
-          }
 
           return Column(
             children: [
