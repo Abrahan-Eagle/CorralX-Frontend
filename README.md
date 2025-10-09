@@ -853,25 +853,289 @@ dependencies:
 
 ---
 
-## 🔮 Roadmap
+## 🔮 Roadmap y Planificación
 
-### Corto Plazo (Post-MVP)
-- [ ] WebSocket chat en tiempo real
-- [ ] Notificaciones push
-- [ ] Modo offline (borradores)
+### 📱 **Módulo de Chat - FASE MVP (Crítico)**
+
+#### **Estado Actual:**
+- ✅ **Backend:** 100% completo (10 endpoints)
+- ⚠️ **Frontend:** 20% (estructura básica)
+
+#### **Funcionalidades Críticas para MVP:**
+
+##### 1️⃣ **WebSocket para Tiempo Real** 🔴 CRÍTICO
+**Por qué es crítico:**
+- ⚡ Mensajes instantáneos (< 100ms vs 2-5 seg con polling)
+- 🔋 Ahorra 80% de batería vs HTTP polling
+- 📡 Reduce consumo de datos en 90%
+- 😊 UX comparable a WhatsApp/Telegram
+- 💰 +40% conversiones en marketplace
+
+**Implementación:**
+```dart
+lib/chat/services/
+  - websocket_service.dart    # Conexión WebSocket persistente
+    - connect()               # Establecer conexión
+    - disconnect()            # Cerrar conexión
+    - onMessage()             # Recibir mensajes en tiempo real
+    - onTyping()              # Indicador de escritura
+    - reconnect()             # Reconexión automática con backoff
+    - heartbeat()             # Keep-alive cada 30 segundos
+```
+
+**Características:**
+- Conexión persistente bidireccional
+- Reconexión automática con backoff exponencial
+- Manejo de estados: conectado/desconectado/reconectando
+- Pausa automática cuando app va a background
+- Indicadores visuales de estado de conexión
+- Cola de mensajes pendientes si hay desconexión
+
+**Métricas de Éxito:**
+- Latencia < 200ms
+- Tasa de reconexión > 95%
+- Tiempo de conexión < 2 segundos
+
+---
+
+##### 2️⃣ **Push Notifications** 🔴 CRÍTICO
+**Por qué es crítico:**
+- 📱 Usuario recibe mensajes aunque la app esté cerrada
+- 🔔 +60% de conversiones en marketplace
+- ⏰ Respuestas 10x más rápidas
+- 📈 Retención de usuarios +300%
+
+**Implementación:**
+```dart
+lib/chat/services/
+  - notification_service.dart  # Firebase Cloud Messaging
+    - initialize()             # Configurar FCM
+    - requestPermission()      # Pedir permisos
+    - getToken()               # Obtener device token
+    - onMessageReceived()      # Manejar notificación
+    - showLocalNotification()  # Mostrar notificación local
+    - navigateToChat()         # Abrir chat al tocar notificación
+```
+
+**Backend (ya implementado):**
+- Envío automático cuando usuario offline
+- Payload con info de remitente y preview
+- Deep linking a conversación específica
+
+**Características:**
+- Notificaciones silenciosas cuando app abierta
+- Sonido y vibración cuando app cerrada
+- Badge count de mensajes no leídos
+- Acción rápida "Responder" desde notificación
+- Agrupación de notificaciones por conversación
+
+**Métricas de Éxito:**
+- Tasa de entrega > 98%
+- Tasa de apertura > 60%
+- Tiempo de respuesta promedio < 5 min
+
+---
+
+##### 3️⃣ **Chat Funcional Completo**
+**Modelos (3 archivos):**
+```dart
+lib/chat/models/
+  - conversation.dart
+    - id, participants, lastMessage
+    - unreadCount, createdAt, updatedAt
+    - isBlocked, isArchived
+    
+  - message.dart
+    - id, conversationId, senderId, receiverId
+    - content, type (text/image/file)
+    - sentAt, deliveredAt, readAt
+    - status (sending/sent/delivered/read/failed)
+    
+  - chat_user.dart
+    - id, name, avatar, isOnline
+    - lastSeen, isVerified, isBlocked
+```
+
+**Servicios (2 archivos):**
+```dart
+lib/chat/services/
+  - chat_service.dart          # API HTTP
+    - getConversations()       # GET /api/chat/conversations
+    - getMessages(convId)      # GET /api/chat/conversations/{id}/messages
+    - sendMessage(convId, text) # POST /api/chat/conversations/{id}/messages
+    - markAsRead(convId)       # POST /api/chat/conversations/{id}/read
+    - createConversation()     # POST /api/chat/conversations
+    - deleteConversation()     # DELETE /api/chat/conversations/{id}
+    - searchMessages(query)    # GET /api/chat/search
+    - blockUser(userId)        # POST /api/chat/block
+    - unblockUser(userId)      # DELETE /api/chat/block/{userId}
+    - getBlockedUsers()        # GET /api/chat/blocked-users
+```
+
+**Provider (1 archivo):**
+```dart
+lib/chat/providers/
+  - chat_provider.dart
+    - conversations: List<Conversation>
+    - messagesByConv: Map<String, List<Message>>
+    - isLoading, errorMessage
+    - unreadCount: int
+    
+    - loadConversations()
+    - loadMessages(convId)
+    - sendMessage(convId, text)
+    - markAsRead(convId)
+    - deleteConversation(convId)
+```
+
+**Pantallas (2 archivos):**
+```dart
+lib/chat/screens/
+  - messages_screen.dart       # Lista de conversaciones
+    - ListView de conversaciones
+    - Pull-to-refresh
+    - Badge de no leídos
+    - Swipe para eliminar
+    - Empty state
+    
+  - chat_screen.dart           # Conversación 1:1
+    - ListView.reverse de mensajes
+    - Burbujas diferenciadas (enviado/recibido)
+    - Campo de texto + botón enviar
+    - Indicador de estado de conexión
+    - Indicador de typing
+    - Auto-scroll a último mensaje
+    - Marcar como leído automático
+```
+
+**Widgets (4 archivos):**
+```dart
+lib/chat/widgets/
+  - conversation_card.dart     # Card de conversación
+    - Avatar + nombre
+    - Último mensaje preview
+    - Timestamp relativo
+    - Badge de no leídos
+    - Indicador online/offline
+    
+  - message_bubble.dart        # Burbuja de mensaje
+    - Estilos diferenciados
+    - Timestamp
+    - Estado (enviando/entregado/leído)
+    - Icono de error si falla
+    
+  - chat_input.dart            # Input de texto
+    - TextField con emoji
+    - Botón enviar
+    - Indicador de typing
+    - Manejo de multiline
+    
+  - typing_indicator.dart      # "Juan está escribiendo..."
+    - Animación de puntos
+    - Avatar del remitente
+```
+
+---
+
+### 📋 **Estimación de Tiempo (MVP Chat Completo)**
+
+| Tarea | Tiempo | Prioridad | Dependencias |
+|-------|--------|-----------|--------------|
+| **Modelos** | 1h | 🔴 Alta | Ninguna |
+| **ChatService (HTTP)** | 2h | 🔴 Alta | Modelos |
+| **WebSocketService** | 3h | 🔴 Alta | Modelos |
+| **NotificationService** | 2h | 🔴 Alta | Ninguna |
+| **ChatProvider** | 2h | 🔴 Alta | Services |
+| **MessagesScreen (actualizar)** | 2h | 🔴 Alta | Provider |
+| **ChatScreen (nueva)** | 3h | 🔴 Alta | Provider |
+| **Widgets (4 archivos)** | 2h | 🟡 Media | Modelos |
+| **Tests unitarios** | 2h | 🟡 Media | Todo lo anterior |
+| **Tests integración** | 1h | 🟡 Media | Todo lo anterior |
+| **Integración ProductDetail** | 1h | 🔴 Alta | ChatScreen |
+| **Testing en dispositivo** | 2h | 🔴 Alta | Todo lo anterior |
+| **TOTAL** | **23 horas** (~3 días) | | |
+
+---
+
+### 🎯 **Criterios de Aceptación MVP Chat**
+
+#### **Funcionales:**
+- ✅ Usuario puede ver lista de conversaciones
+- ✅ Usuario puede abrir una conversación
+- ✅ Usuario puede enviar mensajes de texto
+- ✅ Usuario recibe mensajes en tiempo real (WebSocket)
+- ✅ Usuario recibe notificaciones push cuando app cerrada
+- ✅ Usuario puede crear conversación desde ProductDetail
+- ✅ Mensajes se marcan como leídos automáticamente
+- ✅ Contador de no leídos actualizado en tiempo real
+- ✅ Indicador de estado de conexión visible
+
+#### **No Funcionales:**
+- ✅ Latencia de mensajes < 200ms
+- ✅ Reconexión automática en < 3 segundos
+- ✅ Tasa de entrega push > 98%
+- ✅ Sin crashes en pruebas de 1 hora
+- ✅ Consumo de batería < 5% por hora en background
+
+---
+
+### 🚀 **Post-MVP (Versión 1.1)**
+
+#### **Fase 2: Mejoras de UX (1 semana)**
+- [ ] Búsqueda de mensajes
+- [ ] Typing indicators
+- [ ] Indicadores de entregado/leído (doble check)
+- [ ] Envío de imágenes
+- [ ] Compartir ubicación
+- [ ] Archivar conversaciones
+
+#### **Fase 3: Funcionalidades Avanzadas (2 semanas)**
+- [ ] Mensajes de voz
+- [ ] Videollamadas
+- [ ] Grupos (vendedores + compradores)
+- [ ] Respuestas rápidas predefinidas
+- [ ] Traducción automática
+- [ ] Encriptación end-to-end
+
+#### **Fase 4: Administración (1 semana)**
+- [ ] Reportar conversaciones
+- [ ] Filtros anti-spam
+- [ ] Moderación automática
+- [ ] Analytics de conversaciones
+- [ ] Chatbot de soporte
+
+---
+
+### 📊 **Impacto Esperado**
+
+| Métrica | Sin Chat | Con Chat Básico | Con WebSocket + Push |
+|---------|----------|-----------------|----------------------|
+| Tiempo respuesta | N/A | 2-4 horas | 2-5 minutos |
+| Tasa conversión | 5% | 15% | 45% |
+| Retención 7 días | 20% | 40% | 70% |
+| Satisfacción | 3.0★ | 3.5★ | 4.5★ |
+
+---
+
+### 🛠️ **Otros Items del Roadmap**
+
+#### **Corto Plazo (Próximo mes)**
+- [ ] Modo offline (borradores de productos)
 - [ ] Fix de tests restantes (19 tests)
+- [ ] Optimización de imágenes
+- [ ] Caché inteligente
 
-### Mediano Plazo
-- [ ] Pagos integrados
-- [ ] Sistema de verificación automático
-- [ ] Analítica de mercado
-- [ ] Panel de administración
+#### **Mediano Plazo (3-6 meses)**
+- [ ] Pagos integrados (Stripe/PayPal)
+- [ ] Sistema de verificación automático (selfie + CI)
+- [ ] Analítica de mercado (precios, tendencias)
+- [ ] Panel de administración web
 
-### Largo Plazo
+#### **Largo Plazo (6-12 meses)**
 - [ ] App para iOS
-- [ ] Versión web completa
+- [ ] Versión web completa (PWA)
 - [ ] Integración con sistemas de trazabilidad
-- [ ] Expansión internacional
+- [ ] Expansión internacional (países vecinos)
 
 ---
 

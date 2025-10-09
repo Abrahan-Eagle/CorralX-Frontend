@@ -32,8 +32,28 @@ alwaysApply: true
   - Crear un `ApiService` base que use paquetes como `http` (o `dio` si se prefiere) para manejar peticiones. Este servicio puede gestionar el token de autenticación globalmente (p.ej., adjuntar header `Authorization: Bearer <token>` a cada request tras login).
   - Servicios específicos por recurso: ej. un `ListingService` con métodos para la lógica de publicaciones: `fetchListings({filters})`, `getListingDetail(id)`, `createListing(data)`, `updateListing(id, data)`, `deleteListing(id)`. Cada método realiza la petición REST correspondiente y retorna datos procesados (decodificados a Map o convertidos a modelo).
   - **AuthService:** métodos `login(email, pass)`, `register(datos)`, `logout()` que llaman a las rutas `/api/login`, `/api/register` y gestionan el almacenamiento seguro del token (usando `flutter_secure_storage` para el JWT, por ejemplo).
-  - **ChatService:** métodos para obtener conversaciones (`getConversations()` -> GET `/api/conversations`), obtener mensajes de un chat (`getMessages(convId)` -> GET `/api/conversations/{id}`) y enviar mensaje (`sendMessage(convId, text)` -> POST `/api/conversations/{id}/messages`).
-  - **WebSocketService:** manejo de conexión WebSocket para chat en tiempo real, incluyendo conexión, desconexión, reconexión automática y manejo de eventos de mensajes.
+  - **ChatService:** métodos para obtener conversaciones (`getConversations()` -> GET `/api/chat/conversations`), obtener mensajes de un chat (`getMessages(convId)` -> GET `/api/chat/conversations/{id}/messages`) y enviar mensaje (`sendMessage(convId, text)` -> POST `/api/chat/conversations/{id}/messages`), marcar como leído (`markAsRead(convId)` -> POST `/api/chat/conversations/{id}/read`), crear conversación (`createConversation(participantId)` -> POST `/api/chat/conversations`), eliminar conversación (`deleteConversation(convId)` -> DELETE `/api/chat/conversations/{id}`).
+  - **WebSocketService:** manejo de conexión WebSocket para chat en tiempo real, incluyendo:
+    - `connect()` - Establecer conexión persistente con el servidor WebSocket
+    - `disconnect()` - Cerrar conexión cuando app va a background o cierra
+    - `onMessage(callback)` - Escuchar mensajes entrantes en tiempo real
+    - `sendMessage(message)` - Enviar mensaje a través de WebSocket
+    - `onTyping(callback)` - Detectar cuando otro usuario está escribiendo
+    - `reconnect()` - Reconexión automática con backoff exponencial (1s, 2s, 4s, 8s, max 30s)
+    - `heartbeat()` - Keep-alive cada 30 segundos para mantener conexión
+    - Manejo de estados: `connecting`, `connected`, `disconnected`, `reconnecting`, `error`
+    - Cola de mensajes pendientes cuando hay pérdida temporal de conexión
+    - Indicadores visuales de estado de conexión en la UI
+  - **NotificationService:** integración con Firebase Cloud Messaging (FCM) para notificaciones push:
+    - `initialize()` - Configurar FCM al iniciar la app
+    - `requestPermission()` - Solicitar permisos de notificaciones al usuario
+    - `getToken()` - Obtener device token para envío de notificaciones
+    - `onMessageReceived(callback)` - Manejar notificaciones recibidas (foreground y background)
+    - `showLocalNotification(title, body)` - Mostrar notificación local
+    - `navigateToChat(conversationId)` - Navegar a chat específico al tocar notificación
+    - `updateBadgeCount(count)` - Actualizar badge de mensajes no leídos
+    - Notificaciones silenciosas cuando app está abierta, sonido/vibración cuando está cerrada
+    - Deep linking para abrir conversación específica desde notificación
   - Manejar errores HTTP en estos servicios: si la respuesta tiene código de error, interpretar y lanzar excepciones o retornar valores de error para que la UI pueda reaccionar. Ej.: 401 -> lanzar error de autenticación (frontend redirige a login), 422 -> devolver lista de errores de validación para mostrarlos en el formulario.
 - Parsear las respuestas JSON en modelos Dart o mapas:
   - Si se definieron clases de modelo (con factory `fromJson`), usarlas para convertir las respuestas. Ej: `Listing.fromJson(json)` por cada elemento en la lista de listings.
@@ -59,13 +79,37 @@ alwaysApply: true
     - `updateListing(id, datos)` actualiza tanto vía API como localmente en la lista (reemplazando el objeto modificado).
     - `deleteListing(id)` envía DELETE a API y si éxito, remueve la publicación de `listings`.
     - También maneja filtros locales de ser necesario (aunque es preferible delegar filtrado al backend enviando query params).
-  - **ChatProvider:** maneja las conversaciones y mensajes del chat:
-    - Contiene lista `conversations` (conversaciones del usuario actual) y quizás un mapa `messagesByConv` para almacenar mensajes de cada conversación cargada.
-    - Método `loadConversations()` llama ChatService.getConversations y actualiza la lista.
-    - Método `openConversation(userId)` (o `startConversation(listingId, sellerId)`) podría llamarse para iniciar chat con un vendedor desde un anuncio: llama a ChatService (que devuelve convId existente o nuevo) y luego carga mensajes de esa conversación.
-    - Método `loadMessages(convId)` obtiene mensajes (ChatService.getMessages) y guarda en `messagesByConv[convId]`, notificando listeners.
-    - Método `sendMessage(convId, text)` usa WebSocketService para envío inmediato; al obtener confirmación, agrega el mensaje a `messagesByConv[convId]` y actualiza el último mensaje en `conversations`.
-    - Integración con WebSocketService para recibir mensajes en tiempo real y actualizar automáticamente la UI.
+  - **ChatProvider:** maneja las conversaciones y mensajes del chat con integración completa de WebSocket y notificaciones:
+    - **Estado:**
+      - `List<Conversation> conversations` - Lista de todas las conversaciones del usuario
+      - `Map<String, List<Message>> messagesByConv` - Mensajes organizados por conversación
+      - `int unreadCount` - Contador total de mensajes no leídos (para badge)
+      - `bool isLoading` - Indicador de carga inicial
+      - `String? errorMessage` - Mensaje de error si falla alguna operación
+      - `WebSocketConnectionState connectionState` - Estado de conexión WebSocket (connecting/connected/disconnected/reconnecting)
+      - `Map<String, bool> typingUsers` - Usuarios que están escribiendo en cada conversación
+    - **Métodos principales:**
+      - `loadConversations()` - Obtiene lista de conversaciones vía HTTP (ChatService.getConversations), ordena por fecha del último mensaje, actualiza `unreadCount` sumando no leídos de todas las conversaciones
+      - `openConversation(userId, {productId})` - Crea o abre conversación existente: primero verifica si existe conversación con ese usuario (busca en `conversations`), si no existe llama a ChatService.createConversation, luego carga mensajes con `loadMessages(convId)`, marca la conversación como activa
+      - `loadMessages(convId)` - Carga historial de mensajes vía HTTP (ChatService.getMessages), guarda en `messagesByConv[convId]`, auto-marca como leído si usuario entra a la pantalla de chat
+      - `sendMessage(convId, text)` - Envía mensaje con feedback optimista:
+        1. Agrega mensaje localmente con estado "sending" (feedback optimista)
+        2. Envía a través de WebSocketService (si conectado) o ChatService (fallback HTTP)
+        3. Al recibir confirmación, actualiza estado a "sent" y asigna ID real del servidor
+        4. Si falla, marca mensaje con estado "failed" y botón de reintento
+        5. Actualiza `lastMessage` en la conversación correspondiente
+      - `markAsRead(convId)` - Marca mensajes como leídos vía HTTP (ChatService.markAsRead), actualiza contador local `unreadCount`, actualiza estado de mensajes en `messagesByConv[convId]` a "read"
+      - `deleteConversation(convId)` - Elimina conversación con confirmación del usuario, llama ChatService.deleteConversation, remueve de `conversations` localmente
+    - **Integración WebSocket:**
+      - En `init()` del provider, conecta WebSocketService y registra callbacks
+      - `WebSocketService.onMessage((message) {...})` - Al recibir mensaje nuevo: agrega a `messagesByConv`, actualiza `lastMessage` de conversación, incrementa `unreadCount` si no está en esa conversación, dispara notificación local si app en foreground
+      - `WebSocketService.onTyping((convId, userId, isTyping) {...})` - Actualiza `typingUsers[convId]` para mostrar "Usuario está escribiendo..."
+      - `WebSocketService.onConnectionChange((state) {...})` - Actualiza `connectionState` para mostrar indicador visual en UI
+      - Si WebSocket se desconecta, mantiene cola de mensajes pendientes y los envía cuando reconecte
+    - **Integración NotificationService:**
+      - En `init()`, configura callback de NotificationService para manejar tap en notificación
+      - `NotificationService.onNotificationTap((convId) {...})` - Navega a ChatScreen con esa conversación
+      - Cuando llega mensaje nuevo y usuario NO está en esa conversación, trigger notificación push
   - Los providers deben notificar a la UI para refrescar: usar `notifyListeners()` tras cambios. En la UI, usar `Consumer<...>` o `context.watch()` para reconstruir widgets reactivos cuando cambie el estado.
 - Manejar estados de carga y error en los providers:
   - Por ejemplo, `ListingProvider` puede tener `bool isLoading` mientras carga publicaciones, y `String? errorMessage` si falla la carga. La UI (MarketplaceScreen) debe revisar estos para mostrar un `CircularProgressIndicator` cuando `isLoading=true` o un mensaje de error si `errorMessage != null`.
@@ -101,24 +145,82 @@ alwaysApply: true
   - Similar a una vista de perfil pero para un vendedor ajeno: mostrar nombre comercial, ubicación, bio, rating y verificado. No mostrar datos sensibles (email, teléfono).
   - Listar también las publicaciones activas de ese vendedor (para que el comprador pueda ver más ofertas del mismo). 
   - Botón **Contactar** presente (redundante con el de detalle, pero útil si se llega al perfil por otro medio).
-- **Pantalla de Conversaciones (Chats):**
-  - Mostrar todas las conversaciones del usuario (Fuente: `ChatProvider.conversations`). Usar ListView.builder. Cada item muestra: foto y nombre del otro participante, snippet del último mensaje, timestamp relativo (ej. "hace 5 min"), y un indicador de no leídos (por ejemplo, texto en negrita si hay no leídos, o un badge con el número).
-  - Al entrar a esta pantalla (posiblemente mediante un icono de chat en un BottomNavigationBar), llamar `ChatProvider.loadConversations()` para refrescar la lista desde backend. Implementar igualmente pull-to-refresh para actualizar manualmente.
-  - Al tocar una conversación, navegar a **ChatScreen** pasando el `conversationId` (y cargar mensajes si no lo hizo aún).
-- **Pantalla de Chat (Conversación 1:1):**
-  - Mostrar la lista de mensajes entre el usuario actual y el otro participante. Usar un ListView (o ListView.reverse) para presentar mensajes del más antiguo al más reciente. Formato de burbujas: mensajes del usuario actual alineados a la derecha con color distinto, mensajes recibidos a la izquierda.
-  - Barra superior con el nombre del contacto, su estado de conexión (en línea/desconectado) y el estado de la conexión WebSocket (conectado/desconectado/reconectando). Mostrar también si el contacto es verificado (pequeño icono).
-  - En la parte inferior, un campo de texto para escribir mensaje y botón enviar (IconButton con ícono de envío). Integrar con el teclado (usar `Scaffold` con `resizeToAvoidBottomInset` para que el ListView no quede oculto).
-  - Al enviar un mensaje:
-    - Llamar `ChatProvider.sendMessage(convId, texto)`. Se puede agregar inmediatamente el mensaje a la UI para feedback optimista (asumiendo éxito), pero manejar el caso de fallo (ej. mostrar un icono de reintento si no se entregó).
-    - Despejar el campo de texto tras enviar.
-  - **WebSockets para chat en tiempo real:**
-    - Implementar conexión WebSocket usando `web_socket_channel` para recibir mensajes en tiempo real.
-    - En `ChatProvider`, establecer conexión WebSocket al abrir una conversación y escuchar eventos de nuevos mensajes.
-    - Manejar reconexión automática en caso de pérdida de conexión.
-    - Enviar mensajes a través de WebSocket para entrega inmediata y recibir confirmación de entrega.
-    - Implementar indicadores de estado de conexión (conectado/desconectado) en la UI del chat.
-  - Marcar mensajes como leídos: cuando se abre la pantalla, después de cargar los mensajes, llamar a un método (quizá en ChatService) para marcar la conversación como leída (o asumir que la acción de obtenerlos ya los marca). Asegurarse de actualizar `has_unread_messages` en AuthProvider o ChatProvider para que al volver a lista de chats, esa conversación aparezca sin notificaciones pendientes.
+- **Pantalla de Conversaciones (MessagesScreen):**
+  - **Estructura:** Usar `Scaffold` con `AppBar` (título "Mensajes") y `body` con `ListView.builder` de conversaciones
+  - **Fuente de datos:** `Consumer<ChatProvider>` para reactividad, obtener `conversations` del provider
+  - **Widget por conversación:** `ConversationCard` customizado que muestra:
+    - `CircleAvatar` con foto del otro participante (o inicial si no tiene foto)
+    - Nombre del contacto en negrita (usar `TextStyle(fontWeight: FontWeight.bold)`)
+    - Snippet del último mensaje (máx 50 caracteres con ellipsis)
+    - Timestamp relativo usando `timeago` package ("hace 5 min", "ayer", etc.)
+    - Badge circular rojo con número de no leídos si `conversation.unreadCount > 0`
+    - Indicador verde pequeño si el otro usuario está online (`isOnline`)
+    - Icono de verificado (✓) si el contacto tiene `isVerified=true`
+  - **Interacciones:**
+    - Al entrar a la pantalla: `ChatProvider.loadConversations()` en `initState()`
+    - Pull-to-refresh: `RefreshIndicator` que llama `loadConversations()` nuevamente
+    - Tap en conversación: navega a `ChatScreen` con `Navigator.push()` pasando `conversationId`
+    - Swipe-to-delete: usar `Dismissible` para eliminar conversación (con confirmación)
+  - **Estados especiales:**
+    - Loading: `CircularProgressIndicator` centrado si `isLoading=true`
+    - Empty: Widget centrado con icono de chat vacío y mensaje "No tienes conversaciones aún"
+    - Error: `SnackBar` con mensaje de error si falla la carga
+  - **Badge en BottomNavigationBar:** Mostrar badge rojo con `unreadCount` total en el ícono de mensajes
+  
+- **Pantalla de Chat 1:1 (ChatScreen):**
+  - **AppBar personalizado:**
+    - Leading: botón back
+    - Title: Row con avatar pequeño + nombre del contacto + indicador online/offline
+    - Subtitle: Estado de conexión WebSocket ("Conectado", "Reconectando...", "Sin conexión")
+    - Actions: IconButton de opciones (bloquear, eliminar conversación)
+  - **Body - Lista de mensajes:**
+    - `ListView.builder` con `reverse: true` (mensajes más recientes abajo)
+    - Cada mensaje usa widget `MessageBubble`:
+      - Mensajes enviados: alineados a la derecha, color `theme.colorScheme.primaryContainer`
+      - Mensajes recibidos: alineados a la izquierda, color `theme.colorScheme.surfaceVariant`
+      - Contenido del mensaje en `Text` con manejo de multiline
+      - Timestamp pequeño debajo (formato "12:34 PM")
+      - Estados visuales:
+        - "Enviando": Spinner pequeño gris
+        - "Enviado": Check gris (✓)
+        - "Entregado": Doble check gris (✓✓)
+        - "Leído": Doble check azul (✓✓)
+        - "Fallido": Icono de error rojo con botón "Reintentar"
+    - Auto-scroll al último mensaje cuando se envía o recibe mensaje nuevo
+    - Separador de fecha entre mensajes de días diferentes
+  - **Typing Indicator:**
+    - Widget `TypingIndicator` que aparece sobre el input cuando el otro usuario está escribiendo
+    - Animación de 3 puntos rebotando
+    - Texto: "Usuario está escribiendo..."
+  - **Input de mensaje (parte inferior):**
+    - `Row` con `TextField` expandido y `IconButton` de enviar
+    - TextField con:
+      - Placeholder: "Escribe un mensaje..."
+      - `maxLines: null` para permitir multiline (hasta 5 líneas)
+      - `textCapitalization: TextCapitalization.sentences`
+      - `onChanged`: Detectar escritura y enviar evento de typing vía WebSocket cada 3 segundos
+    - Botón enviar:
+      - Deshabilitado si texto vacío o `isSending=true`
+      - Al presionar: `ChatProvider.sendMessage(convId, text)` y limpiar TextField
+      - Mostrar spinner mientras `isSending=true`
+  - **Indicador de estado de conexión:**
+    - Banner pequeño arriba si `connectionState != connected`
+    - "🔴 Sin conexión - Los mensajes se enviarán cuando reconectes"
+    - "🟡 Reconectando..."
+    - Desaparece automáticamente cuando reconecta
+  - **WebSocket en tiempo real:**
+    - Al entrar a la pantalla: `WebSocketService` ya debe estar conectado (desde `ChatProvider.init()`)
+    - Escuchar evento `onMessage`: si el mensaje es de esta conversación, agregarlo al ListView
+    - Escuchar evento `onTyping`: mostrar/ocultar `TypingIndicator`
+    - Escuchar evento `onConnectionChange`: actualizar indicador de conexión
+  - **Marcar como leído:**
+    - Cuando usuario entra a ChatScreen, llamar `ChatProvider.markAsRead(convId)` en `initState()`
+    - Esto actualiza backend y decrementa `unreadCount` local
+  - **Navegación desde ProductDetail:**
+    - Botón "Contactar Vendedor" en `ProductDetailScreen`
+    - Al presionar: `ChatProvider.openConversation(sellerId, productId: product.id)`
+    - Navega a `ChatScreen` con la conversación creada/abierta
+    - El primer mensaje puede incluir contexto del producto: "Hola, me interesa [Nombre del producto]"
 - **Pantallas de Autenticación:**
   - **LoginScreen:** campos para email y contraseña, con validación básica (no vacío, formato email). Botón "Iniciar Sesión" que al presionar llama `AuthProvider.login(email, pass)`. Mostrar indicador de carga durante autenticación. Si error (credenciales inválidas), mostrar mensaje ("Email o contraseña incorrecta").
   - **RegisterScreen:** campos para nombre, email, teléfono, contraseña y confirmación. Validar formatos (email válido, teléfono quizás opcional pero formato numérico, contraseña mínima 6 caracteres y coincide con confirmación). Botón "Registrarse" llama `AuthProvider.register(datos)` y luego inicia sesión automática o indica éxito.
