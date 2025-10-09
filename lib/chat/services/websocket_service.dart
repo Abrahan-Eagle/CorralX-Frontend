@@ -44,8 +44,8 @@ class WebSocketService {
         return;
       }
 
-      // URL del Echo Server (desde app_config.dart o hardcoded para desarrollo)
-      const echoServerUrl = 'http://192.168.27.12:6001';
+      // URL del Echo Server
+      final echoServerUrl = '${AppConfig.apiUrl.replaceAll(':8000', ':6001')}';
 
       print('🔌 WebSocket: Conectando a $echoServerUrl');
       print('🔑 Token: ${token.substring(0, 20)}...');

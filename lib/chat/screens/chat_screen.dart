@@ -216,52 +216,58 @@ class _ChatScreenState extends State<ChatScreen> {
 
           const SizedBox(width: 12),
 
-          // Nombre + Estado
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              // Nombre + Estado
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.contactName ?? 'Usuario',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.contactName ?? 'Usuario',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                        
+                        // Icono verificado
+                        if (widget.contactIsVerified == true) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.verified,
+                            size: 14,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ],
+                      ],
                     ),
                     
-                    // Icono verificado
-                    if (widget.contactIsVerified == true) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.verified,
-                        size: 14,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
+                    // Estado de conexión WebSocket
+                    Consumer<ChatProvider>(
+                      builder: (context, chatProvider, child) {
+                        return Text(
+                          _getConnectionText(chatProvider.connectionState),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _getConnectionColor(
+                              theme,
+                              chatProvider.connectionState,
+                            ),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        );
+                      },
+                    ),
                   ],
                 ),
-                
-                // Estado de conexión WebSocket
-                Consumer<ChatProvider>(
-                  builder: (context, chatProvider, child) {
-                    return Text(
-                      _getConnectionText(chatProvider.connectionState),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _getConnectionColor(
-                          theme,
-                          chatProvider.connectionState,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+              ),
         ],
       ),
       actions: [
