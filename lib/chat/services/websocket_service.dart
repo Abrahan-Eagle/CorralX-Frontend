@@ -57,33 +57,35 @@ class WebSocketService {
 
       _socket = IO.io(
         echoServerUrl,
-        IO.OptionBuilder()
-            .setTransports(['polling', 'websocket']) // Polling primero, luego WebSocket
-            .setPath('/socket.io/') // ✅ Path explícito
-            .enableAutoConnect() // Auto-conectar
-            .enableReconnection() // Reconexión automática
-            .enableForceNew() // ✅ Forzar nueva conexión
-            .setReconnectionAttempts(10) // Máximo 10 intentos
-            .setReconnectionDelay(2000) // 2 segundos entre intentos
-            .setTimeout(20000) // ✅ Timeout de 20 segundos (igual que Echo Server)
-            .setQuery({
-              'appId': 'corralx-app', // ✅ DEBE coincidir con laravel-echo-server.json
-              'key': 'corralx-secret-key-2025', // ✅ DEBE coincidir con laravel-echo-server.json
-              'EIO': '3', // ✅ Engine.IO version 3 (Laravel Echo Server usa v3)
-            })
-            .setAuth({
-              'token': 'Bearer $token',
-            })
-            .setExtraHeaders({
-              'Authorization': 'Bearer $token',
-            })
-            .build(),
+        <String, dynamic>{
+          'transports': ['websocket', 'polling'], // WebSocket primero
+          'autoConnect': false, // Manual connect
+          'query': {
+            'appId': 'corralx-app',
+            'key': 'corralx-secret-key-2025',
+            'token': token, // ✅ Token en query (v1.0.2 no soporta setAuth)
+          },
+          'extraHeaders': {
+            'Authorization': 'Bearer $token',
+          },
+          'path': '/socket.io/',
+          'reconnection': true,
+          'reconnectionAttempts': 5,
+          'reconnectionDelay': 2000,
+          'timeout': 10000,
+          'forceNew': true,
+        },
       );
+
+      // ✅ Conectar manualmente DESPUÉS de configurar listeners
+      print('🔌 WebSocket: Socket creado, configurando listeners...');
 
       // LISTENERS de eventos de Socket.IO
       _setupSocketListeners();
 
-      print('✅ WebSocket: Configurado y conectando automáticamente...');
+      // ✅ CONECTAR MANUALMENTE después de configurar listeners
+      _socket!.connect();
+      print('✅ WebSocket: Listeners configurados, conectando manualmente...');
     } catch (e) {
       print('💥 Error al conectar WebSocket: $e');
       _updateConnectionState(WebSocketConnectionState.error);
@@ -99,7 +101,7 @@ class WebSocketService {
     _socket!.on('connecting', (_) {
       print('🔄 WebSocket: Evento "connecting" - Intentando conectar...');
     });
-    
+
     // Evento: Conectado exitosamente
     _socket!.onConnect((_) {
       print('✅ WebSocket: ¡¡¡CONECTADO EXITOSAMENTE!!!');
@@ -119,7 +121,7 @@ class WebSocketService {
       print('⚠️ WebSocket: Desconectado - Razón: $reason');
       _updateConnectionState(WebSocketConnectionState.disconnected);
       _stopHeartbeat();
-      
+
       // No reconectar si fue desconexión manual
       if (reason != 'io client disconnect') {
         _scheduleReconnect();
@@ -138,12 +140,12 @@ class WebSocketService {
     _socket!.onError((error) {
       print('❌ WebSocket: Error general: $error');
     });
-    
+
     // Evento: Reconnect attempt
     _socket!.on('reconnect_attempt', (attempt) {
       print('🔄 WebSocket: Intento de reconexión #$attempt');
     });
-    
+
     // Evento: Reconnect failed
     _socket!.on('reconnect_failed', (_) {
       print('❌ WebSocket: Reconexión fallida después de todos los intentos');

@@ -59,7 +59,7 @@ dependencies:
   qr: ^3.0.2
   shimmer: ^3.0.0
 
-  socket_io_client: ^2.0.3+1  # ✅ Cliente Socket.IO v2 COMPATIBLE con Laravel Echo Server v1.6.3
+  socket_io_client: ^1.0.2  # ✅ Socket.IO v2.x client (compatible con Echo Server v2.3.0)
   timeago: ^3.7.0
   flutter_local_notifications: ^17.2.3
   flutter_native_splash: any
