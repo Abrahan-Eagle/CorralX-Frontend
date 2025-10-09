@@ -35,10 +35,10 @@ class Message {
       conversationId: json['conversation_id'] as int,
       senderId: json['sender_id'] as int,
       receiverId: json['receiver_id'] as int?,
-      content: json['content'] as String,
+      content: (json['content'] as String?) ?? '', // ✅ Null-safe
       type: _parseMessageType(json['message_type'] as String?),
       status: _parseMessageStatus(json),
-      sentAt: DateTime.parse(json['sent_at'] ?? json['created_at']),
+      sentAt: DateTime.parse(json['sent_at'] ?? json['created_at'] ?? DateTime.now().toIso8601String()),
       deliveredAt: json['delivered_at'] != null
           ? DateTime.parse(json['delivered_at'])
           : null,
