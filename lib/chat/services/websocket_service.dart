@@ -59,19 +59,12 @@ class WebSocketService {
         echoServerUrl,
         IO.OptionBuilder()
             .setTransports(
-                ['polling', 'websocket']) // ✅ Polling primero, luego upgrade a websocket
+                ['polling', 'websocket']) // ✅ Polling primero, luego upgrade a WebSocket
             .enableAutoConnect() // ✅ Auto-conectar
             .enableReconnection() // ✅ Reconexión automática
-            .setReconnectionAttempts(5) // ✅ Máximo 5 intentos
-            .setReconnectionDelay(1000) // ✅ 1 segundo entre intentos
-            .setTimeout(20000) // ✅ Timeout de 20 segundos (igual que pingTimeout del servidor)
-            .enableForceNew() // ✅ Forzar nueva conexión
-            .setPath('/socket.io/') // ✅ Path explícito
-            .setQuery({
-              'appId': 'corralx-app',
-              'key': 'corralx-secret-key-2025',
-              'EIO': '3', // ✅ Engine.IO versión 3 (Laravel Echo Server)
-            })
+            .setReconnectionAttempts(10) // ✅ Máximo 10 intentos
+            .setReconnectionDelay(2000) // ✅ 2 segundos entre intentos
+            .setTimeout(30000) // ✅ Timeout de 30 segundos
             .setAuth({
               'token': 'Bearer $token',
             })
@@ -84,7 +77,6 @@ class WebSocketService {
       // LISTENERS de eventos de Socket.IO
       _setupSocketListeners();
 
-      // Ya no necesitamos connect() porque enableAutoConnect() lo hace automáticamente
       print('✅ WebSocket: Configurado y conectando automáticamente...');
     } catch (e) {
       print('💥 Error al conectar WebSocket: $e');
@@ -121,7 +113,11 @@ class WebSocketService {
       print('⚠️ WebSocket: Desconectado - Razón: $reason');
       _updateConnectionState(WebSocketConnectionState.disconnected);
       _stopHeartbeat();
-      _scheduleReconnect();
+      
+      // No reconectar si fue desconexión manual
+      if (reason != 'io client disconnect') {
+        _scheduleReconnect();
+      }
     });
 
     // Evento: Error de conexión
