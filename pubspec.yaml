@@ -59,7 +59,6 @@ dependencies:
   qr: ^3.0.2
   shimmer: ^3.0.0
 
-  pusher_channels_flutter: ^2.2.1  # ✅ Pusher Channels (siguiendo documentación Laravel)
   timeago: ^3.7.0
   flutter_local_notifications: ^17.2.3
   flutter_native_splash: any
