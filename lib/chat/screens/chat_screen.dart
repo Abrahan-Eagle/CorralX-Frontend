@@ -187,12 +187,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
               ),
 
-              // Indicador de "está escribiendo..."
-              if (isTyping)
-                const Padding(
-                  padding: EdgeInsets.only(left: 16, bottom: 8),
-                  child: TypingIndicator(),
-                ),
+              // ⚠️ Typing indicators deshabilitados: Requieren WebSocket
+              // HTTP Polling no soporta eventos en tiempo real (<100ms)
+              // TODO: Rehabilitar cuando migremos a WebSocket/Pusher Cloud
+              // if (isTyping)
+              //   const Padding(
+              //     padding: EdgeInsets.only(left: 16, bottom: 8),
+              //     child: TypingIndicator(),
+              //   ),
 
               // Input de mensaje
               ChatInput(
