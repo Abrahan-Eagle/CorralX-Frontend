@@ -10,7 +10,7 @@ class Message {
   final DateTime sentAt;
   final DateTime? deliveredAt;
   final DateTime? readAt;
-  
+
   // Datos del remitente (para UI)
   final MessageSender? sender;
 
@@ -38,7 +38,9 @@ class Message {
       content: (json['content'] as String?) ?? '', // ✅ Null-safe
       type: _parseMessageType(json['message_type'] as String?),
       status: _parseMessageStatus(json),
-      sentAt: DateTime.parse(json['sent_at'] ?? json['created_at'] ?? DateTime.now().toIso8601String()),
+      sentAt: DateTime.parse(json['sent_at'] ??
+          json['created_at'] ??
+          DateTime.now().toIso8601String()),
       deliveredAt: json['delivered_at'] != null
           ? DateTime.parse(json['delivered_at'])
           : null,
@@ -177,7 +179,7 @@ class MessageSender {
   factory MessageSender.fromJson(Map<String, dynamic> json) {
     return MessageSender(
       id: json['id'] as int,
-      name: json['name'] as String,
+      name: (json['name'] as String?) ?? 'Usuario', // ✅ Null-safe
       avatar: json['avatar'] as String?,
     );
   }
@@ -190,4 +192,3 @@ class MessageSender {
     };
   }
 }
-
