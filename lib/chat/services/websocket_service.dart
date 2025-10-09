@@ -1,19 +1,17 @@
 import 'dart:async';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'dart:convert';
+import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:zonix/config/app_config.dart';
 import 'package:zonix/chat/models/message.dart';
 
-/// Servicio WebSocket para chat en tiempo real usando Laravel Echo Server
-/// Maneja conexión persistente, reconexión automática y eventos en tiempo real
+/// Servicio WebSocket usando Pusher Channels para chat en tiempo real
+/// Compatible con Laravel Echo Server siguiendo documentación oficial de Laravel
 class WebSocketService {
   static const storage = FlutterSecureStorage();
 
-  IO.Socket? _socket;
-  Timer? _heartbeatTimer;
-  Timer? _reconnectTimer;
-  int _reconnectAttempts = 0;
-  final int _maxReconnectDelay = 30; // segundos
+  late PusherChannelsFlutter pusher;
+  bool _isInitialized = false;
 
   // Estados de conexión
   WebSocketConnectionState _connectionState =
@@ -24,9 +22,6 @@ class WebSocketService {
   Function(int convId, int userId, bool isTyping)? _onTypingCallback;
   Function(WebSocketConnectionState state)? _onConnectionChangeCallback;
 
-  // Cola de mensajes pendientes si hay desconexión
-  final List<Map<String, dynamic>> _pendingMessages = [];
-
   /// Estado actual de la conexión
   WebSocketConnectionState get connectionState => _connectionState;
 
@@ -34,7 +29,8 @@ class WebSocketService {
   bool get isConnected =>
       _connectionState == WebSocketConnectionState.connected;
 
-  /// CONECTAR al Laravel Echo Server
+  /// CONECTAR a Pusher/Laravel Echo Server
+  /// Siguiendo documentación oficial de Laravel Broadcasting
   Future<void> connect() async {
     try {
       final token = await storage.read(key: 'token');
@@ -45,158 +41,167 @@ class WebSocketService {
         return;
       }
 
-      // URL del Echo Server (sin protocolo http://)
-      final apiUrl =
-          AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
-      final echoServerUrl = 'http://${apiUrl.replaceAll(':8000', ':6001')}';
+      // Obtener configuración del servidor
+      final apiUrl = AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
+      final host = apiUrl.split(':')[0]; // 192.168.27.12
 
-      print('🔌 WebSocket: Conectando a $echoServerUrl');
+      print('🔌 WebSocket: Inicializando Pusher Channels...');
+      print('🌐 Host: $host');
       print('🔑 Token: ${token.substring(0, 20)}...');
 
       _updateConnectionState(WebSocketConnectionState.connecting);
 
-      _socket = IO.io(
-        echoServerUrl,
-        <String, dynamic>{
-          'transports': ['websocket', 'polling'], // WebSocket primero
-          'autoConnect': false, // Manual connect
-          'query': {
-            'appId': 'corralx-app',
-            'key': 'corralx-secret-key-2025',
-            'token': token, // ✅ Token en query (v1.0.2 no soporta setAuth)
+      pusher = PusherChannelsFlutter.getInstance();
+
+      // ✅ Configuración según documentación de Laravel Broadcasting
+      // https://laravel.com/docs/broadcasting#client-side-installation
+      try {
+        await pusher.init(
+          apiKey: 'corralx-secret-key-2025', // PUSHER_APP_KEY del backend
+          cluster: 'mt1', // PUSHER_APP_CLUSTER
+          
+          // ✅ Callback de autorización para canales privados
+          onAuthorizer: (channelName, socketId, options) async {
+            print('🔐 Pusher: Autorizando $channelName con socketId: $socketId');
+            
+            // Laravel espera el token en el header Authorization
+            return {
+              'Authorization': 'Bearer $token',
+            };
           },
-          'extraHeaders': {
-            'Authorization': 'Bearer $token',
+          
+          // ✅ Eventos globales de Pusher
+          onEvent: (event) {
+            _handlePusherEvent(event);
           },
-          'path': '/socket.io/',
-          'reconnection': true,
-          'reconnectionAttempts': 5,
-          'reconnectionDelay': 2000,
-          'timeout': 10000,
-          'forceNew': true,
-        },
-      );
+          
+          // ✅ Cambios de estado de conexión
+          onConnectionStateChange: (currentState, previousState) {
+            print('🔄 Pusher: $previousState → $currentState');
+            _handleConnectionStateChange(currentState, previousState);
+          },
+          
+          // ✅ Manejo de errores
+          onError: (message, code, error) {
+            print('❌ Pusher Error: $message (code: $code)');
+            _updateConnectionState(WebSocketConnectionState.error);
+          },
+        );
 
-      // ✅ Conectar manualmente DESPUÉS de configurar listeners
-      print('🔌 WebSocket: Socket creado, configurando listeners...');
+        _isInitialized = true;
 
-      // LISTENERS de eventos de Socket.IO
-      _setupSocketListeners();
+        // ✅ Conectar a Pusher
+        await pusher.connect();
 
-      // ✅ CONECTAR MANUALMENTE después de configurar listeners
-      _socket!.connect();
-      print('✅ WebSocket: Listeners configurados, conectando manualmente...');
+        print('✅ WebSocket: Pusher inicializado y conectado');
+        _updateConnectionState(WebSocketConnectionState.connected);
+      } catch (e) {
+        print('💥 Error en pusher.init(): $e');
+        _updateConnectionState(WebSocketConnectionState.error);
+        rethrow;
+      }
     } catch (e) {
-      print('💥 Error al conectar WebSocket: $e');
+      print('💥 Error al conectar Pusher: $e');
+      print('📋 Stack: $e');
       _updateConnectionState(WebSocketConnectionState.error);
-      _scheduleReconnect();
     }
   }
 
-  /// Configurar listeners de eventos de Socket.IO
-  void _setupSocketListeners() {
-    if (_socket == null) return;
+  /// DESCONECTAR
+  Future<void> disconnect() async {
+    print('🔌 WebSocket: Desconectando...');
 
-    // Evento: Connecting (intentando conectar)
-    _socket!.on('connecting', (_) {
-      print('🔄 WebSocket: Evento "connecting" - Intentando conectar...');
-    });
-
-    // Evento: Conectado exitosamente
-    _socket!.onConnect((_) {
-      print('✅ WebSocket: ¡¡¡CONECTADO EXITOSAMENTE!!!');
-      print('🎉 Socket ID: ${_socket!.id}');
-      _reconnectAttempts = 0;
-      _updateConnectionState(WebSocketConnectionState.connected);
-
-      // Enviar mensajes pendientes
-      _sendPendingMessages();
-
-      // Iniciar heartbeat
-      _startHeartbeat();
-    });
-
-    // Evento: Desconectado
-    _socket!.onDisconnect((reason) {
-      print('⚠️ WebSocket: Desconectado - Razón: $reason');
-      _updateConnectionState(WebSocketConnectionState.disconnected);
-      _stopHeartbeat();
-
-      // No reconectar si fue desconexión manual
-      if (reason != 'io client disconnect') {
-        _scheduleReconnect();
+    try {
+      if (_isInitialized) {
+        await pusher.disconnect();
       }
-    });
+      _updateConnectionState(WebSocketConnectionState.disconnected);
+      print('✅ WebSocket: Desconectado');
+    } catch (e) {
+      print('⚠️ Error al desconectar: $e');
+    }
+  }
 
-    // Evento: Error de conexión
-    _socket!.onConnectError((error) {
-      print('❌ WebSocket: Error de conexión: $error');
-      print('🔍 Tipo de error: ${error.runtimeType}');
-      _updateConnectionState(WebSocketConnectionState.error);
-      _scheduleReconnect();
-    });
+  /// SUSCRIBIRSE a un canal privado de conversación
+  /// Según documentación: https://laravel.com/docs/broadcasting#authorizing-channels
+  Future<void> subscribeToConversation(int conversationId) async {
+    if (!_isInitialized || !isConnected) {
+      print('⚠️ WebSocket: No está listo para suscribirse');
+      print('   Inicializado: $_isInitialized, Conectado: $isConnected');
+      return;
+    }
 
-    // Evento: Error general
-    _socket!.onError((error) {
-      print('❌ WebSocket: Error general: $error');
-    });
+    try {
+      final channelName = 'private-conversation.$conversationId';
 
-    // Evento: Reconnect attempt
-    _socket!.on('reconnect_attempt', (attempt) {
-      print('🔄 WebSocket: Intento de reconexión #$attempt');
-    });
+      print('📡 WebSocket: Suscribiendo a $channelName');
 
-    // Evento: Reconnect failed
-    _socket!.on('reconnect_failed', (_) {
-      print('❌ WebSocket: Reconexión fallida después de todos los intentos');
-    });
+      // ✅ Pusher maneja automáticamente la autenticación
+      // Llamará a onAuthorizer y hará POST /broadcasting/auth
+      await pusher.subscribe(channelName: channelName);
 
-    // ✅ EVENTOS GLOBALES DE LARAVEL ECHO
-    // Laravel Echo envía eventos con prefijo del namespace
-    // Formato: "App\\Events\\EventName" o simplemente el nombre del evento
+      print('✅ WebSocket: Suscrito a $channelName');
+    } catch (e) {
+      print('💥 Error suscribiéndose: $e');
+      print('📋 Detalle: ${e.toString()}');
+    }
+  }
 
-    // Evento: MessageSent (broadcast desde backend)
-    _socket!.on('.MessageSent', (data) {
-      print('📨 WebSocket: MessageSent recibido (con punto)');
-      print('📦 Data: $data');
-      _processMessageSent(data);
-    });
+  /// DESUSCRIBIRSE de un canal
+  Future<void> unsubscribeFromConversation(int conversationId) async {
+    final channelName = 'private-conversation.$conversationId';
 
-    // También escuchar sin punto por si acaso
-    _socket!.on('MessageSent', (data) {
-      print('📨 WebSocket: MessageSent recibido (sin punto)');
-      print('📦 Data: $data');
-      _processMessageSent(data);
-    });
+    print('📡 WebSocket: Desuscribiendo de $channelName');
 
-    // Evento: TypingStarted
-    _socket!.on('.TypingStarted', (data) {
-      print('⌨️ WebSocket: TypingStarted recibido (con punto)');
-      _processTypingEvent(data, true);
-    });
+    try {
+      await pusher.unsubscribe(channelName: channelName);
+      print('✅ WebSocket: Desuscrito');
+    } catch (e) {
+      print('⚠️ Error al desuscribirse: $e');
+    }
+  }
 
-    _socket!.on('TypingStarted', (data) {
-      print('⌨️ WebSocket: TypingStarted recibido (sin punto)');
-      _processTypingEvent(data, true);
-    });
+  /// Manejar eventos de Pusher
+  void _handlePusherEvent(PusherEvent event) {
+    print('📬 Pusher Event recibido:');
+    print('   Canal: ${event.channelName}');
+    print('   Evento: ${event.eventName}');
+    print('   Data: ${event.data}');
 
-    // Evento: TypingStopped
-    _socket!.on('.TypingStopped', (data) {
-      print('⌨️ WebSocket: TypingStopped recibido (con punto)');
-      _processTypingEvent(data, false);
-    });
+    try {
+      // Parsear el data JSON
+      final data = event.data != null && event.data!.isNotEmpty
+          ? jsonDecode(event.data!)
+          : <String, dynamic>{};
 
-    _socket!.on('TypingStopped', (data) {
-      print('⌨️ WebSocket: TypingStopped recibido (sin punto)');
-      _processTypingEvent(data, false);
-    });
-
-    print('🎧 WebSocket: Listeners configurados');
+      // Determinar tipo de evento según nombre
+      switch (event.eventName) {
+        case 'MessageSent':
+        case '.MessageSent': // Con punto también
+          _processMessageSent(data);
+          break;
+        case 'TypingStarted':
+        case '.TypingStarted':
+          _processTypingEvent(data, true);
+          break;
+        case 'TypingStopped':
+        case '.TypingStopped':
+          _processTypingEvent(data, false);
+          break;
+        default:
+          print('⚠️ Evento no manejado: ${event.eventName}');
+      }
+    } catch (e) {
+      print('💥 Error procesando evento: $e');
+      print('📦 Data original: ${event.data}');
+    }
   }
 
   /// Procesar evento MessageSent
-  void _processMessageSent(dynamic data) {
+  void _processMessageSent(Map<String, dynamic> data) {
     try {
+      print('📨 WebSocket: Procesando MessageSent...');
+
       final messageData = data['message'] as Map<String, dynamic>;
       final message = Message.fromJson(messageData);
 
@@ -213,187 +218,45 @@ class WebSocketService {
   }
 
   /// Procesar evento de Typing
-  void _processTypingEvent(dynamic data, bool isTyping) {
+  void _processTypingEvent(Map<String, dynamic> data, bool isTyping) {
     try {
+      print('⌨️ WebSocket: Procesando Typing (isTyping: $isTyping)...');
+
       final convId = data['conversation_id'] as int;
       final userId = data['user_id'] as int;
 
       if (_onTypingCallback != null) {
         _onTypingCallback!(convId, userId, isTyping);
       }
+
+      print('✅ Typing procesado: conv=$convId, user=$userId');
     } catch (e) {
       print('💥 Error procesando Typing: $e');
       print('📦 Data recibida: $data');
     }
   }
 
-  /// DESCONECTAR
-  void disconnect() {
-    print('🔌 WebSocket: Desconectando...');
+  /// Manejar cambios de estado de conexión
+  void _handleConnectionStateChange(
+      String? currentState, String? previousState) {
+    print('🔄 Pusher: Estado cambió de $previousState → $currentState');
 
-    _stopHeartbeat();
-    _reconnectTimer?.cancel();
-
-    if (_socket != null) {
-      _socket!.disconnect();
-      _socket!.dispose();
-      _socket = null;
+    switch (currentState) {
+      case 'CONNECTED':
+        _updateConnectionState(WebSocketConnectionState.connected);
+        break;
+      case 'CONNECTING':
+        _updateConnectionState(WebSocketConnectionState.connecting);
+        break;
+      case 'DISCONNECTED':
+        _updateConnectionState(WebSocketConnectionState.disconnected);
+        break;
+      case 'RECONNECTING':
+        _updateConnectionState(WebSocketConnectionState.reconnecting);
+        break;
+      default:
+        print('⚠️ Estado desconocido: $currentState');
     }
-
-    _updateConnectionState(WebSocketConnectionState.disconnected);
-    print('✅ WebSocket: Desconectado');
-  }
-
-  /// SUSCRIBIRSE a un canal privado de conversación
-  Future<void> subscribeToConversation(int conversationId) async {
-    if (_socket == null || !_socket!.connected) {
-      print('⚠️ WebSocket: No conectado, no se puede suscribir');
-      return;
-    }
-
-    try {
-      final token = await storage.read(key: 'token');
-      final channelName = 'private-conversation.$conversationId';
-
-      print('📡 WebSocket: Suscribiendo a $channelName');
-
-      // ✅ ESCUCHAR EVENTOS DEL CANAL ESPECÍFICO PRIMERO
-      // Deben registrarse ANTES de suscribirse
-      _socket!.on('$channelName:MessageSent', (data) {
-        print('📨 WebSocket: MessageSent recibido en canal $channelName');
-        print('📦 Data: $data');
-        _processMessageSent(data);
-      });
-
-      _socket!.on('$channelName:TypingStarted', (data) {
-        print('⌨️ WebSocket: TypingStarted recibido en canal $channelName');
-        _processTypingEvent(data, true);
-      });
-
-      _socket!.on('$channelName:TypingStopped', (data) {
-        print('⌨️ WebSocket: TypingStopped recibido en canal $channelName');
-        _processTypingEvent(data, false);
-      });
-
-      // ✅ SUSCRIBIRSE AL CANAL PRIVADO
-      // Laravel Echo Server hará POST /broadcasting/auth
-      // El middleware custom AuthenticateBroadcast extraerá el token
-      final socketId = _socket!.id;
-      
-      _socket!.emit('subscribe', {
-        'channel': channelName,
-        'auth': {
-          'headers': {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json',
-          }
-        },
-        // ✅ ENVIAR TOKEN TAMBIÉN EN BODY (para middleware custom)
-        'token': token,
-      });
-
-      print('✅ WebSocket: Suscripción enviada para $channelName');
-      print('🆔 Socket ID: $socketId');
-      print('🔑 Token incluido en body para auth');
-    } catch (e) {
-      print('💥 Error suscribiéndose a canal: $e');
-      print('📋 Stack trace: ${e.toString()}');
-    }
-  }
-
-  /// DESUSCRIBIRSE de un canal
-  void unsubscribeFromConversation(int conversationId) {
-    if (_socket == null) return;
-
-    print('📡 WebSocket: Desuscribiendo de conversation.$conversationId');
-
-    _socket!.emit('unsubscribe', {
-      'channel': 'private-conversation.$conversationId',
-    });
-
-    print('✅ WebSocket: Desuscrito');
-  }
-
-  /// ENVIAR MENSAJE vía WebSocket (no usado en MVP, se usa HTTP)
-  /// Mantener por si se quiere usar en el futuro
-  void sendMessage(int conversationId, String content) {
-    if (_socket == null || !_socket!.connected) {
-      print('⚠️ WebSocket: No conectado, agregando a cola');
-      _pendingMessages.add({
-        'conversation_id': conversationId,
-        'content': content,
-        'timestamp': DateTime.now().toIso8601String(),
-      });
-      return;
-    }
-
-    _socket!.emit('message', {
-      'conversation_id': conversationId,
-      'content': content,
-    });
-
-    print('📤 WebSocket: Mensaje enviado a conv $conversationId');
-  }
-
-  /// RECONEXIÓN automática con backoff exponencial
-  void _scheduleReconnect() {
-    // Cancelar timer anterior si existe
-    _reconnectTimer?.cancel();
-
-    // Calcular delay con backoff exponencial
-    final delays = [1, 2, 4, 8, 16, 30]; // segundos
-    final delayIndex = _reconnectAttempts < delays.length
-        ? _reconnectAttempts
-        : delays.length - 1;
-    final delaySeconds = delays[delayIndex];
-
-    print(
-        '🔄 WebSocket: Reconectando en $delaySeconds segundos (intento ${_reconnectAttempts + 1})');
-
-    _updateConnectionState(WebSocketConnectionState.reconnecting);
-
-    _reconnectTimer = Timer(Duration(seconds: delaySeconds), () {
-      _reconnectAttempts++;
-      connect();
-    });
-  }
-
-  /// HEARTBEAT - Keep-alive cada 30 segundos
-  void _startHeartbeat() {
-    _stopHeartbeat(); // Detener anterior si existe
-
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (_socket != null && _socket!.connected) {
-        _socket!.emit('ping', {'timestamp': DateTime.now().toIso8601String()});
-        print('💓 WebSocket: Heartbeat enviado');
-      } else {
-        print('⚠️ WebSocket: Heartbeat - No conectado');
-        _stopHeartbeat();
-      }
-    });
-
-    print('💓 WebSocket: Heartbeat iniciado (cada 30s)');
-  }
-
-  /// Detener heartbeat
-  void _stopHeartbeat() {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = null;
-  }
-
-  /// Enviar mensajes pendientes tras reconexión
-  void _sendPendingMessages() {
-    if (_pendingMessages.isEmpty) return;
-
-    print(
-        '📤 WebSocket: Enviando ${_pendingMessages.length} mensajes pendientes');
-
-    for (var msg in _pendingMessages) {
-      _socket!.emit('message', msg);
-    }
-
-    _pendingMessages.clear();
-    print('✅ WebSocket: Mensajes pendientes enviados');
   }
 
   /// Actualizar estado y notificar callbacks
@@ -401,8 +264,7 @@ class WebSocketService {
     if (_connectionState == newState) return;
 
     _connectionState = newState;
-
-    print('🔄 WebSocket: Estado cambiado a $newState');
+    print('🔄 WebSocket: Estado → $newState');
 
     if (_onConnectionChangeCallback != null) {
       _onConnectionChangeCallback!(newState);
