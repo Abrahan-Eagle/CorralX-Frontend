@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:zonix/chat/models/conversation.dart';
 import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/services/chat_service.dart';
-import 'package:zonix/chat/services/websocket_service.dart';
+import 'package:zonix/chat/services/polling_service.dart'; // ✅ HTTP Polling
 import 'package:zonix/chat/services/notification_service.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
 
 /// Provider global para gestión del chat
-/// Maneja conversaciones, mensajes, WebSocket y notificaciones
+/// Maneja conversaciones, mensajes, HTTP Polling y notificaciones
+/// 
+/// MVP: Usa HTTP Polling en vez de WebSocket para evitar problemas
+/// de autenticación de canales privados con Laravel Echo Server
 class ChatProvider extends ChangeNotifier {
   // ============================================
   // ESTADO
@@ -40,19 +43,17 @@ class ChatProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  /// Estado de conexión WebSocket
-  WebSocketConnectionState _connectionState =
-      WebSocketConnectionState.disconnected;
-  WebSocketConnectionState get connectionState => _connectionState;
-
   /// Usuarios que están escribiendo (por conversación)
   final Map<int, Set<int>> _typingUsers = {};
 
-  /// Servicio WebSocket
-  final WebSocketService _websocketService = WebSocketService();
+  /// Servicio de Polling (reemplaza WebSocket para MVP)
+  final PollingService _pollingService = PollingService();
 
   /// ID de conversación actualmente abierta (para marcar como leído automático)
   int? _activeConversationId;
+  
+  /// Indicador de que está usando polling (para mostrar en UI)
+  bool get isUsingPolling => true;
 
   // ============================================
   // INICIALIZACIÓN
@@ -63,7 +64,7 @@ class ChatProvider extends ChangeNotifier {
     _initializeServices();
   }
 
-  /// Inicializar servicios (WebSocket y Notificaciones)
+  /// Inicializar servicios (HTTP Polling y Notificaciones)
   Future<void> _initializeServices() async {
     print('🔧 ChatProvider: Inicializando servicios...');
 
@@ -76,22 +77,11 @@ class ChatProvider extends ChangeNotifier {
       // TODO: Navegar a ChatScreen con ese conversationId
     });
 
-    // Conectar WebSocket
-    await _websocketService.connect();
-
-    // Configurar callbacks de WebSocket
-    _websocketService.onMessage((message) {
-      _handleIncomingMessage(message);
-    });
-
-    _websocketService.onTyping((convId, userId, isTyping) {
-      _handleTypingEvent(convId, userId, isTyping);
-    });
-
-    _websocketService.onConnectionChange((state) {
-      _connectionState = state;
-      notifyListeners();
-    });
+    // ✅ MVP: Usar HTTP Polling en vez de WebSocket
+    // WebSocket tiene problemas de autenticación con Laravel Echo Server
+    // (socket_id formato incompatible entre Socket.IO y Pusher)
+    print('✅ ChatProvider: Usando HTTP Polling para mensajes en tiempo semi-real');
+    print('⏱️ Intervalo: ${PollingService.pollingInterval} segundos');
 
     print('✅ ChatProvider: Servicios inicializados');
   }
@@ -163,8 +153,7 @@ class ChatProvider extends ChangeNotifier {
           await loadMessages(existingConv.id);
         }
 
-        // Suscribirse al canal WebSocket
-        await _websocketService.subscribeToConversation(existingConv.id);
+        // ✅ Iniciado automáticamente por ChatScreen
 
         return existingConv;
       }
@@ -176,8 +165,7 @@ class ChatProvider extends ChangeNotifier {
       // Agregar a la lista
       _conversations.insert(0, newConv);
 
-      // Suscribirse al canal
-      await _websocketService.subscribeToConversation(newConv.id);
+      // ✅ Polling se iniciará cuando se abra ChatScreen
 
       notifyListeners();
 
@@ -202,8 +190,10 @@ class ChatProvider extends ChangeNotifier {
       _conversations.removeWhere((conv) => conv.id == conversationId);
       _messagesByConv.remove(conversationId);
 
-      // Desuscribirse del canal
-      _websocketService.unsubscribeFromConversation(conversationId);
+      // Detener polling si está activo
+      if (_pollingService.activeConversationId == conversationId) {
+        _pollingService.stopPolling();
+      }
 
       print('✅ Conversación eliminada localmente');
       notifyListeners();
@@ -360,54 +350,10 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  /// MANEJAR mensaje entrante desde WebSocket
-  void _handleIncomingMessage(Message message) {
-    print('📨 Mensaje WebSocket recibido: ${message.id}');
-
-    final convId = message.conversationId;
-
-    // Inicializar lista si no existe
-    if (!_messagesByConv.containsKey(convId)) {
-      _messagesByConv[convId] = [];
-    }
-
-    // Agregar mensaje
-    _messagesByConv[convId]!.add(message);
-
-    // Actualizar conversación
-    _updateConversationLastMessage(convId, message.content);
-
-    // Si no es la conversación activa, incrementar no leídos
-    if (_activeConversationId != convId) {
-      _incrementUnreadCount(convId);
-
-      // Mostrar notificación local
-      NotificationService.showLocalNotification(
-        title: message.sender?.name ?? 'Nuevo mensaje',
-        body: message.content,
-        conversationId: convId,
-      );
-    }
-
-    notifyListeners();
-  }
-
-  /// MANEJAR evento de typing
-  void _handleTypingEvent(int convId, int userId, bool isTyping) {
-    print('⌨️ Typing event: conv=$convId, user=$userId, typing=$isTyping');
-
-    if (!_typingUsers.containsKey(convId)) {
-      _typingUsers[convId] = {};
-    }
-
-    if (isTyping) {
-      _typingUsers[convId]!.add(userId);
-    } else {
-      _typingUsers[convId]!.remove(userId);
-    }
-
-    notifyListeners();
-  }
+  // ============================================
+  // MÉTODOS RELACIONADOS CON WEBSOCKET REMOVIDOS
+  // Se usa HTTP Polling en su lugar
+  // ============================================
 
   /// Verificar si alguien está escribiendo en una conversación
   bool isTypingInConversation(int conversationId) {
@@ -481,14 +427,40 @@ class ChatProvider extends ChangeNotifier {
   // WEBSOCKET
   // ============================================
 
-  /// SUSCRIBIRSE al canal WebSocket de una conversación
+  /// SUSCRIBIRSE con HTTP Polling a una conversación
   Future<void> subscribeToConversation(int conversationId) async {
-    await _websocketService.subscribeToConversation(conversationId);
+    print('📡 ChatProvider: Iniciando polling para conv $conversationId');
+    
+    // Iniciar polling de mensajes
+    _pollingService.startPolling(
+      conversationId,
+      onNewMessages: (messages) {
+        _handlePollingUpdate(conversationId, messages);
+      },
+    );
   }
 
-  /// DESUSCRIBIRSE del canal WebSocket de una conversación
+  /// DESUSCRIBIRSE (detener polling)
   void unsubscribeFromConversation(int conversationId) {
-    _websocketService.unsubscribeFromConversation(conversationId);
+    print('🛑 ChatProvider: Deteniendo polling para conv $conversationId');
+    _pollingService.stopPolling();
+  }
+  
+  /// Manejar actualización de polling
+  void _handlePollingUpdate(int conversationId, List<Message> messages) {
+    print('📥 Polling: Actualización recibida - ${messages.length} mensajes');
+    
+    // Actualizar mensajes locales
+    _messagesByConv[conversationId] = messages;
+    
+    // Notificar cambios en la UI
+    notifyListeners();
+  }
+  
+  /// Forzar actualización inmediata (para pull-to-refresh)
+  Future<void> refreshMessages() async {
+    print('🔄 ChatProvider: Refresh manual solicitado');
+    await _pollingService.pollNow();
   }
 
   // ============================================
@@ -522,7 +494,7 @@ class ChatProvider extends ChangeNotifier {
   @override
   void dispose() {
     print('🧹 ChatProvider: Disposing...');
-    _websocketService.dispose();
+    _pollingService.dispose();
     super.dispose();
   }
 }
