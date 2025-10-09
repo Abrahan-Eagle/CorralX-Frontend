@@ -1,5 +1,5 @@
 /// Estados de conexión para chat
-/// 
+///
 /// Usado por compatibilidad con UI existente.
 /// En MVP con HTTP Polling, el estado siempre es:
 /// - connected: cuando polling está activo

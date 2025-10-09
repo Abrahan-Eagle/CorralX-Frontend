@@ -285,6 +285,9 @@ class ChatProvider extends ChangeNotifier {
 
       print('✅ Mensaje enviado exitosamente - ID: ${realMessage.id}');
 
+      // ✅ FORZAR POLLING INMEDIATO para actualizar el otro dispositivo
+      _pollingService.pollNow();
+
       _isSending = false;
       notifyListeners();
     } catch (e) {
@@ -458,8 +461,23 @@ class ChatProvider extends ChangeNotifier {
   void _handlePollingUpdate(int conversationId, List<Message> messages) {
     print('📥 Polling: Actualización recibida - ${messages.length} mensajes');
     
-    // Actualizar mensajes locales
+    // ✅ Actualizar mensajes locales
+    // Fusionar con mensajes optimistas si existen
+    final currentMessages = _messagesByConv[conversationId] ?? [];
+    
+    // Remover mensajes temporales (ya vienen del servidor)
+    final realMessages = currentMessages.where((m) => 
+      m.id is int  // Mensajes reales tienen ID numérico
+    ).toList();
+    
+    // Usar los mensajes del servidor como fuente de verdad
     _messagesByConv[conversationId] = messages;
+    
+    // Actualizar última vez consultada
+    if (messages.isNotEmpty) {
+      final latestMessage = messages.first;
+      _updateConversationLastMessage(conversationId, latestMessage.content);
+    }
     
     // Notificar cambios en la UI
     notifyListeners();
@@ -479,6 +497,10 @@ class ChatProvider extends ChangeNotifier {
   Future<void> notifyTyping(int conversationId, bool isTyping) async {
     if (isTyping) {
       await ChatService.notifyTypingStarted(conversationId);
+      
+      // ✅ CON POLLING: Forzar poll inmediato para ver si el otro está escribiendo
+      // (Polling no puede mostrar typing en tiempo real, pero mejora UX)
+      _pollingService.pollNow();
     } else {
       await ChatService.notifyTypingStopped(conversationId);
     }
