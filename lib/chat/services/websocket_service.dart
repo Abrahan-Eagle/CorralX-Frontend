@@ -31,7 +31,8 @@ class WebSocketService {
   WebSocketConnectionState get connectionState => _connectionState;
 
   /// Verificar si está conectado
-  bool get isConnected => _connectionState == WebSocketConnectionState.connected;
+  bool get isConnected =>
+      _connectionState == WebSocketConnectionState.connected;
 
   /// CONECTAR al Laravel Echo Server
   Future<void> connect() async {
@@ -44,8 +45,9 @@ class WebSocketService {
         return;
       }
 
-      // URL del Echo Server
-      final echoServerUrl = '${AppConfig.apiUrl.replaceAll(':8000', ':6001')}';
+      // URL del Echo Server (sin protocolo http://)
+      final apiUrl = AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
+      final echoServerUrl = 'http://${apiUrl.replaceAll(':8000', ':6001')}';
 
       print('🔌 WebSocket: Conectando a $echoServerUrl');
       print('🔑 Token: ${token.substring(0, 20)}...');
@@ -55,22 +57,26 @@ class WebSocketService {
       _socket = IO.io(
         echoServerUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket']) // Solo WebSocket, no polling
-            .disableAutoConnect() // Conectar manualmente
+            .setTransports(['websocket', 'polling']) // ✅ Permitir polling como fallback
+            .enableAutoConnect() // ✅ Auto-conectar
+            .enableReconnection() // ✅ Reconexión automática
+            .setReconnectionAttempts(5) // ✅ Máximo 5 intentos
+            .setReconnectionDelay(1000) // ✅ 1 segundo entre intentos
+            .setTimeout(10000) // ✅ Timeout de 10 segundos
             .setAuth({
-          'token': 'Bearer $token',
-        }).setExtraHeaders({
-          'Authorization': 'Bearer $token',
-        }).build(),
+              'token': 'Bearer $token',
+            })
+            .setExtraHeaders({
+              'Authorization': 'Bearer $token',
+            })
+            .build(),
       );
 
       // LISTENERS de eventos de Socket.IO
       _setupSocketListeners();
 
-      // Conectar
-      _socket!.connect();
-
-      print('✅ WebSocket: Conectando...');
+      // Ya no necesitamos connect() porque enableAutoConnect() lo hace automáticamente
+      print('✅ WebSocket: Configurado y conectando automáticamente...');
     } catch (e) {
       print('💥 Error al conectar WebSocket: $e');
       _updateConnectionState(WebSocketConnectionState.error);
@@ -255,11 +261,13 @@ class WebSocketService {
 
     // Calcular delay con backoff exponencial
     final delays = [1, 2, 4, 8, 16, 30]; // segundos
-    final delayIndex =
-        _reconnectAttempts < delays.length ? _reconnectAttempts : delays.length - 1;
+    final delayIndex = _reconnectAttempts < delays.length
+        ? _reconnectAttempts
+        : delays.length - 1;
     final delaySeconds = delays[delayIndex];
 
-    print('🔄 WebSocket: Reconectando en $delaySeconds segundos (intento ${_reconnectAttempts + 1})');
+    print(
+        '🔄 WebSocket: Reconectando en $delaySeconds segundos (intento ${_reconnectAttempts + 1})');
 
     _updateConnectionState(WebSocketConnectionState.reconnecting);
 
@@ -296,7 +304,8 @@ class WebSocketService {
   void _sendPendingMessages() {
     if (_pendingMessages.isEmpty) return;
 
-    print('📤 WebSocket: Enviando ${_pendingMessages.length} mensajes pendientes');
+    print(
+        '📤 WebSocket: Enviando ${_pendingMessages.length} mensajes pendientes');
 
     for (var msg in _pendingMessages) {
       _socket!.emit('message', msg);
@@ -355,4 +364,3 @@ enum WebSocketConnectionState {
   reconnecting,
   error,
 }
-
