@@ -59,15 +59,18 @@ class WebSocketService {
         echoServerUrl,
         IO.OptionBuilder()
             .setTransports(
-                ['websocket', 'polling']) // ✅ Permitir polling como fallback
+                ['polling', 'websocket']) // ✅ Polling primero, luego upgrade a websocket
             .enableAutoConnect() // ✅ Auto-conectar
             .enableReconnection() // ✅ Reconexión automática
             .setReconnectionAttempts(5) // ✅ Máximo 5 intentos
             .setReconnectionDelay(1000) // ✅ 1 segundo entre intentos
-            .setTimeout(10000) // ✅ Timeout de 10 segundos
+            .setTimeout(20000) // ✅ Timeout de 20 segundos (igual que pingTimeout del servidor)
+            .enableForceNew() // ✅ Forzar nueva conexión
+            .setPath('/socket.io/') // ✅ Path explícito
             .setQuery({
-              'appId': 'corralx-app', // ✅ App ID del Echo Server
-              'key': 'corralx-secret-key-2025', // ✅ Key del Echo Server
+              'appId': 'corralx-app',
+              'key': 'corralx-secret-key-2025',
+              'EIO': '3', // ✅ Engine.IO versión 3 (Laravel Echo Server)
             })
             .setAuth({
               'token': 'Bearer $token',
@@ -94,9 +97,15 @@ class WebSocketService {
   void _setupSocketListeners() {
     if (_socket == null) return;
 
+    // Evento: Connecting (intentando conectar)
+    _socket!.on('connecting', (_) {
+      print('🔄 WebSocket: Evento "connecting" - Intentando conectar...');
+    });
+    
     // Evento: Conectado exitosamente
     _socket!.onConnect((_) {
-      print('✅ WebSocket: Conectado exitosamente');
+      print('✅ WebSocket: ¡¡¡CONECTADO EXITOSAMENTE!!!');
+      print('🎉 Socket ID: ${_socket!.id}');
       _reconnectAttempts = 0;
       _updateConnectionState(WebSocketConnectionState.connected);
 
@@ -108,8 +117,8 @@ class WebSocketService {
     });
 
     // Evento: Desconectado
-    _socket!.onDisconnect((_) {
-      print('⚠️ WebSocket: Desconectado');
+    _socket!.onDisconnect((reason) {
+      print('⚠️ WebSocket: Desconectado - Razón: $reason');
       _updateConnectionState(WebSocketConnectionState.disconnected);
       _stopHeartbeat();
       _scheduleReconnect();
@@ -118,13 +127,24 @@ class WebSocketService {
     // Evento: Error de conexión
     _socket!.onConnectError((error) {
       print('❌ WebSocket: Error de conexión: $error');
+      print('🔍 Tipo de error: ${error.runtimeType}');
       _updateConnectionState(WebSocketConnectionState.error);
       _scheduleReconnect();
     });
 
     // Evento: Error general
     _socket!.onError((error) {
-      print('❌ WebSocket: Error: $error');
+      print('❌ WebSocket: Error general: $error');
+    });
+    
+    // Evento: Reconnect attempt
+    _socket!.on('reconnect_attempt', (attempt) {
+      print('🔄 WebSocket: Intento de reconexión #$attempt');
+    });
+    
+    // Evento: Reconnect failed
+    _socket!.on('reconnect_failed', (_) {
+      print('❌ WebSocket: Reconexión fallida después de todos los intentos');
     });
 
     // Evento: MessageSent (broadcast desde backend)
