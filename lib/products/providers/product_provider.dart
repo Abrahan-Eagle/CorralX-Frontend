@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
+import 'package:zonix/favorites/services/favorite_service.dart';
 
 class ProductProvider with ChangeNotifier {
   // Estado de productos
@@ -25,6 +26,10 @@ class ProductProvider with ChangeNotifier {
 
   // Favoritos
   Set<int> _favorites = {};
+  List<Product> _favoriteProducts = [];
+  int _currentFavoritesPage = 1;
+  bool _hasMoreFavorites = true;
+  bool _isLoadingFavorites = false;
 
   // Getters
   List<Product> get products => _products;
@@ -42,6 +47,12 @@ class ProductProvider with ChangeNotifier {
   Map<String, dynamic> get currentFilters => _currentFilters;
   bool get hasMorePages => _hasMorePages;
   Set<int> get favorites => _favorites;
+  
+  // Getters de favoritos
+  List<Product> get favoriteProducts => _favoriteProducts;
+  bool get isLoadingFavorites => _isLoadingFavorites;
+  bool get hasMoreFavorites => _hasMoreFavorites;
+  int get currentFavoritesPage => _currentFavoritesPage;
 
   // Método para limpiar errores
   void _clearErrors() {
@@ -510,13 +521,145 @@ class ProductProvider with ChangeNotifier {
     return _products.where((p) => p.isAvailable).toList();
   }
 
-  // Método para manejar favoritos
-  void toggleFavorite(int productId) {
-    if (_favorites.contains(productId)) {
-      _favorites.remove(productId);
-    } else {
-      _favorites.add(productId);
+  /// Cargar lista de productos favoritos del usuario
+  Future<void> fetchFavorites({int page = 1, bool refresh = false}) async {
+    if (refresh) {
+      _favoriteProducts.clear();
+      _currentFavoritesPage = 1;
+      _hasMoreFavorites = true;
     }
-    notifyListeners();
+
+    if (_isLoadingFavorites) {
+      print('⚠️ Ya se están cargando favoritos, saltando...');
+      return;
+    }
+
+    try {
+      _isLoadingFavorites = true;
+      _clearErrors();
+      notifyListeners();
+
+      print('🔍 ProductProvider.fetchFavorites iniciado - Página: $page');
+
+      final response = await FavoriteService.getMyFavorites(
+        page: page,
+        perPage: 20,
+      );
+
+      print('🔍 Respuesta de favoritos recibida');
+
+      // Parsear productos de la respuesta
+      final favoritesData = response['data'] as List;
+      final newFavorites = favoritesData.map((fav) {
+        return Product.fromJson(fav['product']);
+      }).toList();
+
+      print('🔍 Favoritos parseados: ${newFavorites.length}');
+
+      if (refresh) {
+        _favoriteProducts = newFavorites;
+      } else {
+        _favoriteProducts.addAll(newFavorites);
+      }
+
+      // Actualizar set de IDs de favoritos
+      _favorites = _favoriteProducts.map((p) => p.id).toSet();
+
+      // Actualizar paginación
+      _currentFavoritesPage = page;
+      _hasMoreFavorites = response['current_page'] < response['last_page'];
+
+      print('✅ Favoritos cargados: ${_favoriteProducts.length} total');
+      print('📊 Página actual: $_currentFavoritesPage, Hay más: $_hasMoreFavorites');
+    } catch (e) {
+      print('❌ Error en fetchFavorites: $e');
+      _errorMessage = 'Error al cargar favoritos: $e';
+    } finally {
+      _isLoadingFavorites = false;
+      notifyListeners();
+    }
+  }
+
+  /// Toggle favorito (agregar/remover) con sincronización al backend
+  Future<void> toggleFavorite(int productId) async {
+    try {
+      print('🔄 ProductProvider.toggleFavorite - ProductID: $productId');
+      
+      // 1. Optimistic update (actualizar UI inmediatamente)
+      final wasInFavorites = _favorites.contains(productId);
+      if (wasInFavorites) {
+        _favorites.remove(productId);
+        _favoriteProducts.removeWhere((p) => p.id == productId);
+        print('🔄 Optimistic: Removido de favoritos localmente');
+      } else {
+        _favorites.add(productId);
+        print('🔄 Optimistic: Agregado a favoritos localmente');
+      }
+      notifyListeners();
+      
+      // 2. Sincronizar con backend
+      print('🌐 Llamando a FavoriteService.toggleFavorite...');
+      final isFavorite = await FavoriteService.toggleFavorite(productId);
+      
+      // 3. Sincronizar estado con respuesta del servidor
+      if (isFavorite && !_favorites.contains(productId)) {
+        _favorites.add(productId);
+        print('✅ Sincronizado: Agregado a favoritos');
+      } else if (!isFavorite && _favorites.contains(productId)) {
+        _favorites.remove(productId);
+        _favoriteProducts.removeWhere((p) => p.id == productId);
+        print('✅ Sincronizado: Removido de favoritos');
+      }
+      
+      notifyListeners();
+      print('✅ Toggle favorito completado - Estado final: ${isFavorite ? "FAVORITO" : "NO FAVORITO"}');
+    } catch (e) {
+      print('❌ Error al toggle favorito: $e');
+      
+      // Revertir cambio optimista si falló
+      final wasInFavorites = _favorites.contains(productId);
+      if (wasInFavorites) {
+        _favorites.remove(productId);
+        _favoriteProducts.removeWhere((p) => p.id == productId);
+        print('🔄 Revirtiendo: Removido de favoritos');
+      } else {
+        _favorites.add(productId);
+        print('🔄 Revirtiendo: Agregado a favoritos');
+      }
+      
+      notifyListeners();
+      
+      _errorMessage = 'Error al actualizar favorito';
+      rethrow; // Para que la UI pueda mostrar error si lo desea
+    }
+  }
+
+  /// Verificar si un producto es favorito
+  Future<bool> checkIsFavorite(int productId) async {
+    try {
+      final isFavorite = await FavoriteService.isFavorite(productId);
+      
+      // Sincronizar con estado local
+      if (isFavorite) {
+        _favorites.add(productId);
+      } else {
+        _favorites.remove(productId);
+      }
+      
+      return isFavorite;
+    } catch (e) {
+      print('❌ Error al verificar favorito: $e');
+      return _favorites.contains(productId); // Fallback al estado local
+    }
+  }
+
+  /// Cargar más favoritos (paginación infinita)
+  Future<void> loadMoreFavorites() async {
+    if (!_hasMoreFavorites || _isLoadingFavorites) {
+      print('⚠️ No hay más favoritos o ya se están cargando');
+      return;
+    }
+
+    await fetchFavorites(page: _currentFavoritesPage + 1, refresh: false);
   }
 }

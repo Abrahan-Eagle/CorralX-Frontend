@@ -1,177 +1,397 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:zonix/products/providers/product_provider.dart';
+import 'package:zonix/products/screens/product_detail_screen.dart';
+import 'package:zonix/products/models/product.dart';
 
-class FavoritesScreen extends StatelessWidget {
+/// FavoritesScreen - Pantalla de productos favoritos del usuario
+/// 
+/// Muestra una grid de productos que el usuario ha marcado como favoritos.
+/// Características:
+/// - Grid responsive (2/3/4 columnas según dispositivo)
+/// - Pull-to-refresh para actualizar
+/// - Loading state mientras carga
+/// - Empty state si no hay favoritos
+/// - Navegación a ProductDetail al hacer tap
+/// - Botón de favorito para remover directamente
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar favoritos al iniciar la pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('🔄 FavoritesScreen: Iniciando carga de favoritos...');
+      Provider.of<ProductProvider>(context, listen: false)
+          .fetchFavorites(refresh: true);
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    print('🔄 FavoritesScreen: Pull-to-refresh activado');
+    await Provider.of<ProductProvider>(context, listen: false)
+        .fetchFavorites(refresh: true);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isDesktop = screenWidth > 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFDF7),
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFCFDF7),
+        backgroundColor: theme.colorScheme.background,
         elevation: 0,
         title: Text(
           'Mis Favoritos',
           style: TextStyle(
             fontSize: isTablet ? 24 : 20,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF1A1C18),
+            color: theme.colorScheme.onBackground,
           ),
         ),
         centerTitle: true,
       ),
-      body: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: isDesktop ? 800 : double.infinity,
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 24 : 16,
-            vertical: isTablet ? 20 : 16,
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 2);
-                  final childAspectRatio = isTablet ? 1.4 : 1.3;
+      body: Consumer<ProductProvider>(
+        builder: (context, productProvider, child) {
+          // Loading state (primera carga)
+          if (productProvider.isLoadingFavorites && 
+              productProvider.favoriteProducts.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Cargando tus favoritos...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
 
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  childAspectRatio: childAspectRatio,
-                  crossAxisSpacing: isTablet ? 20 : 16,
-                  mainAxisSpacing: isTablet ? 20 : 16,
+          // Empty state
+          if (productProvider.favoriteProducts.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.favorite_border,
+                      size: 80,
+                      color: theme.colorScheme.outline,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'No tienes favoritos guardados',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Marca productos como favoritos\ndesde el marketplace para verlos aquí',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.outline,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // Navegar al marketplace (cambiar bottom nav index)
+                        // Esto se puede hacer mediante un callback o provider global
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.explore),
+                      label: const Text('Explorar Marketplace'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                itemCount: 3, // Mock data
-                itemBuilder: (context, index) => _buildCattleCard(isTablet),
-              );
-            },
-          ),
-        ),
+              ),
+            );
+          }
+
+          // Lista de favoritos
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: theme.colorScheme.primary,
+            child: GridView.builder(
+              padding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 24 : 16,
+                vertical: isTablet ? 20 : 16,
+              ),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isDesktop ? 4 : (isTablet ? 3 : 2),
+                childAspectRatio: 0.75,
+                crossAxisSpacing: isTablet ? 16 : 12,
+                mainAxisSpacing: isTablet ? 16 : 12,
+              ),
+              itemCount: productProvider.favoriteProducts.length +
+                  (productProvider.isLoadingFavorites ? 1 : 0),
+              itemBuilder: (context, index) {
+                // Loader al final si está cargando más
+                if (index == productProvider.favoriteProducts.length) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  );
+                }
+
+                final product = productProvider.favoriteProducts[index];
+                return _buildFavoriteCard(
+                  context,
+                  product,
+                  productProvider,
+                  isTablet,
+                  theme,
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildCattleCard(bool isTablet) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F4ED),
-        borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: isTablet ? 6 : 4,
-            offset: const Offset(0, 2),
+  Widget _buildFavoriteCard(
+    BuildContext context,
+    Product product,
+    ProductProvider provider,
+    bool isTablet,
+    ThemeData theme,
+  ) {
+    final primaryImage = product.images.isNotEmpty
+        ? product.images.first.fileUrl
+        : null;
+
+    return GestureDetector(
+      onTap: () {
+        print('📱 Navegando a detalle del producto: ${product.id}');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(productId: product.id),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image with favorite button
-          Expanded(
-            flex: 3,
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(isTablet ? 20 : 16),
-                    ),
-                    color: Colors.grey,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.image,
-                      size: isTablet ? 64 : 48,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: isTablet ? 12 : 8,
-                  right: isTablet ? 12 : 8,
-                  child: Container(
-                    width: isTablet ? 40 : 32,
-                    height: isTablet ? 40 : 32,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(isTablet ? 20 : 16),
-                    ),
-                    child: Icon(
-                      Icons.favorite,
-                      color: Colors.red,
-                      size: isTablet ? 24 : 20,
-                    ),
-                  ),
-                ),
-              ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-          // Content
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: EdgeInsets.all(isTablet ? 2 : 1),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen con botón de favorito
+            Expanded(
+              child: Stack(
                 children: [
-                  Text(
-                    'Holstein',
-                    style: TextStyle(
-                      fontSize: isTablet ? 18 : 16,
-                      fontWeight: FontWeight.w500,
+                  // Imagen del producto
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                      color: theme.colorScheme.surfaceVariant,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: isTablet ? 1 : 0),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: isTablet ? 14 : 12,
-                        backgroundColor: Colors.grey,
-                        child: Icon(
-                          Icons.person,
-                          size: isTablet ? 18 : 16,
-                        ),
-                      ),
-                      SizedBox(width: isTablet ? 10 : 8),
-                      Expanded(
-                        child: Text(
-                          'Finca Los Girasoles',
-                          style: TextStyle(
-                            fontSize: isTablet ? 14 : 12,
-                            color: Colors.grey,
+                    child: primaryImage != null
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
+                            child: Image.network(
+                              primaryImage,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    size: 48,
+                                    color: theme.colorScheme.outline,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.pets,
+                              size: 48,
+                              color: theme.colorScheme.outline,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  ),
+                  // Botón de favorito (para remover)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          print('❤️ Toggle favorito desde FavoritesScreen: ${product.id}');
+                          try {
+                            await provider.toggleFavorite(product.id);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Producto removido de favoritos'),
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: theme.colorScheme.secondary,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: theme.colorScheme.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.favorite,
+                            color: Colors.red,
+                            size: 24,
+                          ),
                         ),
                       ),
-                      Icon(
-                        Icons.verified,
-                        size: isTablet ? 18 : 16,
-                        color: const Color(0xFF386A20),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Ver Detalles',
-                    style: TextStyle(
-                      fontSize: isTablet ? 16 : 14,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF386A20),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            // Información del producto
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Título/Raza
+                  Text(
+                    product.breed,
+                    style: TextStyle(
+                      fontSize: isTablet ? 18 : 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  // Tipo
+                  Text(
+                    product.type.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Hacienda y verificación
+                  if (product.ranch != null)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.ranch!.name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.outline,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.verified,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 12),
+                  // Precio
+                  Text(
+                    '${product.currency} \$${product.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: isTablet ? 18 : 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Cantidad
+                  Text(
+                    '${product.quantity} ${product.quantity == 1 ? "unidad" : "unidades"}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
