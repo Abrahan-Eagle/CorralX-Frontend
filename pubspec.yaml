@@ -60,6 +60,9 @@ dependencies:
   shimmer: ^3.0.0
 
   web_socket_channel: any
+  socket_io_client: ^2.0.3+1
+  timeago: ^3.7.0
+  flutter_local_notifications: ^17.2.3
   flutter_native_splash: any
 dev_dependencies:
   flutter_test:

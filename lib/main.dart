@@ -334,6 +334,7 @@ import 'package:zonix/config/corral_x_theme.dart';
 import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -406,6 +407,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()), // ✅ Chat MVP
         ChangeNotifierProvider(
             create: (_) => ThemeProvider()..loadThemePreference()),
       ],
