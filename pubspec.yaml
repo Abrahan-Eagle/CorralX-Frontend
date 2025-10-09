@@ -61,6 +61,7 @@ dependencies:
 
   timeago: ^3.7.0
   flutter_local_notifications: ^17.2.3
+  workmanager: ^0.5.2
   flutter_native_splash: any
 dev_dependencies:
   flutter_test:

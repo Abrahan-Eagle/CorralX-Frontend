@@ -335,6 +335,7 @@ import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
+import 'package:zonix/chat/services/background_notification_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -395,6 +396,11 @@ Future<void> main() async {
 
   // Inicializar locales para DateFormat (español)
   await initializeDateFormatting('es', null);
+
+  // ✅ Inicializar background notifications (workmanager)
+  await BackgroundNotificationService.initialize();
+  await BackgroundNotificationService.registerPeriodicTask();
+  print('🔔 Background polling activado: cada 15 minutos');
 
   // Bypass de login para tests de integración
   final bool isIntegrationTest =
