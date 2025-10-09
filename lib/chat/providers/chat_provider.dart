@@ -4,6 +4,7 @@ import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/services/chat_service.dart';
 import 'package:zonix/chat/services/polling_service.dart'; // ✅ HTTP Polling
 import 'package:zonix/chat/services/notification_service.dart';
+import 'package:zonix/chat/services/websocket_service.dart'; // ✅ Solo para enum WebSocketConnectionState
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
 
 /// Provider global para gestión del chat
@@ -54,6 +55,13 @@ class ChatProvider extends ChangeNotifier {
   
   /// Indicador de que está usando polling (para mostrar en UI)
   bool get isUsingPolling => true;
+  
+  /// Estado de conexión (para compatibilidad con UI)
+  /// Con polling siempre está "connected" porque usa HTTP
+  WebSocketConnectionState get connectionState => 
+      _pollingService.isPolling 
+          ? WebSocketConnectionState.connected 
+          : WebSocketConnectionState.disconnected;
 
   // ============================================
   // INICIALIZACIÓN
