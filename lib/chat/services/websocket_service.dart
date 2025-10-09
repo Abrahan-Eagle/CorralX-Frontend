@@ -46,7 +46,8 @@ class WebSocketService {
       }
 
       // URL del Echo Server (sin protocolo http://)
-      final apiUrl = AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
+      final apiUrl =
+          AppConfig.apiUrl.replaceAll('http://', '').replaceAll('https://', '');
       final echoServerUrl = 'http://${apiUrl.replaceAll(':8000', ':6001')}';
 
       print('🔌 WebSocket: Conectando a $echoServerUrl');
@@ -57,7 +58,8 @@ class WebSocketService {
       _socket = IO.io(
         echoServerUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket', 'polling']) // ✅ Permitir polling como fallback
+            .setTransports(
+                ['websocket', 'polling']) // ✅ Permitir polling como fallback
             .enableAutoConnect() // ✅ Auto-conectar
             .enableReconnection() // ✅ Reconexión automática
             .setReconnectionAttempts(5) // ✅ Máximo 5 intentos

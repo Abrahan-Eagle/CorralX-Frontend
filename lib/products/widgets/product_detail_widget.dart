@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/product.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:zonix/chat/screens/chat_screen.dart';
-import 'package:zonix/config/user_provider.dart'; // ✅ Para verificar si es el propio usuario
+import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para verificar si es el propio usuario
 
 class ProductDetailWidget extends StatelessWidget {
   final Product product;
@@ -509,8 +509,8 @@ class ProductDetailWidget extends StatelessWidget {
 
   Widget _buildActionButtons(BuildContext context) {
     // ✅ Verificar si el producto es del usuario actual
-    final userProvider = context.read<UserProvider>();
-    final currentProfileId = userProvider.profileId ?? 0;
+    final profileProvider = context.read<ProfileProvider>();
+    final currentProfileId = profileProvider.myProfile?.id ?? 0;
     final isOwnProduct = product.ranch?.profileId == currentProfileId;
     
     return Column(
@@ -668,15 +668,29 @@ class ProductDetailWidget extends StatelessWidget {
 
   void _showContactDialog(BuildContext context) async {
     final chatProvider = context.read<ChatProvider>();
+    final profileProvider = context.read<ProfileProvider>();
     
     // Obtener ID del perfil del vendedor (del ranch del producto)
     final sellerId = product.ranch?.profileId;
+    final currentProfileId = profileProvider.myProfile?.id ?? 0;
     
     if (sellerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No se puede contactar al vendedor en este momento'),
           backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // ✅ Validar que no sea el propio usuario
+    if (sellerId == currentProfileId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No puedes contactarte a ti mismo'),
+          backgroundColor: Colors.orange[700],
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
