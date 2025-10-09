@@ -48,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // ✅ Asegurar que el perfil esté cargado
       if (profileProvider.myProfile == null) {
-        profileProvider.loadMyProfile();
+        profileProvider.fetchMyProfile();
       }
 
       // Establecer como conversación activa

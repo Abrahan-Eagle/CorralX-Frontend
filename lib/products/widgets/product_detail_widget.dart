@@ -151,7 +151,10 @@ class ProductDetailWidget extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primaryContainer
+                          .withOpacity(0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -196,19 +199,25 @@ class ProductDetailWidget extends StatelessWidget {
     final ranch = product.ranch!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.surface,
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHigh
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? theme.colorScheme.outline.withOpacity(0.3) : theme.colorScheme.outline.withOpacity(0.2),
+          color: isDark
+              ? theme.colorScheme.outline.withOpacity(0.3)
+              : theme.colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -287,19 +296,25 @@ class ProductDetailWidget extends StatelessWidget {
   Widget _buildAnimalDetails(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.surface,
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHigh
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? theme.colorScheme.outline.withOpacity(0.3) : theme.colorScheme.outline.withOpacity(0.2),
+          color: isDark
+              ? theme.colorScheme.outline.withOpacity(0.3)
+              : theme.colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -356,19 +371,25 @@ class ProductDetailWidget extends StatelessWidget {
   Widget _buildHealthInfo(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.surface,
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHigh
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? theme.colorScheme.outline.withOpacity(0.3) : theme.colorScheme.outline.withOpacity(0.2),
+          color: isDark
+              ? theme.colorScheme.outline.withOpacity(0.3)
+              : theme.colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -446,19 +467,25 @@ class ProductDetailWidget extends StatelessWidget {
   Widget _buildDescription(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.surface,
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHigh
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? theme.colorScheme.outline.withOpacity(0.3) : theme.colorScheme.outline.withOpacity(0.2),
+          color: isDark
+              ? theme.colorScheme.outline.withOpacity(0.3)
+              : theme.colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -512,7 +539,7 @@ class ProductDetailWidget extends StatelessWidget {
     final profileProvider = context.read<ProfileProvider>();
     final currentProfileId = profileProvider.myProfile?.id ?? 0;
     final isOwnProduct = product.ranch?.profileId == currentProfileId;
-    
+
     return Column(
       children: [
         // ✅ Solo mostrar botón "Contactar" si NO es el propio producto
@@ -540,10 +567,10 @@ class ProductDetailWidget extends StatelessWidget {
               ),
             ),
           ),
-        
+
         // ✅ Espaciado condicional
         if (!isOwnProduct) const SizedBox(height: 12),
-        
+
         Row(
           children: [
             Expanded(
@@ -556,7 +583,8 @@ class ProductDetailWidget extends StatelessWidget {
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.primary,
-                    side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                    side: BorderSide(
+                        color: Theme.of(context).colorScheme.primary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -582,7 +610,8 @@ class ProductDetailWidget extends StatelessWidget {
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.error,
-                    side: BorderSide(color: Theme.of(context).colorScheme.error),
+                    side:
+                        BorderSide(color: Theme.of(context).colorScheme.error),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -669,11 +698,11 @@ class ProductDetailWidget extends StatelessWidget {
   void _showContactDialog(BuildContext context) async {
     final chatProvider = context.read<ChatProvider>();
     final profileProvider = context.read<ProfileProvider>();
-    
+
     // Obtener ID del perfil del vendedor (del ranch del producto)
     final sellerId = product.ranch?.profileId;
     final currentProfileId = profileProvider.myProfile?.id ?? 0;
-    
+
     if (sellerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -683,7 +712,7 @@ class ProductDetailWidget extends StatelessWidget {
       );
       return;
     }
-    
+
     // ✅ Validar que no sea el propio usuario
     if (sellerId == currentProfileId) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -695,7 +724,7 @@ class ProductDetailWidget extends StatelessWidget {
       );
       return;
     }
-    
+
     // Mostrar loading
     showDialog(
       context: context,
@@ -704,19 +733,19 @@ class ProductDetailWidget extends StatelessWidget {
         child: CircularProgressIndicator(),
       ),
     );
-    
+
     try {
       // Abrir o crear conversación
       final conversation = await chatProvider.openConversation(
         sellerId,
         productId: product.id,
       );
-      
+
       if (!context.mounted) return;
-      
+
       // Cerrar loading
       Navigator.pop(context);
-      
+
       if (conversation != null) {
         // Navegar a ChatScreen
         Navigator.push(
@@ -725,11 +754,12 @@ class ProductDetailWidget extends StatelessWidget {
             builder: (_) => ChatScreen(
               conversationId: conversation.id,
               contactName: product.ranch?.displayName ?? 'Vendedor',
-              contactIsVerified: false, // TODO: Agregar isVerified al modelo Ranch
+              contactIsVerified:
+                  false, // TODO: Agregar isVerified al modelo Ranch
             ),
           ),
         );
-        
+
         print('✅ Navegando a chat con vendedor ID: $sellerId');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -741,10 +771,10 @@ class ProductDetailWidget extends StatelessWidget {
       }
     } catch (e) {
       if (!context.mounted) return;
-      
+
       // Cerrar loading
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

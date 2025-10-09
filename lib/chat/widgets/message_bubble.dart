@@ -18,6 +18,9 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // 🔍 Debug log
+    print('💬 MessageBubble - ID: ${message.id}, senderID: ${message.senderId}, isOwn: $isOwnMessage, align: ${isOwnMessage ? "DERECHA" : "IZQUIERDA"}');
 
     return Align(
       alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
