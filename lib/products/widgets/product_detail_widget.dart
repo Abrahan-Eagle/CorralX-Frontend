@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/product.dart';
+import 'package:zonix/chat/providers/chat_provider.dart';
+import 'package:zonix/chat/screens/chat_screen.dart';
 
 class ProductDetailWidget extends StatelessWidget {
   final Product product;
@@ -653,35 +656,78 @@ class ProductDetailWidget extends StatelessWidget {
     );
   }
 
-  void _showContactDialog(BuildContext context) {
+  void _showContactDialog(BuildContext context) async {
+    final chatProvider = context.read<ChatProvider>();
+    
+    // Obtener ID del perfil del vendedor (del ranch del producto)
+    final sellerId = product.ranch?.profileId;
+    
+    if (sellerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se puede contactar al vendedor en este momento'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // Mostrar loading
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Contactar Vendedor'),
-        content: const Text(
-            '¿Deseas contactar al vendedor para más información sobre este ganado?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: Implementar navegación a chat
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Funcionalidad de chat en desarrollo')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-            ),
-            child: const Text('Contactar'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+    
+    try {
+      // Abrir o crear conversación
+      final conversation = await chatProvider.openConversation(
+        sellerId,
+        productId: product.id,
+      );
+      
+      if (!context.mounted) return;
+      
+      // Cerrar loading
+      Navigator.pop(context);
+      
+      if (conversation != null) {
+        // Navegar a ChatScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: conversation.id,
+              contactName: product.ranch?.displayName ?? 'Vendedor',
+              contactIsVerified: false, // TODO: Agregar isVerified al modelo Ranch
+            ),
+          ),
+        );
+        
+        print('✅ Navegando a chat con vendedor ID: $sellerId');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al abrir conversación'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      
+      // Cerrar loading
+      Navigator.pop(context);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showShareDialog(BuildContext context) {
