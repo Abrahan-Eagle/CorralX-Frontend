@@ -98,32 +98,28 @@ class PollingService {
         return;
       }
 
-      // Detectar mensajes nuevos
+      // ✅ SIEMPRE enviar mensajes al provider para merge inteligente
+      // El provider comparará con mensajes optimistas locales
       final latestId = messages.first.id;
 
       if (_lastMessageId == null) {
         // Primera carga
         print('📥 Polling: Primera carga - ${messages.length} mensajes');
         _lastMessageId = latestId;
-        
-        if (_onNewMessages != null) {
-          _onNewMessages!(messages);
-        }
       } else if (latestId > _lastMessageId!) {
-        // Hay mensajes nuevos
+        // Hay mensajes nuevos del servidor
         final newMessages = messages
             .where((msg) => msg.id > _lastMessageId!)
             .toList();
-
         print('📨 Polling: ${newMessages.length} mensajes nuevos detectados');
         _lastMessageId = latestId;
-
-        // Notificar con TODOS los mensajes (para mantener orden)
-        if (_onNewMessages != null) {
-          _onNewMessages!(messages);
-        }
       } else {
-        print('💤 Polling: Sin mensajes nuevos');
+        print('💤 Polling: Sin mensajes nuevos del servidor');
+      }
+
+      // ✅ SIEMPRE notificar para que merge inteligente preserve optimistas
+      if (_onNewMessages != null) {
+        _onNewMessages!(messages);
       }
     } catch (e) {
       print('⚠️ Polling: Error consultando mensajes: $e');

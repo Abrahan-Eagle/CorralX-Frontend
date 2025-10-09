@@ -285,6 +285,9 @@ class ChatProvider extends ChangeNotifier {
 
       print('✅ Mensaje enviado exitosamente - ID: ${realMessage.id}');
 
+      // 5. ✅ Forzar polling inmediato para sincronizar con servidor
+      _pollingService.pollNow();
+
       _isSending = false;
       notifyListeners();
     } catch (e) {
