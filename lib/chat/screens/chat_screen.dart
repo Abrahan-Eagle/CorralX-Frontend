@@ -31,20 +31,22 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
+  late final ChatProvider _chatProvider; // ✅ Guardar referencia
 
   @override
   void initState() {
     super.initState();
+    _chatProvider = context.read<ChatProvider>(); // ✅ Inicializar en initState
 
     print('🔄 ChatScreen: Inicializado - ConvID: ${widget.conversationId}');
 
     // Cargar mensajes y marcar como leído
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = context.read<ChatProvider>();
-      
+
       // Establecer como conversación activa
       chatProvider.setActiveConversation(widget.conversationId);
-      
+
       // Cargar mensajes si no están cargados
       if (chatProvider.getMessages(widget.conversationId).isEmpty) {
         chatProvider.loadMessages(widget.conversationId);
@@ -54,9 +56,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    // Limpiar conversación activa
-    final chatProvider = context.read<ChatProvider>();
-    chatProvider.setActiveConversation(null);
+    // Limpiar conversación activa usando la referencia guardada
+    _chatProvider.setActiveConversation(null);
 
     _scrollController.dispose();
     _textController.dispose();
@@ -112,7 +113,8 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Consumer<ChatProvider>(
         builder: (context, chatProvider, child) {
           final messages = chatProvider.getMessages(widget.conversationId);
-          final isTyping = chatProvider.isTypingInConversation(widget.conversationId);
+          final isTyping =
+              chatProvider.isTypingInConversation(widget.conversationId);
 
           return Column(
             children: [
@@ -131,18 +133,23 @@ class _ChatScreenState extends State<ChatScreen> {
                         itemBuilder: (context, index) {
                           // Invertir orden para reverse: true
                           final message = messages[messages.length - 1 - index];
-                          final isOwnMessage = message.isOwnMessage(0); // TODO: Get current user ID
+                          final isOwnMessage = message
+                              .isOwnMessage(0); // TODO: Get current user ID
 
                           // Separador de fecha si cambia el día
                           Widget? dateSeparator;
                           if (index < messages.length - 1) {
-                            final nextMessage = messages[messages.length - 2 - index];
-                            if (!_isSameDay(message.sentAt, nextMessage.sentAt)) {
-                              dateSeparator = _buildDateSeparator(theme, message.sentAt);
+                            final nextMessage =
+                                messages[messages.length - 2 - index];
+                            if (!_isSameDay(
+                                message.sentAt, nextMessage.sentAt)) {
+                              dateSeparator =
+                                  _buildDateSeparator(theme, message.sentAt);
                             }
                           } else if (index == messages.length - 1) {
                             // Primer mensaje siempre tiene separador
-                            dateSeparator = _buildDateSeparator(theme, message.sentAt);
+                            dateSeparator =
+                                _buildDateSeparator(theme, message.sentAt);
                           }
 
                           return Column(
@@ -200,7 +207,8 @@ class _ChatScreenState extends State<ChatScreen> {
             radius: 18,
             backgroundColor: theme.colorScheme.primaryContainer,
             backgroundImage: widget.contactAvatar != null
-                ? NetworkImage('${AppConfig.apiUrl}/storage/${widget.contactAvatar}')
+                ? NetworkImage(
+                    '${AppConfig.apiUrl}/storage/${widget.contactAvatar}')
                 : null,
             child: widget.contactAvatar == null
                 ? Text(
@@ -216,58 +224,58 @@ class _ChatScreenState extends State<ChatScreen> {
 
           const SizedBox(width: 12),
 
-              // Nombre + Estado
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // Nombre + Estado
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            widget.contactName ?? 'Usuario',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                    Flexible(
+                      child: Text(
+                        widget.contactName ?? 'Usuario',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
                         ),
-                        
-                        // Icono verificado
-                        if (widget.contactIsVerified == true) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.verified,
-                            size: 14,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ],
-                      ],
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
-                    
-                    // Estado de conexión WebSocket
-                    Consumer<ChatProvider>(
-                      builder: (context, chatProvider, child) {
-                        return Text(
-                          _getConnectionText(chatProvider.connectionState),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _getConnectionColor(
-                              theme,
-                              chatProvider.connectionState,
-                            ),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        );
-                      },
-                    ),
+
+                    // Icono verificado
+                    if (widget.contactIsVerified == true) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.verified,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
                   ],
                 ),
-              ),
+
+                // Estado de conexión WebSocket
+                Consumer<ChatProvider>(
+                  builder: (context, chatProvider, child) {
+                    return Text(
+                      _getConnectionText(chatProvider.connectionState),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _getConnectionColor(
+                          theme,
+                          chatProvider.connectionState,
+                        ),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
       ),
       actions: [
@@ -522,4 +530,3 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 }
-
