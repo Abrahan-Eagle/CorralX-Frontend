@@ -44,6 +44,12 @@ class _ChatScreenState extends State<ChatScreen> {
     // Cargar mensajes y marcar como leído
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = context.read<ChatProvider>();
+      final profileProvider = context.read<ProfileProvider>();
+
+      // ✅ Asegurar que el perfil esté cargado
+      if (profileProvider.myProfile == null) {
+        profileProvider.loadMyProfile();
+      }
 
       // Establecer como conversación activa
       chatProvider.setActiveConversation(widget.conversationId);
@@ -116,9 +122,15 @@ class _ChatScreenState extends State<ChatScreen> {
           final messages = chatProvider.getMessages(widget.conversationId);
           final isTyping =
               chatProvider.isTypingInConversation(widget.conversationId);
-          
+
           // ✅ Obtener el profile ID del usuario actual
           final currentProfileId = profileProvider.myProfile?.id ?? 0;
+          
+          // 🔍 Debug log
+          if (messages.isNotEmpty) {
+            final firstMsg = messages.first;
+            print('🔍 Debug - CurrentProfileID: $currentProfileId, FirstMsg.senderID: ${firstMsg.senderId}, isOwn: ${firstMsg.isOwnMessage(currentProfileId)}');
+          }
 
           return Column(
             children: [
@@ -137,8 +149,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         itemBuilder: (context, index) {
                           // Invertir orden para reverse: true
                           final message = messages[messages.length - 1 - index];
-                          final isOwnMessage = message
-                              .isOwnMessage(currentProfileId); // ✅ Usar el ID real del perfil
+                          final isOwnMessage = message.isOwnMessage(
+                              currentProfileId); // ✅ Usar el ID real del perfil
 
                           // Separador de fecha si cambia el día
                           Widget? dateSeparator;
