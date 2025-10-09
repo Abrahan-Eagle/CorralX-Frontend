@@ -54,6 +54,9 @@ class _ChatScreenState extends State<ChatScreen> {
       // Establecer como conversación activa
       chatProvider.setActiveConversation(widget.conversationId);
 
+      // ✅ SUSCRIBIRSE AL WEBSOCKET DEL CANAL
+      chatProvider.subscribeToConversation(widget.conversationId);
+
       // Cargar mensajes si no están cargados
       if (chatProvider.getMessages(widget.conversationId).isEmpty) {
         chatProvider.loadMessages(widget.conversationId);
@@ -65,6 +68,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     // Limpiar conversación activa usando la referencia guardada
     _chatProvider.setActiveConversation(null);
+
+    // ✅ DESUSCRIBIRSE DEL WEBSOCKET
+    _chatProvider.unsubscribeFromConversation(widget.conversationId);
 
     _scrollController.dispose();
     _textController.dispose();

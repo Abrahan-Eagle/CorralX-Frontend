@@ -254,7 +254,7 @@ class WebSocketService {
     try {
       final token = await storage.read(key: 'token');
       final channelName = 'private-conversation.$conversationId';
-      
+
       print('📡 WebSocket: Suscribiendo a $channelName');
 
       // ✅ SUSCRIBIRSE AL CANAL PRIVADO
@@ -285,7 +285,7 @@ class WebSocketService {
         print('⌨️ WebSocket: TypingStopped recibido en canal $channelName');
         _processTypingEvent(data, false);
       });
-      
+
       print('✅ WebSocket: Suscrito a canal $channelName');
     } catch (e) {
       print('💥 Error suscribiéndose a canal: $e');

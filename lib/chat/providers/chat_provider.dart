@@ -478,6 +478,20 @@ class ChatProvider extends ChangeNotifier {
   }
 
   // ============================================
+  // WEBSOCKET
+  // ============================================
+
+  /// SUSCRIBIRSE al canal WebSocket de una conversación
+  Future<void> subscribeToConversation(int conversationId) async {
+    await _websocketService.subscribeToConversation(conversationId);
+  }
+
+  /// DESUSCRIBIRSE del canal WebSocket de una conversación
+  void unsubscribeFromConversation(int conversationId) {
+    _websocketService.unsubscribeFromConversation(conversationId);
+  }
+
+  // ============================================
   // TYPING INDICATORS
   // ============================================
 
