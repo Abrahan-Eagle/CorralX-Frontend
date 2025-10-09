@@ -285,9 +285,6 @@ class ChatProvider extends ChangeNotifier {
 
       print('✅ Mensaje enviado exitosamente - ID: ${realMessage.id}');
 
-      // ✅ FORZAR POLLING INMEDIATO para actualizar el otro dispositivo
-      _pollingService.pollNow();
-
       _isSending = false;
       notifyListeners();
     } catch (e) {
@@ -461,25 +458,44 @@ class ChatProvider extends ChangeNotifier {
   void _handlePollingUpdate(int conversationId, List<Message> messages) {
     print('📥 Polling: Actualización recibida - ${messages.length} mensajes');
     
-    // ✅ Actualizar mensajes locales
-    // Fusionar con mensajes optimistas si existen
+    // ✅ MERGE INTELIGENTE: Preservar mensajes optimistas
     final currentMessages = _messagesByConv[conversationId] ?? [];
     
-    // Remover mensajes temporales (ya vienen del servidor)
-    final realMessages = currentMessages.where((m) => 
-      m.id is int  // Mensajes reales tienen ID numérico
-    ).toList();
+    // 1. Extraer mensajes optimistas (aún enviando)
+    final optimisticMessages = currentMessages
+        .where((m) => m.status == MessageStatus.sending && m.id.toString().startsWith('temp-'))
+        .toList();
     
-    // Usar los mensajes del servidor como fuente de verdad
-    _messagesByConv[conversationId] = messages;
+    // 2. Crear mapa de mensajes del servidor por ID
+    final serverMessagesMap = {for (var msg in messages) msg.id: msg};
     
-    // Actualizar última vez consultada
-    if (messages.isNotEmpty) {
-      final latestMessage = messages.first;
-      _updateConversationLastMessage(conversationId, latestMessage.content);
+    // 3. Actualizar o agregar mensajes del servidor
+    final updatedMessages = <Message>[];
+    
+    // Agregar todos los mensajes del servidor
+    updatedMessages.addAll(messages);
+    
+    // Agregar mensajes optimistas que NO están en el servidor aún
+    for (final optMsg in optimisticMessages) {
+      updatedMessages.add(optMsg);
     }
     
-    // Notificar cambios en la UI
+    // 4. Ordenar por fecha (más antiguos primero)
+    updatedMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    
+    // 5. Detectar si hay mensajes nuevos
+    final previousCount = currentMessages.length;
+    final newCount = messages.length;
+    
+    if (newCount > previousCount) {
+      final diff = newCount - previousCount;
+      print('📨 $diff mensaje(s) nuevo(s) detectado(s)');
+    } else {
+      print('💤 Polling: Sin mensajes nuevos');
+    }
+    
+    // 6. Actualizar y notificar
+    _messagesByConv[conversationId] = updatedMessages;
     notifyListeners();
   }
   
@@ -497,10 +513,6 @@ class ChatProvider extends ChangeNotifier {
   Future<void> notifyTyping(int conversationId, bool isTyping) async {
     if (isTyping) {
       await ChatService.notifyTypingStarted(conversationId);
-      
-      // ✅ CON POLLING: Forzar poll inmediato para ver si el otro está escribiendo
-      // (Polling no puede mostrar typing en tiempo real, pero mejora UX)
-      _pollingService.pollNow();
     } else {
       await ChatService.notifyTypingStopped(conversationId);
     }
