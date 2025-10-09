@@ -276,7 +276,8 @@ class WebSocketService {
       });
 
       // ✅ SUSCRIBIRSE AL CANAL PRIVADO
-      // Laravel Echo Server necesita auth con socket_id
+      // Laravel Echo Server hará POST /broadcasting/auth
+      // El middleware custom AuthenticateBroadcast extraerá el token
       final socketId = _socket!.id;
       
       _socket!.emit('subscribe', {
@@ -286,11 +287,14 @@ class WebSocketService {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
           }
-        }
+        },
+        // ✅ ENVIAR TOKEN TAMBIÉN EN BODY (para middleware custom)
+        'token': token,
       });
 
       print('✅ WebSocket: Suscripción enviada para $channelName');
       print('🆔 Socket ID: $socketId');
+      print('🔑 Token incluido en body para auth');
     } catch (e) {
       print('💥 Error suscribiéndose a canal: $e');
       print('📋 Stack trace: ${e.toString()}');
