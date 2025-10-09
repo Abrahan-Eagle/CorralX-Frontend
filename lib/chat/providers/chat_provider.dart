@@ -4,6 +4,7 @@ import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/services/chat_service.dart';
 import 'package:zonix/chat/services/websocket_service.dart';
 import 'package:zonix/chat/services/notification_service.dart';
+import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
 
 /// Provider global para gestión del chat
 /// Maneja conversaciones, mensajes, WebSocket y notificaciones
@@ -11,6 +12,9 @@ class ChatProvider extends ChangeNotifier {
   // ============================================
   // ESTADO
   // ============================================
+  
+  /// Referencia al ProfileProvider para obtener el profileId actual
+  ProfileProvider? _profileProvider;
 
   /// Lista de conversaciones del usuario
   List<Conversation> _conversations = [];
@@ -54,7 +58,7 @@ class ChatProvider extends ChangeNotifier {
   // INICIALIZACIÓN
   // ============================================
 
-  ChatProvider() {
+  ChatProvider(this._profileProvider) {
     print('🚀 ChatProvider: Inicializando...');
     _initializeServices();
   }
@@ -245,10 +249,12 @@ class ChatProvider extends ChangeNotifier {
     try {
       // 1. Optimistic update - Agregar mensaje localmente
       final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
+      final currentProfileId = _profileProvider?.myProfile?.id ?? 0; // ✅ Obtener profileId real
+      
       final tempMessage = Message(
         id: tempId,
         conversationId: conversationId,
-        senderId: 0, // TODO: Obtener del AuthProvider
+        senderId: currentProfileId, // ✅ Usar profileId real para alineación correcta
         content: content,
         type: MessageType.text,
         status: MessageStatus.sending,

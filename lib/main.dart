@@ -407,7 +407,13 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()), // ✅ Chat MVP
+        ChangeNotifierProxyProvider<ProfileProvider, ChatProvider>(
+          create: (context) => ChatProvider(
+            Provider.of<ProfileProvider>(context, listen: false),
+          ),
+          update: (context, profileProvider, chatProvider) =>
+              chatProvider ?? ChatProvider(profileProvider),
+        ), // ✅ Chat MVP
         ChangeNotifierProvider(
             create: (_) => ThemeProvider()..loadThemePreference()),
       ],
