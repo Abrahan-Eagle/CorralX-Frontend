@@ -252,19 +252,43 @@ class WebSocketService {
     }
 
     try {
+      final token = await storage.read(key: 'token');
       final channelName = 'private-conversation.$conversationId';
-
+      
       print('📡 WebSocket: Suscribiendo a $channelName');
 
-      // ✅ Laravel Echo Server escucha eventos directamente del canal
-      // NO necesita .emit('subscribe') en Socket.IO v1.x
-      // Los eventos MessageSent, TypingStarted ya están configurados globalmente
-      // Solo registramos el canal para referencia
+      // ✅ SUSCRIBIRSE AL CANAL PRIVADO
+      // Laravel Echo requiere autenticación para canales privados
+      _socket!.emit('subscribe', {
+        'channel': channelName,
+        'auth': {
+          'headers': {
+            'Authorization': 'Bearer $token',
+          }
+        }
+      });
 
-      print(
-          '✅ WebSocket: Canal $channelName configurado (eventos ya registrados globalmente)');
+      // ✅ ESCUCHAR EVENTOS DEL CANAL ESPECÍFICO
+      // Laravel Echo envía eventos con el formato: "private-conversation.687:MessageSent"
+      _socket!.on('$channelName:MessageSent', (data) {
+        print('📨 WebSocket: MessageSent recibido en canal $channelName');
+        print('📦 Data: $data');
+        _processMessageSent(data);
+      });
+
+      _socket!.on('$channelName:TypingStarted', (data) {
+        print('⌨️ WebSocket: TypingStarted recibido en canal $channelName');
+        _processTypingEvent(data, true);
+      });
+
+      _socket!.on('$channelName:TypingStopped', (data) {
+        print('⌨️ WebSocket: TypingStopped recibido en canal $channelName');
+        _processTypingEvent(data, false);
+      });
+      
+      print('✅ WebSocket: Suscrito a canal $channelName');
     } catch (e) {
-      print('💥 Error configurando canal: $e');
+      print('💥 Error suscribiéndose a canal: $e');
     }
   }
 
