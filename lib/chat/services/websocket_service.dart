@@ -63,6 +63,10 @@ class WebSocketService {
             .setReconnectionAttempts(5) // ✅ Máximo 5 intentos
             .setReconnectionDelay(1000) // ✅ 1 segundo entre intentos
             .setTimeout(10000) // ✅ Timeout de 10 segundos
+            .setQuery({
+              'appId': 'corralx-app', // ✅ App ID del Echo Server
+              'key': 'corralx-secret-key-2025', // ✅ Key del Echo Server
+            })
             .setAuth({
               'token': 'Bearer $token',
             })
