@@ -4,7 +4,7 @@ import 'package:zonix/config/app_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// FavoriteService - Servicio para gestión de favoritos
-/// 
+///
 /// Maneja todas las operaciones relacionadas con favoritos:
 /// - Obtener lista de favoritos del usuario
 /// - Toggle favorito (agregar/remover)
@@ -20,23 +20,33 @@ class FavoriteService {
     int perPage = 20,
   }) async {
     try {
-      final token = await storage.read(key: 'auth_token');
+      final token =
+          await storage.read(key: 'token'); // ✅ Usar 'token' no 'auth_token'
       final baseUrl = AppConfig.apiUrl;
 
       print('🌐 FavoriteService.getMyFavorites iniciado');
       print('🔧 URL Base: $baseUrl');
       print('📄 Página: $page, Por página: $perPage');
+      print(
+          '🔑 Token: ${token?.substring(0, 20)}... (${token != null ? "✅ SI" : "❌ NO"})');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación');
+      }
 
       final url = '$baseUrl/api/me/favorites?page=$page&per_page=$perPage';
       print('🌐 URL completa: $url');
 
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      print('📋 Headers: ${headers.keys.join(", ")}');
+
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: headers,
       );
 
       print('🌐 Status code: ${response.statusCode}');
@@ -59,21 +69,31 @@ class FavoriteService {
   /// Toggle favorito (agregar/remover)
   static Future<bool> toggleFavorite(int productId) async {
     try {
-      final token = await storage.read(key: 'auth_token');
+      final token =
+          await storage.read(key: 'token'); // ✅ Usar 'token' no 'auth_token'
       final baseUrl = AppConfig.apiUrl;
 
       print('🔄 FavoriteService.toggleFavorite - ProductID: $productId');
+      print(
+          '🔑 Token: ${token?.substring(0, 20)}... (${token != null ? "✅ SI" : "❌ NO"})');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No hay token de autenticación');
+      }
 
       final url = '$baseUrl/api/products/$productId/favorite';
       print('🌐 URL: $url');
 
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      print('📋 Headers Authorization: Bearer ${token.substring(0, 10)}...');
+
       final response = await http.post(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: headers,
       );
 
       print('🌐 Status code: ${response.statusCode}');
@@ -82,7 +102,8 @@ class FavoriteService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final isFavorite = data['is_favorite'] ?? false;
-        print('✅ Toggle exitoso - Estado: ${isFavorite ? "FAVORITO" : "NO FAVORITO"}');
+        print(
+            '✅ Toggle exitoso - Estado: ${isFavorite ? "FAVORITO" : "NO FAVORITO"}');
         return isFavorite;
       } else {
         print('❌ Error en toggle: ${response.statusCode}');
@@ -98,7 +119,8 @@ class FavoriteService {
   /// Verificar si un producto es favorito
   static Future<bool> isFavorite(int productId) async {
     try {
-      final token = await storage.read(key: 'auth_token');
+      final token =
+          await storage.read(key: 'token'); // ✅ Usar 'token' no 'auth_token'
       final baseUrl = AppConfig.apiUrl;
 
       print('🔍 FavoriteService.isFavorite - ProductID: $productId');
@@ -133,7 +155,8 @@ class FavoriteService {
   /// Remover producto de favoritos
   static Future<bool> removeFavorite(int productId) async {
     try {
-      final token = await storage.read(key: 'auth_token');
+      final token =
+          await storage.read(key: 'token'); // ✅ Usar 'token' no 'auth_token'
       final baseUrl = AppConfig.apiUrl;
 
       print('🗑️ FavoriteService.removeFavorite - ProductID: $productId');
@@ -168,7 +191,7 @@ class FavoriteService {
   static Future<int> getFavoritesCount(int productId) async {
     try {
       final baseUrl = AppConfig.apiUrl;
-      
+
       final url = '$baseUrl/api/products/$productId/favorites-count';
 
       final response = await http.get(
@@ -191,4 +214,3 @@ class FavoriteService {
     }
   }
 }
-

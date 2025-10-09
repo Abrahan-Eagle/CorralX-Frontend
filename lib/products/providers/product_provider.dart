@@ -593,7 +593,15 @@ class ProductProvider with ChangeNotifier {
         print('🔄 Optimistic: Removido de favoritos localmente');
       } else {
         _favorites.add(productId);
-        print('🔄 Optimistic: Agregado a favoritos localmente');
+        // ✅ Agregar el producto completo a favoriteProducts para la UI
+        final product = _products.firstWhere(
+          (p) => p.id == productId,
+          orElse: () => _products.first, // Fallback (no debería pasar)
+        );
+        if (!_favoriteProducts.any((p) => p.id == productId)) {
+          _favoriteProducts.add(product);
+        }
+        print('🔄 Optimistic: Agregado a favoritos localmente (ID: $productId)');
       }
       notifyListeners();
       

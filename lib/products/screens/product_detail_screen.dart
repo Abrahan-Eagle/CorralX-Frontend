@@ -83,7 +83,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
+            icon: Icon(Icons.arrow_back_ios,
+                color: theme.colorScheme.onSurfaceVariant),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
@@ -96,7 +97,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            valueColor:
+                AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
           ),
         ),
       );
@@ -109,7 +111,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
+            icon: Icon(Icons.arrow_back_ios,
+                color: theme.colorScheme.onSurfaceVariant),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
@@ -162,7 +165,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
+            icon: Icon(Icons.arrow_back_ios,
+                color: theme.colorScheme.onSurfaceVariant),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
@@ -188,7 +192,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: theme.colorScheme.onSurfaceVariant),
+          icon: Icon(Icons.arrow_back_ios,
+              color: theme.colorScheme.onSurfaceVariant),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -207,10 +212,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               return IconButton(
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : theme.colorScheme.onSurfaceVariant,
+                  color: isFavorite
+                      ? Colors.red
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
-                onPressed: () {
-                  productProvider.toggleFavorite(_product!.id);
+                onPressed: () async {
+                  final wasInFavorites = isFavorite;
+                  await productProvider.toggleFavorite(_product!.id);
+
+                  // Mostrar mensaje de confirmación
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(
+                            wasInFavorites
+                                ? Icons.heart_broken
+                                : Icons.favorite,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              wasInFavorites
+                                  ? 'Removido de favoritos'
+                                  : 'Agregado a favoritos',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor:
+                          wasInFavorites ? Colors.grey[700] : Colors.green[700],
+                      behavior: SnackBarBehavior
+                          .fixed, // ✅ Fixed para evitar overflow
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
                 },
               );
             },

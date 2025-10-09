@@ -5,7 +5,7 @@ import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/products/models/product.dart';
 
 /// FavoritesScreen - Pantalla de productos favoritos del usuario
-/// 
+///
 /// Muestra una grid de productos que el usuario ha marcado como favoritos.
 /// Características:
 /// - Grid responsive (2/3/4 columnas según dispositivo)
@@ -64,7 +64,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {
           // Loading state (primera carga)
-          if (productProvider.isLoadingFavorites && 
+          if (productProvider.isLoadingFavorites &&
               productProvider.favoriteProducts.isEmpty) {
             return Center(
               child: Column(
@@ -122,12 +122,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // Navegar al marketplace (cambiar bottom nav index)
-                        // Esto se puede hacer mediante un callback o provider global
-                        Navigator.pop(context);
+                        // No hacer nada, el usuario puede usar el bottom nav directamente
+                        // O podríamos navegar a la pantalla de marketplace
+                        print('📱 Usuario presionó Explorar Marketplace');
                       },
                       icon: const Icon(Icons.explore),
-                      label: const Text('Explorar Marketplace'),
+                      label: const Text('Ir al Marketplace'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
@@ -196,9 +196,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     bool isTablet,
     ThemeData theme,
   ) {
-    final primaryImage = product.images.isNotEmpty
-        ? product.images.first.fileUrl
-        : null;
+    final primaryImage =
+        product.images.isNotEmpty ? product.images.first.fileUrl : null;
 
     return GestureDetector(
       onTap: () {
@@ -274,13 +273,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () async {
-                          print('❤️ Toggle favorito desde FavoritesScreen: ${product.id}');
+                          print(
+                              '❤️ Toggle favorito desde FavoritesScreen: ${product.id}');
                           try {
                             await provider.toggleFavorite(product.id);
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Producto removido de favoritos'),
+                                  content: const Text(
+                                      'Producto removido de favoritos'),
                                   duration: const Duration(seconds: 2),
                                   backgroundColor: theme.colorScheme.secondary,
                                 ),

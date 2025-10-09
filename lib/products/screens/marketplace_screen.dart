@@ -71,9 +71,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
                 if (productProvider.errorMessage != null) {
                   return Center(
-            child: Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+                      children: [
                         Icon(
                           Icons.error_outline,
                           size: 64,
@@ -131,10 +131,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey[500],
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
                   );
                 }
 
@@ -224,12 +224,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                                         ),
                                                         textAlign:
                                                             TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
                                         );
                                       },
                                     ),
@@ -281,8 +281,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           itemCount: productProvider.products.length,
                           itemBuilder: (context, index) {
                             final product = productProvider.products[index];
+                            // Verificar si el producto está en favoritos
+                            final isFavorite = productProvider.favoriteProducts
+                                .any((fav) => fav.id == product.id);
+
                             return ProductCard(
                               product: product,
+                              isFavorite:
+                                  isFavorite, // ✅ Verifica si está en favoritos
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -294,13 +300,49 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                                   ),
                                 );
                               },
-                              onFavorite: () {
-                                // TODO: Implementar favoritos
-                                productProvider.toggleFavorite(product.id);
+                              onFavorite: () async {
+                                final wasInFavorites = isFavorite;
+                                await productProvider
+                                    .toggleFavorite(product.id);
+
+                                // Mostrar mensaje de confirmación
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        Icon(
+                                          wasInFavorites
+                                              ? Icons.heart_broken
+                                              : Icons.favorite,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            wasInFavorites
+                                                ? 'Removido de favoritos'
+                                                : 'Agregado a favoritos',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: wasInFavorites
+                                        ? Colors.grey[700]
+                                        : Colors.green[700],
+                                    behavior: SnackBarBehavior
+                                        .fixed, // ✅ Fixed para evitar overflow
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
                               },
-                      );
-                    },
-                  ),
+                            );
+                          },
+                        ),
 
                         // Botón para cargar más productos
                         if (productProvider.hasMorePages &&
@@ -339,8 +381,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     return Container(
       margin: EdgeInsets.only(right: isTablet ? 8 : 6),
       child: Chip(
-      label: Text(
-        label,
+        label: Text(
+          label,
           style: TextStyle(
             fontSize: isTablet ? 12 : 10,
             color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -353,7 +395,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           color: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
         onDeleted: onRemove,
-      padding: EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: isTablet ? 8 : 6,
           vertical: isTablet ? 4 : 2,
         ),
