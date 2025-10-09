@@ -56,19 +56,20 @@ class WebSocketService {
       _updateConnectionState(WebSocketConnectionState.connecting);
 
       _socket = IO.io(
-        '$echoServerUrl/socket.io/',
+        echoServerUrl,
         IO.OptionBuilder()
-            .setTransports(
-                ['polling', 'websocket']) // ✅ Polling primero, luego upgrade a WebSocket
-            .enableAutoConnect() // ✅ Auto-conectar
-            .enableReconnection() // ✅ Reconexión automática
-            .setReconnectionAttempts(10) // ✅ Máximo 10 intentos
-            .setReconnectionDelay(2000) // ✅ 2 segundos entre intentos
-            .setTimeout(30000) // ✅ Timeout de 30 segundos
+            .setTransports(['polling', 'websocket']) // Polling primero, luego WebSocket
+            .setPath('/socket.io/') // ✅ Path explícito
+            .enableAutoConnect() // Auto-conectar
+            .enableReconnection() // Reconexión automática
+            .enableForceNew() // ✅ Forzar nueva conexión
+            .setReconnectionAttempts(10) // Máximo 10 intentos
+            .setReconnectionDelay(2000) // 2 segundos entre intentos
+            .setTimeout(20000) // ✅ Timeout de 20 segundos (igual que Echo Server)
             .setQuery({
-              'appId': 'corralx-app',
-              'key': 'corralx-secret-key-2025',
-              'EIO': '4', // Engine.IO version 4
+              'appId': 'corralx-app', // ✅ DEBE coincidir con laravel-echo-server.json
+              'key': 'corralx-secret-key-2025', // ✅ DEBE coincidir con laravel-echo-server.json
+              'EIO': '3', // ✅ Engine.IO version 3 (Laravel Echo Server usa v3)
             })
             .setAuth({
               'token': 'Bearer $token',
