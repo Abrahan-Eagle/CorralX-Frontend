@@ -13,7 +13,7 @@ import 'package:zonix/chat/models/message.dart';
 /// Con fallback automático a HTTP Polling si falla la conexión
 class PusherService {
   PusherChannelsFlutter? _pusher;
-  Channel? _currentChannel;
+  String? _currentChannelName;
   bool _isConnected = false;
   bool _isInitialized = false;
   
@@ -94,7 +94,8 @@ class PusherService {
       _onConnectionChange = onConnectionChange;
 
       final channelName = 'private-conversation.$conversationId';
-      _currentChannel = await _pusher!.subscribe(channelName: channelName);
+      await _pusher!.subscribe(channelName: channelName);
+      _currentChannelName = channelName;
 
       print('✅ PusherService: Suscrito a canal $channelName');
       return true;
@@ -106,10 +107,10 @@ class PusherService {
 
   /// Desuscribirse del canal actual
   Future<void> unsubscribe() async {
-    if (_currentChannel != null) {
+    if (_currentChannelName != null) {
       try {
-        await _pusher!.unsubscribe(channelName: _currentChannel!.channelName);
-        _currentChannel = null;
+        await _pusher!.unsubscribe(channelName: _currentChannelName!);
+        _currentChannelName = null;
         print('✅ PusherService: Desuscrito del canal');
       } catch (e) {
         print('❌ Error desuscribiendo: $e');
