@@ -3,8 +3,6 @@ import 'package:zonix/chat/models/conversation.dart';
 import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/services/chat_service.dart';
 import 'package:zonix/chat/services/polling_service.dart'; // ✅ HTTP Polling
-import 'package:zonix/chat/services/notification_service.dart';
-import 'package:zonix/chat/services/websocket_service.dart'; // ✅ Solo para enum WebSocketConnectionState
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
 
 /// Provider global para gestión del chat
@@ -58,10 +56,7 @@ class ChatProvider extends ChangeNotifier {
   
   /// Estado de conexión (para compatibilidad con UI)
   /// Con polling siempre está "connected" porque usa HTTP
-  WebSocketConnectionState get connectionState => 
-      _pollingService.isPolling 
-          ? WebSocketConnectionState.connected 
-          : WebSocketConnectionState.disconnected;
+  bool get isConnected => _pollingService.isPolling;
 
   // ============================================
   // INICIALIZACIÓN
@@ -72,24 +67,17 @@ class ChatProvider extends ChangeNotifier {
     _initializeServices();
   }
 
-  /// Inicializar servicios (HTTP Polling y Notificaciones)
+  /// Inicializar servicios (HTTP Polling)
   Future<void> _initializeServices() async {
     print('🔧 ChatProvider: Inicializando servicios...');
-
-    // Inicializar notificaciones locales
-    await NotificationService.initialize();
-
-    // Configurar callbacks de notificaciones
-    NotificationService.onNotificationTap((conversationId) {
-      print('🔔 Notificación tocada: conv $conversationId');
-      // TODO: Navegar a ChatScreen con ese conversationId
-    });
 
     // ✅ MVP: Usar HTTP Polling en vez de WebSocket
     // WebSocket tiene problemas de autenticación con Laravel Echo Server
     // (socket_id formato incompatible entre Socket.IO y Pusher)
     print('✅ ChatProvider: Usando HTTP Polling para mensajes en tiempo semi-real');
     print('⏱️ Intervalo: ${PollingService.pollingInterval} segundos');
+    
+    // Notificaciones background manejadas por BackgroundNotificationService en main.dart
 
     print('✅ ChatProvider: Servicios inicializados');
   }
