@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:zonix/chat/models/conversation.dart';
 import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/services/chat_service.dart';
-import 'package:zonix/chat/services/polling_service.dart'; // ✅ HTTP Polling
+import 'package:zonix/chat/services/pusher_service.dart'; // ✅ Pusher Channels (tiempo real)
+import 'package:zonix/chat/services/polling_service.dart'; // ✅ HTTP Polling (fallback)
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
 
 /// Provider global para gestión del chat
@@ -45,18 +47,24 @@ class ChatProvider extends ChangeNotifier {
   /// Usuarios que están escribiendo (por conversación)
   final Map<int, Set<int>> _typingUsers = {};
 
-  /// Servicio de Polling (reemplaza WebSocket para MVP)
+  /// Servicio de Pusher (principal - tiempo real)
+  final PusherService _pusherService = PusherService();
+  
+  /// Servicio de Polling (fallback si Pusher falla)
   final PollingService _pollingService = PollingService();
 
   /// ID de conversación actualmente abierta (para marcar como leído automático)
   int? _activeConversationId;
   
-  /// Indicador de que está usando polling (para mostrar en UI)
-  bool get isUsingPolling => true;
+  /// Indicador de servicio activo
+  bool _isUsingPusher = false;
+  bool get isUsingPusher => _isUsingPusher;
+  bool get isUsingPolling => !_isUsingPusher;
   
-  /// Estado de conexión (para compatibilidad con UI)
-  /// Con polling siempre está "connected" porque usa HTTP
-  bool get isConnected => _pollingService.isPolling;
+  /// Estado de conexión
+  bool get isConnected => _isUsingPusher 
+      ? _pusherService.isConnected 
+      : _pollingService.isPolling;
 
   // ============================================
   // INICIALIZACIÓN
@@ -67,17 +75,35 @@ class ChatProvider extends ChangeNotifier {
     _initializeServices();
   }
 
-  /// Inicializar servicios (HTTP Polling)
+  /// Inicializar servicios (Pusher con fallback a Polling)
   Future<void> _initializeServices() async {
     print('🔧 ChatProvider: Inicializando servicios...');
 
-    // ✅ MVP: Usar HTTP Polling en vez de WebSocket
-    // WebSocket tiene problemas de autenticación con Laravel Echo Server
-    // (socket_id formato incompatible entre Socket.IO y Pusher)
-    print('✅ ChatProvider: Usando HTTP Polling para mensajes en tiempo semi-real');
-    print('⏱️ Intervalo: ${PollingService.pollingInterval} segundos');
-    
-    // Notificaciones background manejadas por BackgroundNotificationService en main.dart
+    // Verificar si Pusher está habilitado en .env
+    final enablePusher = dotenv.env['ENABLE_PUSHER'] == 'true';
+
+    if (enablePusher) {
+      // Intentar inicializar Pusher primero
+      print('🔗 Intentando conectar a Pusher Channels...');
+      final pusherOk = await _pusherService.initialize();
+
+      if (pusherOk) {
+        _isUsingPusher = true;
+        print('✅ ChatProvider: Usando Pusher Channels (tiempo real)');
+        print('   - Mensajes instantáneos (<100ms)');
+        print('   - Typing indicators activos');
+      } else {
+        print('⚠️ Pusher falló, usando HTTP Polling como fallback');
+        _isUsingPusher = false;
+        print('✅ ChatProvider: Usando HTTP Polling');
+        print('⏱️ Intervalo: ${PollingService.pollingInterval} segundos');
+      }
+    } else {
+      print('⚠️ Pusher deshabilitado en .env');
+      _isUsingPusher = false;
+      print('✅ ChatProvider: Usando HTTP Polling');
+      print('⏱️ Intervalo: ${PollingService.pollingInterval} segundos');
+    }
 
     print('✅ ChatProvider: Servicios inicializados');
   }
@@ -428,21 +454,104 @@ class ChatProvider extends ChangeNotifier {
 
   /// SUSCRIBIRSE con HTTP Polling a una conversación
   Future<void> subscribeToConversation(int conversationId) async {
-    print('📡 ChatProvider: Iniciando polling para conv $conversationId');
-    
-    // Iniciar polling de mensajes
+    _activeConversationId = conversationId;
+
+    if (_isUsingPusher) {
+      print('📡 ChatProvider: Suscribiendo a Pusher para conv $conversationId');
+      
+      try {
+        final success = await _pusherService.subscribeToConversation(
+          conversationId,
+          onMessage: (message) {
+            _handlePusherMessage(conversationId, message);
+          },
+          onTypingStarted: (userId, userName) {
+            _handleTypingStarted(conversationId, userId);
+          },
+          onTypingStopped: (userId) {
+            _handleTypingStopped(conversationId, userId);
+          },
+          onConnectionChange: (isConnected) {
+            if (!isConnected) {
+              print('⚠️ Pusher desconectado, activando fallback a Polling');
+              _activatePollingFallback(conversationId);
+            }
+          },
+        );
+
+        if (success) {
+          print('✅ Suscrito a Pusher exitosamente');
+        } else {
+          print('⚠️ Pusher falló, usando Polling como fallback');
+          _activatePollingFallback(conversationId);
+        }
+      } catch (e) {
+        print('❌ Error con Pusher: $e - Usando Polling');
+        _activatePollingFallback(conversationId);
+      }
+    } else {
+      print('📡 ChatProvider: Iniciando HTTP Polling para conv $conversationId');
+      _activatePollingFallback(conversationId);
+    }
+  }
+
+  /// Activar HTTP Polling como fallback
+  void _activatePollingFallback(int conversationId) {
+    _isUsingPusher = false;
     _pollingService.startPolling(
       conversationId,
       onNewMessages: (messages) {
         _handlePollingUpdate(conversationId, messages);
       },
     );
+    notifyListeners();
   }
 
-  /// DESUSCRIBIRSE (detener polling)
+  /// DESUSCRIBIRSE (detener polling/pusher)
   void unsubscribeFromConversation(int conversationId) {
-    print('🛑 ChatProvider: Deteniendo polling para conv $conversationId');
+    print('🛑 ChatProvider: Desuscribiendo de conv $conversationId');
+    
+    if (_isUsingPusher) {
+      _pusherService.unsubscribe();
+    }
+    
     _pollingService.stopPolling();
+    _activeConversationId = null;
+  }
+  
+  /// Manejar mensaje recibido via Pusher
+  void _handlePusherMessage(int conversationId, Message message) {
+    print('📨 Pusher: Mensaje recibido - ID ${message.id}');
+    
+    final currentMessages = _messagesByConv[conversationId] ?? [];
+    
+    // Verificar si el mensaje ya existe (evitar duplicados)
+    final exists = currentMessages.any((m) => m.id == message.id);
+    
+    if (!exists) {
+      currentMessages.add(message);
+      currentMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      _messagesByConv[conversationId] = currentMessages;
+      notifyListeners();
+      print('✅ Mensaje agregado via Pusher');
+    }
+  }
+  
+  /// Manejar typing started via Pusher
+  void _handleTypingStarted(int conversationId, int userId) {
+    print('⌨️ Pusher: Usuario $userId está escribiendo');
+    
+    _typingUsers[conversationId] ??= {};
+    _typingUsers[conversationId]!.add(userId);
+    notifyListeners();
+  }
+  
+  /// Manejar typing stopped via Pusher
+  void _handleTypingStopped(int conversationId, int userId) {
+    print('⌨️ Pusher: Usuario $userId dejó de escribir');
+    
+    _typingUsers[conversationId]?.remove(userId);
+    notifyListeners();
   }
   
   /// Manejar actualización de polling

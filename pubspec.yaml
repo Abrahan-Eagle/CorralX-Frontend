@@ -61,7 +61,9 @@ dependencies:
 
   timeago: ^3.7.0
   flutter_local_notifications: ^17.2.3
-  flutter_background_service: ^5.0.10
+  pusher_channels_flutter: ^2.2.1
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
   flutter_native_splash: any
 dev_dependencies:
   flutter_test:

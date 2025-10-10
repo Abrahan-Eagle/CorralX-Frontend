@@ -5,6 +5,8 @@ plugins {
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+    // Google Services plugin for Firebase
+    id "com.google.gms.google-services"
 }
 
 android {
@@ -89,6 +91,11 @@ android {
 dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:2.0.20' // Verifica la versión
     implementation 'com.google.android.gms:play-services-auth:21.2.0'
+
+    // Firebase Cloud Messaging
+    implementation platform('com.google.firebase:firebase-bom:34.3.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-analytics'
 
     // Aquí puedes agregar otras dependencias necesarias para tu proyecto
 

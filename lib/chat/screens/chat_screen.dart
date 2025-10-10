@@ -186,14 +186,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
               ),
 
-              // ⚠️ Typing indicators deshabilitados: Requieren WebSocket
-              // HTTP Polling no soporta eventos en tiempo real (<100ms)
-              // TODO: Rehabilitar cuando migremos a WebSocket/Pusher Cloud
-              // if (isTyping)
-              //   const Padding(
-              //     padding: EdgeInsets.only(left: 16, bottom: 8),
-              //     child: TypingIndicator(),
-              //   ),
+              // Typing indicator (solo con Pusher activo)
+              if (chatProvider.isUsingPusher && isTyping)
+                const Padding(
+                  padding: EdgeInsets.only(left: 16, bottom: 8),
+                  child: TypingIndicator(),
+                ),
 
               // Input de mensaje
               ChatInput(
@@ -273,17 +271,27 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
 
-                // Estado de conexión (HTTP Polling)
+                // Estado de conexión y tipo de servicio
                 Consumer<ChatProvider>(
                   builder: (context, chatProvider, child) {
+                    final statusText = chatProvider.isUsingPusher
+                        ? 'Tiempo real ⚡'
+                        : chatProvider.isConnected
+                            ? 'En línea'
+                            : 'Sin conexión';
+                    
+                    final statusColor = chatProvider.isUsingPusher
+                        ? Colors.green
+                        : _getConnectionColor(theme, chatProvider.isConnected);
+                    
                     return Text(
-                      _getConnectionText(chatProvider.isConnected),
+                      statusText,
                       style: TextStyle(
                         fontSize: 12,
-                        color: _getConnectionColor(
-                          theme,
-                          chatProvider.isConnected,
-                        ),
+                        color: statusColor,
+                        fontWeight: chatProvider.isUsingPusher 
+                            ? FontWeight.bold 
+                            : FontWeight.normal,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,

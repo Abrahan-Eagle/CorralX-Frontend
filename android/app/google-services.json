@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "602721721479",
+    "project_id": "corralx-777",
+    "storage_bucket": "corralx-777.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602721721479:android:cc528afbed14424ba4ec22",
+        "android_client_info": {
+          "package_name": "com.example.zonix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_QqLd7wc_eJOGudj7oxW-X-oUp40cxz0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
