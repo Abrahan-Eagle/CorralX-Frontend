@@ -5,12 +5,11 @@ import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/widgets/message_bubble.dart';
 import 'package:zonix/chat/widgets/chat_input.dart';
 import 'package:zonix/chat/widgets/typing_indicator.dart';
-import 'package:zonix/chat/services/websocket_service.dart';
 import 'package:zonix/config/app_config.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener el profileId
 
 /// Pantalla de chat 1:1 con un usuario
-/// Muestra mensajes en tiempo real con WebSocket
+/// Muestra mensajes con HTTP Polling (4 segundos)
 class ChatScreen extends StatefulWidget {
   final int conversationId;
   final String? contactName;
@@ -134,8 +133,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
           return Column(
             children: [
-              // Indicador de estado de conexión WebSocket
-              _buildConnectionBanner(theme, chatProvider.connectionState),
+              // Indicador de estado de conexión (HTTP Polling)
+              _buildConnectionBanner(theme, chatProvider.isConnected),
 
               // Lista de mensajes
               Expanded(
@@ -274,16 +273,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
 
-                // Estado de conexión WebSocket
+                // Estado de conexión (HTTP Polling)
                 Consumer<ChatProvider>(
                   builder: (context, chatProvider, child) {
                     return Text(
-                      _getConnectionText(chatProvider.connectionState),
+                      _getConnectionText(chatProvider.isConnected),
                       style: TextStyle(
                         fontSize: 12,
                         color: _getConnectionColor(
                           theme,
-                          chatProvider.connectionState,
+                          chatProvider.isConnected,
                         ),
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -337,39 +336,19 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Banner de estado de conexión
+  /// Banner de estado de conexión (HTTP Polling)
   Widget _buildConnectionBanner(
     ThemeData theme,
-    WebSocketConnectionState state,
+    bool isConnected,
   ) {
-    if (state == WebSocketConnectionState.connected) {
+    if (isConnected) {
       return const SizedBox.shrink(); // No mostrar si está conectado
     }
 
-    Color bgColor;
-    String text;
-    IconData icon;
-
-    switch (state) {
-      case WebSocketConnectionState.connecting:
-        bgColor = Colors.orange;
-        text = '🟡 Conectando...';
-        icon = Icons.sync;
-        break;
-      case WebSocketConnectionState.reconnecting:
-        bgColor = Colors.orange;
-        text = '🟡 Reconectando...';
-        icon = Icons.sync;
-        break;
-      case WebSocketConnectionState.error:
-      case WebSocketConnectionState.disconnected:
-        bgColor = Colors.red;
-        text = '🔴 Sin conexión - Los mensajes se enviarán cuando reconectes';
-        icon = Icons.cloud_off;
-        break;
-      default:
-        return const SizedBox.shrink();
-    }
+    // Polling desconectado
+    Color bgColor = Colors.red;
+    String text = '🔴 Sin conexión';
+    IconData icon = Icons.cloud_off;
 
     return Container(
       width: double.infinity,
@@ -519,32 +498,13 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  /// Texto de estado de conexión
-  String _getConnectionText(WebSocketConnectionState state) {
-    switch (state) {
-      case WebSocketConnectionState.connected:
-        return 'En línea';
-      case WebSocketConnectionState.connecting:
-        return 'Conectando...';
-      case WebSocketConnectionState.reconnecting:
-        return 'Reconectando...';
-      case WebSocketConnectionState.disconnected:
-      case WebSocketConnectionState.error:
-        return 'Sin conexión';
-    }
+  /// Texto de estado de conexión (HTTP Polling)
+  String _getConnectionText(bool isConnected) {
+    return isConnected ? 'En línea' : 'Sin conexión';
   }
 
-  /// Color de estado de conexión
-  Color _getConnectionColor(ThemeData theme, WebSocketConnectionState state) {
-    switch (state) {
-      case WebSocketConnectionState.connected:
-        return Colors.green;
-      case WebSocketConnectionState.connecting:
-      case WebSocketConnectionState.reconnecting:
-        return Colors.orange;
-      case WebSocketConnectionState.disconnected:
-      case WebSocketConnectionState.error:
-        return Colors.red;
-    }
+  /// Color de estado de conexión (HTTP Polling)
+  Color _getConnectionColor(ThemeData theme, bool isConnected) {
+    return isConnected ? Colors.green : Colors.red;
   }
 }
