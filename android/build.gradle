@@ -1,6 +1,6 @@
 //nuevo
 buildscript {
-    ext.kotlin_version = '2.1.0' // Versión actualizada y estable
+    ext.kotlin_version = '1.9.10' // Compatible con workmanager
     repositories {
         google()
         mavenCentral()

@@ -397,9 +397,9 @@ Future<void> main() async {
   // Inicializar locales para DateFormat (español)
   await initializeDateFormatting('es', null);
 
-  // ✅ Inicializar background notifications (workmanager)
+  // ✅ Inicializar background notifications
   await BackgroundNotificationService.initialize();
-  await BackgroundNotificationService.registerPeriodicTask();
+  await BackgroundNotificationService.start();
   print('🔔 Background polling activado: cada 15 minutos');
 
   // Bypass de login para tests de integración

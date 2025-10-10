@@ -1,85 +1,129 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:workmanager/workmanager.dart';
+import 'dart:ui';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Servicio de notificaciones en background usando Workmanager
+/// Servicio de notificaciones en background
 /// 
-/// Realiza polling HTTP cada 15 minutos cuando la app está cerrada
+/// Realiza polling HTTP cada 15 minutos cuando la app está cerrada/background
 /// y muestra notificaciones locales si hay mensajes nuevos.
 /// 
 /// 100% Nativo - Sin Firebase, sin Pusher, sin servicios externos.
 class BackgroundNotificationService {
-  static const String taskName = 'chat-background-polling';
-  static const String uniqueName = 'chat-polling-task';
+  static final FlutterBackgroundService _service = FlutterBackgroundService();
+  static final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
 
-  /// Inicializar workmanager
+  /// Intervalo de polling en minutos
+  static const int pollingIntervalMinutes = 15;
+
+  /// Inicializar servicio de background
   static Future<void> initialize() async {
-    await Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: false, // true para debugging
+    await _service.configure(
+      androidConfiguration: AndroidConfiguration(
+        onStart: onStart,
+        autoStart: true,
+        isForegroundMode: false, // Background service (no notificación persistente)
+        autoStartOnBoot: true, // Iniciar al reiniciar dispositivo
+      ),
+      iosConfiguration: IosConfiguration(
+        autoStart: true,
+        onForeground: onStart,
+        onBackground: onIosBackground,
+      ),
     );
 
     print('🔔 BackgroundNotificationService: Inicializado');
   }
 
-  /// Registrar tarea periódica de polling
-  static Future<void> registerPeriodicTask() async {
-    await Workmanager().registerPeriodicTask(
-      uniqueName,
-      taskName,
-      frequency: const Duration(minutes: 15), // Mínimo permitido por Android
-      constraints: Constraints(
-        networkType: NetworkType.connected, // Solo con internet
-        requiresBatteryNotLow: false, // Ejecutar aunque batería baja
-        requiresCharging: false,
-        requiresDeviceIdle: false,
-        requiresStorageNotLow: false,
-      ),
-      backoffPolicy: BackoffPolicy.exponential,
-      backoffPolicyDelay: const Duration(minutes: 1),
-    );
-
-    print('✅ Background polling registrado: cada 15 minutos');
+  /// Iniciar servicio
+  static Future<void> start() async {
+    await _service.startService();
+    print('✅ Background service iniciado');
   }
 
-  /// Cancelar tarea periódica
-  static Future<void> cancelPeriodicTask() async {
-    await Workmanager().cancelByUniqueName(uniqueName);
-    print('🛑 Background polling cancelado');
+  /// Detener servicio
+  static Future<void> stop() async {
+    await _service.invoke('stop');
+    print('🛑 Background service detenido');
   }
 
-  /// Cancelar todas las tareas
-  static Future<void> cancelAll() async {
-    await Workmanager().cancelAll();
-    print('🛑 Todas las tareas background canceladas');
-  }
-}
+  /// Callback principal (Android)
+  @pragma('vm:entry-point')
+  static void onStart(ServiceInstance service) async {
+    // Solo para Android
+    DartPluginRegistrant.ensureInitialized();
 
-/// Callback dispatcher (DEBE ser función top-level)
-/// 
-/// Esta función se ejecuta en un isolate separado en background.
-/// NO tiene acceso al contexto de la app principal.
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    print('🔍 Background task ejecutándose: $task');
+    if (service is AndroidServiceInstance) {
+      service.on('setAsForeground').listen((event) {
+        service.setAsForegroundService();
+      });
+
+      service.on('setAsBackground').listen((event) {
+        service.setAsBackgroundService();
+      });
+    }
+
+    service.on('stop').listen((event) {
+      service.stopSelf();
+    });
+
+    // Timer periódico cada 15 minutos
+    Timer.periodic(const Duration(minutes: pollingIntervalMinutes), (timer) async {
+      print('🔍 Background polling ejecutándose...');
+
+      try {
+        await _checkNewMessages();
+      } catch (e) {
+        print('❌ Error en background polling: $e');
+      }
+    });
+
+    // Primera ejecución inmediata
+    await _checkNewMessages();
+  }
+
+  /// Callback para iOS background
+  @pragma('vm:entry-point')
+  static Future<bool> onIosBackground(ServiceInstance service) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    DartPluginRegistrant.ensureInitialized();
 
     try {
-      // 1. Obtener token guardado
-      const storage = FlutterSecureStorage();
+      await _checkNewMessages();
+      return true;
+    } catch (e) {
+      print('❌ Error en iOS background: $e');
+      return false;
+    }
+  }
+
+  /// Consultar API y verificar mensajes nuevos
+  static Future<void> _checkNewMessages() async {
+    try {
+      print('🔍 Verificando mensajes nuevos...');
+
+      // 1. Obtener token de autenticación
+      const storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
+      
       final token = await storage.read(key: 'auth_token');
 
       if (token == null || token.isEmpty) {
-        print('⚠️ No hay token, cancelando polling');
-        return Future.value(true);
+        print('⚠️ No hay token de autenticación');
+        return;
       }
 
-      // 2. Consultar API de conversaciones
-      final apiUrl = await storage.read(key: 'api_base_url') ?? 
-                     'http://192.168.27.12:8000'; // Fallback
-      
+      // 2. Obtener URL base de API
+      final apiUrl = await storage.read(key: 'api_base_url') ??
+          'http://192.168.27.12:8000'; // Fallback
+
+      // 3. Consultar conversaciones
       final response = await http.get(
         Uri.parse('$apiUrl/api/chat/conversations'),
         headers: {
@@ -89,88 +133,95 @@ void callbackDispatcher() {
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        
-        // 3. Calcular mensajes no leídos
+        final List<dynamic> conversations = jsonDecode(response.body);
+
+        // 4. Calcular mensajes no leídos
         int totalUnread = 0;
-        for (var conv in data) {
+        for (var conv in conversations) {
           totalUnread += (conv['unread_count'] as int?) ?? 0;
         }
 
         print('📬 Mensajes no leídos: $totalUnread');
 
-        // 4. Mostrar notificación si hay mensajes nuevos
+        // 5. Mostrar notificación si hay mensajes nuevos
         if (totalUnread > 0) {
           await _showNotification(totalUnread);
+        } else {
+          print('✅ No hay mensajes nuevos');
         }
+      } else if (response.statusCode == 401) {
+        print('⚠️ Token expirado o inválido');
       } else {
         print('⚠️ Error API: ${response.statusCode}');
       }
-
-      return Future.value(true);
     } catch (e) {
-      print('❌ Error en background task: $e');
-      return Future.value(false);
+      print('❌ Error consultando mensajes: $e');
     }
-  });
-}
+  }
 
-/// Mostrar notificación local
-Future<void> _showNotification(int unreadCount) async {
-  final FlutterLocalNotificationsPlugin notifications = 
-      FlutterLocalNotificationsPlugin();
+  /// Mostrar notificación local nativa
+  static Future<void> _showNotification(int unreadCount) async {
+    try {
+      // Inicializar notificaciones si no está inicializado
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  // Configurar notificación
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+        android: initializationSettingsAndroid,
+      );
 
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-  );
+      await _notifications.initialize(initializationSettings);
 
-  await notifications.initialize(initializationSettings);
-
-  // Crear canal de notificación (Android 8+)
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'chat_messages', // id
-    'Mensajes de Chat', // name
-    description: 'Notificaciones de mensajes nuevos en el chat',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
-
-  await notifications
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-
-  // Mostrar notificación
-  await notifications.show(
-    0, // id
-    'Nuevos mensajes', // título
-    unreadCount == 1
-        ? 'Tienes 1 mensaje sin leer'
-        : 'Tienes $unreadCount mensajes sin leer', // body
-    NotificationDetails(
-      android: AndroidNotificationDetails(
-        channel.id,
-        channel.name,
-        channelDescription: channel.description,
+      // Crear canal de notificación (Android 8+)
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'chat_messages_background', // id único
+        'Mensajes de Chat', // nombre
+        description: 'Notificaciones de mensajes nuevos en el chat',
         importance: Importance.high,
-        priority: Priority.high,
-        showWhen: true,
-        icon: '@mipmap/ic_launcher',
-        // Sonido y vibración
         playSound: true,
         enableVibration: true,
-        // Badge count
-        number: unreadCount,
-      ),
-    ),
-    payload: 'chat_messages', // Para deep linking
-  );
+        showBadge: true,
+      );
 
-  print('🔔 Notificación mostrada: $unreadCount mensajes');
+      await _notifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+
+      // Mostrar notificación
+      await _notifications.show(
+        0, // id (siempre 0 para agrupar)
+        'Nuevos mensajes', // título
+        unreadCount == 1
+            ? 'Tienes 1 mensaje sin leer'
+            : 'Tienes $unreadCount mensajes sin leer', // cuerpo
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
+            importance: Importance.high,
+            priority: Priority.high,
+            showWhen: true,
+            when: DateTime.now().millisecondsSinceEpoch,
+            icon: '@mipmap/ic_launcher',
+            // Sonido y vibración
+            playSound: true,
+            enableVibration: true,
+            // Badge count
+            number: unreadCount,
+            // Agrupar notificaciones
+            groupKey: 'chat_messages',
+            setAsGroupSummary: true,
+          ),
+        ),
+        payload: 'chat_messages', // Para deep linking
+      );
+
+      print('🔔 Notificación mostrada: $unreadCount mensajes');
+    } catch (e) {
+      print('❌ Error mostrando notificación: $e');
+    }
+  }
 }
-
