@@ -48,7 +48,7 @@ class BackgroundNotificationService {
 
   /// Detener servicio
   static Future<void> stop() async {
-    await _service.invoke('stop');
+    _service.invoke('stop');
     print('🛑 Background service detenido');
   }
 
@@ -90,7 +90,6 @@ class BackgroundNotificationService {
   /// Callback para iOS background
   @pragma('vm:entry-point')
   static Future<bool> onIosBackground(ServiceInstance service) async {
-    WidgetsFlutterBinding.ensureInitialized();
     DartPluginRegistrant.ensureInitialized();
 
     try {

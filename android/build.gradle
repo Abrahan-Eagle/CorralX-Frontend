@@ -1,6 +1,6 @@
 //nuevo
 buildscript {
-    ext.kotlin_version = '1.9.10' // Compatible con workmanager
+    ext.kotlin_version = '2.1.0' // Compatible con flutter_background_service
     repositories {
         google()
         mavenCentral()
