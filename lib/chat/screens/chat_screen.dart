@@ -298,18 +298,12 @@ class _ChatScreenState extends State<ChatScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: Colors.grey[300],
-            backgroundImage: _contactAvatar != null &&
-                    !_contactAvatar!.contains('via.placeholder.com') &&
-                    !_contactAvatar!.contains('placeholder.com') &&
-                    !_contactAvatar!.contains('placehold.it')
+            backgroundImage: _contactAvatar != null
                 ? NetworkImage(_contactAvatar!.startsWith('http')
                     ? _contactAvatar!
                     : '${AppConfig.apiUrl}/storage/${_contactAvatar}')
                 : null,
-            child: _contactAvatar == null ||
-                    _contactAvatar!.contains('via.placeholder.com') ||
-                    _contactAvatar!.contains('placeholder.com') ||
-                    _contactAvatar!.contains('placehold.it')
+            child: _contactAvatar == null
                 ? Text(
                     _contactFullName?.substring(0, 1).toUpperCase() ?? '?',
                     style: const TextStyle(
