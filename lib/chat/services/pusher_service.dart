@@ -1,22 +1,24 @@
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:zonix/chat/models/message.dart';
+import 'package:http/http.dart' as http;
 
 /// Servicio de Pusher Channels para chat en tiempo real
-/// 
+///
 /// Maneja conexión WebSocket con Pusher Cloud para:
 /// - Mensajes instantáneos (<100ms)
 /// - Typing indicators
 /// - Online/Offline status
-/// 
+///
 /// Con fallback automático a HTTP Polling si falla la conexión
 class PusherService {
   PusherChannelsFlutter? _pusher;
   String? _currentChannelName;
   bool _isConnected = false;
   bool _isInitialized = false;
-  
+
   // Callbacks
   Function(Message)? _onMessage;
   Function(int userId, String userName)? _onTypingStarted;
@@ -40,8 +42,6 @@ class PusherService {
       // Obtener credenciales de .env
       final pusherKey = dotenv.env['PUSHER_APP_KEY'] ?? '';
       final pusherCluster = dotenv.env['PUSHER_APP_CLUSTER'] ?? 'sa1';
-      final authEndpoint = dotenv.env['PUSHER_AUTH_ENDPOINT'] ?? 
-          'http://192.168.27.12:8000/broadcasting/auth';
 
       if (pusherKey.isEmpty) {
         print('❌ PUSHER_APP_KEY no configurada en .env');
@@ -49,7 +49,7 @@ class PusherService {
       }
 
       _pusher = PusherChannelsFlutter.getInstance();
-      
+
       await _pusher!.init(
         apiKey: pusherKey,
         cluster: pusherCluster,
@@ -61,7 +61,6 @@ class PusherService {
         onDecryptionFailure: _handleDecryptionFailure,
         onMemberAdded: _handleMemberAdded,
         onMemberRemoved: _handleMemberRemoved,
-        onAuthorizer: _handleAuthorizer,
       );
 
       await _pusher!.connect();
@@ -93,11 +92,13 @@ class PusherService {
       _onTypingStopped = onTypingStopped;
       _onConnectionChange = onConnectionChange;
 
-      final channelName = 'private-conversation.$conversationId';
+      final channelName =
+          'conversation.$conversationId'; // ✅ Canal público (sin 'private-')
       await _pusher!.subscribe(channelName: channelName);
       _currentChannelName = channelName;
 
-      print('✅ PusherService: Suscrito a canal $channelName');
+      print('✅ PusherService: Suscrito a canal público $channelName');
+      print('📡 Eventos se manejan en onEvent global (línea 57)');
       return true;
     } catch (e) {
       print('❌ Error suscribiendo a canal: $e');
@@ -119,11 +120,12 @@ class PusherService {
   }
 
   /// Manejar cambios de estado de conexión
-  void _handleConnectionStateChange(String currentState, String? previousState) {
+  void _handleConnectionStateChange(
+      String currentState, String? previousState) {
     print('🔄 Pusher connection: $previousState → $currentState');
 
     _isConnected = currentState == 'CONNECTED';
-    
+
     if (_onConnectionChange != null) {
       _onConnectionChange!(_isConnected);
     }
@@ -132,14 +134,31 @@ class PusherService {
   /// Manejar eventos recibidos
   void _handleEvent(PusherEvent event) {
     print('📨 Pusher event: ${event.eventName} en ${event.channelName}');
+    print('📦 Datos completos del evento: ${event.data}');
 
     try {
-      final data = event.data;
+      // Algunos SDKs devuelven data como String (JSON) o como Map dinámico
+      final dynamic raw = event.data;
+      final Map<String, dynamic> data = raw == null
+          ? <String, dynamic>{}
+          : (raw is String
+              ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
+              : Map<String, dynamic>.from(raw as Map));
 
       switch (event.eventName) {
         case 'MessageSent':
-          if (_onMessage != null && data != null) {
-            final messageData = data['message'];
+          if (_onMessage != null && data.isNotEmpty) {
+            final int conversationId =
+                int.tryParse((data['conversation_id'] ?? '').toString()) ?? 0;
+
+            final dynamic payload = data['message'] ?? data;
+            final Map<String, dynamic> messageData = payload is String
+                ? Map<String, dynamic>.from(jsonDecode(payload) as Map)
+                : Map<String, dynamic>.from(payload as Map);
+
+            // Asegurar conversation_id en el payload para el modelo
+            messageData['conversation_id'] ??= conversationId;
+
             final message = Message.fromJson(messageData);
             _onMessage!(message);
             print('✅ Mensaje recibido via Pusher: ${message.id}');
@@ -147,17 +166,19 @@ class PusherService {
           break;
 
         case 'TypingStarted':
-          if (_onTypingStarted != null && data != null) {
-            final userId = data['user_id'] as int;
-            final userName = data['user_name'] as String;
+          if (_onTypingStarted != null && data.isNotEmpty) {
+            final int userId =
+                int.tryParse((data['user_id'] ?? '').toString()) ?? 0;
+            final String userName = (data['user_name'] ?? '').toString();
             _onTypingStarted!(userId, userName);
             print('⌨️ Usuario $userName está escribiendo...');
           }
           break;
 
         case 'TypingStopped':
-          if (_onTypingStopped != null && data != null) {
-            final userId = data['user_id'] as int;
+          if (_onTypingStopped != null && data.isNotEmpty) {
+            final int userId =
+                int.tryParse((data['user_id'] ?? '').toString()) ?? 0;
             _onTypingStopped!(userId);
             print('⌨️ Usuario $userId dejó de escribir');
           }
@@ -175,7 +196,7 @@ class PusherService {
   void _handleError(String message, int? code, dynamic e) {
     print('❌ Pusher error: $message (code: $code)');
     _isConnected = false;
-    
+
     if (_onConnectionChange != null) {
       _onConnectionChange!(false);
     }
@@ -206,37 +227,6 @@ class PusherService {
     print('👤 Miembro removido: ${member.userId} de $channelName');
   }
 
-  /// Autorizador para canales privados
-  dynamic _handleAuthorizer(String channelName, String socketId, dynamic options) async {
-    print('🔐 PusherService: Autorizando canal $channelName con socketId $socketId');
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'auth_token');
-      
-      if (token == null) {
-        print('❌ No hay token de autenticación');
-        return null;
-      }
-
-      final authEndpoint = dotenv.env['PUSHER_AUTH_ENDPOINT'] ?? 
-          'http://192.168.27.12:8000/broadcasting/auth';
-
-      // Pusher espera que retornemos las credenciales de autenticación
-      // Laravel las generará en /broadcasting/auth
-      return {
-        'auth_endpoint': authEndpoint,
-        'auth_headers': {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      };
-    } catch (e) {
-      print('❌ Error en autorizador: $e');
-      return null;
-    }
-  }
-
   /// Desconectar
   Future<void> disconnect() async {
     try {
@@ -259,4 +249,3 @@ class PusherService {
     _onConnectionChange = null;
   }
 }
-

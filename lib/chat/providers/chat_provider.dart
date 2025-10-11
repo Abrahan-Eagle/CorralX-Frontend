@@ -9,14 +9,14 @@ import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obt
 
 /// Provider global para gestión del chat
 /// Maneja conversaciones, mensajes, HTTP Polling y notificaciones
-/// 
+///
 /// MVP: Usa HTTP Polling en vez de WebSocket para evitar problemas
 /// de autenticación de canales privados con Laravel Echo Server
 class ChatProvider extends ChangeNotifier {
   // ============================================
   // ESTADO
   // ============================================
-  
+
   /// Referencia al ProfileProvider para obtener el profileId actual
   ProfileProvider? _profileProvider;
 
@@ -49,22 +49,21 @@ class ChatProvider extends ChangeNotifier {
 
   /// Servicio de Pusher (principal - tiempo real)
   final PusherService _pusherService = PusherService();
-  
+
   /// Servicio de Polling (fallback si Pusher falla)
   final PollingService _pollingService = PollingService();
 
   /// ID de conversación actualmente abierta (para marcar como leído automático)
   int? _activeConversationId;
-  
+
   /// Indicador de servicio activo
   bool _isUsingPusher = false;
   bool get isUsingPusher => _isUsingPusher;
   bool get isUsingPolling => !_isUsingPusher;
-  
+
   /// Estado de conexión
-  bool get isConnected => _isUsingPusher 
-      ? _pusherService.isConnected 
-      : _pollingService.isPolling;
+  bool get isConnected =>
+      _isUsingPusher ? _pusherService.isConnected : _pollingService.isPolling;
 
   // ============================================
   // INICIALIZACIÓN
@@ -253,7 +252,8 @@ class ChatProvider extends ChangeNotifier {
   /// ENVIAR mensaje con optimistic update
   Future<void> sendMessage(int conversationId, String content) async {
     print('📤 ChatProvider.sendMessage - ConvID: $conversationId');
-    print('💬 Contenido: ${content.substring(0, content.length > 50 ? 50 : content.length)}...');
+    print(
+        '💬 Contenido: ${content.substring(0, content.length > 50 ? 50 : content.length)}...');
 
     _isSending = true;
     notifyListeners();
@@ -261,12 +261,14 @@ class ChatProvider extends ChangeNotifier {
     try {
       // 1. Optimistic update - Agregar mensaje localmente
       final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
-      final currentProfileId = _profileProvider?.myProfile?.id ?? 0; // ✅ Obtener profileId real
-      
+      final currentProfileId =
+          _profileProvider?.myProfile?.id ?? 0; // ✅ Obtener profileId real
+
       final tempMessage = Message(
         id: tempId,
         conversationId: conversationId,
-        senderId: currentProfileId, // ✅ Usar profileId real para alineación correcta
+        senderId:
+            currentProfileId, // ✅ Usar profileId real para alineación correcta
         content: content,
         type: MessageType.text,
         status: MessageStatus.sending,
@@ -284,14 +286,27 @@ class ChatProvider extends ChangeNotifier {
       print('🔄 Optimistic: Mensaje agregado localmente');
 
       // 2. Enviar al servidor vía HTTP
-      final realMessage = await ChatService.sendMessage(conversationId, content);
+      final realMessage =
+          await ChatService.sendMessage(conversationId, content);
 
-      // 3. Reemplazar mensaje temporal con el real
+      // 3. Reemplazar mensaje temporal con el real evitando duplicados
       final messageList = _messagesByConv[conversationId]!;
       final tempIndex = messageList.indexWhere((m) => m.id == tempId);
+      final existingIndexWithReal =
+          messageList.indexWhere((m) => m.id == realMessage.id);
 
-      if (tempIndex != -1) {
-        messageList[tempIndex] = realMessage.copyWith(status: MessageStatus.sent);
+      if (existingIndexWithReal != -1) {
+        // Ya llegó vía Pusher; eliminar el temporal si aún existe
+        if (tempIndex != -1) {
+          messageList.removeAt(tempIndex);
+        }
+      } else if (tempIndex != -1) {
+        // Reemplazar el temporal por el real
+        messageList[tempIndex] =
+            realMessage.copyWith(status: MessageStatus.sent);
+      } else {
+        // Ni temporal ni existente: agregar el real de forma segura
+        messageList.add(realMessage.copyWith(status: MessageStatus.sent));
       }
 
       // 4. Actualizar conversación con último mensaje
@@ -312,7 +327,8 @@ class ChatProvider extends ChangeNotifier {
       if (messageList != null && messageList.isNotEmpty) {
         final lastMessage = messageList.last;
         if (lastMessage.status == MessageStatus.sending) {
-          final failedMessage = lastMessage.copyWith(status: MessageStatus.failed);
+          final failedMessage =
+              lastMessage.copyWith(status: MessageStatus.failed);
           messageList[messageList.length - 1] = failedMessage;
         }
       }
@@ -435,7 +451,8 @@ class ChatProvider extends ChangeNotifier {
   }
 
   /// REINTENTAR envío de mensaje fallido
-  Future<void> retryFailedMessage(int conversationId, Message failedMessage) async {
+  Future<void> retryFailedMessage(
+      int conversationId, Message failedMessage) async {
     print('🔄 Reintentando envío de mensaje: ${failedMessage.id}');
 
     // Remover mensaje fallido
@@ -458,7 +475,7 @@ class ChatProvider extends ChangeNotifier {
 
     if (_isUsingPusher) {
       print('📡 ChatProvider: Suscribiendo a Pusher para conv $conversationId');
-      
+
       try {
         final success = await _pusherService.subscribeToConversation(
           conversationId,
@@ -490,7 +507,8 @@ class ChatProvider extends ChangeNotifier {
         _activatePollingFallback(conversationId);
       }
     } else {
-      print('📡 ChatProvider: Iniciando HTTP Polling para conv $conversationId');
+      print(
+          '📡 ChatProvider: Iniciando HTTP Polling para conv $conversationId');
       _activatePollingFallback(conversationId);
     }
   }
@@ -510,24 +528,24 @@ class ChatProvider extends ChangeNotifier {
   /// DESUSCRIBIRSE (detener polling/pusher)
   void unsubscribeFromConversation(int conversationId) {
     print('🛑 ChatProvider: Desuscribiendo de conv $conversationId');
-    
+
     if (_isUsingPusher) {
       _pusherService.unsubscribe();
     }
-    
+
     _pollingService.stopPolling();
     _activeConversationId = null;
   }
-  
+
   /// Manejar mensaje recibido via Pusher
   void _handlePusherMessage(int conversationId, Message message) {
     print('📨 Pusher: Mensaje recibido - ID ${message.id}');
-    
+
     final currentMessages = _messagesByConv[conversationId] ?? [];
-    
+
     // Verificar si el mensaje ya existe (evitar duplicados)
     final exists = currentMessages.any((m) => m.id == message.id);
-    
+
     if (!exists) {
       currentMessages.add(message);
       currentMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
@@ -536,69 +554,71 @@ class ChatProvider extends ChangeNotifier {
       print('✅ Mensaje agregado via Pusher');
     }
   }
-  
+
   /// Manejar typing started via Pusher
   void _handleTypingStarted(int conversationId, int userId) {
     print('⌨️ Pusher: Usuario $userId está escribiendo');
-    
+
     _typingUsers[conversationId] ??= {};
     _typingUsers[conversationId]!.add(userId);
     notifyListeners();
   }
-  
+
   /// Manejar typing stopped via Pusher
   void _handleTypingStopped(int conversationId, int userId) {
     print('⌨️ Pusher: Usuario $userId dejó de escribir');
-    
+
     _typingUsers[conversationId]?.remove(userId);
     notifyListeners();
   }
-  
+
   /// Manejar actualización de polling
   void _handlePollingUpdate(int conversationId, List<Message> messages) {
     print('📥 Polling: Actualización recibida - ${messages.length} mensajes');
-    
+
     // ✅ MERGE INTELIGENTE: Preservar mensajes optimistas
     final currentMessages = _messagesByConv[conversationId] ?? [];
-    
+
     // 1. Extraer mensajes optimistas (aún enviando)
     final optimisticMessages = currentMessages
-        .where((m) => m.status == MessageStatus.sending && m.id.toString().startsWith('temp-'))
+        .where((m) =>
+            m.status == MessageStatus.sending &&
+            m.id.toString().startsWith('temp-'))
         .toList();
-    
+
     // 2. Crear mapa de mensajes del servidor por ID
     final serverMessagesMap = {for (var msg in messages) msg.id: msg};
-    
+
     // 3. Actualizar o agregar mensajes del servidor
     final updatedMessages = <Message>[];
-    
+
     // Agregar todos los mensajes del servidor
     updatedMessages.addAll(messages);
-    
+
     // Agregar mensajes optimistas que NO están en el servidor aún
     for (final optMsg in optimisticMessages) {
       updatedMessages.add(optMsg);
     }
-    
+
     // 4. Ordenar por fecha (más antiguos primero)
     updatedMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
-    
+
     // 5. Detectar si hay mensajes nuevos
     final previousCount = currentMessages.length;
     final newCount = messages.length;
-    
+
     if (newCount > previousCount) {
       final diff = newCount - previousCount;
       print('📨 $diff mensaje(s) nuevo(s) detectado(s)');
     } else {
       print('💤 Polling: Sin mensajes nuevos');
     }
-    
+
     // 6. Actualizar y notificar
     _messagesByConv[conversationId] = updatedMessages;
     notifyListeners();
   }
-  
+
   /// Forzar actualización inmediata (para pull-to-refresh)
   Future<void> refreshMessages() async {
     print('🔄 ChatProvider: Refresh manual solicitado');
@@ -640,4 +660,3 @@ class ChatProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

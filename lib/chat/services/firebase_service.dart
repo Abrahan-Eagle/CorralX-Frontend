@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Servicio de Firebase Cloud Messaging para notificaciones push
-/// 
+///
 /// Maneja:
 /// - Inicialización de Firebase
 /// - Registro de device token
@@ -17,7 +17,7 @@ class FirebaseService {
   static FirebaseMessaging? _messaging;
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  
+
   static bool _initialized = false;
   static Function(int conversationId)? _onNotificationTap;
 
@@ -71,7 +71,8 @@ class FirebaseService {
 
   /// Configurar notificaciones locales
   static Future<void> _setupLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -134,7 +135,7 @@ class FirebaseService {
   static Future<void> _registerDeviceToken() async {
     try {
       final token = await _messaging!.getToken();
-      
+
       if (token == null) {
         print('⚠️ No se pudo obtener device token');
         return;
@@ -144,7 +145,8 @@ class FirebaseService {
 
       // Enviar token al backend
       const storage = FlutterSecureStorage();
-      final authToken = await storage.read(key: 'auth_token');
+      final authToken =
+          await storage.read(key: 'token'); // ✅ Usar 'token' no 'auth_token'
       final apiUrl = dotenv.env['API_URL_LOCAL'] ?? 'http://192.168.27.12:8000';
 
       if (authToken == null) {
@@ -236,4 +238,3 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Título: ${message.notification?.title}');
   print('Cuerpo: ${message.notification?.body}');
 }
-

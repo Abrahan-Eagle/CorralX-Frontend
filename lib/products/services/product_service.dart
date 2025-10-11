@@ -27,8 +27,16 @@ class ProductService {
 
   // Headers comunes con token de autenticación
   static Future<Map<String, String>> _getHeaders() async {
-    final token = await _storage.read(
-        key: 'token'); // ✅ CORREGIDO: usar 'token' no 'auth_token'
+    String? token;
+    try {
+      token = await _storage.read(
+          key: 'token'); // ✅ CORREGIDO: usar 'token' no 'auth_token'
+    } catch (e) {
+      // En entorno de test, flutter_secure_storage no tiene implementación
+      // Evitamos que rompa y seguimos sin Authorization
+      debugPrint('⚠️ FlutterSecureStorage no disponible en tests: $e');
+      token = null;
+    }
     print(
         '🔑 Token recuperado: ${token != null ? "✅ SI (${token.substring(0, 20)}...)" : "❌ NO"}');
     return {
