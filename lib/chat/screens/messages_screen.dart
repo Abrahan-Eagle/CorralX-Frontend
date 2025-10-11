@@ -57,56 +57,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ),
         centerTitle: true,
         actions: [
-          // Botón de cámara
-          IconButton(
-            icon: Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              // TODO: Implementar cámara rápida
-            },
-          ),
-
-          // Menú de opciones
-          PopupMenuButton<String>(
-            icon: Icon(
-              Icons.more_vert,
-              color: Colors.white,
-            ),
-            onSelected: (value) {
-              switch (value) {
-                case 'new_group':
-                  // TODO: Implementar nuevo grupo
-                  break;
-                case 'settings':
-                  // TODO: Implementar configuración de chat
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'new_group',
-                child: Row(
-                  children: [
-                    Icon(Icons.group_add),
-                    SizedBox(width: 12),
-                    Text('Nuevo grupo'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings),
-                    SizedBox(width: 12),
-                    Text('Configuración'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // Iconos removidos para interfaz minimalista
         ],
       ),
       body: Consumer<ChatProvider>(
