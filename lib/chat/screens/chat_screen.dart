@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
-import 'package:zonix/chat/models/message.dart';
 import 'package:zonix/chat/widgets/message_bubble.dart';
 import 'package:zonix/chat/widgets/chat_input.dart';
 import 'package:zonix/chat/widgets/typing_indicator.dart';
@@ -120,107 +119,113 @@ class _ChatScreenState extends State<ChatScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      appBar: _buildAppBar(theme),
-      body: Consumer2<ChatProvider, ProfileProvider>(
-        builder: (context, chatProvider, profileProvider, child) {
-          final messages = chatProvider.getMessages(widget.conversationId);
-          final isTyping =
-              chatProvider.isTypingInConversation(widget.conversationId);
+      backgroundColor: const Color(0xFF075E54), // Verde WhatsApp
+      appBar: _buildWhatsAppAppBar(theme),
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFECE5DD), // Color de fondo WhatsApp
+        ),
+        child: Consumer2<ChatProvider, ProfileProvider>(
+          builder: (context, chatProvider, profileProvider, child) {
+            final messages = chatProvider.getMessages(widget.conversationId);
+            final isTyping =
+                chatProvider.isTypingInConversation(widget.conversationId);
 
-          // ✅ Obtener el profile ID del usuario actual
-          final currentProfileId = profileProvider.myProfile?.id ?? 0;
+            // ✅ Obtener el profile ID del usuario actual
+            final currentProfileId = profileProvider.myProfile?.id ?? 0;
 
-          return Column(
-            children: [
-              // Indicador de estado de conexión (HTTP Polling)
-              _buildConnectionBanner(theme, chatProvider.isConnected),
+            return Column(
+              children: [
+                // Indicador de estado de conexión (HTTP Polling)
+                _buildConnectionBanner(theme, chatProvider.isConnected),
 
-              // Lista de mensajes
-              Expanded(
-                child: messages.isEmpty
-                    ? _buildEmptyState(theme)
-                    : ListView.builder(
-                        controller: _scrollController,
-                        reverse: true, // Mensajes más recientes abajo
-                        padding: const EdgeInsets.all(16),
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          // Invertir orden para reverse: true
-                          final message = messages[messages.length - 1 - index];
-                          final isOwnMessage = message.isOwnMessage(
-                              currentProfileId); // ✅ Usar el ID real del perfil
+                // Lista de mensajes
+                Expanded(
+                  child: messages.isEmpty
+                      ? _buildEmptyState(theme)
+                      : ListView.builder(
+                          controller: _scrollController,
+                          reverse: true, // Mensajes más recientes abajo
+                          padding: const EdgeInsets.all(16),
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            // Invertir orden para reverse: true
+                            final message =
+                                messages[messages.length - 1 - index];
+                            final isOwnMessage = message.isOwnMessage(
+                                currentProfileId); // ✅ Usar el ID real del perfil
 
-                          // Separador de fecha si cambia el día
-                          Widget? dateSeparator;
-                          if (index < messages.length - 1) {
-                            final nextMessage =
-                                messages[messages.length - 2 - index];
-                            if (!_isSameDay(
-                                message.sentAt, nextMessage.sentAt)) {
+                            // Separador de fecha si cambia el día
+                            Widget? dateSeparator;
+                            if (index < messages.length - 1) {
+                              final nextMessage =
+                                  messages[messages.length - 2 - index];
+                              if (!_isSameDay(
+                                  message.sentAt, nextMessage.sentAt)) {
+                                dateSeparator =
+                                    _buildDateSeparator(theme, message.sentAt);
+                              }
+                            } else if (index == messages.length - 1) {
+                              // Primer mensaje siempre tiene separador
                               dateSeparator =
                                   _buildDateSeparator(theme, message.sentAt);
                             }
-                          } else if (index == messages.length - 1) {
-                            // Primer mensaje siempre tiene separador
-                            dateSeparator =
-                                _buildDateSeparator(theme, message.sentAt);
-                          }
 
-                          return Column(
-                            children: [
-                              if (dateSeparator != null) dateSeparator,
-                              MessageBubble(
-                                message: message,
-                                isOwnMessage: isOwnMessage,
-                                onRetry: () async {
-                                  await chatProvider.retryFailedMessage(
-                                    widget.conversationId,
-                                    message,
-                                  );
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-              ),
-
-              // Typing indicator (solo con Pusher activo)
-              if (chatProvider.isUsingPusher && isTyping)
-                const Padding(
-                  padding: EdgeInsets.only(left: 16, bottom: 8),
-                  child: TypingIndicator(),
+                            return Column(
+                              children: [
+                                if (dateSeparator != null) dateSeparator,
+                                MessageBubble(
+                                  message: message,
+                                  isOwnMessage: isOwnMessage,
+                                  onRetry: () async {
+                                    await chatProvider.retryFailedMessage(
+                                      widget.conversationId,
+                                      message,
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                 ),
 
-              // Input de mensaje
-              ChatInput(
-                controller: _textController,
-                conversationId: widget.conversationId,
-                onSend: _handleSendMessage,
-              ),
-            ],
-          );
-        },
+                // Typing indicator (solo con Pusher activo)
+                if (chatProvider.isUsingPusher && isTyping)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 16, bottom: 8),
+                    child: TypingIndicator(),
+                  ),
+
+                // Input de mensaje
+                ChatInput(
+                  controller: _textController,
+                  conversationId: widget.conversationId,
+                  onSend: _handleSendMessage,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  /// AppBar con info del contacto
-  PreferredSizeWidget _buildAppBar(ThemeData theme) {
+  /// AppBar estilo WhatsApp
+  PreferredSizeWidget _buildWhatsAppAppBar(ThemeData theme) {
     return AppBar(
-      backgroundColor: theme.colorScheme.surface,
-      elevation: 1,
+      backgroundColor: const Color(0xFF075E54), // Verde WhatsApp
+      elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
         onPressed: () => Navigator.pop(context),
       ),
       title: Row(
         children: [
-          // Avatar pequeño
+          // Avatar del contacto
           CircleAvatar(
             radius: 18,
-            backgroundColor: theme.colorScheme.primaryContainer,
+            backgroundColor: Colors.grey[300],
             backgroundImage: widget.contactAvatar != null
                 ? NetworkImage(
                     '${AppConfig.apiUrl}/storage/${widget.contactAvatar}')
@@ -228,10 +233,10 @@ class _ChatScreenState extends State<ChatScreen> {
             child: widget.contactAvatar == null
                 ? Text(
                     widget.contactName?.substring(0, 1).toUpperCase() ?? '?',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimaryContainer,
+                      color: Colors.black54,
                     ),
                   )
                 : null,
@@ -249,10 +254,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     Flexible(
                       child: Text(
                         widget.contactName ?? 'Usuario',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
+                          color: Colors.white,
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
@@ -262,36 +267,30 @@ class _ChatScreenState extends State<ChatScreen> {
                     // Icono verificado
                     if (widget.contactIsVerified == true) ...[
                       const SizedBox(width: 4),
-                      Icon(
+                      const Icon(
                         Icons.verified,
                         size: 14,
-                        color: theme.colorScheme.primary,
+                        color: Colors.blue,
                       ),
                     ],
                   ],
                 ),
 
-                // Estado de conexión y tipo de servicio
+                // Estado de conexión
                 Consumer<ChatProvider>(
                   builder: (context, chatProvider, child) {
                     final statusText = chatProvider.isUsingPusher
-                        ? 'Tiempo real ⚡'
+                        ? 'En línea ⚡'
                         : chatProvider.isConnected
                             ? 'En línea'
                             : 'Sin conexión';
-                    
-                    final statusColor = chatProvider.isUsingPusher
-                        ? Colors.green
-                        : _getConnectionColor(theme, chatProvider.isConnected);
-                    
+
                     return Text(
                       statusText,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: statusColor,
-                        fontWeight: chatProvider.isUsingPusher 
-                            ? FontWeight.bold 
-                            : FontWeight.normal,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.normal,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -306,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
       actions: [
         // Menú de opciones
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurface),
+          icon: const Icon(Icons.more_vert, color: Colors.white),
           onSelected: (value) {
             switch (value) {
               case 'delete':
@@ -504,15 +503,5 @@ class _ChatScreenState extends State<ChatScreen> {
         Navigator.pop(context);
       }
     }
-  }
-
-  /// Texto de estado de conexión (HTTP Polling)
-  String _getConnectionText(bool isConnected) {
-    return isConnected ? 'En línea' : 'Sin conexión';
-  }
-
-  /// Color de estado de conexión (HTTP Polling)
-  Color _getConnectionColor(ThemeData theme, bool isConnected) {
-    return isConnected ? Colors.green : Colors.red;
   }
 }

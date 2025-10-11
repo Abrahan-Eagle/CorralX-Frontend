@@ -86,90 +86,86 @@ class _ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         final isSending = chatProvider.isSending;
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: theme.colorScheme.outline.withOpacity(0.2),
-              ),
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: const BoxDecoration(
+            color: Color(0xFFECE5DD), // Color de fondo WhatsApp
           ),
           child: SafeArea(
             child: Row(
               children: [
                 // TextField
                 Expanded(
-                  child: TextField(
-                    controller: widget.controller,
-                    enabled: !isSending,
-                    maxLines: null,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
-                      hintStyle: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: theme.colorScheme.onSurface,
+                    child: TextField(
+                      controller: widget.controller,
+                      enabled: !isSending,
+                      maxLines: null,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        hintText: 'Mensaje',
+                        hintStyle: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                 ),
 
                 const SizedBox(width: 8),
 
-                // Botón enviar
-                Container(
-                  decoration: BoxDecoration(
-                    color: _hasText && !isSending
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outline.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: _hasText && !isSending
-                        ? () {
-                            final text = widget.controller.text;
-                            widget.onSend(text);
-                            _stopTyping(); // Detener typing al enviar
-                          }
-                        : null,
-                    icon: isSending
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: theme.colorScheme.onPrimary,
+                // Botón enviar (solo cuando hay texto)
+                if (_hasText || isSending)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _hasText && !isSending
+                          ? const Color(0xFF075E54) // Verde WhatsApp
+                          : Colors.grey.shade300,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: _hasText && !isSending
+                          ? () {
+                              final text = widget.controller.text;
+                              widget.onSend(text);
+                              _stopTyping(); // Detener typing al enviar
+                            }
+                          : null,
+                      icon: isSending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.send,
+                              color: Colors.white,
+                              size: 24,
                             ),
-                          )
-                        : Icon(
-                            Icons.send,
-                            color: _hasText
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-                          ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -178,4 +174,3 @@ class _ChatInputState extends State<ChatInput> {
     );
   }
 }
-

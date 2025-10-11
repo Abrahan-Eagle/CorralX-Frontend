@@ -17,27 +17,33 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Align(
       alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(
-          left: isOwnMessage ? 64 : 0,
-          right: isOwnMessage ? 0 : 64,
-          bottom: 8,
+          left: isOwnMessage ? 64 : 8,
+          right: isOwnMessage ? 8 : 64,
+          bottom: 2,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isOwnMessage
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.surfaceVariant,
+              ? const Color(
+                  0xFFDCF8C6) // Verde claro WhatsApp (mensajes enviados)
+              : Colors.white, // Blanco (mensajes recibidos)
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isOwnMessage ? 16 : 4),
-            bottomRight: Radius.circular(isOwnMessage ? 4 : 16),
+            topLeft: const Radius.circular(8),
+            topRight: const Radius.circular(8),
+            bottomLeft: Radius.circular(isOwnMessage ? 8 : 0),
+            bottomRight: Radius.circular(isOwnMessage ? 0 : 8),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,11 +51,10 @@ class MessageBubble extends StatelessWidget {
             // Contenido del mensaje
             Text(
               message.content,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 15,
-                color: isOwnMessage
-                    ? theme.colorScheme.onPrimaryContainer
-                    : theme.colorScheme.onSurfaceVariant,
+                color: Colors.black87,
+                height: 1.2,
               ),
             ),
 
@@ -61,18 +66,16 @@ class MessageBubble extends StatelessWidget {
               children: [
                 Text(
                   _formatTime(message.sentAt),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
-                    color: isOwnMessage
-                        ? theme.colorScheme.onPrimaryContainer.withOpacity(0.6)
-                        : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    color: Colors.black54,
                   ),
                 ),
 
                 const SizedBox(width: 4),
 
                 // Indicador de estado (solo mensajes propios)
-                if (isOwnMessage) _buildStatusIndicator(theme),
+                if (isOwnMessage) _buildWhatsAppStatusIndicator(),
               ],
             ),
           ],
@@ -81,58 +84,58 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  /// Indicador de estado del mensaje
-  Widget _buildStatusIndicator(ThemeData theme) {
+  /// Indicador de estado estilo WhatsApp
+  Widget _buildWhatsAppStatusIndicator() {
     switch (message.status) {
       case MessageStatus.sending:
-        return SizedBox(
+        return const SizedBox(
           width: 12,
           height: 12,
           child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
+            strokeWidth: 1.5,
+            color: Colors.black54,
           ),
         );
 
       case MessageStatus.sent:
-        return Icon(
+        return const Icon(
           Icons.check,
           size: 14,
-          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
+          color: Colors.black54,
         );
 
       case MessageStatus.delivered:
-        return Icon(
+        return const Icon(
           Icons.done_all,
           size: 14,
-          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
+          color: Colors.black54,
         );
 
       case MessageStatus.read:
-        return Icon(
+        return const Icon(
           Icons.done_all,
           size: 14,
-          color: theme.colorScheme.primary,
+          color: Color(0xFF4FC3F7), // Azul de WhatsApp
         );
 
       case MessageStatus.failed:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 14,
-              color: theme.colorScheme.error,
+              color: Colors.red,
             ),
             if (onRetry != null) ...[
               const SizedBox(width: 4),
               GestureDetector(
                 onTap: onRetry,
-                child: Text(
+                child: const Text(
                   'Reintentar',
                   style: TextStyle(
                     fontSize: 11,
-                    color: theme.colorScheme.error,
+                    color: Colors.red,
                     fontWeight: FontWeight.w600,
                     decoration: TextDecoration.underline,
                   ),
