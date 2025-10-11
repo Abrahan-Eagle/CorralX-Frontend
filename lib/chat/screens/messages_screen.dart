@@ -5,8 +5,8 @@ import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:zonix/chat/screens/chat_screen.dart';
 import 'package:zonix/chat/widgets/conversation_card.dart';
 
-/// Pantalla de lista de conversaciones
-/// Muestra todas las conversaciones del usuario con badges de no leídos
+/// Pantalla de lista de conversaciones estilo WhatsApp
+/// Muestra todas las conversaciones del usuario con diseño exacto de WhatsApp
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
@@ -18,16 +18,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Configurar timeago en español
     timeago.setLocaleMessages('es', timeago.EsMessages());
-    
+
     // Cargar conversaciones al entrar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = context.read<ChatProvider>();
       chatProvider.loadConversations();
     });
-    
+
     print('🔄 MessagesScreen: Inicializado');
   }
 
@@ -39,49 +39,73 @@ class _MessagesScreenState extends State<MessagesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: isDarkMode ? const Color(0xFF0B141A) : Colors.white,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor:
+            isDarkMode ? const Color(0xFF2A2F32) : const Color(0xFF075E54),
         elevation: 0,
         title: Text(
           'Mensajes',
           style: TextStyle(
-            fontSize: isTablet ? 24 : 20,
-            fontWeight: FontWeight.w500,
-            color: theme.colorScheme.onBackground,
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
         actions: [
-          // Badge de no leídos total
-          Consumer<ChatProvider>(
-            builder: (context, chatProvider, child) {
-              if (chatProvider.unreadCount > 0) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.error,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${chatProvider.unreadCount}',
-                      style: TextStyle(
-                        color: theme.colorScheme.onError,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
+          // Botón de cámara
+          IconButton(
+            icon: Icon(
+              Icons.camera_alt_outlined,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              // TODO: Implementar cámara rápida
             },
+          ),
+
+          // Menú de opciones
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert,
+              color: Colors.white,
+            ),
+            onSelected: (value) {
+              switch (value) {
+                case 'new_group':
+                  // TODO: Implementar nuevo grupo
+                  break;
+                case 'settings':
+                  // TODO: Implementar configuración de chat
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'new_group',
+                child: Row(
+                  children: [
+                    Icon(Icons.group_add),
+                    SizedBox(width: 12),
+                    Text('Nuevo grupo'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings),
+                    SizedBox(width: 12),
+                    Text('Configuración'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -94,13 +118,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
+                    color: const Color(0xFF075E54),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Cargando conversaciones...',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
                       fontSize: 14,
                     ),
                   ),
@@ -112,34 +136,45 @@ class _MessagesScreenState extends State<MessagesScreen> {
           // ERROR STATE
           if (chatProvider.errorMessage != null) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    chatProvider.errorMessage!,
-                    style: TextStyle(
-                      color: theme.colorScheme.error,
-                      fontSize: 16,
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: _handleRefresh,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error al cargar conversaciones',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      chatProvider.errorMessage!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _handleRefresh,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF075E54),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -155,7 +190,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     Icon(
                       Icons.chat_bubble_outline,
                       size: 80,
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      color: isDarkMode ? Colors.white38 : Colors.black26,
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -163,7 +198,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -171,7 +206,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       '¡Empieza a contactar vendedores desde una publicación!',
                       style: TextStyle(
                         fontSize: 14,
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        color: isDarkMode ? Colors.white54 : Colors.black38,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -181,15 +216,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
             );
           }
 
-          // LISTA DE CONVERSACIONES
+          // LISTA DE CONVERSACIONES - Estilo WhatsApp
           return RefreshIndicator(
             onRefresh: _handleRefresh,
-            color: theme.colorScheme.primary,
+            color: const Color(0xFF075E54),
+            backgroundColor:
+                isDarkMode ? const Color(0xFF2A2F32) : Colors.white,
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(
-                horizontal: isTablet ? 20 : 0,
-                vertical: isTablet ? 16 : 8,
-              ),
+              padding: EdgeInsets.zero,
               itemCount: chatProvider.conversations.length,
               itemBuilder: (context, index) {
                 final conversation = chatProvider.conversations[index];
@@ -202,21 +236,37 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     return await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Eliminar conversación'),
-                        content: const Text(
+                        backgroundColor:
+                            isDarkMode ? const Color(0xFF2A2F32) : Colors.white,
+                        title: Text(
+                          'Eliminar conversación',
+                          style: TextStyle(
+                              color:
+                                  isDarkMode ? Colors.white : Colors.black87),
+                        ),
+                        content: Text(
                           '¿Estás seguro de que deseas eliminar esta conversación? '
                           'No podrás recuperar los mensajes.',
+                          style: TextStyle(
+                              color:
+                                  isDarkMode ? Colors.white70 : Colors.black54),
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancelar'),
+                            child: Text(
+                              'Cancelar',
+                              style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black54),
+                            ),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: Text(
+                            child: const Text(
                               'Eliminar',
-                              style: TextStyle(color: theme.colorScheme.error),
+                              style: TextStyle(color: Colors.red),
                             ),
                           ),
                         ],
@@ -224,26 +274,31 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     );
                   },
                   onDismissed: (direction) {
+                    final chatProvider = context.read<ChatProvider>();
                     chatProvider.deleteConversation(conversation.id);
-                    
+
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Conversación eliminada'),
-                        duration: Duration(seconds: 2),
+                      SnackBar(
+                        content: const Text('Conversación eliminada'),
+                        backgroundColor: isDarkMode
+                            ? const Color(0xFF2A2F32)
+                            : Colors.black87,
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   },
                   background: Container(
-                    color: theme.colorScheme.error,
+                    color: Colors.red,
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 20),
-                    child: Icon(
+                    child: const Icon(
                       Icons.delete,
-                      color: theme.colorScheme.onError,
+                      color: Colors.white,
                     ),
                   ),
                   child: ConversationCard(
                     conversation: conversation,
+                    isDarkMode: isDarkMode,
                     onTap: () {
                       // Navegar a ChatScreen
                       Navigator.push(

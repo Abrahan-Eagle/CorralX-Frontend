@@ -3,84 +3,70 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:zonix/chat/models/conversation.dart';
 import 'package:zonix/config/app_config.dart';
 
-/// Widget Card para una conversación en la lista de mensajes
+/// Widget Card para una conversación estilo WhatsApp
+/// Diseño exacto de WhatsApp con avatares circulares, estados online y badges
 class ConversationCard extends StatelessWidget {
   final Conversation conversation;
   final VoidCallback onTap;
+  final bool isDarkMode;
 
   const ConversationCard({
     super.key,
     required this.conversation,
     required this.onTap,
+    required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-
     final otherParticipant = conversation.otherParticipant;
     final hasUnread = conversation.unreadCount > 0;
 
     return InkWell(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: isTablet ? 0 : 16,
-          vertical: isTablet ? 6 : 4,
-        ),
         decoration: BoxDecoration(
-          color: hasUnread
-              ? theme.colorScheme.primaryContainer.withOpacity(0.3)
-              : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-          border: Border.all(
-            color: hasUnread
-                ? theme.colorScheme.primary.withOpacity(0.3)
-                : theme.colorScheme.outline.withOpacity(0.2),
+          color: isDarkMode ? const Color(0xFF2A2F32) : Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: isDarkMode
+                  ? const Color(0xFF3B3B3B)
+                  : const Color(0xFFE0E0E0),
+              width: 0.5,
+            ),
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(isTablet ? 16 : 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              // AVATAR
+              // AVATAR CIRCULAR - Estilo WhatsApp
               Stack(
                 children: [
                   CircleAvatar(
-                    radius: isTablet ? 28 : 24,
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    backgroundImage: otherParticipant?.avatar != null
-                        ? NetworkImage(
-                            '${AppConfig.apiUrl}/storage/${otherParticipant!.avatar}',
-                          )
-                        : null,
-                    child: otherParticipant?.avatar == null
-                        ? Text(
-                            otherParticipant?.name.substring(0, 1).toUpperCase() ?? '?',
-                            style: TextStyle(
-                              fontSize: isTablet ? 20 : 16,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          )
-                        : null,
+                    radius: 28,
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF3B3B3B)
+                        : const Color(0xFFE0E0E0),
+                    backgroundImage: _getAvatarImage(otherParticipant),
+                    child: _getAvatarPlaceholder(otherParticipant),
                   ),
-                  
-                  // Indicador online
+
+                  // Indicador online - Punto verde pequeño
                   if (otherParticipant?.isOnline == true)
                     Positioned(
                       right: 0,
                       bottom: 0,
                       child: Container(
-                        width: 14,
-                        height: 14,
+                        width: 16,
+                        height: 16,
                         decoration: BoxDecoration(
                           color: Colors.green,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: theme.colorScheme.surface,
+                            color: isDarkMode
+                                ? const Color(0xFF2A2F32)
+                                : Colors.white,
                             width: 2,
                           ),
                         ),
@@ -89,111 +75,117 @@ class ConversationCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
 
-              // CONTENIDO
+              // CONTENIDO PRINCIPAL
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Nombre + Verificado
+                    // Nombre + Verificado + Timestamp
                     Row(
                       children: [
+                        // Nombre del contacto
                         Expanded(
                           child: Text(
-                            otherParticipant?.name ?? 'Usuario',
+                            _getContactName(otherParticipant),
                             style: TextStyle(
-                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
-                              fontSize: isTablet ? 18 : 16,
-                              color: theme.colorScheme.onSurface,
+                              fontWeight:
+                                  hasUnread ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 17,
+                              color: isDarkMode ? Colors.white : Colors.black87,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        
+
                         // Icono verificado
                         if (otherParticipant?.isVerified == true) ...[
                           const SizedBox(width: 4),
                           Icon(
                             Icons.verified,
-                            size: 16,
-                            color: theme.colorScheme.primary,
+                            size: 18,
+                            color: Colors.blue,
                           ),
+                          const SizedBox(width: 8),
                         ],
+
+                        // Timestamp
+                        Text(
+                          _formatTimestamp(conversation.lastMessageAt),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: hasUnread
+                                ? (isDarkMode ? Colors.white70 : Colors.black54)
+                                : (isDarkMode
+                                    ? Colors.white54
+                                    : Colors.black38),
+                            fontWeight:
+                                hasUnread ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
                       ],
                     ),
 
                     const SizedBox(height: 4),
 
-                    // Último mensaje
-                    Text(
-                      conversation.lastMessage ?? 'Sin mensajes',
-                      style: TextStyle(
-                        color: hasUnread
-                            ? theme.colorScheme.onSurface
-                            : theme.colorScheme.onSurfaceVariant,
-                        fontSize: isTablet ? 16 : 14,
-                        fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    // Último mensaje + Badge de no leídos
+                    Row(
+                      children: [
+                        // Último mensaje
+                        Expanded(
+                          child: Text(
+                            _getLastMessage(conversation),
+                            style: TextStyle(
+                              color: hasUnread
+                                  ? (isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black54)
+                                  : (isDarkMode
+                                      ? Colors.white54
+                                      : Colors.black38),
+                              fontSize: 15,
+                              fontWeight: hasUnread
+                                  ? FontWeight.w500
+                                  : FontWeight.normal,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        // Badge de no leídos - Estilo WhatsApp
+                        if (hasUnread)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF25D366), // Verde WhatsApp
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 20,
+                              minHeight: 20,
+                            ),
+                            child: Text(
+                              '${conversation.unreadCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // TIMESTAMP + BADGE
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Timestamp relativo
-                  Text(
-                    conversation.lastMessageAt != null
-                        ? timeago.format(
-                            conversation.lastMessageAt!,
-                            locale: 'es',
-                          )
-                        : '',
-                    style: TextStyle(
-                      fontSize: isTablet ? 14 : 12,
-                      color: hasUnread
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Badge de no leídos
-                  if (hasUnread)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.error,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 24,
-                      ),
-                      child: Text(
-                        '${conversation.unreadCount}',
-                        style: TextStyle(
-                          color: theme.colorScheme.onError,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                ],
               ),
             ],
           ),
@@ -201,5 +193,77 @@ class ConversationCard extends StatelessWidget {
       ),
     );
   }
-}
 
+  /// Obtener imagen del avatar
+  ImageProvider? _getAvatarImage(ChatParticipant? participant) {
+    if (participant?.avatar != null && participant!.avatar!.isNotEmpty) {
+      // Evitar URLs de placeholder
+      if (participant.avatar!.contains('via.placeholder.com') ||
+          participant.avatar!.contains('placeholder.com') ||
+          participant.avatar!.contains('placehold.it')) {
+        return null;
+      }
+
+      final avatarUrl = participant.avatar!.startsWith('http')
+          ? participant.avatar!
+          : '${AppConfig.apiUrl}/storage/${participant.avatar}';
+      return NetworkImage(avatarUrl);
+    }
+    return null;
+  }
+
+  /// Obtener placeholder del avatar
+  Widget? _getAvatarPlaceholder(ChatParticipant? participant) {
+    if (participant?.avatar == null || participant!.avatar!.isEmpty) {
+      return Text(
+        _getInitials(participant?.name ?? 'U'),
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: isDarkMode ? Colors.white70 : Colors.black54,
+        ),
+      );
+    }
+    return null;
+  }
+
+  /// Obtener iniciales del nombre
+  String _getInitials(String name) {
+    final words = name.trim().split(' ');
+    if (words.isEmpty) return 'U';
+
+    if (words.length == 1) {
+      return words[0].substring(0, 1).toUpperCase();
+    }
+
+    return (words[0].substring(0, 1) + words[1].substring(0, 1)).toUpperCase();
+  }
+
+  /// Obtener nombre del contacto
+  String _getContactName(ChatParticipant? participant) {
+    if (participant?.name != null && participant!.name.isNotEmpty) {
+      return participant.name;
+    }
+    return 'Usuario';
+  }
+
+  /// Obtener último mensaje
+  String _getLastMessage(Conversation conversation) {
+    if (conversation.lastMessage != null &&
+        conversation.lastMessage!.isNotEmpty) {
+      return conversation.lastMessage!;
+    }
+    return 'Sin mensajes';
+  }
+
+  /// Formatear timestamp relativo
+  String _formatTimestamp(DateTime? timestamp) {
+    if (timestamp == null) return '';
+
+    try {
+      return timeago.format(timestamp, locale: 'es');
+    } catch (e) {
+      return '';
+    }
+  }
+}
