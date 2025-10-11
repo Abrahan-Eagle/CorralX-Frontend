@@ -48,7 +48,8 @@ class ChatService {
         throw Exception('No autorizado. Por favor inicia sesión nuevamente.');
       } else {
         print('❌ Error ${response.statusCode}: ${response.body}');
-        throw Exception('Error al obtener conversaciones: ${response.statusCode}');
+        throw Exception(
+            'Error al obtener conversaciones: ${response.statusCode}');
       }
     } catch (e) {
       print('💥 Exception en getConversations: $e');
@@ -108,7 +109,8 @@ class ChatService {
       final baseUrl = AppConfig.apiUrl;
 
       print('📤 ChatService.sendMessage - ConvID: $conversationId');
-      print('💬 Contenido: ${content.substring(0, content.length > 50 ? 50 : content.length)}...');
+      print(
+          '💬 Contenido: ${content.substring(0, content.length > 50 ? 50 : content.length)}...');
 
       if (token == null || token.isEmpty) {
         throw Exception('Token no disponible');
@@ -261,7 +263,8 @@ class ChatService {
       } else if (response.statusCode == 404) {
         throw Exception('Conversación no encontrada');
       } else {
-        throw Exception('Error al eliminar conversación: ${response.statusCode}');
+        throw Exception(
+            'Error al eliminar conversación: ${response.statusCode}');
       }
     } catch (e) {
       print('💥 Exception en deleteConversation: $e');
@@ -283,7 +286,8 @@ class ChatService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/chat/search?query=${Uri.encodeComponent(query)}'),
+        Uri.parse(
+            '$baseUrl/api/chat/search?query=${Uri.encodeComponent(query)}'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -471,5 +475,51 @@ class ChatService {
       return []; // Retornar lista vacía en caso de error
     }
   }
-}
 
+  /// GET /api/profile/{id}
+  /// Obtiene el perfil de un usuario por ID
+  static Future<Map<String, dynamic>> getContactProfile(int profileId) async {
+    try {
+      final token = await storage.read(key: 'token');
+      final baseUrl = AppConfig.apiUrl;
+
+      print('👤 ChatService.getContactProfile iniciado');
+      print('🔧 URL: $baseUrl/api/profile/$profileId');
+      print('🔑 Token: ${token?.substring(0, 20)}...');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Token no disponible. Usuario no autenticado.');
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/profile/$profileId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('📡 Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> profile = json.decode(response.body);
+        print(
+            '✅ Perfil obtenido: ${profile['firstName']} ${profile['lastName']}');
+        return profile;
+      } else if (response.statusCode == 401) {
+        print('❌ Error 401: Token inválido o expirado');
+        throw Exception('No autorizado. Por favor inicia sesión nuevamente.');
+      } else if (response.statusCode == 404) {
+        print('❌ Error 404: Perfil no encontrado');
+        throw Exception('Perfil no encontrado');
+      } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
+        throw Exception('Error al obtener perfil: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('💥 Exception en getContactProfile: $e');
+      rethrow;
+    }
+  }
+}

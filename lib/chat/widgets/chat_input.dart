@@ -86,14 +86,19 @@ class _ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         final isSending = chatProvider.isSending;
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: const BoxDecoration(
-            color: Color(0xFFECE5DD), // Color de fondo WhatsApp
+          decoration: BoxDecoration(
+            color: isDarkMode
+                ? const Color(0xFF2A2F32)
+                : const Color(0xFFECE5DD), // Color de fondo WhatsApp
           ),
           child: SafeArea(
             child: Row(
@@ -102,30 +107,35 @@ class _ChatInputState extends State<ChatInput> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color:
+                          isDarkMode ? const Color(0xFF2A2F32) : Colors.white,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.grey[600]!
+                            : Colors.grey.shade300,
+                      ),
                     ),
                     child: TextField(
                       controller: widget.controller,
                       enabled: !isSending,
                       maxLines: null,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Mensaje',
                         hintStyle: TextStyle(
-                          color: Colors.grey,
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey,
                           fontSize: 15,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: Colors.black87,
+                        color: isDarkMode ? Colors.white : Colors.black87,
                       ),
                     ),
                   ),
@@ -138,8 +148,11 @@ class _ChatInputState extends State<ChatInput> {
                   Container(
                     decoration: BoxDecoration(
                       color: _hasText && !isSending
-                          ? const Color(0xFF075E54) // Verde WhatsApp
-                          : Colors.grey.shade300,
+                          ? const Color(
+                              0xFF075E54) // Verde WhatsApp (igual en ambos modos)
+                          : (isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey.shade300),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(

@@ -639,6 +639,26 @@ class ChatProvider extends ChangeNotifier {
   }
 
   // ============================================
+  // PERFILES DE CONTACTOS
+  // ============================================
+
+  /// Obtener perfil de un contacto por ID
+  Future<dynamic> getContactProfile(int profileId) async {
+    try {
+      print('👤 ChatProvider: Obteniendo perfil del contacto $profileId');
+
+      // Llamar al servicio para obtener el perfil
+      final profile = await ChatService.getContactProfile(profileId);
+
+      print('✅ ChatProvider: Perfil obtenido exitosamente');
+      return profile;
+    } catch (e) {
+      print('❌ ChatProvider: Error obteniendo perfil del contacto: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
   // LIMPIAR Y DISPOSE
   // ============================================
 

@@ -32,6 +32,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   late final ChatProvider _chatProvider; // ✅ Guardar referencia
 
+  // Datos del contacto
+  String? _contactFullName;
+  String? _contactAvatar;
+  bool _contactIsVerified = false;
+  bool _isLoadingContact = true;
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     print('🔄 ChatScreen: Inicializado - ConvID: ${widget.conversationId}');
 
-    // Cargar mensajes y marcar como leído
+    // Cargar datos del contacto y mensajes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = context.read<ChatProvider>();
       final profileProvider = context.read<ProfileProvider>();
@@ -59,6 +65,9 @@ class _ChatScreenState extends State<ChatScreen> {
       if (chatProvider.getMessages(widget.conversationId).isEmpty) {
         chatProvider.loadMessages(widget.conversationId);
       }
+
+      // Cargar datos del contacto
+      _loadContactData();
     });
   }
 
@@ -85,6 +94,62 @@ class _ChatScreenState extends State<ChatScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+  }
+
+  /// Cargar datos del contacto desde la conversación
+  Future<void> _loadContactData() async {
+    try {
+      final chatProvider = context.read<ChatProvider>();
+      final profileProvider = context.read<ProfileProvider>();
+
+      // Obtener la conversación
+      final conversations = chatProvider.conversations;
+      final conversation = conversations.firstWhere(
+        (conv) => conv.id == widget.conversationId,
+        orElse: () => throw Exception('Conversación no encontrada'),
+      );
+
+      // Obtener el ID del otro participante
+      final myProfileId = profileProvider.myProfile?.id;
+      final otherProfileId = conversation.profile1Id == myProfileId
+          ? conversation.profile2Id
+          : conversation.profile1Id;
+
+      // Obtener el perfil del contacto
+      final contactProfile =
+          await chatProvider.getContactProfile(otherProfileId);
+
+      if (mounted) {
+        setState(() {
+          // Construir nombre completo: commercial_name o firstName + lastName
+          // El backend devuelve Map<String, dynamic> en snake_case
+          final commercialName = contactProfile['commercial_name'] as String?;
+          if (commercialName != null && commercialName.isNotEmpty) {
+            _contactFullName = commercialName;
+          } else {
+            final firstName = contactProfile['firstName'] as String? ?? '';
+            final lastName = contactProfile['lastName'] as String? ?? '';
+            _contactFullName = '$firstName $lastName'.trim();
+          }
+
+          _contactAvatar = contactProfile['photo_users'] as String?;
+          _contactIsVerified = contactProfile['is_verified'] as bool? ?? false;
+          _isLoadingContact = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error cargando datos del contacto: $e');
+
+      // Fallback: usar datos del widget
+      if (mounted) {
+        setState(() {
+          _contactFullName = widget.contactName ?? 'Usuario';
+          _contactAvatar = widget.contactAvatar;
+          _contactIsVerified = widget.contactIsVerified ?? false;
+          _isLoadingContact = false;
+        });
+      }
     }
   }
 
@@ -117,13 +182,18 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF075E54), // Verde WhatsApp
-      appBar: _buildWhatsAppAppBar(theme),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF1E2428)
+          : const Color(0xFF075E54), // Verde WhatsApp
+      appBar: _buildWhatsAppAppBar(theme, isDarkMode),
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFECE5DD), // Color de fondo WhatsApp
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? const Color(0xFF0B141A)
+              : const Color(0xFFECE5DD), // Color de fondo WhatsApp
         ),
         child: Consumer2<ChatProvider, ProfileProvider>(
           builder: (context, chatProvider, profileProvider, child) {
@@ -212,9 +282,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// AppBar estilo WhatsApp
-  PreferredSizeWidget _buildWhatsAppAppBar(ThemeData theme) {
+  PreferredSizeWidget _buildWhatsAppAppBar(ThemeData theme, bool isDarkMode) {
     return AppBar(
-      backgroundColor: const Color(0xFF075E54), // Verde WhatsApp
+      backgroundColor: isDarkMode
+          ? const Color(0xFF2A2F32)
+          : const Color(0xFF075E54), // Verde WhatsApp
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -226,13 +298,14 @@ class _ChatScreenState extends State<ChatScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: Colors.grey[300],
-            backgroundImage: widget.contactAvatar != null
-                ? NetworkImage(
-                    '${AppConfig.apiUrl}/storage/${widget.contactAvatar}')
+            backgroundImage: _contactAvatar != null
+                ? NetworkImage(_contactAvatar!.startsWith('http')
+                    ? _contactAvatar!
+                    : '${AppConfig.apiUrl}/storage/${_contactAvatar}')
                 : null,
-            child: widget.contactAvatar == null
+            child: _contactAvatar == null
                 ? Text(
-                    widget.contactName?.substring(0, 1).toUpperCase() ?? '?',
+                    _contactFullName?.substring(0, 1).toUpperCase() ?? '?',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -253,7 +326,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        widget.contactName ?? 'Usuario',
+                        _isLoadingContact
+                            ? 'Cargando...'
+                            : (_contactFullName ?? 'Usuario'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -265,7 +340,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
 
                     // Icono verificado
-                    if (widget.contactIsVerified == true) ...[
+                    if (_contactIsVerified) ...[
                       const SizedBox(width: 4),
                       const Icon(
                         Icons.verified,

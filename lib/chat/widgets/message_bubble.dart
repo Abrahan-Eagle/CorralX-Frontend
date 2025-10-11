@@ -17,6 +17,9 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Align(
       alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -28,9 +31,14 @@ class MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isOwnMessage
-              ? const Color(
-                  0xFFDCF8C6) // Verde claro WhatsApp (mensajes enviados)
-              : Colors.white, // Blanco (mensajes recibidos)
+              ? (isDarkMode
+                  ? const Color(
+                      0xFF056162) // Verde oscuro WhatsApp (modo oscuro)
+                  : const Color(
+                      0xFFDCF8C6)) // Verde claro WhatsApp (modo claro)
+              : (isDarkMode
+                  ? const Color(0xFF2A2F32) // Gris oscuro (modo oscuro)
+                  : Colors.white), // Blanco (modo claro)
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(8),
             topRight: const Radius.circular(8),
@@ -39,7 +47,7 @@ class MessageBubble extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),
@@ -51,9 +59,9 @@ class MessageBubble extends StatelessWidget {
             // Contenido del mensaje
             Text(
               message.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: Colors.black87,
+                color: isDarkMode ? Colors.white : Colors.black87,
                 height: 1.2,
               ),
             ),
@@ -66,16 +74,16 @@ class MessageBubble extends StatelessWidget {
               children: [
                 Text(
                   _formatTime(message.sentAt),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: Colors.black54,
+                    color: isDarkMode ? Colors.grey[400] : Colors.black54,
                   ),
                 ),
 
                 const SizedBox(width: 4),
 
                 // Indicador de estado (solo mensajes propios)
-                if (isOwnMessage) _buildWhatsAppStatusIndicator(),
+                if (isOwnMessage) _buildWhatsAppStatusIndicator(isDarkMode),
               ],
             ),
           ],
@@ -85,37 +93,37 @@ class MessageBubble extends StatelessWidget {
   }
 
   /// Indicador de estado estilo WhatsApp
-  Widget _buildWhatsAppStatusIndicator() {
+  Widget _buildWhatsAppStatusIndicator(bool isDarkMode) {
     switch (message.status) {
       case MessageStatus.sending:
-        return const SizedBox(
+        return SizedBox(
           width: 12,
           height: 12,
           child: CircularProgressIndicator(
             strokeWidth: 1.5,
-            color: Colors.black54,
+            color: isDarkMode ? Colors.grey[400] : Colors.black54,
           ),
         );
 
       case MessageStatus.sent:
-        return const Icon(
+        return Icon(
           Icons.check,
           size: 14,
-          color: Colors.black54,
+          color: isDarkMode ? Colors.grey[400] : Colors.black54,
         );
 
       case MessageStatus.delivered:
-        return const Icon(
+        return Icon(
           Icons.done_all,
           size: 14,
-          color: Colors.black54,
+          color: isDarkMode ? Colors.grey[400] : Colors.black54,
         );
 
       case MessageStatus.read:
         return const Icon(
           Icons.done_all,
           size: 14,
-          color: Color(0xFF4FC3F7), // Azul de WhatsApp
+          color: Color(0xFF4FC3F7), // Azul de WhatsApp (igual en ambos modos)
         );
 
       case MessageStatus.failed:
