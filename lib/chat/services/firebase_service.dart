@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/material.dart';
 
 /// Servicio de Firebase Cloud Messaging para notificaciones push
 ///
@@ -50,6 +51,9 @@ class FirebaseService {
         return false;
       }
 
+      // Configurar canal de notificaciones Android (estilo WhatsApp)
+      await _setupAndroidNotificationChannel();
+
       // Configurar notificaciones locales
       await _setupLocalNotifications();
 
@@ -67,6 +71,28 @@ class FirebaseService {
       _initialized = false;
       return false;
     }
+  }
+
+  /// Configurar canal de notificaciones Android (estilo WhatsApp)
+  static Future<void> _setupAndroidNotificationChannel() async {
+    const androidChannel = AndroidNotificationChannel(
+      'chat_messages_fcm',
+      'Mensajes de Chat',
+      description: 'Notificaciones de mensajes nuevos en tiempo real',
+      importance: Importance.high,
+      enableVibration: true,
+      enableLights: true,
+      ledColor: Color(0xFF386A20), // Verde de CorralX
+      playSound: true,
+      showBadge: true,
+    );
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+
+    print('✅ Canal de notificaciones Android configurado (estilo WhatsApp)');
   }
 
   /// Configurar notificaciones locales
@@ -115,7 +141,7 @@ class FirebaseService {
 
   /// Configurar handlers de notificaciones
   static void _setupNotificationHandlers() {
-    // Mensaje recibido mientras app está en FOREGROUND
+    // Mensaje recibido mientras app está en FOREGROUND: mostrar notificación local con mejor UI
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('📬 FCM: Mensaje recibido (foreground)');
       _showLocalNotification(message);
@@ -177,9 +203,27 @@ class FirebaseService {
   /// Mostrar notificación local cuando app está en foreground
   static Future<void> _showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
-    if (notification == null) return;
+    final data = message.data;
 
-    const androidDetails = AndroidNotificationDetails(
+    // Extraer datos del mensaje (similar a WhatsApp)
+    final conversationId =
+        int.tryParse((data['conversation_id'] ?? '').toString());
+    final senderName =
+        (data['sender_name'] ?? notification?.title ?? 'CorralX').toString();
+    final messageContent = (data['snippet'] ??
+            data['body'] ??
+            notification?.body ??
+            'Nuevo mensaje')
+        .toString();
+    final groupKey = 'corralx_chat_${conversationId ?? 'general'}';
+
+    print('📱 Mostrando notificación estilo WhatsApp:');
+    print('   - Remitente: $senderName');
+    print('   - Mensaje: $messageContent');
+    print('   - Conversation ID: $conversationId');
+
+    // Estilo WhatsApp: InboxStyle con múltiples mensajes del mismo chat
+    final androidDetails = AndroidNotificationDetails(
       'chat_messages_fcm',
       'Mensajes de Chat',
       channelDescription: 'Notificaciones de mensajes nuevos en tiempo real',
@@ -187,21 +231,75 @@ class FirebaseService {
       priority: Priority.high,
       showWhen: true,
       icon: '@mipmap/ic_launcher',
+      // Usar InboxStyle para agrupar mensajes como WhatsApp
+      styleInformation: InboxStyleInformation(
+        [messageContent], // Lista de mensajes del mismo chat
+        contentTitle: senderName, // Nombre del remitente como título
+        summaryText: 'CorralX', // App name como summary
+        htmlFormatContentTitle: false,
+        htmlFormatSummaryText: false,
+        htmlFormatLines: false,
+      ),
+      ticker: 'Nuevo mensaje de $senderName',
+      groupKey: groupKey, // Agrupar mensajes del mismo chat
+      groupAlertBehavior:
+          GroupAlertBehavior.summary, // Mostrar solo un resumen del grupo
+      // Acciones como WhatsApp: Responder, Marcar como leído, Silenciar
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'reply',
+          'Responder',
+          icon: DrawableResourceAndroidBitmap('ic_reply'),
+          inputs: [
+            AndroidNotificationActionInput(
+              label: 'Escribe una respuesta',
+              allowFreeFormInput: true,
+            )
+          ],
+        ),
+        const AndroidNotificationAction(
+          'mark_read',
+          'Marcar como leído',
+          icon: DrawableResourceAndroidBitmap('ic_done'),
+        ),
+        const AndroidNotificationAction(
+          'mute',
+          'Silenciar',
+          icon: DrawableResourceAndroidBitmap('ic_notifications_off'),
+        ),
+      ],
+      // Configuración adicional para mejor apariencia
+      color: const Color(0xFF386A20), // Verde de CorralX
+      ledColor: const Color(0xFF386A20),
+      ledOnMs: 1000,
+      ledOffMs: 500,
+      // Configuración adicional para estilo WhatsApp
+      category: AndroidNotificationCategory.message,
+      visibility: NotificationVisibility.public,
+      autoCancel: false, // No auto-cancelar para permitir acciones
+      ongoing: false,
+      showProgress: false,
+      maxProgress: 0,
+      indeterminate: false,
     );
 
-    const iosDetails = DarwinNotificationDetails();
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
     await _localNotifications.show(
-      notification.hashCode,
-      notification.title ?? 'Nuevo mensaje',
-      notification.body ?? '',
+      conversationId ?? DateTime.now().millisecondsSinceEpoch % 2147483647,
+      senderName, // Título: nombre del remitente
+      messageContent, // Cuerpo: contenido del mensaje
       details,
-      payload: message.data['conversation_id']?.toString(),
+      payload: conversationId?.toString(),
     );
   }
 
@@ -234,7 +332,105 @@ class FirebaseService {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+
   print('📬 FCM: Mensaje recibido en background');
-  print('Título: ${message.notification?.title}');
-  print('Cuerpo: ${message.notification?.body}');
+  print('Data: ${message.data}');
+
+  // Mostrar notificación WhatsApp cuando app está en background
+  await _showWhatsAppStyleNotification(message);
+}
+
+/// Mostrar notificación estilo WhatsApp (para background)
+Future<void> _showWhatsAppStyleNotification(RemoteMessage message) async {
+  try {
+    final data = message.data;
+
+    // Extraer datos del mensaje
+    final conversationId =
+        int.tryParse((data['conversation_id'] ?? '').toString());
+    final senderName =
+        (data['sender_name'] ?? data['title'] ?? 'CorralX').toString();
+    final messageContent =
+        (data['snippet'] ?? data['body'] ?? 'Nuevo mensaje').toString();
+    final groupKey = 'corralx_chat_${conversationId ?? 'general'}';
+
+    print('📱 Mostrando notificación WhatsApp en background:');
+    print('   - Remitente: $senderName');
+    print('   - Mensaje: $messageContent');
+
+    // Configurar notificación estilo WhatsApp
+    final androidDetails = AndroidNotificationDetails(
+      'chat_messages_fcm',
+      'Mensajes de Chat',
+      channelDescription: 'Notificaciones de mensajes nuevos en tiempo real',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+      icon: '@mipmap/ic_launcher',
+      // Usar InboxStyle para agrupar mensajes como WhatsApp
+      styleInformation: InboxStyleInformation(
+        [messageContent],
+        contentTitle: senderName,
+        summaryText: 'CorralX',
+      ),
+      ticker: 'Nuevo mensaje de $senderName',
+      groupKey: groupKey,
+      groupAlertBehavior: GroupAlertBehavior.summary,
+      // Acciones como WhatsApp
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'reply',
+          'Responder',
+          icon: DrawableResourceAndroidBitmap('ic_reply'),
+          inputs: [
+            AndroidNotificationActionInput(
+              label: 'Escribe una respuesta',
+              allowFreeFormInput: true,
+            )
+          ],
+        ),
+        const AndroidNotificationAction(
+          'mark_read',
+          'Marcar como leído',
+          icon: DrawableResourceAndroidBitmap('ic_done'),
+        ),
+        const AndroidNotificationAction(
+          'mute',
+          'Silenciar',
+          icon: DrawableResourceAndroidBitmap('ic_notifications_off'),
+        ),
+      ],
+      color: const Color(0xFF386A20),
+      ledColor: const Color(0xFF386A20),
+      ledOnMs: 1000,
+      ledOffMs: 500,
+      category: AndroidNotificationCategory.message,
+      visibility: NotificationVisibility.public,
+      autoCancel: false,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final localNotifications = FlutterLocalNotificationsPlugin();
+    await localNotifications.show(
+      conversationId ?? DateTime.now().millisecondsSinceEpoch % 2147483647,
+      senderName,
+      messageContent,
+      details,
+      payload: conversationId?.toString(),
+    );
+
+    print('✅ Notificación WhatsApp mostrada en background');
+  } catch (e) {
+    print('❌ Error mostrando notificación WhatsApp: $e');
+  }
 }

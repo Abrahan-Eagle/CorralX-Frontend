@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CorralX</string>
+    
+    <!-- Notificaciones -->
+    <string name="notification_channel_chat">Mensajes de Chat</string>
+    <string name="notification_channel_chat_description">Notificaciones de mensajes nuevos en tiempo real</string>
+    
+    <!-- Acciones de notificación -->
+    <string name="notification_action_reply">Responder</string>
+    <string name="notification_action_mark_read">Marcar como leído</string>
+    <string name="notification_action_mute">Silenciar</string>
+    <string name="notification_reply_hint">Escribe una respuesta</string>
+    
+    <!-- Iconos de notificación -->
+    <string name="notification_icon_reply">ic_reply</string>
+    <string name="notification_icon_done">ic_done</string>
+    <string name="notification_icon_mute">ic_notifications_off</string>
+</resources>
