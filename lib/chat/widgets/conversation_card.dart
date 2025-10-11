@@ -197,13 +197,7 @@ class ConversationCard extends StatelessWidget {
   /// Obtener imagen del avatar
   ImageProvider? _getAvatarImage(ChatParticipant? participant) {
     if (participant?.avatar != null && participant!.avatar!.isNotEmpty) {
-      // Evitar URLs de placeholder
-      if (participant.avatar!.contains('via.placeholder.com') ||
-          participant.avatar!.contains('placeholder.com') ||
-          participant.avatar!.contains('placehold.it')) {
-        return null;
-      }
-
+      // Construir URL completa si es necesario
       final avatarUrl = participant.avatar!.startsWith('http')
           ? participant.avatar!
           : '${AppConfig.apiUrl}/storage/${participant.avatar}';
