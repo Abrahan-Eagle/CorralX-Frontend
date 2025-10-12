@@ -4,8 +4,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
+import 'package:zonix/config/app_config.dart';
 
 /// Servicio de Firebase Cloud Messaging para notificaciones push
 ///
@@ -173,7 +173,7 @@ class FirebaseService {
       const storage = FlutterSecureStorage();
       final authToken =
           await storage.read(key: 'token'); // ✅ Usar 'token' no 'auth_token'
-      final apiUrl = dotenv.env['API_URL_LOCAL'] ?? 'http://192.168.27.12:8000';
+      final apiUrl = AppConfig.apiUrl; // ✅ Usar AppConfig para URL dinámica
 
       if (authToken == null) {
         print('⚠️ No hay auth token, no se puede registrar FCM token');
