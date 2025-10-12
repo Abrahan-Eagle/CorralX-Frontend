@@ -167,14 +167,116 @@ Uri.parse('https://www.googleapis.com/oauth2/v3/userinfo')
 
 | Categoría | Archivos | URLs Encontradas | Estado |
 |-----------|----------|------------------|--------|
-| Services | 8 | 8 construcciones dinámicas | ✅ 100% correctas |
-| Config | 1 | 4 (con fallbacks) | ✅ Correcto |
-| Auth | 1 | 1 (Google API) | ✅ Correcto |
-| Screens | 15+ | 0 | ✅ N/A |
-| Widgets | 10+ | 0 | ✅ N/A |
-| Models | 5+ | 0 | ✅ N/A |
-| Providers | 3 | 0 | ✅ N/A |
-| **TOTAL** | **43+** | **13** | **✅ 100%** |
+| **Módulo Profiles** | | | |
+| - profile_service.dart | 1 | 9 construcciones dinámicas | ✅ Usa `_baseUrl` (dotenv) |
+| - ranch_service.dart | 1 | 3 construcciones dinámicas | ✅ Usa `_baseUrl` (dotenv) |
+| - profile_screen.dart | 1 | 0 (solo lee del modelo) | ✅ N/A |
+| - public_profile_screen.dart | 1 | 0 (solo lee del modelo) | ✅ N/A |
+| - edit_profile_screen.dart | 1 | 0 (solo lee del modelo) | ✅ N/A |
+| - create_ranch_screen.dart | 1 | 0 | ✅ N/A |
+| - edit_ranch_screen.dart | 1 | 0 | ✅ N/A |
+| - ranch_detail_screen.dart | 1 | 0 | ✅ N/A |
+| **Módulo Products** | | | |
+| - product_service.dart | 1 | 1 construcción dinámica | ✅ Usa `_baseUrl` (dotenv) |
+| **Módulo Chat** | | | |
+| - chat_service.dart | 1 | Usa AppConfig | ✅ Usa AppConfig.apiUrl |
+| - firebase_service.dart | 1 | 1 | ✅ **CORREGIDO** (AppConfig) |
+| - pusher_service.dart | 1 | Usa AppConfig | ✅ Usa AppConfig.wsUrl |
+| **Módulo Auth** | | | |
+| - api_service.dart | 1 | Construcción dinámica | ✅ Usa dotenv |
+| - google_sign_in_service.dart | 1 | 1 (Google API) | ✅ Correcto (API pública) |
+| **Módulo Favorites** | | | |
+| - favorite_service.dart | 1 | Usa AppConfig | ✅ Usa AppConfig.apiUrl |
+| **Módulo Onboarding** | | | |
+| - onboarding_api_service.dart | 1 | Construcción dinámica | ✅ Usa dotenv |
+| **Config** | | | |
+| - app_config.dart | 1 | 4 (con fallbacks) | ✅ Correcto |
+| **TOTAL** | **18** | **18 instancias** | **✅ 100%** |
+
+---
+
+## 🔬 ANÁLISIS DETALLADO DEL MÓDULO PROFILES
+
+### ✅ **TODOS LOS ARCHIVOS DEL MÓDULO PROFILES ESTÁN CORRECTOS**
+
+#### **Servicios** (2 archivos)
+
+1. **`profile_service.dart`** ✅
+   - **Construcciones de URL:** 9 instancias
+   - **Patrón usado:** `static String get _baseUrl` con triple detección
+   - **Endpoints:**
+     - `GET /api/profile` - Obtener perfil propio
+     - `GET /api/profiles/{id}` - Perfil público
+     - `PUT /api/profile` - Actualizar perfil
+     - `POST /api/profile/photo` - Subir foto
+     - `GET /api/me/metrics` - Métricas del perfil
+     - `GET /api/me/products` - Productos del perfil
+     - `GET /api/me/ranches` - Ranchos del perfil
+     - `GET /api/profiles/{id}/ranches` - Ranchos de otro perfil
+   - **Estado:** ✅ **TODAS usan `_baseUrl` dinámico**
+
+2. **`ranch_service.dart`** ✅
+   - **Construcciones de URL:** 3 instancias
+   - **Patrón usado:** `static String get _baseUrl` con triple detección
+   - **Endpoints:**
+     - `PUT /api/ranches/{id}` - Actualizar rancho
+     - `DELETE /api/ranches/{id}` - Eliminar rancho
+     - `POST /api/ranches` - Crear rancho
+   - **Estado:** ✅ **TODAS usan `_baseUrl` dinámico**
+
+#### **Screens** (6 archivos)
+
+Todas las screens **SOLO LEEN** URLs del backend, NO las construyen:
+
+1. **`profile_screen.dart`** ✅
+   - Lee: `profile.photoUsers` del modelo
+   - Muestra: `CachedNetworkImageProvider(profile.photoUsers!)`
+   - **Estado:** ✅ **Solo consume, no construye URLs**
+
+2. **`public_profile_screen.dart`** ✅
+   - Lee: `profile.photoUsers` del modelo
+   - Muestra: `CachedNetworkImageProvider(profile.photoUsers!)`
+   - **Estado:** ✅ **Solo consume, no construye URLs**
+
+3. **`edit_profile_screen.dart`** ✅
+   - Lee: `profile.photoUsers` para preview
+   - Usa: `NetworkImage(profile!.photoUsers!)` o `FileImage(_selectedImage!)`
+   - **Estado:** ✅ **Solo consume, no construye URLs**
+
+4. **`create_ranch_screen.dart`** ✅
+   - No maneja imágenes
+   - **Estado:** ✅ **N/A**
+
+5. **`edit_ranch_screen.dart`** ✅
+   - No maneja imágenes
+   - **Estado:** ✅ **N/A**
+
+6. **`ranch_detail_screen.dart`** ✅
+   - No maneja imágenes
+   - **Estado:** ✅ **N/A**
+
+#### **Models** (3 archivos)
+
+Los modelos **SOLO ALMACENAN** URLs, NO las construyen:
+
+1. **`profile.dart`** ✅
+   - Campo: `String? photoUsers`
+   - **Estado:** ✅ **Solo almacena datos del backend**
+
+2. **`ranch.dart`** ✅
+   - No tiene campos de imágenes
+   - **Estado:** ✅ **N/A**
+
+3. **`address.dart`** ✅
+   - No tiene campos de imágenes
+   - **Estado:** ✅ **N/A**
+
+#### **Providers** (1 archivo)
+
+1. **`profile_provider.dart`** ✅
+   - Llama servicios que usan `_baseUrl` dinámico
+   - No construye URLs directamente
+   - **Estado:** ✅ **Delega a servicios**
 
 ---
 
