@@ -814,6 +814,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return number.toString();
   }
 
+  Widget _buildQuickStat({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required ThemeData theme,
+    required bool isTablet,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: isTablet ? 22 : 18,
+          color: color,
+        ),
+        SizedBox(height: isTablet ? 6 : 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTablet ? 18 : 16,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTablet ? 11 : 10,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMyListingsContent(bool isTablet, ThemeData theme) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
@@ -1313,9 +1349,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-              // Lista de fincas
+              // Lista de fincas - Diseño mejorado tipo card premium
               ...profileProvider.myRanches.map((ranch) {
-                return InkWell(
+                final isDark = theme.brightness == Brightness.dark;
+                
+                return GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1324,227 +1362,380 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     );
                   },
-                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
-                    padding: EdgeInsets.all(isTablet ? 18 : 14),
-      decoration: BoxDecoration(
+                    margin: EdgeInsets.only(bottom: isTablet ? 20 : 16),
+                    decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-                        // Icono minimalista
-          Container(
-                          width: isTablet ? 70 : 56,
-                          height: isTablet ? 70 : 56,
-            decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-                            Icons.home_outlined,
-                            color: theme.colorScheme.primary,
-                            size: isTablet ? 34 : 28,
-            ),
-          ),
-          SizedBox(width: isTablet ? 20 : 16),
-
-                        // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      ranch.name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: isTablet ? 18 : 16,
-                                        color: theme.colorScheme.onSurface,
-                                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark 
+                              ? Colors.black.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.05),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header con gradiente
+                        Container(
+                          padding: EdgeInsets.all(isTablet ? 20 : 16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary.withOpacity(0.15),
+                                theme.colorScheme.primary.withOpacity(0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Icono destacado
+                              Container(
+                                padding: EdgeInsets.all(isTablet ? 14 : 12),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary.withOpacity(0.4),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
                                     ),
-                                  ),
-                                  if (ranch.isPrimary)
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: isTablet ? 10 : 8,
-                                        vertical: isTablet ? 4 : 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            theme.colorScheme.primaryContainer,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        'Principal',
-                                        style: TextStyle(
-                                          fontSize: isTablet ? 12 : 10,
-                                          color: theme
-                                              .colorScheme.onPrimaryContainer,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                ),
-                SizedBox(height: isTablet ? 6 : 4),
-                Text(
-                                'RIF: ${ranch.taxId}',
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.home_work,
+                                  color: theme.colorScheme.onPrimary,
+                                  size: isTablet ? 32 : 28,
                                 ),
                               ),
-                              if (ranch.description != null) ...[
-                                SizedBox(height: isTablet ? 6 : 4),
+                              SizedBox(width: isTablet ? 16 : 12),
+                              
+                              // Nombre y badge
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      ranch.name,
+                                      style: TextStyle(
+                                        fontSize: isTablet ? 20 : 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (ranch.isPrimary) ...[
+                                      SizedBox(height: isTablet ? 6 : 4),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isTablet ? 12 : 10,
+                                          vertical: isTablet ? 6 : 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.primary,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              size: isTablet ? 14 : 12,
+                                              color: theme.colorScheme.onPrimary,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Principal',
+                                              style: TextStyle(
+                                                fontSize: isTablet ? 12 : 11,
+                                                color: theme.colorScheme.onPrimary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Contenido
+                        Padding(
+                          padding: EdgeInsets.all(isTablet ? 20 : 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // RIF
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.badge_outlined,
+                                    size: isTablet ? 18 : 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  SizedBox(width: isTablet ? 8 : 6),
+                                  Text(
+                                    'RIF: ${ranch.taxId}',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 15 : 14,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Descripción
+                              if (ranch.description != null && ranch.description!.isNotEmpty) ...[
+                                SizedBox(height: isTablet ? 12 : 10),
                                 Text(
                                   ranch.description!,
-                                  maxLines: 2,
+                                  maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: isTablet ? 14 : 12,
+                                    fontSize: isTablet ? 14 : 13,
                                     color: theme.colorScheme.onSurfaceVariant,
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
-              ],
-            ),
-          ),
 
-                        // Botones - Estilo minimalista
-          Row(
-            children: [
-                            // Botón Editar
-                            Container(
-                              decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          EditRanchScreen(ranch: ranch),
+                              SizedBox(height: isTablet ? 16 : 14),
+
+                              // Estadísticas rápidas
+                              Container(
+                                padding: EdgeInsets.all(isTablet ? 14 : 12),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outline.withOpacity(0.1),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _buildQuickStat(
+                                      icon: Icons.star,
+                                      label: 'Rating',
+                                      value: ranch.avgRating.toStringAsFixed(1),
+                                      color: Colors.amber,
+                                      theme: theme,
+                                      isTablet: isTablet,
                                     ),
-                                  );
-
-                                  if (result == true && mounted) {
-                                    // Ya se refrescó en EditRanchScreen
-                                  }
-                                },
-                                icon: Icon(
-                                  Icons.edit_outlined,
-                                  size: isTablet ? 22 : 20,
-                                  color: theme.colorScheme.primary,
+                                    Container(
+                                      width: 1,
+                                      height: isTablet ? 40 : 32,
+                                      color: theme.colorScheme.outline.withOpacity(0.2),
+                                    ),
+                                    _buildQuickStat(
+                                      icon: Icons.shopping_bag,
+                                      label: 'Ventas',
+                                      value: ranch.totalSales.toString(),
+                                      color: Colors.green,
+                                      theme: theme,
+                                      isTablet: isTablet,
+                                    ),
+                                    Container(
+                                      width: 1,
+                                      height: isTablet ? 40 : 32,
+                                      color: theme.colorScheme.outline.withOpacity(0.2),
+                                    ),
+                                    _buildQuickStat(
+                                      icon: Icons.inventory_2,
+                                      label: 'Productos',
+                                      value: '0', // TODO: Agregar contador de productos
+                                      color: Colors.blue,
+                                      theme: theme,
+                                      isTablet: isTablet,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8),
 
-                            // Botón Eliminar
-                            Container(
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.error.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Eliminar Hacienda'),
-                                      content: const Text(
-                                        '¿Estás seguro de eliminar esta hacienda?\n\n'
-                                        'No podrás eliminarla si tiene productos activos o es la única hacienda.',
+                              SizedBox(height: isTablet ? 16 : 14),
+
+                              // Botones de acción
+                              Row(
+                                children: [
+                                  // Botón Ver Detalles
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => RanchDetailScreen(ranch: ranch),
+                                          ),
+                                        );
+                                      },
+                                      icon: Icon(
+                                        Icons.visibility_outlined,
+                                        size: isTablet ? 18 : 16,
                                       ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('Cancelar'),
+                                      label: Text(
+                                        'Ver',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 14 : 13,
+                                          fontWeight: FontWeight.w600,
                                         ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor:
-                                                theme.colorScheme.error,
-                                          ),
-                                          child: const Text('Eliminar'),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: theme.colorScheme.primary,
+                                        side: BorderSide(
+                                          color: theme.colorScheme.primary,
+                                          width: 1.5,
                                         ),
-                                      ],
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isTablet ? 14 : 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
                                     ),
-                                  );
+                                  ),
+                                  SizedBox(width: isTablet ? 12 : 10),
 
-                                  if (confirm == true && mounted) {
-                                    try {
-                                      final result =
-                                          await RanchService.deleteRanch(
-                                              ranch.id);
+                                  // Botón Editar
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => EditRanchScreen(ranch: ranch),
+                                          ),
+                                        );
+                                        if (result == true && mounted) {
+                                          profileProvider.fetchMyRanches(forceRefresh: true);
+                                        }
+                                      },
+                                      icon: Icon(
+                                        Icons.edit_outlined,
+                                        size: isTablet ? 18 : 16,
+                                      ),
+                                      label: Text(
+                                        'Editar',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 14 : 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: theme.colorScheme.onPrimary,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isTablet ? 14 : 12,
+                                        ),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: isTablet ? 12 : 10),
 
-                                      if (result['success'] == true &&
-                                          mounted) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                                '✅ Hacienda eliminada exitosamente'),
-                                            backgroundColor: Colors.green,
+                                  // Botón Eliminar
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.error.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: theme.colorScheme.error.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Eliminar Hacienda'),
+                                            content: const Text(
+                                              '¿Estás seguro de eliminar esta hacienda?\n\n'
+                                              'No podrás eliminarla si tiene productos activos o es la única hacienda.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, false),
+                                                child: const Text('Cancelar'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, true),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: theme.colorScheme.error,
+                                                ),
+                                                child: const Text('Eliminar'),
+                                              ),
+                                            ],
                                           ),
                                         );
 
-                                        // Refrescar lista
-                                        profileProvider.fetchMyRanches(
-                                            forceRefresh: true);
-                                      } else if (mounted) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(result['message'] ??
-                                                'Error al eliminar hacienda'),
-                                            backgroundColor:
-                                                theme.colorScheme.error,
-                                          ),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(e
-                                                .toString()
-                                                .replaceFirst(
-                                                    'Exception: ', '')),
-                                            backgroundColor:
-                                                theme.colorScheme.error,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  }
-                                },
-                                icon: Icon(
-                                  Icons.delete_outline,
-                                  size: isTablet ? 22 : 20,
-                                  color: theme.colorScheme.error,
-                                ),
+                                        if (confirm == true && mounted) {
+                                          try {
+                                            final result = await RanchService.deleteRanch(ranch.id);
+                                            if (result['success'] == true && mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('✅ Hacienda eliminada exitosamente'),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                              profileProvider.fetchMyRanches(forceRefresh: true);
+                                            } else if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(result['message'] ?? 'Error al eliminar hacienda'),
+                                                  backgroundColor: theme.colorScheme.error,
+                                                ),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(e.toString().replaceFirst('Exception: ', '')),
+                                                  backgroundColor: theme.colorScheme.error,
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        }
+                                      },
+                                      icon: Icon(
+                                        Icons.delete_outline,
+                                        size: isTablet ? 22 : 20,
+                                        color: theme.colorScheme.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
