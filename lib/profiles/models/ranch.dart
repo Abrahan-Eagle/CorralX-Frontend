@@ -11,7 +11,10 @@ class Ranch {
   final String? legalName; // Razón social
   final String? taxId; // RIF
   final String? businessDescription;
+  final List<String>? certifications; // Lista de certificaciones
+  final String? businessLicenseUrl; // URL del documento de licencia
   final String? contactHours;
+  final bool acceptsVisits; // Acepta visitas de compradores
   final int? addressId;
   final bool isPrimary; // Hacienda principal del usuario
   final String? deliveryPolicy;
@@ -21,7 +24,7 @@ class Ranch {
   final DateTime? lastSaleAt;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // Relaciones
   final Address? address;
 
@@ -32,7 +35,10 @@ class Ranch {
     this.legalName,
     this.taxId,
     this.businessDescription,
+    this.certifications,
+    this.businessLicenseUrl,
     this.contactHours,
+    this.acceptsVisits = false,
     this.addressId,
     required this.isPrimary,
     this.deliveryPolicy,
@@ -54,7 +60,10 @@ class Ranch {
       legalName: json['legal_name'],
       taxId: json['tax_id'],
       businessDescription: json['business_description'],
+      certifications: _parseStringList(json['certifications']),
+      businessLicenseUrl: json['business_license_url'],
       contactHours: json['contact_hours'],
+      acceptsVisits: _parseBool(json['accepts_visits']) ?? false,
       addressId: _parseInt(json['address_id']),
       isPrimary: _parseBool(json['is_primary']) ?? false,
       deliveryPolicy: json['delivery_policy'],
@@ -64,7 +73,8 @@ class Ranch {
       lastSaleAt: _parseDateTime(json['last_sale_at']),
       createdAt: _parseDateTime(json['created_at']) ?? DateTime.now(),
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
-      address: json['address'] != null ? Address.fromJson(json['address']) : null,
+      address:
+          json['address'] != null ? Address.fromJson(json['address']) : null,
     );
   }
 
@@ -77,7 +87,10 @@ class Ranch {
       'legal_name': legalName,
       'tax_id': taxId,
       'business_description': businessDescription,
+      'certifications': certifications,
+      'business_license_url': businessLicenseUrl,
       'contact_hours': contactHours,
+      'accepts_visits': acceptsVisits,
       'address_id': addressId,
       'is_primary': isPrimary,
       'delivery_policy': deliveryPolicy,
@@ -134,6 +147,15 @@ class Ranch {
     return null;
   }
 
+  /// Helper: Parsear List<String> desde dynamic
+  static List<String>? _parseStringList(dynamic value) {
+    if (value == null) return null;
+    if (value is List) {
+      return value.map((item) => item.toString()).toList();
+    }
+    return null;
+  }
+
   /// Crear una copia con campos actualizados
   Ranch copyWith({
     int? id,
@@ -142,7 +164,10 @@ class Ranch {
     String? legalName,
     String? taxId,
     String? businessDescription,
+    List<String>? certifications,
+    String? businessLicenseUrl,
     String? contactHours,
+    bool? acceptsVisits,
     int? addressId,
     bool? isPrimary,
     String? deliveryPolicy,
@@ -161,7 +186,10 @@ class Ranch {
       legalName: legalName ?? this.legalName,
       taxId: taxId ?? this.taxId,
       businessDescription: businessDescription ?? this.businessDescription,
+      certifications: certifications ?? this.certifications,
+      businessLicenseUrl: businessLicenseUrl ?? this.businessLicenseUrl,
       contactHours: contactHours ?? this.contactHours,
+      acceptsVisits: acceptsVisits ?? this.acceptsVisits,
       addressId: addressId ?? this.addressId,
       isPrimary: isPrimary ?? this.isPrimary,
       deliveryPolicy: deliveryPolicy ?? this.deliveryPolicy,

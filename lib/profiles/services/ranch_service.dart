@@ -41,6 +41,8 @@ class RanchService {
     String? legalName,
     String? taxId,
     String? businessDescription,
+    List<String>? certifications,
+    String? businessLicenseUrl,
     String? contactHours,
     int? addressId,
     bool? isPrimary,
@@ -60,6 +62,9 @@ class RanchService {
       if (taxId != null) body['tax_id'] = taxId;
       if (businessDescription != null)
         body['business_description'] = businessDescription;
+      if (certifications != null) body['certifications'] = certifications;
+      if (businessLicenseUrl != null)
+        body['business_license_url'] = businessLicenseUrl;
       if (contactHours != null) body['contact_hours'] = contactHours;
       if (addressId != null) body['address_id'] = addressId;
       if (isPrimary != null) body['is_primary'] = isPrimary;
@@ -149,6 +154,8 @@ class RanchService {
     String? legalName,
     String? taxId,
     String? businessDescription,
+    List<String>? certifications,
+    String? businessLicenseUrl,
     String? contactHours,
     int? addressId,
     String? deliveryPolicy,
@@ -166,6 +173,9 @@ class RanchService {
         if (taxId != null) 'tax_id': taxId,
         if (businessDescription != null)
           'business_description': businessDescription,
+        if (certifications != null) 'certifications': certifications,
+        if (businessLicenseUrl != null)
+          'business_license_url': businessLicenseUrl,
         if (contactHours != null) 'contact_hours': contactHours,
         if (addressId != null) 'address_id': addressId,
         if (deliveryPolicy != null) 'delivery_policy': deliveryPolicy,
