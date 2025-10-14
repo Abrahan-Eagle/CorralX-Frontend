@@ -1402,7 +1402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               SizedBox(width: isTablet ? 14 : 12),
-                              
+
                               // Nombre y RIF
                               Expanded(
                                 child: Column(
@@ -1423,13 +1423,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       'RIF: ${ranch.taxId}',
                                       style: TextStyle(
                                         fontSize: isTablet ? 13 : 12,
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              
+
                               // Badge Principal
                               if (ranch.isPrimary)
                                 Container(
@@ -1454,7 +1455,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
 
                           // Descripción
-                          if (ranch.description != null && ranch.description!.isNotEmpty) ...[
+                          if (ranch.description != null &&
+                              ranch.description!.isNotEmpty) ...[
                             SizedBox(height: isTablet ? 14 : 12),
                             Text(
                               ranch.description!,
@@ -1527,7 +1529,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => RanchDetailScreen(ranch: ranch),
+                                        builder: (context) =>
+                                            RanchDetailScreen(ranch: ranch),
                                       ),
                                     );
                                   },
@@ -1543,7 +1546,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                   ),
                                   style: TextButton.styleFrom(
-                                    foregroundColor: theme.colorScheme.onSurfaceVariant,
+                                    foregroundColor:
+                                        theme.colorScheme.onSurfaceVariant,
                                     padding: EdgeInsets.symmetric(
                                       vertical: isTablet ? 12 : 10,
                                     ),
@@ -1555,7 +1559,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 width: 1,
                                 height: isTablet ? 40 : 36,
-                                color: theme.colorScheme.outline.withOpacity(0.2),
+                                color:
+                                    theme.colorScheme.outline.withOpacity(0.2),
                               ),
 
                               // Editar
@@ -1565,11 +1570,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => EditRanchScreen(ranch: ranch),
+                                        builder: (context) =>
+                                            EditRanchScreen(ranch: ranch),
                                       ),
                                     );
                                     if (result == true && mounted) {
-                                      profileProvider.fetchMyRanches(forceRefresh: true);
+                                      profileProvider.fetchMyRanches(
+                                          forceRefresh: true);
                                     }
                                   },
                                   icon: Icon(
@@ -1596,7 +1603,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 width: 1,
                                 height: isTablet ? 40 : 36,
-                                color: theme.colorScheme.outline.withOpacity(0.2),
+                                color:
+                                    theme.colorScheme.outline.withOpacity(0.2),
                               ),
 
                               // Eliminar
@@ -1613,13 +1621,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context, false),
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
                                             child: const Text('Cancelar'),
                                           ),
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context, true),
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
                                             style: TextButton.styleFrom(
-                                              foregroundColor: theme.colorScheme.error,
+                                              foregroundColor:
+                                                  theme.colorScheme.error,
                                             ),
                                             child: const Text('Eliminar'),
                                           ),
@@ -1629,29 +1640,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                     if (confirm == true && mounted) {
                                       try {
-                                        final result = await RanchService.deleteRanch(ranch.id);
-                                        if (result['success'] == true && mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                        final result =
+                                            await RanchService.deleteRanch(
+                                                ranch.id);
+                                        if (result['success'] == true &&
+                                            mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
                                             const SnackBar(
-                                              content: Text('✅ Hacienda eliminada exitosamente'),
+                                              content: Text(
+                                                  '✅ Hacienda eliminada exitosamente'),
                                               backgroundColor: Colors.green,
                                             ),
                                           );
-                                          profileProvider.fetchMyRanches(forceRefresh: true);
+                                          profileProvider.fetchMyRanches(
+                                              forceRefresh: true);
                                         } else if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
                                             SnackBar(
-                                              content: Text(result['message'] ?? 'Error al eliminar hacienda'),
-                                              backgroundColor: theme.colorScheme.error,
+                                              content: Text(result['message'] ??
+                                                  'Error al eliminar hacienda'),
+                                              backgroundColor:
+                                                  theme.colorScheme.error,
                                             ),
                                           );
                                         }
                                       } catch (e) {
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
                                             SnackBar(
-                                              content: Text(e.toString().replaceFirst('Exception: ', '')),
-                                              backgroundColor: theme.colorScheme.error,
+                                              content: Text(e
+                                                  .toString()
+                                                  .replaceFirst(
+                                                      'Exception: ', '')),
+                                              backgroundColor:
+                                                  theme.colorScheme.error,
                                             ),
                                           );
                                         }

@@ -20,15 +20,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _lastNameController = TextEditingController();
   final _secondLastNameController = TextEditingController();
   final _ciNumberController = TextEditingController();
-  final _whatsappNumberController = TextEditingController();
   final _bioController = TextEditingController();
 
   DateTime? _selectedDate;
   String? _selectedMaritalStatus;
   String? _selectedSex;
-  bool _acceptsCalls = true;
-  bool _acceptsWhatsapp = true;
-  bool _acceptsEmails = true;
 
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -47,14 +43,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _lastNameController.text = profile.lastName;
         _secondLastNameController.text = profile.secondLastName ?? '';
         _ciNumberController.text = profile.ciNumber;
-        _whatsappNumberController.text = profile.whatsappNumber ?? '';
         _bioController.text = profile.bio ?? '';
         _selectedDate = profile.dateOfBirth;
         _selectedMaritalStatus = profile.maritalStatus;
         _selectedSex = profile.sex;
-        _acceptsCalls = profile.acceptsCalls;
-        _acceptsWhatsapp = profile.acceptsWhatsapp;
-        _acceptsEmails = profile.acceptsEmails;
         setState(() {});
       }
     });
@@ -67,7 +59,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastNameController.dispose();
     _secondLastNameController.dispose();
     _ciNumberController.dispose();
-    _whatsappNumberController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -240,26 +231,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return null;
   }
 
-  String? _validateWhatsApp(String? value) {
-    if (value != null && value.trim().isNotEmpty) {
-      // Remover espacios y guiones para validar solo números
-      String cleanValue = value.trim().replaceAll(RegExp(r'[\s\-]'), '');
-
-      // Validar que tenga al menos 10 dígitos (formato venezolano)
-      if (cleanValue.length < 10) {
-        return 'Mínimo 10 dígitos';
-      }
-      if (cleanValue.length > 15) {
-        return 'Máximo 15 dígitos';
-      }
-      // Validar que solo contenga números
-      if (!RegExp(r'^\d+$').hasMatch(cleanValue)) {
-        return 'Solo se permiten números';
-      }
-    }
-    return null;
-  }
-
   // Método para validar el formulario en tiempo real
   void _validateForm() {
     setState(() {
@@ -308,13 +279,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       maritalStatus: _selectedMaritalStatus,
       sex: _selectedSex,
       ciNumber: _ciNumberController.text.trim(),
-      acceptsCalls: _acceptsCalls,
-      acceptsWhatsapp: _acceptsWhatsapp,
-      acceptsEmails: _acceptsEmails,
-      whatsappNumber:
-          _acceptsWhatsapp && _whatsappNumberController.text.trim().isNotEmpty
-              ? _whatsappNumberController.text.trim()
-              : null,
     );
 
     if (mounted) {
@@ -824,119 +788,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         _selectedSex = value;
                       });
                     },
-                  ),
-
-                  SizedBox(height: isTablet ? 32 : 24),
-
-                  // Sección de preferencias de contacto
-                  Text(
-                    'Preferencias de Contacto',
-                    style: TextStyle(
-                      fontSize: isTablet ? 18 : 16,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onBackground,
-                    ),
-                  ),
-
-                  SizedBox(height: isTablet ? 16 : 12),
-
-                  // Acepta llamadas
-                  SwitchListTile(
-                    title: Text(
-                      'Acepto llamadas telefónicas',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                    ),
-                    value: _acceptsCalls,
-                    onChanged: (value) {
-                      setState(() {
-                        _acceptsCalls = value;
-                      });
-                    },
-                    activeColor: theme.colorScheme.primary,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-
-                  // Acepta WhatsApp
-                  SwitchListTile(
-                    title: Text(
-                      'Acepto mensajes por WhatsApp',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                    ),
-                    value: _acceptsWhatsapp,
-                    onChanged: (value) {
-                      setState(() {
-                        _acceptsWhatsapp = value;
-                      });
-                    },
-                    activeColor: theme.colorScheme.primary,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-
-                  // Número de WhatsApp (solo si acepta WhatsApp)
-                  if (_acceptsWhatsapp) ...[
-                    SizedBox(height: isTablet ? 16 : 12),
-                    TextFormField(
-                      controller: _whatsappNumberController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d\s\-]')),
-                        LengthLimitingTextInputFormatter(15),
-                      ],
-                      onChanged: (_) {
-                        _validateForm();
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Número de WhatsApp',
-                        labelStyle: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant),
-                        hintText: '04121234567',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              BorderSide(color: theme.colorScheme.outline),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: theme.colorScheme.primary, width: 2),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: theme.colorScheme.error, width: 2),
-                        ),
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isTablet ? 20 : 16,
-                          vertical: isTablet ? 20 : 16,
-                        ),
-                        prefixIcon: Icon(Icons.phone, color: Colors.green),
-                      ),
-                      validator: _validateWhatsApp,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                    ),
-                  ],
-
-                  SizedBox(height: isTablet ? 16 : 12),
-
-                  // Acepta emails
-                  SwitchListTile(
-                    title: Text(
-                      'Acepto correos electrónicos',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                    ),
-                    value: _acceptsEmails,
-                    onChanged: (value) {
-                      setState(() {
-                        _acceptsEmails = value;
-                      });
-                    },
-                    activeColor: theme.colorScheme.primary,
-                    contentPadding: EdgeInsets.zero,
                   ),
 
                   SizedBox(height: isTablet ? 32 : 24),
