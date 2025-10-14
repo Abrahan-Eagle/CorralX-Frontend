@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/ranch_provider.dart';
 import '../widgets/ranch_card.dart';
-import '../../profiles/screens/ranch_detail_screen.dart';
+import 'public_ranch_detail_screen.dart';
 
 class RanchMarketplaceScreen extends StatefulWidget {
   const RanchMarketplaceScreen({super.key});
@@ -145,7 +145,7 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => RanchDetailScreen(
+                                      builder: (context) => PublicRanchDetailScreen(
                                         ranch: ranch,
                                       ),
                                     ),
