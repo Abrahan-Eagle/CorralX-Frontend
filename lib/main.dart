@@ -334,6 +334,7 @@ import 'package:zonix/config/corral_x_theme.dart';
 import 'package:zonix/config/theme_provider.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:zonix/ranches/providers/ranch_provider.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:zonix/chat/services/firebase_service.dart';
 import 'package:flutter/services.dart';
@@ -347,6 +348,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:zonix/auth/screens/sign_in_screen.dart';
 
 import 'package:zonix/products/screens/marketplace_screen.dart';
+import 'package:zonix/ranches/screens/ranch_marketplace_screen.dart';
 import 'package:zonix/favorites/screens/favorites_screen.dart';
 import 'package:zonix/products/screens/create_screen.dart';
 import 'package:zonix/chat/screens/messages_screen.dart';
@@ -412,6 +414,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => RanchProvider()), // ✅ Ranch Marketplace
         ChangeNotifierProxyProvider<ProfileProvider, ChatProvider>(
           create: (context) => ChatProvider(
             Provider.of<ProfileProvider>(context, listen: false),
@@ -779,8 +782,7 @@ class MainRouterState extends State<MainRouter> {
                     case 2:
                       return const CreateScreen(); // Publicar
                     case 3:
-                      return _buildComingSoonScreen(
-                          'Fincas'); // Fincas (próximamente)
+                      return const RanchMarketplaceScreen(); // ✅ Fincas/Haciendas Marketplace
                     case 4:
                       return const ProfileScreen(); // Perfil
                     default:
