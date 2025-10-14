@@ -30,189 +30,115 @@ class PublicRanchDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      body: CustomScrollView(
-        slivers: [
-          // AppBar con imagen de fondo (placeholder por ahora)
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            backgroundColor: theme.colorScheme.primary,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            actions: [
-              // Botón de favoritos
-              Consumer<RanchProvider>(
-                builder: (context, ranchProvider, child) {
-                  final isFavorite = ranchProvider.isFavorite(ranch.id);
-                  return IconButton(
-                    icon: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : theme.colorScheme.onPrimary,
-                    ),
-                    onPressed: () {
-                      ranchProvider.toggleFavorite(ranch);
-                    },
-                  );
-                },
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                ranch.name,
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.primaryContainer,
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.agriculture,
-                    size: 80,
-                    color: theme.colorScheme.onPrimary.withOpacity(0.3),
-                  ),
-                ),
-              ),
-            ),
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios,
+              color: theme.colorScheme.onSurfaceVariant),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Detalles de la Hacienda',
+          style: TextStyle(
+            color: theme.colorScheme.onBackground,
+            fontWeight: FontWeight.w600,
+            fontSize: isTablet ? 20 : 18,
           ),
+        ),
+        actions: [
+          Consumer<RanchProvider>(
+            builder: (context, ranchProvider, child) {
+              final isFavorite = ranchProvider.isFavorite(ranch.id);
+              return IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : theme.colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () {
+                  ranchProvider.toggleFavorite(ranch);
+                },
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Galería de imágenes (placeholder)
+            _buildImageGallery(context, isTablet),
 
-          // Contenido
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+            // Contenido
+            Padding(
+              padding: EdgeInsets.all(isTablet ? 24 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nombre legal y badges
-                  _buildHeaderSection(theme),
+                  // Título y badges
+                  _buildTitleSection(context, theme, isTablet),
                   const SizedBox(height: 16),
 
-                  // Rating y estadísticas
-                  _buildStatsRow(theme),
-                  const SizedBox(height: 24),
+                  // Información del rancho
+                  if (ranch.legalName != null && ranch.legalName!.isNotEmpty) ...[
+                    _buildDetailCard(
+                      context,
+                      theme,
+                      isTablet,
+                      icon: Icons.business,
+                      label: 'Razón Social',
+                      value: ranch.legalName!,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Ubicación
+                  _buildDetailCard(
+                    context,
+                    theme,
+                    isTablet,
+                    icon: Icons.location_on,
+                    label: 'Ubicación',
+                    value: _getLocationText(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Estadísticas
+                  _buildStatsSection(context, theme, isTablet),
+                  const SizedBox(height: 16),
 
                   // Descripción
                   if (ranch.businessDescription != null &&
                       ranch.businessDescription!.isNotEmpty) ...[
-                    _buildSectionTitle(theme, 'Descripción'),
-                    const SizedBox(height: 8),
-                    _buildInfoCard(
-                      theme,
-                      isDark,
-                      child: Text(
-                        ranch.businessDescription!,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    _buildDescriptionCard(context, theme, isTablet),
+                    const SizedBox(height: 16),
                   ],
-
-                  // Ubicación
-                  _buildSectionTitle(theme, 'Ubicación'),
-                  const SizedBox(height: 8),
-                  _buildInfoCard(
-                    theme,
-                    isDark,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          color: theme.colorScheme.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _getLocationText(),
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
 
                   // Certificaciones
                   if (ranch.certifications != null &&
                       ranch.certifications!.isNotEmpty) ...[
-                    _buildSectionTitle(theme, 'Certificaciones'),
-                    const SizedBox(height: 8),
-                    _buildInfoCard(
-                      theme,
-                      isDark,
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: ranch.certifications!.map((cert) {
-                          return Chip(
-                            avatar: Icon(
-                              Icons.verified,
-                              color: theme.colorScheme.primary,
-                              size: 18,
-                            ),
-                            label: Text(cert),
-                            backgroundColor: theme.colorScheme.primaryContainer,
-                            labelStyle: TextStyle(
-                              color: theme.colorScheme.onPrimaryContainer,
-                              fontSize: 12,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    _buildCertificationsCard(context, theme, isTablet),
+                    const SizedBox(height: 16),
                   ],
 
                   // Horarios de contacto
                   if (ranch.contactHours != null &&
                       ranch.contactHours!.isNotEmpty) ...[
-                    _buildSectionTitle(theme, 'Horarios de Contacto'),
-                    const SizedBox(height: 8),
-                    _buildInfoCard(
+                    _buildDetailCard(
+                      context,
                       theme,
-                      isDark,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            color: theme.colorScheme.primary,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              ranch.contactHours!,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      isTablet,
+                      icon: Icons.access_time,
+                      label: 'Horarios de Contacto',
+                      value: ranch.contactHours!,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                   ],
 
                   // Políticas
@@ -220,95 +146,69 @@ class PublicRanchDetailScreen extends StatelessWidget {
                           ranch.deliveryPolicy!.isNotEmpty) ||
                       (ranch.returnPolicy != null &&
                           ranch.returnPolicy!.isNotEmpty)) ...[
-                    _buildSectionTitle(theme, 'Políticas'),
-                    const SizedBox(height: 8),
-                    if (ranch.deliveryPolicy != null &&
-                        ranch.deliveryPolicy!.isNotEmpty)
-                      _buildPolicyCard(
-                        theme,
-                        isDark,
-                        'Política de Entrega',
-                        ranch.deliveryPolicy!,
-                        Icons.local_shipping,
-                      ),
-                    if (ranch.returnPolicy != null &&
-                        ranch.returnPolicy!.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _buildPolicyCard(
-                        theme,
-                        isDark,
-                        'Política de Devolución',
-                        ranch.returnPolicy!,
-                        Icons.assignment_return,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
+                    _buildPoliciesCard(context, theme, isTablet),
+                    const SizedBox(height: 16),
                   ],
 
-                  // Productos del Rancho (placeholder)
-                  _buildSectionTitle(theme, 'Productos Disponibles'),
-                  const SizedBox(height: 8),
-                  _buildInfoCard(
-                    theme,
-                    isDark,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 48,
-                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Próximamente: Lista de productos',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 100), // Espacio para el botón flotante
+                  // Botón de contactar
+                  _buildContactButton(context, theme, isTablet),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Implementar función de contacto
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Función de contacto próximamente...'),
-              backgroundColor: theme.colorScheme.primary,
-            ),
-          );
-        },
-        icon: const Icon(Icons.message),
-        label: const Text('Contactar'),
-        backgroundColor: theme.colorScheme.primary,
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeaderSection(ThemeData theme) {
+  Widget _buildImageGallery(BuildContext context, bool isTablet) {
+    final theme = Theme.of(context);
+    
+    // Placeholder para imágenes
+    return Container(
+      height: isTablet ? 400 : 300,
+      width: double.infinity,
+      color: theme.colorScheme.surfaceVariant,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.agriculture,
+              size: isTablet ? 80 : 60,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Sin imágenes disponibles',
+              style: TextStyle(
+                fontSize: isTablet ? 16 : 14,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleSection(BuildContext context, ThemeData theme, bool isTablet) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (ranch.legalName != null && ranch.legalName!.isNotEmpty)
-          Text(
-            ranch.legalName!,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+        // Nombre de la hacienda
+        Text(
+          ranch.name,
+          style: TextStyle(
+            fontSize: isTablet ? 24 : 20,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onBackground,
           ),
+        ),
         const SizedBox(height: 12),
+        
+        // Badges
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -317,19 +217,24 @@ class PublicRanchDetailScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(20),
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, size: 16, color: theme.colorScheme.onPrimary),
+                    Icon(
+                      Icons.star,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Principal',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: isTablet ? 14 : 12,
                       ),
                     ),
                   ],
@@ -339,19 +244,24 @@ class PublicRanchDetailScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade700,
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle, size: 16, color: Colors.white),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: Colors.green,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Acepta Visitas',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                        fontSize: isTablet ? 14 : 12,
                       ),
                     ),
                   ],
@@ -363,140 +273,407 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow(ThemeData theme) {
-    return Row(
+  Widget _buildDetailCard(
+    BuildContext context,
+    ThemeData theme,
+    bool isTablet, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: theme.colorScheme.primary,
+                size: isTablet ? 24 : 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: isTablet ? 14 : 12,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isTablet ? 16 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onBackground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(BuildContext context, ThemeData theme, bool isTablet) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildStatItem(
+                theme,
+                isTablet,
+                Icons.star,
+                ranch.avgRating.toStringAsFixed(1),
+                'Rating',
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: theme.colorScheme.outlineVariant,
+            ),
+            Expanded(
+              child: _buildStatItem(
+                theme,
+                isTablet,
+                Icons.shopping_bag,
+                ranch.totalSales.toString(),
+                'Ventas',
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: theme.colorScheme.outlineVariant,
+            ),
+            Expanded(
+              child: _buildStatItem(
+                theme,
+                isTablet,
+                Icons.inventory_2,
+                '0', // TODO: Implementar contador de productos
+                'Productos',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+    ThemeData theme,
+    bool isTablet,
+    IconData icon,
+    String value,
+    String label,
+  ) {
+    return Column(
       children: [
-        Expanded(
-          child: _buildStatCard(
-            theme,
-            Icons.star,
-            ranch.avgRating.toStringAsFixed(1),
-            'Rating',
+        Icon(
+          icon,
+          color: theme.colorScheme.primary,
+          size: isTablet ? 24 : 20,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTablet ? 20 : 18,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onBackground,
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            theme,
-            Icons.shopping_bag,
-            ranch.totalSales.toString(),
-            'Ventas',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            theme,
-            Icons.inventory_2,
-            '0', // TODO: Implementar contador de productos
-            'Productos',
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTablet ? 12 : 10,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(ThemeData theme, IconData icon, String value, String label) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
+  Widget _buildDescriptionCard(BuildContext context, ThemeData theme, bool isTablet) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        children: [
-          Icon(icon, color: theme.colorScheme.primary, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onPrimaryContainer,
-            ),
-          ),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(ThemeData theme, String title) {
-    return Text(
-      title,
-      style: theme.textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: theme.colorScheme.onSurface,
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(ThemeData theme, bool isDark, {required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.1),
-        ),
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildPolicyCard(
-    ThemeData theme,
-    bool isDark,
-    String title,
-    String content,
-    IconData icon,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: theme.colorScheme.primary, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.description,
+                  color: theme.colorScheme.primary,
+                  size: isTablet ? 24 : 20,
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  'Descripción',
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              ranch.businessDescription!,
+              style: TextStyle(
+                fontSize: isTablet ? 16 : 14,
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCertificationsCard(BuildContext context, ThemeData theme, bool isTablet) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.verified,
+                  color: theme.colorScheme.primary,
+                  size: isTablet ? 24 : 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Certificaciones',
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: ranch.certifications!.map((cert) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.green.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        cert,
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontSize: isTablet ? 14 : 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPoliciesCard(BuildContext context, ThemeData theme, bool isTablet) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.policy,
+                  color: theme.colorScheme.primary,
+                  size: isTablet ? 24 : 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Políticas',
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+              ],
+            ),
+            if (ranch.deliveryPolicy != null && ranch.deliveryPolicy!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.local_shipping,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Entrega',
+                          style: TextStyle(
+                            fontSize: isTablet ? 14 : 12,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onBackground,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          ranch.deliveryPolicy!,
+                          style: TextStyle(
+                            fontSize: isTablet ? 14 : 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            content,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.5,
+            if (ranch.returnPolicy != null && ranch.returnPolicy!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.assignment_return,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Devolución',
+                          style: TextStyle(
+                            fontSize: isTablet ? 14 : 12,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onBackground,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          ranch.returnPolicy!,
+                          style: TextStyle(
+                            fontSize: isTablet ? 14 : 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactButton(BuildContext context, ThemeData theme, bool isTablet) {
+    return SizedBox(
+      width: double.infinity,
+      height: isTablet ? 56 : 48,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          // TODO: Implementar función de contacto
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Función de contacto próximamente...'),
+              backgroundColor: theme.colorScheme.primary,
             ),
+          );
+        },
+        icon: const Icon(Icons.message),
+        label: Text(
+          'Contactar Vendedor',
+          style: TextStyle(
+            fontSize: isTablet ? 18 : 16,
+            fontWeight: FontWeight.bold,
           ),
-        ],
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
       ),
     );
   }
 }
-
