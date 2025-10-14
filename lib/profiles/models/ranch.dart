@@ -27,6 +27,7 @@ class Ranch {
 
   // Relaciones
   final Address? address;
+  final Map<String, dynamic>? profile; // Perfil del dueño (eager loading)
 
   Ranch({
     required this.id,
@@ -49,6 +50,7 @@ class Ranch {
     required this.createdAt,
     required this.updatedAt,
     this.address,
+    this.profile,
   });
 
   /// Factory para crear una instancia desde JSON
@@ -75,6 +77,9 @@ class Ranch {
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
       address:
           json['address'] != null ? Address.fromJson(json['address']) : null,
+      profile: json['profile'] != null
+          ? Map<String, dynamic>.from(json['profile'])
+          : null,
     );
   }
 
@@ -178,6 +183,7 @@ class Ranch {
     DateTime? createdAt,
     DateTime? updatedAt,
     Address? address,
+    Map<String, dynamic>? profile,
   }) {
     return Ranch(
       id: id ?? this.id,
@@ -200,6 +206,7 @@ class Ranch {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       address: address ?? this.address,
+      profile: profile ?? this.profile,
     );
   }
 

@@ -15,9 +15,10 @@ class PublicRanchDetailScreen extends StatelessWidget {
     final address = ranch.address;
     if (address == null) return 'Ubicación no especificada';
 
-    String cityName = address.city?['name'] ?? '';
-    String stateName = address.city?['state']?['name'] ?? '';
-    String countryName = address.city?['state']?['country']?['name'] ?? '';
+    // Intentar obtener de los campos directos primero
+    String cityName = address.cityName ?? address.city?['name'] ?? '';
+    String stateName = address.stateName ?? address.city?['state']?['name'] ?? '';
+    String countryName = address.countryName ?? address.city?['state']?['country']?['name'] ?? '';
 
     List<String> parts = [];
     if (cityName.isNotEmpty) parts.add(cityName);
@@ -161,37 +162,49 @@ class PublicRanchDetailScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    // Placeholder para imágenes con gradiente (estilo rancho)
+    // Obtener foto del perfil del dueño
+    final profilePhoto = ranch.profile?['photo_users'];
+    final hasPhoto = profilePhoto != null && profilePhoto.toString().isNotEmpty;
+    
     return Container(
       height: isTablet ? 400 : 300,
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  theme.colorScheme.primaryContainer,
-                  theme.colorScheme.surfaceVariant,
-                ]
-              : [
-                  theme.colorScheme.primary.withOpacity(0.1),
-                  theme.colorScheme.primaryContainer.withOpacity(0.3),
-                ],
-        ),
+        image: hasPhoto
+            ? DecorationImage(
+                image: NetworkImage(profilePhoto),
+                fit: BoxFit.cover,
+              )
+            : null,
+        gradient: !hasPhoto
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        theme.colorScheme.primaryContainer,
+                        theme.colorScheme.surfaceVariant,
+                      ]
+                    : [
+                        theme.colorScheme.primary.withOpacity(0.1),
+                        theme.colorScheme.primaryContainer.withOpacity(0.3),
+                      ],
+              )
+            : null,
       ),
       child: Stack(
         children: [
-          // Icono de fondo
-          Positioned.fill(
-            child: Center(
-              child: Icon(
-                Icons.agriculture,
-                size: isTablet ? 120 : 100,
-                color: theme.colorScheme.primary.withOpacity(0.2),
+          // Icono de fondo (solo si no hay foto)
+          if (!hasPhoto)
+            Positioned.fill(
+              child: Center(
+                child: Icon(
+                  Icons.agriculture,
+                  size: isTablet ? 120 : 100,
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                ),
               ),
             ),
-          ),
           // Texto overlay
           Positioned(
             bottom: 0,
