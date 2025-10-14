@@ -98,16 +98,11 @@ class PublicRanchDetailScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
 
-                  // Ubicación
-                  _buildDetailCard(
-                    context,
-                    theme,
-                    isTablet,
-                    icon: Icons.location_on,
-                    label: 'Ubicación',
-                    value: _getLocationText(),
-                  ),
-                  const SizedBox(height: 16),
+                  // Ubicación completa
+                  if (ranch.address != null) ...[
+                    _buildLocationCard(context, theme, isTablet),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Estadísticas
                   _buildStatsSection(context, theme, isTablet),
@@ -164,31 +159,97 @@ class PublicRanchDetailScreen extends StatelessWidget {
 
   Widget _buildImageGallery(BuildContext context, bool isTablet) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
-    // Placeholder para imágenes
+    // Placeholder para imágenes con gradiente (estilo rancho)
     return Container(
       height: isTablet ? 400 : 300,
       width: double.infinity,
-      color: theme.colorScheme.surfaceVariant,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.agriculture,
-              size: isTablet ? 80 : 60,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Sin imágenes disponibles',
-              style: TextStyle(
-                fontSize: isTablet ? 16 : 14,
-                color: theme.colorScheme.onSurfaceVariant,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  theme.colorScheme.primaryContainer,
+                  theme.colorScheme.surfaceVariant,
+                ]
+              : [
+                  theme.colorScheme.primary.withOpacity(0.1),
+                  theme.colorScheme.primaryContainer.withOpacity(0.3),
+                ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Icono de fondo
+          Positioned.fill(
+            child: Center(
+              child: Icon(
+                Icons.agriculture,
+                size: isTablet ? 120 : 100,
+                color: theme.colorScheme.primary.withOpacity(0.2),
               ),
             ),
-          ],
-        ),
+          ),
+          // Texto overlay
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.all(isTablet ? 24 : 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    ranch.name,
+                    style: TextStyle(
+                      fontSize: isTablet ? 24 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (ranch.address != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 16,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _getLocationText(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -270,6 +331,86 @@ class PublicRanchDetailScreen extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildLocationCard(BuildContext context, ThemeData theme, bool isTablet) {
+    final address = ranch.address!;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header con icono
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.location_on,
+                    color: theme.colorScheme.primary,
+                    size: isTablet ? 24 : 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Ubicación',
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // Dirección completa (campo addresses)
+            if (address.addresses.isNotEmpty) ...[
+              Text(
+                address.addresses,
+                style: TextStyle(
+                  fontSize: isTablet ? 16 : 14,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onBackground,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            
+            // Ciudad, Estado, País
+            Row(
+              children: [
+                Icon(
+                  Icons.public,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _getLocationText(),
+                    style: TextStyle(
+                      fontSize: isTablet ? 14 : 12,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
