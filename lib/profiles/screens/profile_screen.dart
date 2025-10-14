@@ -114,9 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _switchTab(String tab) {
-        setState(() {
-          _activeTab = tab;
-        });
+    setState(() {
+      _activeTab = tab;
+    });
     // Cargar datos del tab seleccionado si aún no están cargados
     final profileProvider = context.read<ProfileProvider>();
     if (tab == 'myListings' && profileProvider.myProducts.isEmpty) {
@@ -237,14 +237,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         // Renderizar perfil
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isTablet ? 24 : 16),
-      child: Column(
-        children: [
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(isTablet ? 24 : 16),
+          child: Column(
+            children: [
               // Profile info card - Diseño Minimalista Moderno
-          Container(
-            padding: EdgeInsets.all(isTablet ? 32 : 24),
-            decoration: BoxDecoration(
+              Container(
+                padding: EdgeInsets.all(isTablet ? 32 : 24),
+                decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
@@ -254,9 +254,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       offset: const Offset(0, 4),
                     ),
                   ],
-            ),
-            child: Column(
-              children: [
+                ),
+                child: Column(
+                  children: [
                     // Avatar con borde sólido
                     Container(
                       padding: const EdgeInsets.all(4),
@@ -275,26 +275,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : null,
                         child: profile.photoUsers == null
                             ? Icon(
-                    Icons.person,
+                                Icons.person,
                                 size: isTablet ? 76 : 60,
                                 color: theme.colorScheme.onSurfaceVariant,
                               )
                             : null,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 20 : 16),
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 20 : 16),
 
                     // Nombre
-                Text(
+                    Text(
                       profile.fullName,
-                  style: TextStyle(
-                    fontSize: isTablet ? 28 : 24,
-                    fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        fontSize: isTablet ? 28 : 24,
+                        fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurface,
-                  ),
+                      ),
                       textAlign: TextAlign.center,
-                ),
-                SizedBox(height: isTablet ? 10 : 8),
+                    ),
+                    SizedBox(height: isTablet ? 10 : 8),
 
                     // Bio
                     if (profile.bio != null && profile.bio!.isNotEmpty) ...[
@@ -315,9 +315,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(height: isTablet ? 16 : 12),
 
                     // Rating y verificado
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         if (profile.isVerified) ...[
                           Icon(
                             Icons.verified,
@@ -326,29 +326,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(width: isTablet ? 8 : 6),
                         ],
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: isTablet ? 24 : 20,
-                    ),
-                    SizedBox(width: isTablet ? 6 : 4),
-                    Text(
+                        Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: isTablet ? 24 : 20,
+                        ),
+                        SizedBox(width: isTablet ? 6 : 4),
+                        Text(
                           profile.rating.toStringAsFixed(1),
                           style: TextStyle(
                             fontSize: isTablet ? 20 : 18,
                             color: theme.colorScheme.onSurface,
                           ),
-                    ),
-                    SizedBox(width: isTablet ? 10 : 8),
-                    Text(
+                        ),
+                        SizedBox(width: isTablet ? 10 : 8),
+                        Text(
                           '(${profile.ratingsCount} ${profile.ratingsCount == 1 ? "opinión" : "opiniones"})',
-                      style: TextStyle(
+                          style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: isTablet ? 16 : 14,
-                      ),
+                            fontSize: isTablet ? 16 : 14,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
 
                     // Premium badge - Sólido
                     if (profile.isPremiumSeller) ...[
@@ -384,7 +384,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
 
-                SizedBox(height: isTablet ? 20 : 16),
+                    SizedBox(height: isTablet ? 20 : 16),
 
                     // Ubicación
                     if (profile.primaryAddress != null) ...[
@@ -397,23 +397,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           SizedBox(width: isTablet ? 6 : 4),
-                Text(
+                          Text(
                             profile.primaryAddress!.formattedLocation,
-                  style: TextStyle(
+                            style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: isTablet ? 16 : 14,
-                  ),
-                ),
+                              fontSize: isTablet ? 16 : 14,
+                            ),
+                          ),
                         ],
                       ),
                       SizedBox(height: isTablet ? 12 : 8),
                     ],
 
                     // Miembro desde
-                Text(
+                    Text(
                       'Miembro desde: ${DateFormat('MMMM yyyy', 'es').format(profile.createdAt)}',
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -599,23 +599,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                  style: ElevatedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: theme.colorScheme.onPrimary,
-                    padding: EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                               vertical: isTablet ? 16 : 14),
                           elevation: 0,
-                    shape: RoundedRectangleBorder(
+                          shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  ),
-                ),
 
                     // Botón de cambiar tema eliminado - El tema ahora se ajusta automáticamente según el sistema
-              ],
-            ),
-          ),
+                  ],
+                ),
+              ),
 
               SizedBox(height: isTablet ? 32 : 24),
 
@@ -645,9 +645,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             theme.colorScheme.primary,
                           ),
                         ),
-      ),
-    );
-  }
+                      ),
+                    );
+                  }
 
                   // Mostrar error
                   if (metricsProvider.metricsError != null) {
@@ -670,9 +670,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-      child: Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+                      children: [
                         // Título
                         Text(
                           'Estadísticas',
@@ -682,7 +682,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: theme.colorScheme.onSurface,
                           ),
                         ),
-          SizedBox(height: isTablet ? 20 : 16),
+                        SizedBox(height: isTablet ? 20 : 16),
 
                         // Grid de métricas
                         GridView.count(
@@ -850,6 +850,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildMinimalStat({
+    required IconData icon,
+    required String value,
+    required String label,
+    required ThemeData theme,
+    required bool isTablet,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: isTablet ? 18 : 16,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        SizedBox(width: isTablet ? 8 : 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: isTablet ? 16 : 14,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: isTablet ? 11 : 10,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildMyListingsContent(bool isTablet, ThemeData theme) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
@@ -888,7 +929,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () {
                     profileProvider.fetchMyProducts(refresh: true);
                   },
-            style: ElevatedButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
                   ),
@@ -927,10 +968,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontSize: isTablet ? 14 : 12,
                   ),
                 ),
-        ],
-      ),
-    );
-  }
+              ],
+            ),
+          );
+        }
 
         // Lista de productos con métricas y acciones
         return ListView.builder(
@@ -938,21 +979,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           itemCount: profileProvider.myProducts.length,
           itemBuilder: (context, index) {
             final product = profileProvider.myProducts[index];
-    return Container(
+            return Container(
               margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
-      decoration: BoxDecoration(
+              decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
+                boxShadow: [
+                  BoxShadow(
                     color: Colors.black.withOpacity(0.04),
                     blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
                   // Imagen del producto
                   GestureDetector(
                     onTap: () {
@@ -997,38 +1038,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: isTablet ? 120 : 100,
                               height: isTablet ? 120 : 100,
                               color: theme.colorScheme.surfaceVariant,
-            child: Icon(
-              Icons.image,
+                              child: Icon(
+                                Icons.image,
                                 color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+                              ),
+                            ),
                     ),
                   ),
 
                   // Información del producto
-          Expanded(
+                  Expanded(
                     child: Padding(
                       padding: EdgeInsets.all(isTablet ? 16 : 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           // Título
-                Text(
+                          Text(
                             product.title,
-                  style: TextStyle(
-                    fontSize: isTablet ? 18 : 16,
+                            style: TextStyle(
+                              fontSize: isTablet ? 18 : 16,
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.onSurface,
-                  ),
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                ),
+                          ),
                           SizedBox(height: isTablet ? 8 : 6),
 
                           // Raza y tipo
-                Text(
+                          Text(
                             '${product.breed} · ${product.type}',
-                  style: TextStyle(
+                            style: TextStyle(
                               fontSize: isTablet ? 14 : 12,
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -1050,15 +1091,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Colors.blue,
                                   ),
                                   SizedBox(width: 4),
-                Text(
+                                  Text(
                                     '${product.viewsCount}',
-                  style: TextStyle(
+                                    style: TextStyle(
                                       fontSize: isTablet ? 14 : 12,
                                       color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+                                    ),
+                                  ),
+                                ],
+                              ),
 
                               // Estado
                               Container(
@@ -1099,7 +1140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // Acciones (Editar/Eliminar)
                   Padding(
-                  padding: EdgeInsets.all(isTablet ? 12 : 8),
+                    padding: EdgeInsets.all(isTablet ? 12 : 8),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1163,9 +1204,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         'Eliminar',
                                         style: TextStyle(
                                             color: theme.colorScheme.error),
-                ),
-              ),
-            ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               );
 
@@ -1208,9 +1249,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-          ),
-        ],
-      ),
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -1349,27 +1390,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-              // Lista de fincas - Diseño mejorado tipo card premium
+              // Lista de fincas - Diseño minimalista profesional
               ...profileProvider.myRanches.map((ranch) {
                 final isDark = theme.brightness == Brightness.dark;
-                
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RanchDetailScreen(ranch: ranch),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(bottom: isTablet ? 20 : 16),
+
+                return Container(
+                  margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark 
+                          color: isDark
                               ? Colors.black.withOpacity(0.3)
                               : Colors.black.withOpacity(0.08),
                           blurRadius: 20,
@@ -1413,7 +1445,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.colorScheme.primary.withOpacity(0.4),
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.4),
                                       blurRadius: 12,
                                       offset: const Offset(0, 4),
                                     ),
@@ -1426,7 +1459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               SizedBox(width: isTablet ? 16 : 12),
-                              
+
                               // Nombre y badge
                               Expanded(
                                 child: Column(
@@ -1451,7 +1484,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: theme.colorScheme.primary,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
@@ -1459,14 +1493,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             Icon(
                                               Icons.star,
                                               size: isTablet ? 14 : 12,
-                                              color: theme.colorScheme.onPrimary,
+                                              color:
+                                                  theme.colorScheme.onPrimary,
                                             ),
                                             SizedBox(width: 4),
                                             Text(
                                               'Principal',
                                               style: TextStyle(
                                                 fontSize: isTablet ? 12 : 11,
-                                                color: theme.colorScheme.onPrimary,
+                                                color:
+                                                    theme.colorScheme.onPrimary,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -1508,7 +1544,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
 
                               // Descripción
-                              if (ranch.description != null && ranch.description!.isNotEmpty) ...[
+                              if (ranch.description != null &&
+                                  ranch.description!.isNotEmpty) ...[
                                 SizedBox(height: isTablet ? 12 : 10),
                                 Text(
                                   ranch.description!,
@@ -1531,11 +1568,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: theme.colorScheme.surfaceContainerLow,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: theme.colorScheme.outline.withOpacity(0.1),
+                                    color: theme.colorScheme.outline
+                                        .withOpacity(0.1),
                                   ),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
                                   children: [
                                     _buildQuickStat(
                                       icon: Icons.star,
@@ -1548,7 +1587,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Container(
                                       width: 1,
                                       height: isTablet ? 40 : 32,
-                                      color: theme.colorScheme.outline.withOpacity(0.2),
+                                      color: theme.colorScheme.outline
+                                          .withOpacity(0.2),
                                     ),
                                     _buildQuickStat(
                                       icon: Icons.shopping_bag,
@@ -1561,12 +1601,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Container(
                                       width: 1,
                                       height: isTablet ? 40 : 32,
-                                      color: theme.colorScheme.outline.withOpacity(0.2),
+                                      color: theme.colorScheme.outline
+                                          .withOpacity(0.2),
                                     ),
                                     _buildQuickStat(
                                       icon: Icons.inventory_2,
                                       label: 'Productos',
-                                      value: '0', // TODO: Agregar contador de productos
+                                      value:
+                                          '0', // TODO: Agregar contador de productos
                                       color: Colors.blue,
                                       theme: theme,
                                       isTablet: isTablet,
@@ -1587,7 +1629,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => RanchDetailScreen(ranch: ranch),
+                                            builder: (context) =>
+                                                RanchDetailScreen(ranch: ranch),
                                           ),
                                         );
                                       },
@@ -1603,7 +1646,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ),
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: theme.colorScheme.primary,
+                                        foregroundColor:
+                                            theme.colorScheme.primary,
                                         side: BorderSide(
                                           color: theme.colorScheme.primary,
                                           width: 1.5,
@@ -1612,7 +1656,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           vertical: isTablet ? 14 : 12,
                                         ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                       ),
                                     ),
@@ -1626,11 +1671,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         final result = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => EditRanchScreen(ranch: ranch),
+                                            builder: (context) =>
+                                                EditRanchScreen(ranch: ranch),
                                           ),
                                         );
                                         if (result == true && mounted) {
-                                          profileProvider.fetchMyRanches(forceRefresh: true);
+                                          profileProvider.fetchMyRanches(
+                                              forceRefresh: true);
                                         }
                                       },
                                       icon: Icon(
@@ -1645,14 +1692,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: theme.colorScheme.primary,
-                                        foregroundColor: theme.colorScheme.onPrimary,
+                                        backgroundColor:
+                                            theme.colorScheme.primary,
+                                        foregroundColor:
+                                            theme.colorScheme.onPrimary,
                                         padding: EdgeInsets.symmetric(
                                           vertical: isTablet ? 14 : 12,
                                         ),
                                         elevation: 0,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                       ),
                                     ),
@@ -1662,10 +1712,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   // Botón Eliminar
                                   Container(
                                     decoration: BoxDecoration(
-                                      color: theme.colorScheme.error.withOpacity(0.1),
+                                      color: theme.colorScheme.error
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: theme.colorScheme.error.withOpacity(0.3),
+                                        color: theme.colorScheme.error
+                                            .withOpacity(0.3),
                                       ),
                                     ),
                                     child: IconButton(
@@ -1673,20 +1725,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            title: const Text('Eliminar Hacienda'),
+                                            title:
+                                                const Text('Eliminar Hacienda'),
                                             content: const Text(
                                               '¿Estás seguro de eliminar esta hacienda?\n\n'
                                               'No podrás eliminarla si tiene productos activos o es la única hacienda.',
                                             ),
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(context, false),
+                                                onPressed: () => Navigator.pop(
+                                                    context, false),
                                                 child: const Text('Cancelar'),
                                               ),
                                               TextButton(
-                                                onPressed: () => Navigator.pop(context, true),
+                                                onPressed: () => Navigator.pop(
+                                                    context, true),
                                                 style: TextButton.styleFrom(
-                                                  foregroundColor: theme.colorScheme.error,
+                                                  foregroundColor:
+                                                      theme.colorScheme.error,
                                                 ),
                                                 child: const Text('Eliminar'),
                                               ),
@@ -1696,29 +1752,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                         if (confirm == true && mounted) {
                                           try {
-                                            final result = await RanchService.deleteRanch(ranch.id);
-                                            if (result['success'] == true && mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                            final result =
+                                                await RanchService.deleteRanch(
+                                                    ranch.id);
+                                            if (result['success'] == true &&
+                                                mounted) {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
                                                 const SnackBar(
-                                                  content: Text('✅ Hacienda eliminada exitosamente'),
+                                                  content: Text(
+                                                      '✅ Hacienda eliminada exitosamente'),
                                                   backgroundColor: Colors.green,
                                                 ),
                                               );
-                                              profileProvider.fetchMyRanches(forceRefresh: true);
+                                              profileProvider.fetchMyRanches(
+                                                  forceRefresh: true);
                                             } else if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
                                                 SnackBar(
-                                                  content: Text(result['message'] ?? 'Error al eliminar hacienda'),
-                                                  backgroundColor: theme.colorScheme.error,
+                                                  content: Text(result[
+                                                          'message'] ??
+                                                      'Error al eliminar hacienda'),
+                                                  backgroundColor:
+                                                      theme.colorScheme.error,
                                                 ),
                                               );
                                             }
                                           } catch (e) {
                                             if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
                                                 SnackBar(
-                                                  content: Text(e.toString().replaceFirst('Exception: ', '')),
-                                                  backgroundColor: theme.colorScheme.error,
+                                                  content: Text(e
+                                                      .toString()
+                                                      .replaceFirst(
+                                                          'Exception: ', '')),
+                                                  backgroundColor:
+                                                      theme.colorScheme.error,
                                                 ),
                                               );
                                             }
