@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/ranch.dart';
 import '../providers/profile_provider.dart';
 import '../services/ranch_service.dart';
+import '../../shared/services/location_service.dart';
+import '../../profiles/services/address_service.dart';
 
 class EditRanchScreen extends StatefulWidget {
   final Ranch ranch;
@@ -52,6 +55,25 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
   ];
   String? _businessLicenseUrl;
 
+  // Campos de ubicación
+  late TextEditingController _addressDetailController;
+  int? _selectedCountryId;
+  int? _selectedStateId;
+  int? _selectedCityId;
+  int? _selectedParishId;
+
+  List<Map<String, dynamic>> _countries = [];
+  List<Map<String, dynamic>> _states = [];
+  List<Map<String, dynamic>> _cities = [];
+  List<Map<String, dynamic>> _parishes = [];
+
+  int? _existingAddressId;
+
+  // GPS
+  double? _latitude;
+  double? _longitude;
+  bool _isCapturingGPS = false;
+
   late bool _isPrimary;
   bool _isSubmitting = false;
 
@@ -84,7 +106,67 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     _selectedCertifications = widget.ranch.certifications ?? [];
     _businessLicenseUrl = widget.ranch.businessLicenseUrl;
 
+    // Inicializar dirección
+    _addressDetailController =
+        TextEditingController(text: widget.ranch.address?.addresses ?? '');
+    _existingAddressId = widget.ranch.address?.id;
+
+    // Si ya tiene dirección, inicializar los IDs y coordenadas
+    if (widget.ranch.address != null) {
+      _selectedCityId = widget.ranch.address!.cityId;
+      _latitude = widget.ranch.address!.latitude;
+      _longitude = widget.ranch.address!.longitude;
+      // Cargaremos los países, estados, ciudades para mostrar la selección actual
+      _loadCountries();
+    } else {
+      // Si no tiene dirección, solo cargar países
+      _loadCountries();
+    }
+
     _isPrimary = widget.ranch.isPrimary;
+
+    // Capturar GPS automáticamente (silencioso)
+    _captureGPSAutomatically();
+  }
+
+  /// Captura GPS automáticamente en segundo plano
+  Future<void> _captureGPSAutomatically() async {
+    if (_isCapturingGPS) return;
+
+    setState(() => _isCapturingGPS = true);
+
+    try {
+      // Verificar permisos
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        debugPrint('⚠️ Permisos de ubicación denegados');
+        setState(() => _isCapturingGPS = false);
+        return;
+      }
+
+      // Obtener posición actual
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      if (mounted) {
+        setState(() {
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+          _isCapturingGPS = false;
+        });
+        debugPrint('📍 GPS capturado: $_latitude, $_longitude');
+      }
+    } catch (e) {
+      debugPrint('❌ Error capturando GPS: $e');
+      setState(() => _isCapturingGPS = false);
+    }
   }
 
   @override
@@ -96,7 +178,141 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     _contactHoursController.dispose();
     _deliveryPolicyController.dispose();
     _returnPolicyController.dispose();
+    _addressDetailController.dispose();
     super.dispose();
+  }
+
+  // Métodos para cargar ubicaciones
+  Future<void> _loadCountries() async {
+    try {
+      final countries = await LocationService.getCountries();
+      if (mounted) {
+        setState(() {
+          _countries = countries;
+        });
+
+        // Si ya tiene dirección, cargar los datos de ubicación existentes
+        if (widget.ranch.address != null) {
+          await _loadLocationHierarchy();
+        } else {
+          // Si NO tiene dirección, pre-seleccionar Venezuela por defecto
+          final venezuela = countries.firstWhere(
+            (country) => country['name'] == 'Venezuela',
+            orElse: () => {},
+          );
+          
+          if (venezuela.isNotEmpty && mounted) {
+            final venezuelaId = venezuela['id'] as int;
+            setState(() {
+              _selectedCountryId = venezuelaId;
+            });
+            // Cargar estados de Venezuela automáticamente
+            await _loadStates(venezuelaId);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading countries: $e');
+    }
+  }
+
+  Future<void> _loadLocationHierarchy() async {
+    // Este método carga la jerarquía completa cuando ya existe una dirección
+    try {
+      final address = widget.ranch.address!;
+      final cityData = address.city;
+
+      if (cityData != null && cityData['state'] != null) {
+        final stateData = cityData['state'] as Map<String, dynamic>;
+        final countryData = stateData['country'] as Map<String, dynamic>?;
+
+        if (countryData != null) {
+          final countryId = countryData['id'] as int;
+          final stateId = stateData['id'] as int;
+          final cityId = cityData['id'] as int;
+
+          // Establecer el país seleccionado
+          _selectedCountryId = countryId;
+
+          // Cargar estados de ese país
+          final states = await LocationService.getStates(countryId);
+          if (mounted) {
+            setState(() {
+              _states = states;
+              _selectedStateId = stateId;
+            });
+          }
+
+          // Cargar ciudades de ese estado
+          final cities = await LocationService.getCities(stateId);
+          if (mounted) {
+            setState(() {
+              _cities = cities;
+              _selectedCityId = cityId;
+            });
+          }
+
+          // Si tiene parroquia, cargarla
+          if (address.parishId != null) {
+            final parishes = await LocationService.getParishes(cityId);
+            if (mounted) {
+              setState(() {
+                _parishes = parishes;
+                _selectedParishId = address.parishId;
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading location hierarchy: $e');
+    }
+  }
+
+  Future<void> _loadStates(int countryId) async {
+    try {
+      final states = await LocationService.getStates(countryId);
+      if (mounted) {
+        setState(() {
+          _states = states;
+          _selectedStateId = null;
+          _selectedCityId = null;
+          _cities.clear();
+          _parishes.clear();
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading states: $e');
+    }
+  }
+
+  Future<void> _loadCities(int stateId) async {
+    try {
+      final cities = await LocationService.getCities(stateId);
+      if (mounted) {
+        setState(() {
+          _cities = cities;
+          _selectedCityId = null;
+          _parishes.clear();
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading cities: $e');
+    }
+  }
+
+  Future<void> _loadParishes(int cityId) async {
+    try {
+      final parishes = await LocationService.getParishes(cityId);
+      if (mounted) {
+        setState(() {
+          _parishes = parishes;
+          _selectedParishId = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading parishes: $e');
+    }
   }
 
   Future<void> _handleSubmit() async {
@@ -107,6 +323,55 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     setState(() => _isSubmitting = true);
 
     try {
+      int? addressId = _existingAddressId;
+
+      // PASO 1: Crear o actualizar dirección si se proporcionó ubicación
+      if (_selectedCityId != null &&
+          _addressDetailController.text.trim().isNotEmpty) {
+        if (_existingAddressId != null) {
+          // Actualizar dirección existente
+          final addressResult = await AddressService.updateAddress(
+            addressId: _existingAddressId!,
+            cityId: _selectedCityId,
+            addressDetail: _addressDetailController.text.trim(),
+            latitude: _latitude ?? 0.0, // GPS capturado automáticamente
+            longitude: _longitude ?? 0.0,
+            level: 'ranches', // Dirección de hacienda
+          );
+
+          if (addressResult['success'] != true) {
+            throw Exception(
+                addressResult['message'] ?? 'Error al actualizar dirección');
+          }
+        } else {
+          // Crear nueva dirección
+          final profileProvider = context.read<ProfileProvider>();
+          final profileId = profileProvider.myProfile?.id;
+
+          if (profileId == null) {
+            throw Exception('No se encontró el perfil del usuario');
+          }
+
+          final addressResult = await AddressService.createAddress(
+            profileId: profileId,
+            cityId: _selectedCityId!,
+            addressDetail: _addressDetailController.text.trim(),
+            latitude: _latitude ?? 0.0, // GPS capturado automáticamente
+            longitude: _longitude ?? 0.0,
+            level: 'ranches', // Dirección de hacienda
+          );
+
+          if (addressResult['success'] == true) {
+            final newAddress = addressResult['address'];
+            addressId = newAddress['id'] as int;
+          } else {
+            throw Exception(
+                addressResult['message'] ?? 'Error al crear dirección');
+          }
+        }
+      }
+
+      // PASO 2: Actualizar ranch
       final result = await RanchService.updateRanch(
         ranchId: widget.ranch.id,
         name: _nameController.text,
@@ -121,6 +386,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             _selectedCertifications.isNotEmpty ? _selectedCertifications : null,
         businessLicenseUrl: _businessLicenseUrl,
         contactHours: _selectedSchedule,
+        addressId: addressId, // Asignar el address_id al ranch
         isPrimary: _isPrimary,
         deliveryPolicy: _deliveryPolicyController.text.isNotEmpty
             ? _deliveryPolicyController.text
@@ -146,6 +412,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             .fetchMyRanches(forceRefresh: true);
 
         if (mounted) {
+          // Volver a la vista anterior (lista de haciendas en Mi Perfil)
           Navigator.pop(context, true);
         }
       } else if (mounted) {
@@ -869,111 +1136,221 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     );
   }
 
-  /// Widget para mostrar información de contacto (Teléfonos y Dirección)
+  /// Widget para la sección de Dirección con selects anidados
   Widget _buildContactInfoSection(ThemeData theme) {
-    final hasAddress = widget.ranch.address != null;
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Información de Contacto',
+          'Ubicación de la Hacienda',
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow,
-            border: Border.all(color: theme.colorScheme.outline),
-            borderRadius: BorderRadius.circular(12),
+        const SizedBox(height: 16),
+
+        // Dirección detallada PRIMERO
+        TextFormField(
+          controller: _addressDetailController,
+          maxLines: 2,
+          maxLength: 255,
+          decoration: InputDecoration(
+            labelText: 'Dirección Detallada *',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: theme.colorScheme.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            prefixIcon:
+                Icon(Icons.home_outlined, color: theme.colorScheme.primary),
+            helperText: 'Ej: Carretera Nacional, Km 45, Sector Los Uveros',
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dirección
-              if (hasAddress) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.location_on,
-                        color: theme.colorScheme.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dirección',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.ranch.address!.fullLocation,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          if (widget.ranch.address!.addresses.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                widget.ranch.address!.addresses,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 16),
-              ],
-              
-              // Nota informativa
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline,
-                        size: 20, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Los teléfonos y dirección de la hacienda se gestionan desde el perfil principal. Ve a "Mi Perfil" para actualizar esta información.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Ingresa la dirección detallada';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+
+        // Select País
+        DropdownButtonFormField<int>(
+          value: _selectedCountryId,
+          isExpanded: true, // CORRIGE OVERFLOW
+          decoration: InputDecoration(
+            labelText: 'País *',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: theme.colorScheme.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            prefixIcon: Icon(Icons.public, color: theme.colorScheme.primary),
+          ),
+          items: _countries.map((country) {
+            return DropdownMenuItem<int>(
+              value: country['id'] as int,
+              child: Text(
+                country['name'] ?? '',
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _selectedCountryId = value;
+              });
+              _loadStates(value);
+            }
+          },
+          validator: (value) => value == null ? 'Selecciona un país' : null,
         ),
+        const SizedBox(height: 16),
+
+        // Select Estado
+        DropdownButtonFormField<int>(
+          value: _selectedStateId,
+          isExpanded: true, // CORRIGE OVERFLOW
+          decoration: InputDecoration(
+            labelText: 'Estado *',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: theme.colorScheme.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            prefixIcon: Icon(Icons.map, color: theme.colorScheme.primary),
+          ),
+          items: _states.map((state) {
+            return DropdownMenuItem<int>(
+              value: state['id'] as int,
+              child: Text(
+                state['name'] ?? '',
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+          onChanged: _selectedCountryId == null
+              ? null
+              : (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedStateId = value;
+                    });
+                    _loadCities(value);
+                  }
+                },
+          validator: (value) => value == null ? 'Selecciona un estado' : null,
+        ),
+        const SizedBox(height: 16),
+
+        // Select Ciudad
+        DropdownButtonFormField<int>(
+          value: _selectedCityId,
+          isExpanded: true, // CORRIGE OVERFLOW
+          decoration: InputDecoration(
+            labelText: 'Ciudad *',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: theme.colorScheme.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            prefixIcon:
+                Icon(Icons.location_city, color: theme.colorScheme.primary),
+          ),
+          items: _cities.map((city) {
+            return DropdownMenuItem<int>(
+              value: city['id'] as int,
+              child: Text(
+                city['name'] ?? '',
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+          onChanged: _selectedStateId == null
+              ? null
+              : (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedCityId = value;
+                    });
+                    _loadParishes(value);
+                  }
+                },
+          validator: (value) => value == null ? 'Selecciona una ciudad' : null,
+        ),
+        const SizedBox(height: 16),
+
+        // Select Parroquia (opcional)
+        if (_parishes.isNotEmpty) ...[
+          DropdownButtonFormField<int>(
+            value: _selectedParishId,
+            isExpanded: true, // CORRIGE OVERFLOW
+            decoration: InputDecoration(
+              labelText: 'Parroquia',
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: theme.colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: theme.colorScheme.primary, width: 2),
+              ),
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              prefixIcon: Icon(Icons.location_on_outlined,
+                  color: theme.colorScheme.primary),
+            ),
+            items: _parishes.map((parish) {
+              return DropdownMenuItem<int>(
+                value: parish['id'] as int,
+                child: Text(
+                  parish['name'] ?? '',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedParishId = value;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ],
     );
   }

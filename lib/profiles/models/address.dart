@@ -10,11 +10,15 @@ class Address {
   final String status; // verified, notverified
   final int profileId;
   final int cityId;
+  final int? parishId; // Parroquia (opcional)
 
   // Datos de relaciones (eager loading desde backend)
   final String? cityName;
   final String? stateName;
   final String? countryName;
+
+  // Objetos completos de las relaciones (cuando vienen del backend)
+  final Map<String, dynamic>? city;
 
   Address({
     required this.id,
@@ -24,9 +28,11 @@ class Address {
     required this.status,
     required this.profileId,
     required this.cityId,
+    this.parishId,
     this.cityName,
     this.stateName,
     this.countryName,
+    this.city,
   });
 
   /// Ubicación formateada (Ciudad, Estado)
@@ -68,9 +74,12 @@ class Address {
       status: json['status'] ?? 'notverified',
       profileId: _parseInt(json['profile_id']) ?? 0,
       cityId: _parseInt(json['city_id']) ?? 0,
+      parishId: _parseInt(json['parish_id']),
       cityName: json['city_name'] ?? json['city']?['name'],
       stateName: json['state_name'] ?? json['state']?['name'],
       countryName: json['country_name'] ?? json['country']?['name'],
+      city:
+          json['city'] != null ? Map<String, dynamic>.from(json['city']) : null,
     );
   }
 
@@ -84,9 +93,11 @@ class Address {
       'status': status,
       'profile_id': profileId,
       'city_id': cityId,
+      if (parishId != null) 'parish_id': parishId,
       if (cityName != null) 'city_name': cityName,
       if (stateName != null) 'state_name': stateName,
       if (countryName != null) 'country_name': countryName,
+      if (city != null) 'city': city,
     };
   }
 
@@ -117,9 +128,11 @@ class Address {
     String? status,
     int? profileId,
     int? cityId,
+    int? parishId,
     String? cityName,
     String? stateName,
     String? countryName,
+    Map<String, dynamic>? city,
   }) {
     return Address(
       id: id ?? this.id,
@@ -129,9 +142,11 @@ class Address {
       status: status ?? this.status,
       profileId: profileId ?? this.profileId,
       cityId: cityId ?? this.cityId,
+      parishId: parishId ?? this.parishId,
       cityName: cityName ?? this.cityName,
       stateName: stateName ?? this.stateName,
       countryName: countryName ?? this.countryName,
+      city: city ?? this.city,
     );
   }
 }
