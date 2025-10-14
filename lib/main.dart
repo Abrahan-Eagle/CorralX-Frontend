@@ -556,16 +556,16 @@ class MainRouterState extends State<MainRouter> {
             label: 'Mercado',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favoritos',
+            icon: Icon(Icons.message),
+            label: 'Mensajes',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.add_circle),
             label: 'Publicar',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.message),
-            label: 'Mensajes',
+            icon: Icon(Icons.home_work),
+            label: 'Fincas',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -728,6 +728,23 @@ class MainRouterState extends State<MainRouter> {
           fit: BoxFit.contain,
         ),
         centerTitle: false,
+        actions: [
+          // Botón de Favoritos en el AppBar
+          IconButton(
+            icon: const Icon(Icons.favorite),
+            color: Colors.red, // Color rojo para representar favoritos
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoritesScreen(),
+                ),
+              );
+            },
+            tooltip: 'Favoritos',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
@@ -756,15 +773,16 @@ class MainRouterState extends State<MainRouter> {
                 if (_selectedLevel == 0) {
                   switch (_bottomNavIndex) {
                     case 0:
-                      return const MarketplaceScreen();
+                      return const MarketplaceScreen(); // Mercado
                     case 1:
-                      return const FavoritesScreen();
+                      return const MessagesScreen(); // Mensajes
                     case 2:
-                      return const CreateScreen();
+                      return const CreateScreen(); // Publicar
                     case 3:
-                      return const MessagesScreen();
+                      return _buildComingSoonScreen(
+                          'Fincas'); // Fincas (próximamente)
                     case 4:
-                      return const ProfileScreen();
+                      return const ProfileScreen(); // Perfil
                     default:
                       return const MarketplaceScreen();
                   }
