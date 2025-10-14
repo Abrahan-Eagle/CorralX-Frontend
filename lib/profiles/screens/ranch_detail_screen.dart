@@ -13,19 +13,22 @@ class RanchDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Detalle de Hacienda',
           style: TextStyle(
-            color: Colors.white,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -42,7 +45,7 @@ class RanchDetailScreen extends StatelessWidget {
                 Navigator.pop(context, true);
               }
             },
-            icon: const Icon(Icons.edit, color: Colors.white),
+            icon: Icon(Icons.edit, color: theme.colorScheme.primary),
             tooltip: 'Editar',
           ),
         ],
@@ -53,32 +56,32 @@ class RanchDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Card
-            _buildHeaderCard(context),
+            _buildHeaderCard(context, theme, isDark),
             const SizedBox(height: 16),
 
             // Descripción
             if (ranch.businessDescription != null &&
                 ranch.businessDescription!.isNotEmpty) ...[
-              _buildDescriptionCard(context),
+              _buildDescriptionCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Ubicación
             if (ranch.address != null) ...[
-              _buildLocationCard(context),
+              _buildLocationCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Certificaciones
             if (ranch.certifications != null &&
                 ranch.certifications!.isNotEmpty) ...[
-              _buildCertificationsCard(context),
+              _buildCertificationsCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Horarios
             if (ranch.contactHours != null && ranch.contactHours!.isNotEmpty) ...[
-              _buildHoursCard(context),
+              _buildHoursCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
@@ -87,16 +90,16 @@ class RanchDetailScreen extends StatelessWidget {
                     ranch.deliveryPolicy!.isNotEmpty) ||
                 (ranch.returnPolicy != null &&
                     ranch.returnPolicy!.isNotEmpty)) ...[
-              _buildPoliciesSection(context),
+              _buildPoliciesSection(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Estadísticas
-            _buildStatisticsCard(context),
+            _buildStatisticsCard(context, theme, isDark),
             const SizedBox(height: 16),
 
             // Productos del Rancho
-            _buildProductsSection(context),
+            _buildProductsSection(context, theme, isDark),
             const SizedBox(height: 80), // Espacio para el FAB
           ],
         ),
@@ -104,18 +107,18 @@ class RanchDetailScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Función de contacto próximamente'),
-              backgroundColor: Color(0xFF4CAF50),
+            SnackBar(
+              content: const Text('Función de contacto próximamente'),
+              backgroundColor: theme.colorScheme.primary,
             ),
           );
         },
-        backgroundColor: const Color(0xFF81C784),
-        icon: const Icon(Icons.message, color: Colors.white),
-        label: const Text(
+        backgroundColor: theme.colorScheme.primary,
+        icon: Icon(Icons.message, color: theme.colorScheme.onPrimary),
+        label: Text(
           'Contactar',
           style: TextStyle(
-            color: Colors.white,
+            color: theme.colorScheme.onPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -124,15 +127,26 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderCard(BuildContext context) {
+  Widget _buildHeaderCard(BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,10 +157,10 @@ class RanchDetailScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   ranch.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -155,13 +169,13 @@ class RanchDetailScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50),
+                    color: theme.colorScheme.primary,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Principal',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -173,14 +187,15 @@ class RanchDetailScreen extends StatelessWidget {
 
           // Razón Social
           if (ranch.legalName != null && ranch.legalName!.isNotEmpty)
-            _buildInfoRow(Icons.store, ranch.legalName!),
+            _buildInfoRow(theme, Icons.store, ranch.legalName!),
 
           // RIF
           if (ranch.taxId != null && ranch.taxId!.isNotEmpty)
-            _buildInfoRow(Icons.badge, 'RIF: ${ranch.taxId}'),
+            _buildInfoRow(theme, Icons.badge, 'RIF: ${ranch.taxId}'),
 
           // Fecha de creación
           _buildInfoRow(
+            theme,
             Icons.calendar_today,
             'Creada: ${DateFormat('dd/MM/yyyy').format(ranch.createdAt)}',
           ),
@@ -189,18 +204,18 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow(ThemeData theme, IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF4CAF50), size: 20),
+          Icon(icon, color: theme.colorScheme.primary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFFB0B0B0),
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 14,
               ),
             ),
@@ -210,29 +225,42 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDescriptionCard(BuildContext context) {
+  Widget _buildDescriptionCard(
+      BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.description, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.description,
+                  color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Descripción del Negocio',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -240,8 +268,8 @@ class RanchDetailScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             ranch.businessDescription!,
-            style: const TextStyle(
-              color: Color(0xFFB0B0B0),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
               fontSize: 14,
               height: 1.5,
             ),
@@ -251,7 +279,8 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLocationCard(BuildContext context) {
+  Widget _buildLocationCard(
+      BuildContext context, ThemeData theme, bool isDark) {
     final address = ranch.address;
     if (address == null) return const SizedBox.shrink();
 
@@ -274,25 +303,37 @@ class RanchDetailScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.location_on, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.location_on,
+                  color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Ubicación',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -301,13 +342,14 @@ class RanchDetailScreen extends StatelessWidget {
           if (fullLocation.isNotEmpty) ...[
             Row(
               children: [
-                const Icon(Icons.public, color: Color(0xFFB0B0B0), size: 18),
+                Icon(Icons.public,
+                    color: theme.colorScheme.onSurfaceVariant, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     fullLocation,
-                    style: const TextStyle(
-                      color: Color(0xFFB0B0B0),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 14,
                     ),
                   ),
@@ -320,13 +362,14 @@ class RanchDetailScreen extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.home, color: Color(0xFFB0B0B0), size: 18),
+                Icon(Icons.home,
+                    color: theme.colorScheme.onSurfaceVariant, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     address.addresses,
-                    style: const TextStyle(
-                      color: Color(0xFFB0B0B0),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 14,
                       height: 1.5,
                     ),
@@ -340,29 +383,41 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCertificationsCard(BuildContext context) {
+  Widget _buildCertificationsCard(
+      BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.verified, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.verified, color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Certificaciones',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -376,22 +431,22 @@ class RanchDetailScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.2),
+                  color: theme.colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFF4CAF50),
+                    color: theme.colorScheme.primary,
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle,
-                        size: 16, color: Color(0xFF4CAF50)),
+                    Icon(Icons.check_circle,
+                        size: 16, color: theme.colorScheme.primary),
                     const SizedBox(width: 6),
                     Text(
                       cert,
-                      style: const TextStyle(
-                        color: Color(0xFF4CAF50),
+                      style: TextStyle(
+                        color: theme.colorScheme.onPrimaryContainer,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -407,27 +462,29 @@ class RanchDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF2196F3).withOpacity(0.2),
+                color: theme.colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(0xFF2196F3),
+                  color: theme.colorScheme.secondary,
                 ),
               ),
               child: Row(
-                children: const [
-                  Icon(Icons.attach_file, size: 18, color: Color(0xFF2196F3)),
-                  SizedBox(width: 8),
+                children: [
+                  Icon(Icons.attach_file,
+                      size: 18, color: theme.colorScheme.secondary),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Documento de Licencia Adjunto',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF2196F3),
+                        color: theme.colorScheme.onSecondaryContainer,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  Icon(Icons.download, size: 18, color: Color(0xFF2196F3)),
+                  Icon(Icons.download,
+                      size: 18, color: theme.colorScheme.secondary),
                 ],
               ),
             ),
@@ -437,29 +494,41 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHoursCard(BuildContext context) {
+  Widget _buildHoursCard(BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.access_time, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.access_time,
+                  color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Horarios de Atención',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -468,18 +537,19 @@ class RanchDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7D32),
+              color: theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                const Icon(Icons.schedule, color: Colors.white, size: 18),
+                Icon(Icons.schedule,
+                    color: theme.colorScheme.onPrimaryContainer, size: 18),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     ranch.contactHours!,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimaryContainer,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -493,29 +563,41 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPoliciesSection(BuildContext context) {
+  Widget _buildPoliciesSection(
+      BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.policy, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.policy, color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Políticas',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -525,6 +607,8 @@ class RanchDetailScreen extends StatelessWidget {
           // Política de Entrega
           if (ranch.deliveryPolicy != null && ranch.deliveryPolicy!.isNotEmpty)
             _buildPolicyItem(
+              theme,
+              isDark,
               Icons.local_shipping,
               'Política de Entrega',
               ranch.deliveryPolicy!,
@@ -539,6 +623,8 @@ class RanchDetailScreen extends StatelessWidget {
           // Política de Devolución
           if (ranch.returnPolicy != null && ranch.returnPolicy!.isNotEmpty)
             _buildPolicyItem(
+              theme,
+              isDark,
               Icons.keyboard_return,
               'Política de Devolución',
               ranch.returnPolicy!,
@@ -548,11 +634,14 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPolicyItem(IconData icon, String title, String content) {
+  Widget _buildPolicyItem(ThemeData theme, bool isDark, IconData icon,
+      String title, String content) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF252525),
+        color: isDark
+            ? const Color(0xFF252525)
+            : theme.colorScheme.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -560,14 +649,14 @@ class RanchDetailScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF4CAF50), size: 18),
+              Icon(icon, color: theme.colorScheme.primary, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -575,8 +664,8 @@ class RanchDetailScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             content,
-            style: const TextStyle(
-              color: Color(0xFFB0B0B0),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
               fontSize: 14,
               height: 1.5,
             ),
@@ -586,29 +675,41 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatisticsCard(BuildContext context) {
+  Widget _buildStatisticsCard(
+      BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.bar_chart, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.bar_chart, color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Estadísticas',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -618,6 +719,8 @@ class RanchDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatItem(
+                  theme,
+                  isDark,
                   Icons.star,
                   ranch.avgRating.toStringAsFixed(1),
                   'Rating',
@@ -626,6 +729,8 @@ class RanchDetailScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatItem(
+                  theme,
+                  isDark,
                   Icons.shopping_bag,
                   ranch.totalSales.toString(),
                   'Ventas',
@@ -634,6 +739,8 @@ class RanchDetailScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatItem(
+                  theme,
+                  isDark,
                   Icons.inventory_2,
                   '0',
                   'Productos',
@@ -646,21 +753,24 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label) {
+  Widget _buildStatItem(
+      ThemeData theme, bool isDark, IconData icon, String value, String label) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF252525),
+        color: isDark
+            ? const Color(0xFF252525)
+            : theme.colorScheme.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF4CAF50), size: 24),
+          Icon(icon, color: theme.colorScheme.primary, size: 24),
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -668,8 +778,8 @@ class RanchDetailScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFFB0B0B0),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
               fontSize: 11,
             ),
             textAlign: TextAlign.center,
@@ -679,29 +789,42 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProductsSection(BuildContext context) {
+  Widget _buildProductsSection(
+      BuildContext context, ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.inventory_2, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 12),
+            children: [
+              Icon(Icons.inventory_2,
+                  color: theme.colorScheme.primary, size: 20),
+              const SizedBox(width: 12),
               Text(
                 'Productos del Rancho',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -711,26 +834,27 @@ class RanchDetailScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(40),
               child: Column(
-                children: const [
+                children: [
                   Icon(
                     Icons.inventory_outlined,
                     size: 64,
-                    color: Color(0xFF808080),
+                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'Sin productos',
                     style: TextStyle(
-                      color: Color(0xFFB0B0B0),
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Esta finca aún no tiene productos publicados',
                     style: TextStyle(
-                      color: Color(0xFF808080),
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withOpacity(0.7),
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -744,5 +868,3 @@ class RanchDetailScreen extends StatelessWidget {
     );
   }
 }
-
-
