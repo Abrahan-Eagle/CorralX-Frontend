@@ -115,7 +115,7 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                         flexibleSpace: Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: isTablet ? 24 : 16,
-                            vertical: isTablet ? 16 : 12,
+                            vertical: isTablet ? 14 : 8,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
