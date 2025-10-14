@@ -80,7 +80,8 @@ class RanchDetailScreen extends StatelessWidget {
             ],
 
             // Horarios
-            if (ranch.contactHours != null && ranch.contactHours!.isNotEmpty) ...[
+            if (ranch.contactHours != null &&
+                ranch.contactHours!.isNotEmpty) ...[
               _buildHoursCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
@@ -100,28 +101,8 @@ class RanchDetailScreen extends StatelessWidget {
 
             // Productos del Rancho
             _buildProductsSection(context, theme, isDark),
-            const SizedBox(height: 80), // Espacio para el FAB
+            const SizedBox(height: 16),
           ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Función de contacto próximamente'),
-              backgroundColor: theme.colorScheme.primary,
-            ),
-          );
-        },
-        backgroundColor: theme.colorScheme.primary,
-        icon: Icon(Icons.message, color: theme.colorScheme.onPrimary),
-        label: Text(
-          'Contactar',
-          style: TextStyle(
-            color: theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
         ),
       ),
     );
@@ -853,8 +834,8 @@ class RanchDetailScreen extends StatelessWidget {
                   Text(
                     'Esta finca aún no tiene productos publicados',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant
-                          .withOpacity(0.7),
+                      color:
+                          theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
