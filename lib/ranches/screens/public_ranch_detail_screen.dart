@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../profiles/models/ranch.dart';
 import '../providers/ranch_provider.dart';
+import '../../chat/providers/chat_provider.dart';
+import '../../chat/screens/chat_screen.dart';
+import '../../profiles/providers/profile_provider.dart';
 
 class PublicRanchDetailScreen extends StatelessWidget {
   final Ranch ranch;
@@ -802,15 +805,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
       width: double.infinity,
       height: isTablet ? 56 : 48,
       child: ElevatedButton.icon(
-        onPressed: () {
-          // TODO: Implementar función de contacto
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Función de contacto próximamente...'),
-              backgroundColor: theme.colorScheme.primary,
-            ),
-          );
-        },
+        onPressed: () => _showContactDialog(context),
         icon: const Icon(Icons.message),
         label: Text(
           'Contactar Vendedor',
@@ -829,5 +824,81 @@ class PublicRanchDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showContactDialog(BuildContext context) async {
+    final chatProvider = context.read<ChatProvider>();
+    final profileProvider = context.read<ProfileProvider>();
+
+    // Obtener ID del perfil del dueño del rancho
+    final sellerId = ranch.profileId;
+    final currentProfileId = profileProvider.myProfile?.id ?? 0;
+
+    if (sellerId == currentProfileId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No puedes contactarte a ti mismo'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      // Abrir o crear conversación (contexto: hacienda)
+      final conversation = await chatProvider.openConversation(
+        sellerId,
+        ranchId: ranch.id, // Contexto de hacienda
+      );
+
+      if (!context.mounted) return;
+
+      // Cerrar loading
+      Navigator.pop(context);
+
+      if (conversation != null) {
+        // Enviar mensaje automático
+        final initialMessage = 'Hola, me interesa tu hacienda "${ranch.name}"';
+        await chatProvider.sendMessage(conversation.id, initialMessage);
+
+        if (!context.mounted) return;
+
+        // Navegar al chat
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(conversationId: conversation.id),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al abrir la conversación'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      // Cerrar loading si está abierto
+      Navigator.of(context).popUntil((route) => route.isFirst || !route.isActive);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

@@ -148,8 +148,10 @@ class ChatProvider extends ChangeNotifier {
   Future<Conversation?> openConversation(
     int otherProfileId, {
     int? productId,
+    int? ranchId,
   }) async {
-    print('➕ ChatProvider.openConversation - ProfileID: $otherProfileId');
+    print(
+        '➕ ChatProvider.openConversation - ProfileID: $otherProfileId, ProductID: $productId, RanchID: $ranchId');
 
     try {
       // 1. Verificar si ya existe conversación
