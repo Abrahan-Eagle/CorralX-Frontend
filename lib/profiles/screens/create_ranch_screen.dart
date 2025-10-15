@@ -929,37 +929,41 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
               child: Container(
                 width: double.maxFinite,
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Título
-                    Row(
-                      children: [
-                        Icon(Icons.schedule,
-                            color: theme.colorScheme.primary, size: 28),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Horario de Atención',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Título
+                      Row(
+                        children: [
+                          Icon(Icons.schedule,
+                              color: theme.colorScheme.primary, size: 28),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Horario de Atención',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Selecciona un horario',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 14,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Selecciona un horario',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
-                    // Horarios predefinidos
-                    ..._predefinedSchedules.map((schedule) {
+                      // Horarios predefinidos
+                      ..._predefinedSchedules.map((schedule) {
                       final isSelected = tempSelectedSchedule == schedule;
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -1071,6 +1075,7 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
                       ],
                     ),
                   ],
+                ),
                 ),
               ),
             );
