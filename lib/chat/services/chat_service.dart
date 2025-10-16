@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 /// Maneja todas las operaciones REST relacionadas con conversaciones y mensajes
 class ChatService {
   static const storage = FlutterSecureStorage();
-  
+
   // URL base con detección robusta del modo producción (igual que ProductService)
   static String get _baseUrl {
     final bool isProduction = kReleaseMode ||
