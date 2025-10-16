@@ -168,12 +168,14 @@ class SignInScreenState extends State<SignInScreen>
                 Column(
                   children: [
                     SizedBox(height: isTablet ? 40 : 30),
-                    // Logo principal
+                    // Logo principal (cambia según el tema)
                     SizedBox(
                       width: isTablet ? 360 : 240,
                       height: isTablet ? 360 : 240,
                       child: Image.asset(
-                        'assets/splash/image_light_1024.png',
+                        theme.brightness == Brightness.dark
+                            ? 'assets/splash/image_dark_1024.png'
+                            : 'assets/splash/image_light_1024.png',
                         fit: BoxFit.contain,
                       ),
                     ),
