@@ -23,9 +23,7 @@ class SignInScreenState extends State<SignInScreen>
   bool isAuthenticated = false;
   GoogleSignInAccount? _currentUser;
   late AnimationController _fadeController;
-  late AnimationController _scaleController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
   String? _loginError;
   bool _isLoading = false;
 
@@ -38,11 +36,6 @@ class SignInScreenState extends State<SignInScreen>
 
   void _setupAnimations() {
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _scaleController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
@@ -52,30 +45,15 @@ class SignInScreenState extends State<SignInScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut,
     ));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.easeInOut,
-    ));
-
-    // Iniciar animaciones
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        _fadeController.forward();
-        _scaleController.forward();
-      }
-    });
+    _fadeController.forward();
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
-    _scaleController.dispose();
     super.dispose();
   }
 
@@ -165,122 +143,101 @@ class SignInScreenState extends State<SignInScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F0F0F) : const Color(0xFFFAFAFA),
+      backgroundColor: colorScheme.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
+        child: Center(
+          child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
-              horizontal: screenSize.width * 0.05,
-              vertical: screenSize.height * 0.03,
+              horizontal: isTablet ? 48 : 24,
+              vertical: 32,
             ),
-            child: Column(
-              children: [
-                // Espacio superior
-                SizedBox(height: screenSize.height * 0.08),
-
-                // Logo grande sin sombra
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: SizedBox(
-                      width: screenSize.width * 0.8,
-                      height: screenSize.width * 0.8,
-                      child: Image.asset(
-                        'assets/splash/image_light_1024.png',
-                        fit: BoxFit.contain,
-                      ),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo principal
+                  Container(
+                    width: isTablet ? 280 : 220,
+                    height: isTablet ? 280 : 220,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          offset: const Offset(0, 4),
+                          blurRadius: 12,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Image.asset(
+                      'assets/splash/image_light_1024.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                ),
 
-                SizedBox(height: screenSize.height * 0.02),
+                  SizedBox(height: isTablet ? 48 : 32),
 
-                // Subtítulo
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    'Marketplace Ganadero',
-                    style: TextStyle(
-                      fontSize: screenSize.width * 0.045,
-                      fontWeight: FontWeight.w500,
+                  // Título
+                  Text(
+                    'Bienvenido a CorralX',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isTablet ? 32 : 28,
+                      color: colorScheme.onBackground,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  SizedBox(height: isTablet ? 16 : 12),
+
+                  // Subtítulo
+                  Text(
+                    'Marketplace Ganadero Profesional',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontSize: isTablet ? 18 : 16,
                       color: colorScheme.onSurfaceVariant,
-                      letterSpacing: 0.5,
+                      fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
 
-                SizedBox(height: screenSize.height * 0.06),
+                  SizedBox(height: isTablet ? 64 : 48),
 
-                // Estadísticas
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          '1.2K+',
-                          'Vendedores',
-                          Icons.people_outline,
-                          const Color(0xFF3B7A57),
-                        ),
-                      ),
-                      SizedBox(width: screenSize.width * 0.03),
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          '5.8K+',
-                          'Publicaciones',
-                          Icons.inventory_2_outlined,
-                          const Color(0xFF4CAF50),
-                        ),
-                      ),
-                      SizedBox(width: screenSize.width * 0.03),
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          '98%',
-                          'Satisfacción',
-                          Icons.star_outline,
-                          const Color(0xFFFBBF24),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: screenSize.height * 0.04),
-
-                // Mensaje de error
-                if (_loginError != null)
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
+                  // Mensaje de error
+                  if (_loginError != null)
+                    Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
-                      margin: EdgeInsets.only(bottom: screenSize.height * 0.02),
+                      margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: colorScheme.errorContainer,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.withOpacity(0.3)),
+                        border: Border.all(
+                          color: colorScheme.error.withOpacity(0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline,
-                              color: Colors.red, size: 20),
+                          Icon(
+                            Icons.error_outline,
+                            color: colorScheme.error,
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _loginError!,
                               style: TextStyle(
-                                color: Colors.red,
-                                fontSize: screenSize.width * 0.035,
+                                color: colorScheme.onErrorContainer,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -288,197 +245,119 @@ class SignInScreenState extends State<SignInScreen>
                         ],
                       ),
                     ),
-                  ),
 
-                // Botón de login
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
+                  // Botón de Google Sign In
+                  SizedBox(
                     width: double.infinity,
-                    height: screenSize.height * 0.065,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFFFBBF24),
-                          const Color(0xFFFBBF24).withOpacity(0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFBBF24).withOpacity(0.3),
-                          offset: const Offset(0, 8),
-                          blurRadius: 20,
-                          spreadRadius: 0,
+                    height: isTablet ? 64 : 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleSignIn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        disabledBackgroundColor:
+                            colorScheme.primary.withOpacity(0.6),
+                        elevation: 2,
+                        shadowColor: colorScheme.primary.withOpacity(0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: _isLoading ? null : _handleSignIn,
-                        child: Center(
-                          child: _isLoading
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'G',
-                                          style: TextStyle(
-                                            color: const Color(0xFFFBBF24),
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Text(
-                                      'Continuar con Google',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: screenSize.width * 0.045,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colorScheme.onPrimary,
                                 ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: isTablet ? 28 : 24,
+                                  height: isTablet ? 28 : 24,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'G',
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: isTablet ? 16 : 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: isTablet ? 16 : 12),
+                                Text(
+                                  'Continuar con Google',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 18 : 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+
+                  SizedBox(height: isTablet ? 32 : 24),
+
+                  // Términos y condiciones
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: isTablet ? 14 : 12,
+                          height: 1.5,
                         ),
+                        children: [
+                          const TextSpan(
+                            text: 'Al continuar, aceptas nuestros ',
+                          ),
+                          TextSpan(
+                            text: 'Términos de Servicio',
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: ' y ',
+                          ),
+                          TextSpan(
+                            text: 'Política de Privacidad',
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-
-                SizedBox(height: screenSize.height * 0.03),
-
-                // Términos y condiciones
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: screenSize.width * 0.032,
-                        height: 1.4,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Al continuar, aceptas nuestros ',
-                        ),
-                        TextSpan(
-                          text: 'Términos de Servicio',
-                          style: TextStyle(
-                            color: const Color(0xFF3B7A57),
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' y ',
-                        ),
-                        TextSpan(
-                          text: 'Política de Privacidad',
-                          style: TextStyle(
-                            color: const Color(0xFF3B7A57),
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: screenSize.height * 0.03),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(BuildContext context, String value, String label,
-      IconData icon, Color color) {
-    final theme = Theme.of(context);
-    final screenSize = MediaQuery.of(context).size;
-
-    return Container(
-      padding: EdgeInsets.all(screenSize.width * 0.03),
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, 2),
-            blurRadius: 8,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: screenSize.width * 0.08,
-            height: screenSize.width * 0.08,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: screenSize.width * 0.05,
-            ),
-          ),
-          SizedBox(height: screenSize.height * 0.008),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: color,
-              fontSize: screenSize.width * 0.04,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: screenSize.width * 0.025,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }
