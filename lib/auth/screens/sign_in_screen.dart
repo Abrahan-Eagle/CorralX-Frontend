@@ -170,8 +170,8 @@ class SignInScreenState extends State<SignInScreen>
                     SizedBox(height: isTablet ? 40 : 30),
                     // Logo principal
                     SizedBox(
-                      width: isTablet ? 300 : 200,
-                      height: isTablet ? 300 : 200,
+                      width: isTablet ? 360 : 240,
+                      height: isTablet ? 360 : 240,
                       child: Image.asset(
                         'assets/splash/image_light_1024.png',
                         fit: BoxFit.contain,
