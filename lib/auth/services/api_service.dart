@@ -3,13 +3,21 @@ import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 final logger = Logger();
-const FlutterSecureStorage _storage =
-    FlutterSecureStorage(); // Inicializa _storage
-final String baseUrl = const bool.fromEnvironment('dart.vm.product')
-    ? dotenv.env['API_URL_PROD']!
-    : dotenv.env['API_URL_LOCAL']!;
+const FlutterSecureStorage _storage = FlutterSecureStorage();
+
+// Detección robusta de producción (igual que otros servicios)
+String get baseUrl {
+  final bool isProduction = kReleaseMode ||
+      const bool.fromEnvironment('dart.vm.product') ||
+      dotenv.env['ENVIRONMENT'] == 'production';
+  
+  return isProduction
+      ? dotenv.env['API_URL_PROD']!
+      : dotenv.env['API_URL_LOCAL']!;
+}
 
 class ApiService {
   // Enviar el token al backend

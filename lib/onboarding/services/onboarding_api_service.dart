@@ -4,10 +4,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class OnboardingApiService {
   String get baseUrl {
-    final String apiUrl = const bool.fromEnvironment('dart.vm.product')
+    // Detección robusta de producción (igual que otros servicios)
+    final bool isProduction = kReleaseMode ||
+        const bool.fromEnvironment('dart.vm.product') ||
+        dotenv.env['ENVIRONMENT'] == 'production';
+    
+    final String apiUrl = isProduction
         ? dotenv.env['API_URL_PROD']!
         : dotenv.env['API_URL_LOCAL']!;
     return '$apiUrl/api';
