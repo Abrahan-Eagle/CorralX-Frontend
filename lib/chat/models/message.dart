@@ -32,10 +32,16 @@ class Message {
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       id: json['id'], // Puede ser int o string
-      conversationId: json['conversation_id'] is String ? int.parse(json['conversation_id']) : json['conversation_id'] as int,
-      senderId: json['sender_id'] is String ? int.parse(json['sender_id']) : json['sender_id'] as int,
-      receiverId: json['receiver_id'] != null 
-          ? (json['receiver_id'] is String ? int.parse(json['receiver_id']) : json['receiver_id'] as int)
+      conversationId: json['conversation_id'] is String
+          ? int.parse(json['conversation_id'])
+          : json['conversation_id'] as int,
+      senderId: json['sender_id'] is String
+          ? int.parse(json['sender_id'])
+          : json['sender_id'] as int,
+      receiverId: json['receiver_id'] != null
+          ? (json['receiver_id'] is String
+              ? int.parse(json['receiver_id'])
+              : json['receiver_id'] as int)
           : null,
       content: (json['content'] as String?) ?? '', // ✅ Null-safe
       type: _parseMessageType(json['message_type'] as String?),

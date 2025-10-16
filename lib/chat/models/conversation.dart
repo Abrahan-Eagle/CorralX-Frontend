@@ -135,7 +135,7 @@ class ChatParticipant {
       id: json['id'] is String ? int.parse(json['id']) : json['id'] as int,
       name: (json['name'] as String?) ?? 'Usuario',
       avatar: json['avatar'] as String?,
-      isOnline: json['is_online'] is String 
+      isOnline: json['is_online'] is String
           ? (json['is_online'] == 'true' || json['is_online'] == '1')
           : (json['is_online'] as bool? ?? false),
       lastSeen:
