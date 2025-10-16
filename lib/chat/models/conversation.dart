@@ -29,15 +29,15 @@ class Conversation {
   /// Crear desde JSON del backend
   factory Conversation.fromJson(Map<String, dynamic> json) {
     return Conversation(
-      id: json['id'] as int,
-      profile1Id: json['profile_id_1'] as int,
-      profile2Id: json['profile_id_2'] as int,
+      id: json['id'] is String ? int.parse(json['id']) : json['id'] as int,
+      profile1Id: json['profile_id_1'] is String ? int.parse(json['profile_id_1']) : json['profile_id_1'] as int,
+      profile2Id: json['profile_id_2'] is String ? int.parse(json['profile_id_2']) : json['profile_id_2'] as int,
       lastMessage: json['last_message'] as String?,
       lastMessageAt: json['last_message_at'] != null
           ? DateTime.parse(json['last_message_at'])
           : null,
-      unreadCount: json['unread_count'] as int? ?? 0,
-      isActive: json['is_active'] as bool? ?? true,
+      unreadCount: json['unread_count'] is String ? int.parse(json['unread_count']) : (json['unread_count'] as int? ?? 0),
+      isActive: json['is_active'] is String ? json['is_active'] == 'true' || json['is_active'] == '1' : (json['is_active'] as bool? ?? true),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       otherParticipant: json['other_participant'] != null
