@@ -4,18 +4,33 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:zonix/config/app_config.dart';
 import 'package:zonix/chat/models/conversation.dart';
 import 'package:zonix/chat/models/message.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 /// Servicio HTTP para comunicación con la API de Chat
 /// Maneja todas las operaciones REST relacionadas con conversaciones y mensajes
 class ChatService {
   static const storage = FlutterSecureStorage();
+  
+  // URL base con detección robusta del modo producción (igual que ProductService)
+  static String get _baseUrl {
+    final bool isProduction = kReleaseMode ||
+        const bool.fromEnvironment('dart.vm.product') ||
+        dotenv.env['ENVIRONMENT'] == 'production';
+
+    final String baseUrl = isProduction
+        ? dotenv.env['API_URL_PROD']!
+        : dotenv.env['API_URL_LOCAL']!;
+
+    return baseUrl;
+  }
 
   /// GET /api/chat/conversations
   /// Obtiene la lista de conversaciones del usuario autenticado
   static Future<List<Conversation>> getConversations() async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('🌐 ChatService.getConversations iniciado');
       print('🔧 URL: $baseUrl/api/chat/conversations');
@@ -62,7 +77,7 @@ class ChatService {
   static Future<List<Message>> getMessages(int conversationId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('🌐 ChatService.getMessages - ConvID: $conversationId');
       print('🔧 URL: $baseUrl/api/chat/conversations/$conversationId/messages');
@@ -106,7 +121,7 @@ class ChatService {
   static Future<Message> sendMessage(int conversationId, String content) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('📤 ChatService.sendMessage - ConvID: $conversationId');
       print(
@@ -155,7 +170,7 @@ class ChatService {
   static Future<void> markAsRead(int conversationId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('👁️ ChatService.markAsRead - ConvID: $conversationId');
 
@@ -190,7 +205,7 @@ class ChatService {
   static Future<Conversation> createConversation(int otherProfileId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('➕ ChatService.createConversation - ProfileID: $otherProfileId');
 
@@ -237,7 +252,7 @@ class ChatService {
   static Future<void> deleteConversation(int conversationId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('🗑️ ChatService.deleteConversation - ConvID: $conversationId');
 
@@ -277,7 +292,7 @@ class ChatService {
   static Future<List<Message>> searchMessages(String query) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('🔍 ChatService.searchMessages - Query: $query');
 
@@ -317,7 +332,7 @@ class ChatService {
   static Future<void> notifyTypingStarted(int conversationId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       if (token == null || token.isEmpty) return;
 
@@ -343,7 +358,7 @@ class ChatService {
   static Future<void> notifyTypingStopped(int conversationId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       if (token == null || token.isEmpty) return;
 
@@ -369,7 +384,7 @@ class ChatService {
   static Future<void> blockUser(int userId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('🚫 ChatService.blockUser - UserID: $userId');
 
@@ -407,7 +422,7 @@ class ChatService {
   static Future<void> unblockUser(int userId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('✅ ChatService.unblockUser - UserID: $userId');
 
@@ -442,7 +457,7 @@ class ChatService {
   static Future<List<int>> getBlockedUsers() async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('🌐 ChatService.getBlockedUsers');
 
@@ -481,7 +496,7 @@ class ChatService {
   static Future<Map<String, dynamic>> getContactProfile(int profileId) async {
     try {
       final token = await storage.read(key: 'token');
-      final baseUrl = AppConfig.apiUrl;
+      final baseUrl = _baseUrl;
 
       print('👤 ChatService.getContactProfile iniciado');
       print('🔧 URL: $baseUrl/api/profile/$profileId');
