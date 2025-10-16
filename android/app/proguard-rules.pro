@@ -1,3 +1,8 @@
+# Optimizaciones gráficas para reducir errores de gralloc4
+-keep class android.graphics.** { *; }
+-keep class android.hardware.** { *; }
+-dontwarn android.hardware.display.**
+
 # Mantener las clases necesarias para ML Kit Text Recognition
 -keep class com.google.mlkit.** { *; }
 -keepnames class com.google.mlkit.**
