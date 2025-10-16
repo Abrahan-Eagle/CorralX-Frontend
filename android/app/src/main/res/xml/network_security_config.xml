@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuración para desarrollo (permite HTTP para localhost) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">192.168.0.0/16</domain>
+    </domain-config>
+    
+    <!-- Configuración por defecto para producción (solo HTTPS) -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Certificados personalizados si los tienes -->
+    <!-- 
+    <domain-config>
+        <domain includeSubdomains="true">api.corralx.com</domain>
+        <trust-anchors>
+            <certificates src="@raw/my_ca"/>
+        </trust-anchors>
+    </domain-config>
+    -->
+</network-security-config>
+

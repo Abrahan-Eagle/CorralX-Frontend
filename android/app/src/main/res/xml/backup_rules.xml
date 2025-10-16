@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Incluir todos los archivos por defecto -->
+    <include domain="sharedpref" path="."/>
+    <include domain="database" path="."/>
+    <include domain="file" path="."/>
+    
+    <!-- Excluir datos sensibles del backup -->
+    <exclude domain="sharedpref" path="FlutterSecureStorage"/>
+    <exclude domain="sharedpref" path="auth_token.xml"/>
+    <exclude domain="file" path="cache"/>
+    <exclude domain="file" path="temp"/>
+    
+    <!-- Excluir archivos temporales de imágenes -->
+    <exclude domain="file" path="image_cache"/>
+    <exclude domain="external" path="Android/data/com.example.zonix/cache"/>
+</full-backup-content>
+
