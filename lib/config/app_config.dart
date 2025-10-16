@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConfig {
   // Variables de entorno desde .env
@@ -57,11 +58,17 @@ class AppConfig {
   static bool get enableWebSockets =>
       dotenv.env['ENABLE_WEBSOCKETS']?.toLowerCase() == 'true';
 
-  // Getters dinámicos
+  // Getters dinámicos con detección robusta de producción
+  static bool get isProduction {
+    // Detección robusta igual que ProductService y ChatService
+    return kReleaseMode ||
+        const bool.fromEnvironment('dart.vm.product') ||
+        environment == 'production';
+  }
+  
+  static bool get isDevelopment => !isProduction;
   static String get apiUrl => isProduction ? apiUrlProd : apiUrlLocal;
   static String get wsUrl => isProduction ? wsUrlProd : wsUrlLocal;
-  static bool get isProduction => environment == 'production';
-  static bool get isDevelopment => environment == 'development';
 
   // URL completa de la API
   static String get apiBaseUrl => '$apiUrl/api';
