@@ -149,13 +149,12 @@ class SignInScreenState extends State<SignInScreen>
     return Scaffold(
       backgroundColor: colorScheme.background,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isTablet ? 48 : 24,
-              vertical: 32,
-            ),
-            child: FadeTransition(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 48 : 24,
+            vertical: isTablet ? 32 : 24,
+          ),
+          child: FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,15 +163,15 @@ class SignInScreenState extends State<SignInScreen>
                   Column(
                     children: [
                       SizedBox(height: isTablet ? 40 : 30),
-                  // Logo principal
-                  SizedBox(
-                    width: isTablet ? 840 : 660,
-                    height: isTablet ? 840 : 660,
-                    child: Image.asset(
-                      'assets/splash/image_light_1024.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+                      // Logo principal
+                      SizedBox(
+                        width: isTablet ? 840 : 660,
+                        height: isTablet ? 840 : 660,
+                        child: Image.asset(
+                          'assets/splash/image_light_1024.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ],
                   ),
 
@@ -182,173 +181,173 @@ class SignInScreenState extends State<SignInScreen>
                       SizedBox(height: isTablet ? 32 : 24),
 
                       // Título
-                  Text(
-                    'Bienvenido a CorralX',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isTablet ? 28 : 24,
-                      color: colorScheme.onBackground,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  SizedBox(height: isTablet ? 12 : 8),
-
-                  // Subtítulo
-                  Text(
-                    'Marketplace Ganadero Profesional',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontSize: isTablet ? 16 : 14,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  SizedBox(height: isTablet ? 40 : 32),
-
-                  // Mensaje de error
-                  if (_loginError != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: colorScheme.error.withOpacity(0.3),
+                      Text(
+                        'Bienvenido a CorralX',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isTablet ? 28 : 24,
+                          color: colorScheme.onBackground,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: colorScheme.error,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _loginError!,
-                              style: TextStyle(
-                                color: colorScheme.onErrorContainer,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+
+                      SizedBox(height: isTablet ? 12 : 8),
+
+                      // Subtítulo
+                      Text(
+                        'Marketplace Ganadero Profesional',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontSize: isTablet ? 16 : 14,
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      SizedBox(height: isTablet ? 40 : 32),
+
+                      // Mensaje de error
+                      if (_loginError != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 24),
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.error.withOpacity(0.3),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-
-                  // Botón de Google Sign In
-                  SizedBox(
-                    width: double.infinity,
-                    height: isTablet ? 64 : 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSignIn,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: colorScheme.onPrimary,
-                        disabledBackgroundColor:
-                            colorScheme.primary.withOpacity(0.6),
-                        elevation: 2,
-                        shadowColor: colorScheme.primary.withOpacity(0.3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                      ),
-                      child: _isLoading
-                          ? SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  colorScheme.onPrimary,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: colorScheme.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _loginError!,
+                                  style: TextStyle(
+                                    color: colorScheme.onErrorContainer,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: isTablet ? 28 : 24,
-                                  height: isTablet ? 28 : 24,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'G',
-                                      style: TextStyle(
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: isTablet ? 16 : 14,
-                                      ),
+                            ],
+                          ),
+                        ),
+
+                      // Botón de Google Sign In
+                      SizedBox(
+                        width: double.infinity,
+                        height: isTablet ? 64 : 56,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleSignIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
+                            disabledBackgroundColor:
+                                colorScheme.primary.withOpacity(0.6),
+                            elevation: 2,
+                            shadowColor: colorScheme.primary.withOpacity(0.3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      colorScheme.onPrimary,
                                     ),
                                   ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: isTablet ? 28 : 24,
+                                      height: isTablet ? 28 : 24,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'G',
+                                          style: TextStyle(
+                                            color: colorScheme.primary,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: isTablet ? 16 : 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: isTablet ? 16 : 12),
+                                    Text(
+                                      'Continuar con Google',
+                                      style: TextStyle(
+                                        fontSize: isTablet ? 18 : 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: isTablet ? 16 : 12),
-                                Text(
-                                  'Continuar con Google',
-                                  style: TextStyle(
-                                    fontSize: isTablet ? 18 : 16,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-
-                  SizedBox(height: isTablet ? 24 : 20),
-
-                  // Términos y condiciones
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: isTablet ? 14 : 12,
-                          height: 1.5,
                         ),
-                        children: [
-                          const TextSpan(
-                            text: 'Al continuar, aceptas nuestros ',
-                          ),
-                          TextSpan(
-                            text: 'Términos de Servicio',
-                            style: TextStyle(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          const TextSpan(
-                            text: ' y ',
-                          ),
-                          TextSpan(
-                            text: 'Política de Privacidad',
-                            style: TextStyle(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
+
+                      SizedBox(height: isTablet ? 24 : 20),
+
+                      // Términos y condiciones
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: isTablet ? 14 : 12,
+                              height: 1.5,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'Al continuar, aceptas nuestros ',
+                              ),
+                              TextSpan(
+                                text: 'Términos de Servicio',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ' y ',
+                              ),
+                              TextSpan(
+                                text: 'Política de Privacidad',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
