@@ -161,55 +161,42 @@ class SignInScreenState extends State<SignInScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo principal
-                  Container(
-                    width: isTablet ? 280 : 220,
-                    height: isTablet ? 280 : 220,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.1),
-                          offset: const Offset(0, 4),
-                          blurRadius: 12,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(20),
+                  SizedBox(
+                    width: isTablet ? 200 : 160,
+                    height: isTablet ? 200 : 160,
                     child: Image.asset(
                       'assets/splash/image_light_1024.png',
                       fit: BoxFit.contain,
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 48 : 32),
+                  SizedBox(height: isTablet ? 32 : 24),
 
                   // Título
                   Text(
                     'Bienvenido a CorralX',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: isTablet ? 32 : 28,
+                      fontSize: isTablet ? 28 : 24,
                       color: colorScheme.onBackground,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  SizedBox(height: isTablet ? 16 : 12),
+                  SizedBox(height: isTablet ? 12 : 8),
 
                   // Subtítulo
                   Text(
                     'Marketplace Ganadero Profesional',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      fontSize: isTablet ? 18 : 16,
+                      fontSize: isTablet ? 16 : 14,
                       color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  SizedBox(height: isTablet ? 64 : 48),
+                  SizedBox(height: isTablet ? 40 : 32),
 
                   // Mensaje de error
                   if (_loginError != null)
@@ -313,7 +300,7 @@ class SignInScreenState extends State<SignInScreen>
                     ),
                   ),
 
-                  SizedBox(height: isTablet ? 32 : 24),
+                  SizedBox(height: isTablet ? 24 : 20),
 
                   // Términos y condiciones
                   Padding(
