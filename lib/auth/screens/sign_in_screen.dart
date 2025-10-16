@@ -158,12 +158,14 @@ class SignInScreenState extends State<SignInScreen>
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
+                  // Espaciador superior para empujar contenido hacia abajo
+                  SizedBox(height: isTablet ? 80 : 60),
                   // Logo principal
                   SizedBox(
-                    width: isTablet ? 200 : 160,
-                    height: isTablet ? 200 : 160,
+                    width: isTablet ? 280 : 220,
+                    height: isTablet ? 280 : 220,
                     child: Image.asset(
                       'assets/splash/image_light_1024.png',
                       fit: BoxFit.contain,
