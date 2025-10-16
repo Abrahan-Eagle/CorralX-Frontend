@@ -158,23 +158,30 @@ class SignInScreenState extends State<SignInScreen>
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Espaciador superior para empujar contenido hacia abajo
-                  SizedBox(height: isTablet ? 80 : 60),
+                  // Logo en la parte superior
+                  Column(
+                    children: [
+                      SizedBox(height: isTablet ? 40 : 30),
                   // Logo principal
                   SizedBox(
-                    width: isTablet ? 280 : 220,
-                    height: isTablet ? 280 : 220,
+                    width: isTablet ? 840 : 660,
+                    height: isTablet ? 840 : 660,
                     child: Image.asset(
                       'assets/splash/image_light_1024.png',
                       fit: BoxFit.contain,
                     ),
                   ),
+                    ],
+                  ),
 
-                  SizedBox(height: isTablet ? 32 : 24),
+                  // Contenido en la parte inferior
+                  Column(
+                    children: [
+                      SizedBox(height: isTablet ? 32 : 24),
 
-                  // Título
+                      // Título
                   Text(
                     'Bienvenido a CorralX',
                     style: theme.textTheme.headlineMedium?.copyWith(
@@ -341,6 +348,8 @@ class SignInScreenState extends State<SignInScreen>
                         ],
                       ),
                     ),
+                  ),
+                    ],
                   ),
                 ],
               ),
