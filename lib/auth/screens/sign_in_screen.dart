@@ -260,14 +260,14 @@ class SignInScreenState extends State<SignInScreen>
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 3,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      colorScheme.onPrimary),
                                 ),
                               )
-                            : Image.asset(
-                                'assets/icons/google_logo.png',
-                                height: isTablet ? 28 : 24,
-                                width: isTablet ? 28 : 24,
+                            : Icon(
+                                Icons.login,
+                                size: isTablet ? 28 : 24,
+                                color: colorScheme.onPrimary,
                               ),
                         label: _isLoading
                             ? const Text('Cargando...')
