@@ -101,7 +101,8 @@
         <!-- Receptor para notificaciones en segundo plano -->
         <receiver
             android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingReceiver"
-            android:exported="false" />
+            android:exported="false"
+            tools:replace="android:exported" />
 
         <meta-data
             android:name="com.google.android.gms.auth.api.credentials.ClientId"
