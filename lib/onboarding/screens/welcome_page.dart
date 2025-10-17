@@ -58,12 +58,12 @@ class _WelcomePageState extends State<WelcomePage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icono grande (igual al HTML: documento con líneas)
-                  Icon(
-                    Icons
-                        .article_outlined, // Documento con líneas (igual al SVG del HTML)
-                    size: 80,
-                    color: CorralXTheme.primarySolid, // Verde principal #386A20
+                  // SVG exacto del HTML V2
+                  CustomPaint(
+                    size: const Size(80, 80),
+                    painter: _DocumentIconPainter(
+                      color: CorralXTheme.primarySolid,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -97,4 +97,58 @@ class _WelcomePageState extends State<WelcomePage>
       ),
     );
   }
+}
+
+/// CustomPainter para dibujar el SVG exacto del HTML V2
+/// Path: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"
+class _DocumentIconPainter extends CustomPainter {
+  final Color color;
+
+  _DocumentIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final scaleX = size.width / 24;
+    final scaleY = size.height / 24;
+
+    final path = Path();
+
+    // Rectángulo superior redondeado (header del documento)
+    // M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z
+    path.moveTo(5.625 * scaleX, 4.5 * scaleY);
+    path.lineTo(18.375 * scaleX, 4.5 * scaleY);
+    path.arcToPoint(
+      Offset(18.375 * scaleX, 8.25 * scaleY),
+      radius: Radius.circular(1.875 * scaleX),
+    );
+    path.lineTo(5.625 * scaleX, 8.25 * scaleY);
+    path.arcToPoint(
+      Offset(5.625 * scaleX, 4.5 * scaleY),
+      radius: Radius.circular(1.875 * scaleX),
+    );
+
+    // Línea 1: M3.75 12h16.5
+    path.moveTo(3.75 * scaleX, 12 * scaleY);
+    path.lineTo(20.25 * scaleX, 12 * scaleY);
+
+    // Línea 2: m-16.5 3.75h16.5 (relativo)
+    path.moveTo(3.75 * scaleX, 15.75 * scaleY);
+    path.lineTo(20.25 * scaleX, 15.75 * scaleY);
+
+    // Línea 3: M3.75 19.5h16.5
+    path.moveTo(3.75 * scaleX, 19.5 * scaleY);
+    path.lineTo(20.25 * scaleX, 19.5 * scaleY);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
