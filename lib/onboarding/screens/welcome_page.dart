@@ -111,7 +111,7 @@ class _DocumentIconPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 2.5 // Aumentado de 1.5 a 2.5 para líneas más gruesas
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
