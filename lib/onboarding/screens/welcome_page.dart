@@ -58,10 +58,10 @@ class _WelcomePageState extends State<WelcomePage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icono grande (igual al HTML: documento/lista de 3 barras horizontales)
+                  // Icono grande (igual al HTML: documento con líneas)
                   Icon(
                     Icons
-                        .view_headline, // 3 líneas horizontales como en el HTML
+                        .article_outlined, // Documento con líneas (igual al SVG del HTML)
                     size: 80,
                     color: CorralXTheme.primarySolid, // Verde principal #386A20
                   ),
