@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/corral_x_theme.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -46,7 +47,9 @@ class _WelcomePageState extends State<WelcomePage>
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      color: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8F9FA),
+      color: isDark
+          ? const Color(0xFF0F0F0F)
+          : const Color(0xFFF8F9FA), // Backgrounds del HTML
       child: SafeArea(
         child: Center(
           child: FadeTransition(
@@ -57,11 +60,12 @@ class _WelcomePageState extends State<WelcomePage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icono grande
+                  // Icono grande (igual al HTML: documento/lista de 3 barras horizontales)
                   Icon(
-                    Icons.receipt_long_outlined,
+                    Icons
+                        .view_headline, // 3 líneas horizontales como en el HTML
                     size: 80,
-                    color: const Color(0xFF386A20),
+                    color: CorralXTheme.primarySolid,
                   ),
                   const SizedBox(height: 24),
 
