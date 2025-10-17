@@ -44,12 +44,10 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Container(
-      color: isDark
-          ? const Color(0xFF0F0F0F)
-          : const Color(0xFFF8F9FA), // Backgrounds del HTML
+      color: colorScheme.background, // Usar color del tema
       child: SafeArea(
         child: Center(
           child: FadeTransition(
@@ -65,7 +63,7 @@ class _WelcomePageState extends State<WelcomePage>
                     Icons
                         .view_headline, // 3 líneas horizontales como en el HTML
                     size: 80,
-                    color: CorralXTheme.primarySolid,
+                    color: CorralXTheme.primarySolid, // Verde principal #386A20
                   ),
                   const SizedBox(height: 24),
 
@@ -75,7 +73,7 @@ class _WelcomePageState extends State<WelcomePage>
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.grey[200] : Colors.grey[800],
+                      color: colorScheme.onSurface, // Color del tema
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -86,7 +84,7 @@ class _WelcomePageState extends State<WelcomePage>
                     'Antes de empezar, necesitamos algunos datos para configurar tu perfil. Es un proceso rápido que nos ayudará a personalizar tu experiencia.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: colorScheme.onSurfaceVariant, // Color del tema
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,

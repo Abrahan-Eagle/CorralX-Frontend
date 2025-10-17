@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/corral_x_theme.dart';
 
 class OnboardingPage3 extends StatefulWidget {
   const OnboardingPage3({super.key});
@@ -40,10 +41,10 @@ class _OnboardingPage3State extends State<OnboardingPage3>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Container(
-      color: isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8F9FA),
+      color: colorScheme.background, // Usar color del tema
       child: SafeArea(
         child: Center(
           child: FadeTransition(
@@ -57,7 +58,7 @@ class _OnboardingPage3State extends State<OnboardingPage3>
                   Icon(
                     Icons.check_circle_outline,
                     size: 80,
-                    color: const Color(0xFF386A20),
+                    color: CorralXTheme.successSolid, // Verde éxito #00A651
                   ),
                   const SizedBox(height: 24),
                   
@@ -67,7 +68,7 @@ class _OnboardingPage3State extends State<OnboardingPage3>
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.grey[200] : Colors.grey[800],
+                      color: colorScheme.onSurface, // Color del tema
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -78,7 +79,7 @@ class _OnboardingPage3State extends State<OnboardingPage3>
                     'Tu perfil ha sido creado con éxito. Ya puedes explorar el mercado, conectar con otros ganaderos y hacer negocios.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: colorScheme.onSurfaceVariant, // Color del tema
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,
