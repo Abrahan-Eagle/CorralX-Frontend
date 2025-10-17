@@ -30,20 +30,24 @@ class AmazonButton extends StatefulWidget {
 class _AmazonButtonState extends State<AmazonButton> {
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       width: widget.width,
       height: 36,
       decoration: BoxDecoration(
-        color: widget.isSecondary ? Colors.white : CorralXTheme.accentSolid,
+        color: widget.isSecondary 
+            ? colorScheme.surface 
+            : CorralXTheme.primarySolid, // Verde principal #386A20
         border: widget.isSecondary
-            ? Border.all(color: CorralXTheme.neutralSolid, width: 1)
+            ? Border.all(color: CorralXTheme.primarySolid, width: 1)
             : null,
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(9999), // Botón totalmente redondeado (HTML style)
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(9999), // Coincidir con el container
           onTap: widget.onPressed,
           child: Center(
             child: widget.isLoading
@@ -574,8 +578,8 @@ class AmazonProgressIndicator extends StatelessWidget {
           width: index == currentPage ? 16 : 3,
           decoration: BoxDecoration(
             color: index == currentPage
-                ? CorralXTheme.accentSolid
-                : CorralXTheme.neutralSolid.withOpacity(0.2),
+                ? CorralXTheme.primarySolid // Verde principal #386A20
+                : CorralXTheme.lightGray, // Gris claro #E0E4D7
             borderRadius: BorderRadius.circular(1),
           ),
         ),

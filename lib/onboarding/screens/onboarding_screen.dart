@@ -281,14 +281,12 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: isDark 
-            ? const Color(0xFF0F0F0F) 
-            : const Color(0xFFF8F9FA), // Mismo fondo que las páginas
+        backgroundColor: colorScheme.background, // Usar color del tema
         body: Stack(
           children: [
             // Contenido principal
