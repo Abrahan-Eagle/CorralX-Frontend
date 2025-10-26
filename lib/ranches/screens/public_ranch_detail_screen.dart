@@ -532,7 +532,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 theme,
                 isTablet,
                 Icons.inventory_2,
-                '0', // TODO: Implementar contador de productos
+                (ranch.productsCount ?? 0).toString(),
                 'Productos',
               ),
             ),
