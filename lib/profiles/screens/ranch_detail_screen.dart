@@ -1,15 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/ranch.dart';
 import 'edit_ranch_screen.dart';
+import '../../products/models/product.dart' hide Ranch;
+import '../../products/screens/product_detail_screen.dart';
+import '../../config/app_config.dart';
 
-class RanchDetailScreen extends StatelessWidget {
+class RanchDetailScreen extends StatefulWidget {
   final Ranch ranch;
 
   const RanchDetailScreen({
     super.key,
     required this.ranch,
   });
+
+  @override
+  State<RanchDetailScreen> createState() => _RanchDetailScreenState();
+}
+
+class _RanchDetailScreenState extends State<RanchDetailScreen> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  List<Product> _ranchProducts = [];
+  bool _isLoadingProducts = false;
+  bool _hasErrorProducts = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRanchProducts();
+  }
+
+  Future<void> _loadRanchProducts() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingProducts = true;
+      _hasErrorProducts = false;
+    });
+
+    try {
+      final token = await _storage.read(key: 'token');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final uri = Uri.parse(
+          '${AppConfig.apiUrl}/api/ranches/${widget.ranch.id}/products');
+
+      final response = await http.get(uri, headers: headers);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          setState(() {
+            _ranchProducts = (data['data'] as List)
+                .map((json) => Product.fromJson(json))
+                .toList();
+            _isLoadingProducts = false;
+          });
+          return;
+        }
+      }
+
+      setState(() {
+        _hasErrorProducts = true;
+        _isLoadingProducts = false;
+      });
+    } catch (e) {
+      print('Error cargando productos del ranch: $e');
+      setState(() {
+        _hasErrorProducts = true;
+        _isLoadingProducts = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +108,7 @@ class RanchDetailScreen extends StatelessWidget {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditRanchScreen(ranch: ranch),
+                  builder: (context) => EditRanchScreen(ranch: widget.ranch),
                 ),
               );
               if (result == true && context.mounted) {
@@ -60,37 +130,37 @@ class RanchDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Descripción
-            if (ranch.businessDescription != null &&
-                ranch.businessDescription!.isNotEmpty) ...[
+            if (widget.ranch.businessDescription != null &&
+                widget.ranch.businessDescription!.isNotEmpty) ...[
               _buildDescriptionCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Ubicación
-            if (ranch.address != null) ...[
+            if (widget.ranch.address != null) ...[
               _buildLocationCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Certificaciones
-            if (ranch.certifications != null &&
-                ranch.certifications!.isNotEmpty) ...[
+            if (widget.ranch.certifications != null &&
+                widget.ranch.certifications!.isNotEmpty) ...[
               _buildCertificationsCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Horarios
-            if (ranch.contactHours != null &&
-                ranch.contactHours!.isNotEmpty) ...[
+            if (widget.ranch.contactHours != null &&
+                widget.ranch.contactHours!.isNotEmpty) ...[
               _buildHoursCard(context, theme, isDark),
               const SizedBox(height: 16),
             ],
 
             // Políticas
-            if ((ranch.deliveryPolicy != null &&
-                    ranch.deliveryPolicy!.isNotEmpty) ||
-                (ranch.returnPolicy != null &&
-                    ranch.returnPolicy!.isNotEmpty)) ...[
+            if ((widget.ranch.deliveryPolicy != null &&
+                    widget.ranch.deliveryPolicy!.isNotEmpty) ||
+                (widget.ranch.returnPolicy != null &&
+                    widget.ranch.returnPolicy!.isNotEmpty)) ...[
               _buildPoliciesSection(context, theme, isDark),
               const SizedBox(height: 16),
             ],
@@ -137,7 +207,7 @@ class RanchDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  ranch.name,
+                  widget.ranch.name,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -145,7 +215,7 @@ class RanchDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              if (ranch.isPrimary)
+              if (widget.ranch.isPrimary)
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -167,18 +237,19 @@ class RanchDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Razón Social
-          if (ranch.legalName != null && ranch.legalName!.isNotEmpty)
-            _buildInfoRow(theme, Icons.store, ranch.legalName!),
+          if (widget.ranch.legalName != null &&
+              widget.ranch.legalName!.isNotEmpty)
+            _buildInfoRow(theme, Icons.store, widget.ranch.legalName!),
 
           // RIF
-          if (ranch.taxId != null && ranch.taxId!.isNotEmpty)
-            _buildInfoRow(theme, Icons.badge, 'RIF: ${ranch.taxId}'),
+          if (widget.ranch.taxId != null && widget.ranch.taxId!.isNotEmpty)
+            _buildInfoRow(theme, Icons.badge, 'RIF: ${widget.ranch.taxId}'),
 
           // Fecha de creación
           _buildInfoRow(
             theme,
             Icons.calendar_today,
-            'Creada: ${DateFormat('dd/MM/yyyy').format(ranch.createdAt)}',
+            'Creada: ${DateFormat('dd/MM/yyyy').format(widget.ranch.createdAt)}',
           ),
         ],
       ),
@@ -248,7 +319,7 @@ class RanchDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            ranch.businessDescription!,
+            widget.ranch.businessDescription!,
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
               fontSize: 14,
@@ -262,7 +333,7 @@ class RanchDetailScreen extends StatelessWidget {
 
   Widget _buildLocationCard(
       BuildContext context, ThemeData theme, bool isDark) {
-    final address = ranch.address;
+    final address = widget.ranch.address;
     if (address == null) return const SizedBox.shrink();
 
     String fullLocation = '';
@@ -407,7 +478,7 @@ class RanchDetailScreen extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: ranch.certifications!.map((cert) {
+            children: widget.ranch.certifications!.map((cert) {
               return Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -437,8 +508,8 @@ class RanchDetailScreen extends StatelessWidget {
               );
             }).toList(),
           ),
-          if (ranch.businessLicenseUrl != null &&
-              ranch.businessLicenseUrl!.isNotEmpty) ...[
+          if (widget.ranch.businessLicenseUrl != null &&
+              widget.ranch.businessLicenseUrl!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -528,7 +599,7 @@ class RanchDetailScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    ranch.contactHours!,
+                    widget.ranch.contactHours!,
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontSize: 14,
@@ -586,29 +657,31 @@ class RanchDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Política de Entrega
-          if (ranch.deliveryPolicy != null && ranch.deliveryPolicy!.isNotEmpty)
+          if (widget.ranch.deliveryPolicy != null &&
+              widget.ranch.deliveryPolicy!.isNotEmpty)
             _buildPolicyItem(
               theme,
               isDark,
               Icons.local_shipping,
               'Política de Entrega',
-              ranch.deliveryPolicy!,
+              widget.ranch.deliveryPolicy!,
             ),
 
-          if (ranch.deliveryPolicy != null &&
-              ranch.deliveryPolicy!.isNotEmpty &&
-              ranch.returnPolicy != null &&
-              ranch.returnPolicy!.isNotEmpty)
+          if (widget.ranch.deliveryPolicy != null &&
+              widget.ranch.deliveryPolicy!.isNotEmpty &&
+              widget.ranch.returnPolicy != null &&
+              widget.ranch.returnPolicy!.isNotEmpty)
             const SizedBox(height: 12),
 
           // Política de Devolución
-          if (ranch.returnPolicy != null && ranch.returnPolicy!.isNotEmpty)
+          if (widget.ranch.returnPolicy != null &&
+              widget.ranch.returnPolicy!.isNotEmpty)
             _buildPolicyItem(
               theme,
               isDark,
               Icons.keyboard_return,
               'Política de Devolución',
-              ranch.returnPolicy!,
+              widget.ranch.returnPolicy!,
             ),
         ],
       ),
@@ -703,7 +776,7 @@ class RanchDetailScreen extends StatelessWidget {
                   theme,
                   isDark,
                   Icons.star,
-                  ranch.avgRating.toStringAsFixed(1),
+                  widget.ranch.avgRating.toStringAsFixed(1),
                   'Rating',
                 ),
               ),
@@ -713,7 +786,7 @@ class RanchDetailScreen extends StatelessWidget {
                   theme,
                   isDark,
                   Icons.shopping_bag,
-                  ranch.totalSales.toString(),
+                  widget.ranch.totalSales.toString(),
                   'Ventas',
                 ),
               ),
@@ -723,7 +796,10 @@ class RanchDetailScreen extends StatelessWidget {
                   theme,
                   isDark,
                   Icons.inventory_2,
-                  '0',
+                  _ranchProducts
+                      .where((p) => p.status == 'active')
+                      .length
+                      .toString(),
                   'Productos',
                 ),
               ),
@@ -772,6 +848,12 @@ class RanchDetailScreen extends StatelessWidget {
 
   Widget _buildProductsSection(
       BuildContext context, ThemeData theme, bool isDark) {
+    // Filtrar solo productos activos
+    final activeProducts =
+        _ranchProducts.where((p) => p.status == 'active').toList();
+    final activeCount = activeProducts.length;
+    final displayProducts = activeProducts.take(3).toList();
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -795,55 +877,209 @@ class RanchDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header con contador
           Row(
             children: [
               Icon(Icons.inventory_2,
                   color: theme.colorScheme.primary, size: 20),
               const SizedBox(width: 12),
-              Text(
-                'Productos del Rancho',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  'Productos del Rancho',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
+              // Badge con contador de productos activos
+              if (activeCount > 0)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$activeCount',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 20),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.inventory_outlined,
-                    size: 64,
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Sin productos',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Esta finca aún no tiene productos publicados',
-                    style: TextStyle(
-                      color:
-                          theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+
+          // Contenido
+          if (_isLoadingProducts)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
               ),
+            )
+          else if (_hasErrorProducts)
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(40),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: theme.colorScheme.error.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error al cargar productos',
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (displayProducts.isEmpty)
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(40),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.inventory_outlined,
+                      size: 64,
+                      color:
+                          theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Sin productos',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Esta finca aún no tiene productos publicados',
+                      style: TextStyle(
+                        color:
+                            theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            // Lista de productos
+            Column(
+              children: displayProducts.map((product) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailScreen(
+                            productId: product.id,
+                            product: product,
+                          ),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.2),
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          // Imagen del producto (60x60)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: product.images.isNotEmpty
+                                ? Image.network(
+                                    product.images.first.fileUrl,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: theme.colorScheme.surfaceVariant,
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          size: 30,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    width: 60,
+                                    height: 60,
+                                    color: theme.colorScheme.surfaceVariant,
+                                    child: Icon(
+                                      Icons.inventory_2,
+                                      size: 30,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Título y precio
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.title,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${product.currency} ${product.price.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          ),
         ],
       ),
     );

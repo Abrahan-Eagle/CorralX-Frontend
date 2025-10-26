@@ -282,7 +282,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
