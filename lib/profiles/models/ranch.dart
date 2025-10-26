@@ -24,6 +24,7 @@ class Ranch {
   final DateTime? lastSaleAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? productsCount; // Cantidad de productos activos
 
   // Relaciones
   final Address? address;
@@ -49,6 +50,7 @@ class Ranch {
     this.lastSaleAt,
     required this.createdAt,
     required this.updatedAt,
+    this.productsCount,
     this.address,
     this.profile,
   });
@@ -75,6 +77,7 @@ class Ranch {
       lastSaleAt: _parseDateTime(json['last_sale_at']),
       createdAt: _parseDateTime(json['created_at']) ?? DateTime.now(),
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
+      productsCount: _parseInt(json['products_count']),
       address:
           json['address'] != null ? Address.fromJson(json['address']) : null,
       profile: json['profile'] != null

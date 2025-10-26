@@ -1498,6 +1498,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 theme: theme,
                                 isTablet: isTablet,
                               ),
+                              SizedBox(width: isTablet ? 24 : 20),
+                              _buildMinimalStat(
+                                icon: Icons.inventory_2_outlined,
+                                value: (ranch.productsCount ?? 0).toString(),
+                                label: 'Productos',
+                                theme: theme,
+                                isTablet: isTablet,
+                              ),
                             ],
                           ),
 
