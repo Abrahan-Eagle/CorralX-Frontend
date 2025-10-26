@@ -593,13 +593,27 @@ class ProductProvider with ChangeNotifier {
         print('🔄 Optimistic: Removido de favoritos localmente');
       } else {
         _favorites.add(productId);
-        // ✅ Agregar el producto completo a favoriteProducts para la UI
-        final product = _products.firstWhere(
-          (p) => p.id == productId,
-          orElse: () => _products.first, // Fallback (no debería pasar)
-        );
+        // ✅ Solo agregar si no existe ya
         if (!_favoriteProducts.any((p) => p.id == productId)) {
-          _favoriteProducts.add(product);
+          // Intentar obtener el producto desde _products o _selectedProduct
+          Product? product;
+          try {
+            product = _products.firstWhere((p) => p.id == productId);
+          } catch (e) {
+            // Si no está en _products, obtenerlo del backend
+            try {
+              final response = await ProductService.getProductDetail(productId);
+              if (response['data'] != null) {
+                product = Product.fromJson(response['data']);
+              }
+            } catch (e2) {
+              print('⚠️ No se pudo obtener el producto: $e2');
+            }
+          }
+          
+          if (product != null) {
+            _favoriteProducts.add(product);
+          }
         }
         print('🔄 Optimistic: Agregado a favoritos localmente (ID: $productId)');
       }
@@ -609,7 +623,14 @@ class ProductProvider with ChangeNotifier {
       print('🌐 Llamando a FavoriteService.toggleFavorite...');
       final isFavorite = await FavoriteService.toggleFavorite(productId);
       
-      // 3. Sincronizar estado con respuesta del servidor
+      // 3. Si se agregó exitosamente, recargar lista de favoritos para asegurar datos completos
+      if (isFavorite && !wasInFavorites) {
+        print('🔄 Recargando lista de favoritos para actualizar UI...');
+        await fetchFavorites(refresh: false);
+        return; // Ya se actualizó con fetchFavorites, no hacer más
+      }
+      
+      // 4. Sincronizar estado con respuesta del servidor (solo si no se recargó)
       if (isFavorite && !_favorites.contains(productId)) {
         _favorites.add(productId);
         print('✅ Sincronizado: Agregado a favoritos');
