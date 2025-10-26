@@ -28,8 +28,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     // Cargar favoritos al iniciar la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print('🔄 FavoritesScreen: Iniciando carga de favoritos...');
-      Provider.of<ProductProvider>(context, listen: false)
-          .fetchFavorites(refresh: true);
+      final provider = Provider.of<ProductProvider>(context, listen: false);
+      // Forzar refresh si no hay favoritos cargados
+      if (provider.favoriteProducts.isEmpty) {
+        provider.fetchFavorites(refresh: true);
+      }
+    });
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recargar favoritos si se navega desde otra pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<ProductProvider>(context, listen: false);
+      if (provider.favoriteProducts.isEmpty && !provider.isLoadingFavorites) {
+        provider.fetchFavorites(refresh: true);
+      }
     });
   }
 
