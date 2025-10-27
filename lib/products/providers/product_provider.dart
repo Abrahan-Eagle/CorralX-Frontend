@@ -146,13 +146,24 @@ class ProductProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await ProductService.getProductDetail(productId);
-      print('🔍 ProductProvider: Response recibida: ${response.containsKey('data')}');
+      print('🔍 ProductProvider: Response recibida: ${response.keys.toList()}');
 
+      // El backend devuelve el producto directamente o en {data: ...}
+      Product? product;
       if (response['data'] != null) {
-        _selectedProduct = Product.fromJson(response['data']);
-        print('✅ ProductProvider: Producto cargado correctamente - ID: ${_selectedProduct?.id}');
+        product = Product.fromJson(response['data']);
+        print('✅ ProductProvider: Producto cargado desde "data" - ID: ${product.id}');
+      } else if (response['id'] != null) {
+        // El backend devuelve el producto directamente
+        product = Product.fromJson(response);
+        print('✅ ProductProvider: Producto cargado directamente - ID: ${product.id}');
       } else {
-        print('⚠️ ProductProvider: Response no contiene "data"');
+        print('⚠️ ProductProvider: Response no contiene ni "data" ni "id"');
+      }
+      
+      if (product != null) {
+        _selectedProduct = product;
+        print('✅ ProductProvider: Producto asignado a _selectedProduct');
       }
     } catch (e) {
       print('❌ ProductProvider: Error en fetchProductDetail: $e');
