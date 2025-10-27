@@ -522,11 +522,19 @@ class MainRouterState extends State<MainRouter> {
     });
 
     // Escuchar deep links mientras la app está activa
+    // ⚠️ Importante: Solo procesar nuevos links, NO el inicial
     DeepLinkService().listenToLinks().listen((uri) {
+      // Comparar con el link inicial para evitar duplicados
       if (_hasHandledInitialLink) {
-        // Solo procesar si ya se procesó el link inicial
-        print('🔗 Deep link recibido (app activa): $uri');
-        _handleDeepLink(uri, isInitial: false);
+        DeepLinkService().getInitialLink().then((initialUri) {
+          // Solo procesar si es un link diferente al inicial
+          if (initialUri == null || initialUri.toString() != uri.toString()) {
+            print('🔗 Deep link recibido (app activa - nuevo): $uri');
+            _handleDeepLink(uri, isInitial: false);
+          } else {
+            print('🔗 Deep link ignorado (ya procesado como inicial): $uri');
+          }
+        });
       }
     });
   }
