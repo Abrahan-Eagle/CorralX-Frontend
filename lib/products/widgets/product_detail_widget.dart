@@ -6,6 +6,7 @@ import '../services/report_service.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:zonix/chat/screens/chat_screen.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para verificar si es el propio usuario
+import '../../config/app_config.dart';
 
 class ProductDetailWidget extends StatelessWidget {
   final Product product;
@@ -811,7 +812,8 @@ class ProductDetailWidget extends StatelessWidget {
     if (result == true && context.mounted) {
       try {
         // Crear URL para compartir usando HTTPS (funciona mejor con apps)
-        final deepLink = 'https://corralx.com/product/${product.id}';
+        // Usar apiUrl que ya incluye el protocolo y dominio correcto
+        final deepLink = '${AppConfig.apiUrl.replaceAll('/api', '')}/product/${product.id}';
 
         // Mensaje descriptivo para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'
