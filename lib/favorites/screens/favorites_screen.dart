@@ -35,7 +35,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       }
     });
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -303,7 +303,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               );
                             }
                           } catch (e) {
-                            if (mounted) {
+                            if (mounted && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Error: $e'),
