@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../../shared/services/location_service.dart';
 
 class FiltersModal extends StatefulWidget {
   final Map<String, dynamic> currentFilters;
@@ -22,7 +23,7 @@ class _FiltersModalState extends State<FiltersModal> {
 
   // Estado de los filtros
   String _selectedType = 'Todos';
-  String _selectedLocation = 'Todos';
+  int? _selectedStateId; // ✅ Cambiado de String a int (state_id)
   RangeValues _priceRange = const RangeValues(0, 100000);
   int _quantity = 1;
   String _sortBy = 'newest'; // newest, price_asc, price_desc
@@ -37,39 +38,43 @@ class _FiltersModalState extends State<FiltersModal> {
     'mixto'
   ];
 
-  final List<String> _locations = [
-    'Todos',
-    'Toda Venezuela',
-    'carabobo',
-    'aragua',
-    'miranda',
-    'zulia',
-    'merida',
-    'tachira',
-    'trujillo',
-    'portuguesa',
-    'barinas',
-    'apure',
-    'guarico',
-    'cojedes',
-    'yaracuy',
-    'lara',
-    'falcon',
-    'sucre',
-    'monagas',
-    'anzoategui',
-    'delta_amacuro',
-    'amazonas',
-    'bolivar',
-    'nueva_esparta',
-    'vargas',
-    'distrito_capital'
-  ];
+  // ✅ Estados cargados desde el backend
+  List<Map<String, dynamic>> _states = [];
+  bool _isLoadingStates = false;
 
   @override
   void initState() {
     super.initState();
     _loadFiltersFromCache();
+    _loadStates(); // Cargar estados desde el backend
+  }
+
+  Future<void> _loadStates() async {
+    setState(() => _isLoadingStates = true);
+    try {
+      // Obtener ID de Venezuela dinámicamente
+      final countries = await LocationService.getCountries();
+      final venezuela = countries.firstWhere(
+        (country) => country['name'] == 'Venezuela',
+        orElse: () => {'id': 237}, // Fallback si no se encuentra
+      );
+
+      final venezuelaId = venezuela['id'] as int;
+
+      // Cargar estados de Venezuela
+      final states = await LocationService.getStates(venezuelaId);
+      if (mounted) {
+        setState(() {
+          _states = states;
+          _isLoadingStates = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading states: $e');
+      if (mounted) {
+        setState(() => _isLoadingStates = false);
+      }
+    }
   }
 
   @override
@@ -88,7 +93,7 @@ class _FiltersModalState extends State<FiltersModal> {
 
         setState(() {
           _selectedType = filters['type'] ?? 'Todos';
-          _selectedLocation = filters['location'] ?? 'Todos';
+          _selectedStateId = filters['state_id'] as int?;
           _priceRange = RangeValues(
             (filters['min_price'] ?? 0).toDouble(),
             (filters['max_price'] ?? 100000).toDouble(),
@@ -102,7 +107,7 @@ class _FiltersModalState extends State<FiltersModal> {
         // Cargar filtros actuales si no hay cache
         setState(() {
           _selectedType = widget.currentFilters['type'] ?? 'Todos';
-          _selectedLocation = widget.currentFilters['location'] ?? 'Todos';
+          _selectedStateId = widget.currentFilters['state_id'] as int?;
           _priceRange = RangeValues(
             (widget.currentFilters['min_price'] ?? 0).toDouble(),
             (widget.currentFilters['max_price'] ?? 100000).toDouble(),
@@ -130,7 +135,7 @@ class _FiltersModalState extends State<FiltersModal> {
   void _clearAllFilters() {
     setState(() {
       _selectedType = 'Todos';
-      _selectedLocation = 'Todos';
+      _selectedStateId = null;
       _priceRange = const RangeValues(0, 100000);
       _quantity = 1;
       _sortBy = 'newest';
@@ -146,8 +151,8 @@ class _FiltersModalState extends State<FiltersModal> {
       filters['type'] = _selectedType;
     }
 
-    if (_selectedLocation != 'Todos') {
-      filters['location'] = _selectedLocation;
+    if (_selectedStateId != null) {
+      filters['state_id'] = _selectedStateId;
     }
 
     if (_priceRange.start > 0) {
@@ -179,7 +184,7 @@ class _FiltersModalState extends State<FiltersModal> {
   int _getActiveFiltersCount() {
     int count = 0;
     if (_selectedType != 'Todos') count++;
-    if (_selectedLocation != 'Todos') count++;
+    if (_selectedStateId != null) count++;
     if (_priceRange.start > 0) count++;
     if (_priceRange.end < 100000) count++;
     if (_quantity > 1) count++;
@@ -203,65 +208,6 @@ class _FiltersModalState extends State<FiltersModal> {
         return 'Mixto';
       default:
         return type;
-    }
-  }
-
-  String _getLocationDisplayName(String location) {
-    switch (location) {
-      case 'Todos':
-        return 'Todos los estados';
-      case 'Toda Venezuela':
-        return 'Toda Venezuela';
-      case 'carabobo':
-        return 'Carabobo';
-      case 'aragua':
-        return 'Aragua';
-      case 'miranda':
-        return 'Miranda';
-      case 'zulia':
-        return 'Zulia';
-      case 'merida':
-        return 'Mérida';
-      case 'tachira':
-        return 'Táchira';
-      case 'trujillo':
-        return 'Trujillo';
-      case 'portuguesa':
-        return 'Portuguesa';
-      case 'barinas':
-        return 'Barinas';
-      case 'apure':
-        return 'Apure';
-      case 'guarico':
-        return 'Guárico';
-      case 'cojedes':
-        return 'Cojedes';
-      case 'yaracuy':
-        return 'Yaracuy';
-      case 'lara':
-        return 'Lara';
-      case 'falcon':
-        return 'Falcón';
-      case 'sucre':
-        return 'Sucre';
-      case 'monagas':
-        return 'Monagas';
-      case 'anzoategui':
-        return 'Anzoátegui';
-      case 'delta_amacuro':
-        return 'Delta Amacuro';
-      case 'amazonas':
-        return 'Amazonas';
-      case 'bolivar':
-        return 'Bolívar';
-      case 'nueva_esparta':
-        return 'Nueva Esparta';
-      case 'vargas':
-        return 'Vargas';
-      case 'distrito_capital':
-        return 'Distrito Capital';
-      default:
-        return location;
     }
   }
 
@@ -480,30 +426,43 @@ class _FiltersModalState extends State<FiltersModal> {
                           ),
                         ],
                       ),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedLocation,
-                        style: TextStyle(color: theme.colorScheme.onSurface),
-                        dropdownColor:
-                            isDark ? theme.colorScheme.surface : Colors.white,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          prefixIcon: Icon(Icons.location_on,
-                              color: theme.colorScheme.primary, size: 20),
-                        ),
-                        items: _locations.map((location) {
-                          return DropdownMenuItem<String>(
-                            value: location,
-                            child: Text(_getLocationDisplayName(location)),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedLocation = value ?? 'Todos';
-                          });
-                        },
-                      ),
+                      child: _isLoadingStates
+                          ? const Center(child: CircularProgressIndicator())
+                          : DropdownButtonFormField<int>(
+                              value: _selectedStateId,
+                              style:
+                                  TextStyle(color: theme.colorScheme.onSurface),
+                              dropdownColor: isDark
+                                  ? theme.colorScheme.surface
+                                  : Colors.white,
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                prefixIcon: Icon(Icons.location_on,
+                                    color: theme.colorScheme.primary, size: 20),
+                                hintText: 'Todos los estados',
+                              ),
+                              items: [
+                                // Opción "Todos"
+                                DropdownMenuItem<int>(
+                                  value: null,
+                                  child: Text('Todos los estados'),
+                                ),
+                                // Estados cargados desde el backend
+                                ..._states.map((state) {
+                                  return DropdownMenuItem<int>(
+                                    value: state['id'] as int,
+                                    child: Text(state['name'] ?? ''),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedStateId = value;
+                                });
+                              },
+                            ),
                     ),
 
                     SizedBox(height: 20),
