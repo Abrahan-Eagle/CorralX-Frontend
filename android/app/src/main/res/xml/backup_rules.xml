@@ -13,6 +13,5 @@
     
     <!-- Excluir archivos temporales de imágenes -->
     <exclude domain="file" path="image_cache"/>
-    <exclude domain="external" path="Android/data/com.example.zonix/cache"/>
 </full-backup-content>
 

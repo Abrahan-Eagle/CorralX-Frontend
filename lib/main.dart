@@ -416,7 +416,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => RanchProvider()), // ✅ Ranch Marketplace
+        ChangeNotifierProvider(
+            create: (_) => RanchProvider()), // ✅ Ranch Marketplace
         ChangeNotifierProxyProvider<ProfileProvider, ChatProvider>(
           create: (context) => ChatProvider(
             Provider.of<ProfileProvider>(context, listen: false),
@@ -500,6 +501,7 @@ class MainRouterState extends State<MainRouter> {
   int _selectedLevel = 0;
   int _bottomNavIndex = 0;
   dynamic _profile;
+  bool _hasHandledInitialLink = false; // ✅ Prevenir doble navegación
 
   @override
   void initState() {
@@ -510,24 +512,35 @@ class MainRouterState extends State<MainRouter> {
   }
 
   void _setupDeepLinks() {
-    // Escuchar deep links
-    DeepLinkService().listenToLinks().listen((uri) {
-      print('🔗 Deep link recibido: $uri');
-      _handleDeepLink(uri);
+    // Obtener link inicial primero (solo se ejecuta una vez al abrir la app)
+    DeepLinkService().getInitialLink().then((uri) {
+      if (uri != null && !_hasHandledInitialLink) {
+        print('🔗 Link inicial detectado: $uri');
+        _hasHandledInitialLink = true;
+        _handleDeepLink(uri, isInitial: true);
+      }
     });
 
-    // Obtener link inicial si la app se abrió con un link
-    DeepLinkService().getInitialLink().then((uri) {
-      if (uri != null) {
-        print('🔗 Link inicial detectado: $uri');
-        _handleDeepLink(uri);
+    // Escuchar deep links mientras la app está activa
+    DeepLinkService().listenToLinks().listen((uri) {
+      if (_hasHandledInitialLink) {
+        // Solo procesar si ya se procesó el link inicial
+        print('🔗 Deep link recibido (app activa): $uri');
+        _handleDeepLink(uri, isInitial: false);
       }
     });
   }
 
-  void _handleDeepLink(Uri uri) {
+  void _handleDeepLink(Uri uri, {required bool isInitial}) async {
+    // ✅ Esperar más tiempo si es el link inicial (app cerrada)
+    final delay = isInitial ? 1500 : 300;
+    await Future.delayed(Duration(milliseconds: delay));
+
+    if (!mounted) return;
+
     final productId = DeepLinkService.extractProductId(uri);
     if (productId != null) {
+      print('🔗 Navegando a producto: $productId (initial: $isInitial)');
       // Navegar a ProductDetailScreen
       Navigator.push(
         context,
