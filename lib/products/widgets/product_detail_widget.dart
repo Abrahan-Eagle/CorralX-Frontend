@@ -808,27 +808,30 @@ class ProductDetailWidget extends StatelessWidget {
       ),
     );
 
-        if (result == true && context.mounted) {
+    if (result == true && context.mounted) {
       try {
-        // Crear URL para compartir (deep link con esquema custom)
-        // Usar esquema personalizado que funciona sin configuración de servidor
-        final deepLink = 'corralx://product/${product.id}';
+        // Crear URL para compartir
+        // NOTA: Usar https://corralx.com cuando el dominio tenga un servidor web activo
+        // Por ahora, usar esquema custom que funciona siempre
+        final deepLink = 'https://corralx.com/product/${product.id}';
         
-        // Crear mensaje para compartir
+        // Mensaje de ayuda para el usuario
         final shareText = '¡Mira este ganado en CorralX!\n\n'
             '🐄 ${product.title}\n'
             '📋 Tipo: ${product.type.toUpperCase()}\n'
             '🏷️ Raza: ${product.breed}\n'
             '💰 Precio: \$${product.price.toStringAsFixed(2)} ${product.currency}\n\n'
             '📝 ${product.description}\n\n'
-            '🔗 Ver en la app: $deepLink';
-        
+            '📱 Descarga la app CorralX para ver más detalles:\n'
+            '🔗 $deepLink\n\n'
+            'O busca "CorralX" en Google Play o App Store';
+
         // Usar share_plus para compartir
         await Share.share(
           shareText,
           subject: product.title,
         );
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -881,11 +884,12 @@ class ProductDetailWidget extends StatelessWidget {
           reportType: 'inappropriate', // Tipo por defecto
           description: 'Producto reportado por usuario',
         );
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Producto reportado. Nuestro equipo lo revisará pronto.'),
+              content: Text(
+                  'Producto reportado. Nuestro equipo lo revisará pronto.'),
               duration: Duration(seconds: 3),
             ),
           );
