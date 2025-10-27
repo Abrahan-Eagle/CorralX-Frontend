@@ -811,10 +811,9 @@ class ProductDetailWidget extends StatelessWidget {
 
     if (result == true && context.mounted) {
       try {
-        // Crear URL para compartir usando HTTPS (funciona mejor con apps)
-        // Usar apiUrl que ya incluye el protocolo y dominio correcto
-        final deepLink =
-            '${AppConfig.apiUrl.replaceAll('/api', '')}/product/${product.id}';
+        // Crear URL para compartir usando esquema custom corralx://
+        // Este esquema abre la app directamente sin necesidad de servidor web
+        final deepLink = 'corralx://product/${product.id}';
 
         // Mensaje descriptivo para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'
