@@ -38,6 +38,7 @@ class _CreateScreenState extends State<CreateScreen> {
   bool _isFeatured = false;
   bool _negotiable = false;
   bool _documentationIncluded = false; // ✅ NUEVO: documentación incluida
+  bool _isVaccinated = false; // ✅ NUEVO: vacunado
   int? _selectedRanchId;
 
   // ✅ NUEVOS: campos opcionales críticos
@@ -314,6 +315,7 @@ class _CreateScreenState extends State<CreateScreen> {
         isFeatured: _isFeatured, // ✅ NUEVO: checkbox destacado
         documentationIncluded:
             _documentationIncluded, // ✅ NUEVO: checkbox documentación
+        isVaccinated: _isVaccinated, // ✅ NUEVO: vacunado
         status:
             'active', // ✅ Backend solo acepta: active, paused, sold, expired
         imagePaths: _selectedImages.map((img) => img.path).toList(),
@@ -375,6 +377,7 @@ class _CreateScreenState extends State<CreateScreen> {
           _isFeatured = false;
           _negotiable = false;
           _documentationIncluded = false;
+          _isVaccinated = false;
         });
 
         // 5. Resetear validaciones del formulario con delay
@@ -1278,6 +1281,25 @@ class _CreateScreenState extends State<CreateScreen> {
                           Flexible(
                             child: Text(
                               'Incluye Documentación (certificados, vacunas, etc.)',
+                              style: TextStyle(fontSize: isTablet ? 16 : 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // ✅ NUEVO: Vacunado
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _isVaccinated,
+                            onChanged: (value) {
+                              setState(() {
+                                _isVaccinated = value ?? false;
+                              });
+                            },
+                          ),
+                          Flexible(
+                            child: Text(
+                              'Animales Vacunados',
                               style: TextStyle(fontSize: isTablet ? 16 : 14),
                             ),
                           ),
