@@ -20,8 +20,11 @@ class PublicRanchDetailScreen extends StatelessWidget {
 
     // Intentar obtener de los campos directos primero
     String cityName = address.cityName ?? address.city?['name'] ?? '';
-    String stateName = address.stateName ?? address.city?['state']?['name'] ?? '';
-    String countryName = address.countryName ?? address.city?['state']?['country']?['name'] ?? '';
+    String stateName =
+        address.stateName ?? address.city?['state']?['name'] ?? '';
+    String countryName = address.countryName ??
+        address.city?['state']?['country']?['name'] ??
+        '';
 
     List<String> parts = [];
     if (cityName.isNotEmpty) parts.add(cityName);
@@ -33,6 +36,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(
+        '🟢 PublicRanchDetailScreen: Construyendo pantalla para ranch: ${ranch.name} (ID: ${ranch.id})');
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
@@ -62,7 +67,9 @@ class PublicRanchDetailScreen extends StatelessWidget {
               return IconButton(
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : theme.colorScheme.onSurfaceVariant,
+                  color: isFavorite
+                      ? Colors.red
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () {
                   ranchProvider.toggleFavorite(ranch);
@@ -90,7 +97,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Información del rancho
-                  if (ranch.legalName != null && ranch.legalName!.isNotEmpty) ...[
+                  if (ranch.legalName != null &&
+                      ranch.legalName!.isNotEmpty) ...[
                     _buildDetailCard(
                       context,
                       theme,
@@ -164,11 +172,11 @@ class PublicRanchDetailScreen extends StatelessWidget {
   Widget _buildImageGallery(BuildContext context, bool isTablet) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Obtener foto del perfil del dueño
     final profilePhoto = ranch.profile?['photo_users'];
     final hasPhoto = profilePhoto != null && profilePhoto.toString().isNotEmpty;
-    
+
     return Container(
       height: isTablet ? 400 : 300,
       width: double.infinity,
@@ -270,7 +278,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleSection(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildTitleSection(
+      BuildContext context, ThemeData theme, bool isTablet) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -284,7 +293,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Badges
         Wrap(
           spacing: 8,
@@ -292,7 +301,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
           children: [
             if (ranch.isPrimary)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -319,7 +329,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
               ),
             if (ranch.acceptsVisits)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -350,9 +361,10 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLocationCard(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildLocationCard(
+      BuildContext context, ThemeData theme, bool isTablet) {
     final address = ranch.address!;
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -390,7 +402,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Dirección completa (campo addresses)
             if (address.addresses.isNotEmpty) ...[
               Text(
@@ -403,7 +415,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
-            
+
             // Ciudad, Estado, País
             Row(
               children: [
@@ -489,7 +501,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildStatsSection(
+      BuildContext context, ThemeData theme, bool isTablet) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -576,7 +589,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDescriptionCard(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildDescriptionCard(
+      BuildContext context, ThemeData theme, bool isTablet) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -620,7 +634,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCertificationsCard(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildCertificationsCard(
+      BuildContext context, ThemeData theme, bool isTablet) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -655,7 +670,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
               runSpacing: 8,
               children: ranch.certifications!.map((cert) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -691,7 +707,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPoliciesCard(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildPoliciesCard(
+      BuildContext context, ThemeData theme, bool isTablet) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -720,7 +737,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
-            if (ranch.deliveryPolicy != null && ranch.deliveryPolicy!.isNotEmpty) ...[
+            if (ranch.deliveryPolicy != null &&
+                ranch.deliveryPolicy!.isNotEmpty) ...[
               const SizedBox(height: 16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -757,7 +775,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 ],
               ),
             ],
-            if (ranch.returnPolicy != null && ranch.returnPolicy!.isNotEmpty) ...[
+            if (ranch.returnPolicy != null &&
+                ranch.returnPolicy!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -800,7 +819,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactButton(BuildContext context, ThemeData theme, bool isTablet) {
+  Widget _buildContactButton(
+      BuildContext context, ThemeData theme, bool isTablet) {
     return SizedBox(
       width: double.infinity,
       height: isTablet ? 56 : 48,
@@ -891,7 +911,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
       if (!context.mounted) return;
 
       // Cerrar loading si está abierto
-      Navigator.of(context).popUntil((route) => route.isFirst || !route.isActive);
+      Navigator.of(context)
+          .popUntil((route) => route.isFirst || !route.isActive);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

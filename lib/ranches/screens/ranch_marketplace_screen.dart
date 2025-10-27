@@ -99,7 +99,7 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                           ),
                         ),
                       ),
-                      
+
                       // Estado vacío
                       if (ranchProvider.ranches.isEmpty)
                         SliverFillRemaining(
@@ -110,7 +110,8 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                                 Icon(
                                   Icons.agriculture_outlined,
                                   size: 80,
-                                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withOpacity(0.5),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
@@ -123,7 +124,8 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                                 Text(
                                   'Intenta ajustar los filtros de búsqueda',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withOpacity(0.7),
                                   ),
                                 ),
                               ],
@@ -136,16 +138,20 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final ranch = ranchProvider.ranches[index];
-                              final isFavorite = ranchProvider.isFavorite(ranch.id);
+                              final isFavorite =
+                                  ranchProvider.isFavorite(ranch.id);
 
                               return RanchCard(
                                 ranch: ranch,
                                 isFavorite: isFavorite,
                                 onTap: () {
+                                  print(
+                                      '🔵 Navegando a detalle de ranch: ${ranch.name} (ID: ${ranch.id})');
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => PublicRanchDetailScreen(
+                                      builder: (context) =>
+                                          PublicRanchDetailScreen(
                                         ranch: ranch,
                                       ),
                                     ),
@@ -159,7 +165,7 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
                             childCount: ranchProvider.ranches.length,
                           ),
                         ),
-                      
+
                       // Espacio inferior
                       const SliverToBoxAdapter(
                         child: SizedBox(height: 80),
@@ -175,4 +181,3 @@ class _RanchMarketplaceScreenState extends State<RanchMarketplaceScreen> {
     );
   }
 }
-
