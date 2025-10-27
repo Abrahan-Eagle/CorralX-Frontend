@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/product.dart';
+import '../services/report_service.dart';
 import 'package:zonix/chat/providers/chat_provider.dart';
 import 'package:zonix/chat/screens/chat_screen.dart';
 import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para verificar si es el propio usuario
@@ -784,26 +786,19 @@ class ProductDetailWidget extends StatelessWidget {
     }
   }
 
-  void _showShareDialog(BuildContext context) {
-    showDialog(
+  void _showShareDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Compartir'),
         content: const Text('¿Deseas compartir este ganado con otros?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: Implementar compartir
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Funcionalidad de compartir en desarrollo')),
-              );
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
@@ -812,28 +807,62 @@ class ProductDetailWidget extends StatelessWidget {
         ],
       ),
     );
+
+        if (result == true && context.mounted) {
+      try {
+        // Crear URL de deep link
+        final deepLink = 'https://corralx.com/product/${product.id}';
+        
+        // Crear mensaje para compartir con deep link
+        final shareText = '¡Mira este ganado en CorralX!\n\n'
+            '🐄 ${product.title}\n'
+            '📋 Tipo: ${product.type.toUpperCase()}\n'
+            '🏷️ Raza: ${product.breed}\n'
+            '💰 Precio: \$${product.price.toStringAsFixed(2)} ${product.currency}\n\n'
+            '📝 ${product.description}\n\n'
+            '🔗 Ver más: $deepLink';
+        
+        // Usar share_plus para compartir
+        await Share.share(
+          shareText,
+          subject: product.title,
+        );
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Producto compartido exitosamente'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al compartir: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    }
   }
 
-  void _showReportDialog(BuildContext context) {
-    showDialog(
+  void _showReportDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reportar'),
-        content: const Text('¿Deseas reportar este anuncio por algún motivo?'),
+        title: const Text('Reportar Producto'),
+        content: const Text('¿Deseas reportar este anuncio?\n\n'
+            'Esto notificará a nuestro equipo para revisar el contenido.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: Implementar reportar
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Funcionalidad de reportar en desarrollo')),
-              );
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
@@ -842,6 +871,35 @@ class ProductDetailWidget extends StatelessWidget {
         ],
       ),
     );
+
+    if (result == true && context.mounted) {
+      try {
+        // Reportar el producto al backend
+        await ReportService.reportProduct(
+          productId: product.id,
+          reportType: 'inappropriate', // Tipo por defecto
+          description: 'Producto reportado por usuario',
+        );
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Producto reportado. Nuestro equipo lo revisará pronto.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al reportar: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Color _getTypeColor() {

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:zonix/config/app_config.dart';
+import 'dart:convert';
 import '../providers/profile_provider.dart';
 import '../services/ranch_service.dart';
 import '../../shared/services/location_service.dart';
@@ -553,16 +558,7 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    // TODO: Implementar file picker para subir documento
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Función de carga de documentos próximamente disponible'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onPressed: _businessLicenseUrl == null ? () => _pickDocument() : null,
                   icon: const Icon(Icons.upload),
                   label: const Text('Cargar Documento'),
                   style: OutlinedButton.styleFrom(
@@ -1680,6 +1676,56 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
         ),
       ),
     );
+  }
+
+  /// Seleccionar documento usando file_picker
+  Future<void> _pickDocument() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = result.files.single;
+        
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('El archivo no puede superar los 10MB'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        // Guardar el path temporal
+        setState(() {
+          _businessLicenseUrl = file.path;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Documento seleccionado correctamente'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar documento: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 

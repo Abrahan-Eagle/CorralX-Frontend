@@ -5,6 +5,8 @@ import 'package:zonix/profiles/services/profile_service.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/widgets/product_card.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
+import 'package:zonix/chat/providers/chat_provider.dart';
+import 'package:zonix/chat/screens/chat_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
@@ -340,13 +342,44 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () {
-                              // TODO: Abrir chat con este vendedor
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Chat - Próximamente'),
-                                ),
-                              );
+                            onPressed: () async {
+                              try {
+                                // Abrir chat con este vendedor
+                                final chatProvider =
+                                    context.read<ChatProvider>();
+
+                                // Abrir o crear conversación
+                                final conversation =
+                                    await chatProvider.openConversation(
+                                  profile.userId,
+                                );
+
+                                // Navegar a ChatScreen si la conversación se creó correctamente
+                                if (!mounted) return;
+
+                                if (conversation != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatScreen(
+                                        conversationId: conversation.id,
+                                        contactName: profile.displayName,
+                                        contactAvatar: profile.photoUsers,
+                                        contactIsVerified: profile.isVerified,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (!mounted) return;
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error al abrir chat: $e'),
+                                    backgroundColor: theme.colorScheme.error,
+                                  ),
+                                );
+                              }
                             },
                             icon: Icon(Icons.chat_bubble_outline,
                                 size: isTablet ? 22 : 20),
