@@ -502,6 +502,7 @@ class MainRouterState extends State<MainRouter> {
   int _bottomNavIndex = 0;
   dynamic _profile;
   bool _hasHandledInitialLink = false; // ✅ Prevenir doble navegación
+  Uri? _initialUri; // ✅ Guardar URI inicial procesado
 
   @override
   void initState() {
@@ -512,10 +513,12 @@ class MainRouterState extends State<MainRouter> {
   }
 
   void _setupDeepLinks() {
+    
     // Obtener link inicial primero (solo se ejecuta una vez al abrir la app)
     DeepLinkService().getInitialLink().then((uri) {
       if (uri != null && !_hasHandledInitialLink) {
         print('🔗 Link inicial detectado: $uri');
+        _initialUri = uri;
         _hasHandledInitialLink = true;
         _handleDeepLink(uri, isInitial: true);
       }
@@ -525,16 +528,14 @@ class MainRouterState extends State<MainRouter> {
     // ⚠️ Importante: Solo procesar nuevos links, NO el inicial
     DeepLinkService().listenToLinks().listen((uri) {
       // Comparar con el link inicial para evitar duplicados
-      if (_hasHandledInitialLink) {
-        DeepLinkService().getInitialLink().then((initialUri) {
-          // Solo procesar si es un link diferente al inicial
-          if (initialUri == null || initialUri.toString() != uri.toString()) {
-            print('🔗 Deep link recibido (app activa - nuevo): $uri');
-            _handleDeepLink(uri, isInitial: false);
-          } else {
-            print('🔗 Deep link ignorado (ya procesado como inicial): $uri');
-          }
-        });
+      if (_hasHandledInitialLink && _initialUri != null) {
+        // Solo procesar si es un link diferente al inicial
+        if (_initialUri.toString() != uri.toString()) {
+          print('🔗 Deep link recibido (app activa - nuevo): $uri');
+          _handleDeepLink(uri, isInitial: false);
+        } else {
+          print('🔗 Deep link ignorado (ya procesado como inicial): $uri');
+        }
       }
     });
   }
