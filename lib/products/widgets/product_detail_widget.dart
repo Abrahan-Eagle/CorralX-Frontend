@@ -817,7 +817,7 @@ class ProductDetailWidget extends StatelessWidget {
             ? 'https://backend.corralx.com'
             : 'http://192.168.27.12:8000';
         final deepLink =
-            '$baseUrl/products/${product.id}'; // ✅ Cambiar a /products/
+            '$baseUrl/api/products/${product.id}'; // ✅ Incluir /api/ para la ruta correcta
 
         // Mensaje descriptivo para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'

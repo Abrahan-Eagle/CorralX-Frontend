@@ -74,19 +74,19 @@
                 <!-- Backend URL para deep links - Producción -->
                 <data android:scheme="https"
                       android:host="backend.corralx.com"
-                      android:pathPrefix="/products" />
+                      android:pathPrefix="/api/products" />
                 <data android:scheme="https"
                       android:host="backend.corralx.com"
-                      android:pathPrefix="/ranch" />
+                      android:pathPrefix="/api/ranches" />
                 <!-- Backend URL para deep links - Desarrollo local -->
                 <data android:scheme="http"
                       android:host="192.168.27.12"
                       android:port="8000"
-                      android:pathPrefix="/products" />
+                      android:pathPrefix="/api/products" />
                 <data android:scheme="http"
                       android:host="192.168.27.12"
                       android:port="8000"
-                      android:pathPrefix="/ranch" />
+                      android:pathPrefix="/api/ranches" />
             </intent-filter>
             
             <!-- App Links para URLs personalizadas -->
