@@ -810,8 +810,9 @@ class ProductDetailWidget extends StatelessWidget {
 
         if (result == true && context.mounted) {
       try {
-        // Crear URL para compartir (deep link configurado)
-        final deepLink = 'https://corralx.com/product/${product.id}';
+        // Crear URL para compartir (deep link con esquema custom)
+        // Usar esquema personalizado que funciona sin configuración de servidor
+        final deepLink = 'corralx://product/${product.id}';
         
         // Crear mensaje para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'

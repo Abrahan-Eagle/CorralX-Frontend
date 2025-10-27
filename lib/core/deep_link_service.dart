@@ -26,16 +26,20 @@ class DeepLinkService {
 
   /// Extraer el ID del producto desde un deep link
   static int? extractProductId(Uri uri) {
-    if (uri.path.startsWith('/product/')) {
-      return int.tryParse(uri.path.split('/').last);
+    // Soporta ambos formatos: /product/123 y product/123
+    final path = uri.path.startsWith('/') ? uri.path : '/${uri.path}';
+    if (path.startsWith('/product/')) {
+      return int.tryParse(path.split('/').last);
     }
     return null;
   }
 
   /// Extraer el ID del ranch desde un deep link
   static int? extractRanchId(Uri uri) {
-    if (uri.path.startsWith('/ranch/')) {
-      return int.tryParse(uri.path.split('/').last);
+    // Soporta ambos formatos: /ranch/123 y ranch/123
+    final path = uri.path.startsWith('/') ? uri.path : '/${uri.path}';
+    if (path.startsWith('/ranch/')) {
+      return int.tryParse(path.split('/').last);
     }
     return null;
   }
