@@ -280,9 +280,30 @@ class _CreateScreenState extends State<CreateScreen> {
       print('  🏷️ Featured: $_isFeatured');
       print('  📸 Images: ${_selectedImages.length}');
 
+      // Obtener el stateId del ranch seleccionado
+      int? stateId;
+      try {
+        final ranchProvider = context.read<ProfileProvider>();
+        final ranches = ranchProvider.myRanches;
+        final selectedRanch = ranches.firstWhere((r) => r.id == _selectedRanchId);
+        
+        // Extraer stateId desde address.city.state.id
+        if (selectedRanch.address?.city != null) {
+          final city = selectedRanch.address!.city;
+          if (city?['state'] != null) {
+            final state = city!['state'] as Map<String, dynamic>?;
+            stateId = state?['id'] as int?;
+            print('🗺️ State ID obtenido del ranch: $stateId');
+          }
+        }
+      } catch (e) {
+        print('⚠️ No se pudo obtener stateId: $e');
+      }
+
       // Crear el producto
       final success = await productProvider.createProduct(
         ranchId: _selectedRanchId!,
+        stateId: stateId, // ✅ Pasar stateId obtenido del ranch
         title: _titleController.text.trim().isEmpty
             ? '${_selectedType.toUpperCase()} - $_selectedBreed'
             : _titleController.text.trim(),
@@ -1175,92 +1196,6 @@ class _CreateScreenState extends State<CreateScreen> {
                                 return null;
                               },
                             ),
-                          
-                          // ✅ NUEVO: Mostrar ubicación de la finca seleccionada
-                          if (_selectedRanchId != null) ...[
-                            SizedBox(height: isTablet ? 16 : 12),
-                            Builder(
-                              builder: (context) {
-                                final selectedRanch = ranches.firstWhere(
-                                  (r) => r.id == _selectedRanchId,
-                                  orElse: () => ranches.first,
-                                );
-                                
-                                String locationText = 'Sin ubicación registrada';
-                                if (selectedRanch.address != null) {
-                                  final address = selectedRanch.address!;
-                                  final parts = <String>[];
-                                  
-                                  // Dirección completa
-                                  if (address.addresses.isNotEmpty) {
-                                    parts.add(address.addresses);
-                                  }
-                                  
-                                  // Ciudad, Estado, País
-                                  final cityName = address.cityName ?? 
-                                      address.city?['name'] ?? '';
-                                  final stateName = address.stateName ?? 
-                                      address.city?['state']?['name'] ?? '';
-                                  final countryName = address.countryName ?? 
-                                      address.city?['state']?['country']?['name'] ?? '';
-                                  
-                                  if (cityName.isNotEmpty) parts.add(cityName);
-                                  if (stateName.isNotEmpty) parts.add(stateName);
-                                  if (countryName.isNotEmpty) parts.add(countryName);
-                                  
-                                  if (parts.isNotEmpty) {
-                                    locationText = parts.join(', ');
-                                  }
-                                }
-                                
-                                return Container(
-                                  padding: EdgeInsets.all(isTablet ? 16 : 12),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
-                                    border: Border.all(
-                                      color: theme.colorScheme.primary.withOpacity(0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        color: theme.colorScheme.primary,
-                                        size: isTablet ? 24 : 20,
-                                      ),
-                                      SizedBox(width: isTablet ? 12 : 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Ubicación de la publicación',
-                                              style: TextStyle(
-                                                fontSize: isTablet ? 13 : 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: theme.colorScheme.onPrimaryContainer,
-                                              ),
-                                            ),
-                                            SizedBox(height: isTablet ? 4 : 2),
-                                            Text(
-                                              locationText,
-                                              style: TextStyle(
-                                                fontSize: isTablet ? 15 : 13,
-                                                color: theme.colorScheme.onSurface,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                          
                           SizedBox(height: isTablet ? 20 : 16),
                           TextFormField(
                             controller: _descriptionController,

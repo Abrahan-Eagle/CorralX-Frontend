@@ -160,6 +160,7 @@ class ProductProvider with ChangeNotifier {
   // Crear nuevo producto
   Future<bool> createProduct({
     required int ranchId,
+    int? stateId, // ✅ NUEVO: ID del estado del ranch
     required String title,
     required String description,
     required String type,
@@ -194,6 +195,7 @@ class ProductProvider with ChangeNotifier {
       // Crear el producto
       final response = await ProductService.createProduct(
         ranchId: ranchId,
+        stateId: stateId, // ✅ NUEVO: pasar stateId
         title: title,
         description: description,
         type: type,

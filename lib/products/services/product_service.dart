@@ -125,6 +125,7 @@ class ProductService {
   // POST /api/products - Crear nuevo producto
   static Future<Map<String, dynamic>> createProduct({
     required int ranchId,
+    int? stateId, // ✅ NUEVO: ID del estado del ranch
     required String title,
     required String description,
     required String type,
@@ -153,6 +154,7 @@ class ProductService {
     try {
       final body = {
         'ranch_id': ranchId,
+        'state_id': stateId, // ✅ NUEVO: estado del ranch
         'title': title,
         'description': description,
         'type': type, // Backend espera: engorde, lechero, padrote
