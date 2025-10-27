@@ -810,8 +810,8 @@ class ProductDetailWidget extends StatelessWidget {
 
     if (result == true && context.mounted) {
       try {
-        // Crear URL para compartir usando esquema custom que abre la app
-        final deepLink = 'corralx://product/${product.id}';
+        // Crear URL para compartir usando HTTPS (funciona mejor con apps)
+        final deepLink = 'https://corralx.com/product/${product.id}';
 
         // Mensaje descriptivo para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'
@@ -820,7 +820,7 @@ class ProductDetailWidget extends StatelessWidget {
             '🏷️ Raza: ${product.breed}\n'
             '💰 Precio: \$${product.price.toStringAsFixed(2)} ${product.currency}\n\n'
             '📝 ${product.description}\n\n'
-            '📱 Abre con la app CorralX:\n$deepLink';
+            '🔗 $deepLink';
 
         // Usar share_plus para compartir
         await Share.share(

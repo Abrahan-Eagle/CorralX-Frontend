@@ -36,13 +36,27 @@ class DeepLinkService {
     print('🔍 DeepLinkService.extractProductId - URI completo: $uri');
     print('🔍 Scheme: ${uri.scheme}, Path: ${uri.path}, Host: ${uri.host}');
     
-    // Soporta ambos formatos: /product/123 y product/123
+    // Soporta múltiples formatos:
+    // - https://corralx.com/product/123
+    // - http://corralx.com/product/123
+    // - corralx://product/123
     final path = uri.path.startsWith('/') ? uri.path : '/${uri.path}';
     print('🔍 Path procesado: $path');
     
-    if (path.startsWith('/product/')) {
+    // Verificar si la URL es de corralx.com (HTTP o HTTPS)
+    if ((uri.scheme == 'https' || uri.scheme == 'http') && 
+        (uri.host.contains('corralx.com') || uri.host.contains('corralx'))) {
+      if (path.startsWith('/product/')) {
+        final productId = int.tryParse(path.split('/').last);
+        print('🔍 Product ID extraído (HTTPS): $productId');
+        return productId;
+      }
+    }
+    
+    // También soporta el esquema custom corralx://
+    if (uri.scheme == 'corralx' && path.startsWith('/product/')) {
       final productId = int.tryParse(path.split('/').last);
-      print('🔍 Product ID extraído: $productId');
+      print('🔍 Product ID extraído (custom scheme): $productId');
       return productId;
     }
     
