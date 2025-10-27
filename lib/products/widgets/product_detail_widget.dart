@@ -811,9 +811,13 @@ class ProductDetailWidget extends StatelessWidget {
 
     if (result == true && context.mounted) {
       try {
-        // Crear URL para compartir usando esquema custom corralx://
-        // Este esquema abre la app directamente sin necesidad de servidor web
-        final deepLink = 'corralx://product/${product.id}';
+        // Crear URL HTTPS que WhatsApp pueda reconocer como link clicable
+        // Usar el dominio del backend según el entorno
+        final baseUrl = AppConfig.isProduction
+            ? 'https://backend.corralx.com'
+            : 'http://192.168.27.12:8000';
+        final deepLink =
+            '$baseUrl/products/${product.id}'; // ✅ Cambiar a /products/
 
         // Mensaje descriptivo para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'
