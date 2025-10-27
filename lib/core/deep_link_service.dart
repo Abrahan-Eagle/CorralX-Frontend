@@ -12,6 +12,12 @@ class DeepLinkService {
   Future<Uri?> getInitialLink() async {
     try {
       final link = await _appLinks.getInitialLink();
+      print('🔗 DeepLinkService.getInitialLink: $link');
+      if (link != null) {
+        print('🔗 Link scheme: ${link.scheme}');
+        print('🔗 Link path: ${link.path}');
+        print('🔗 Link host: ${link.host}');
+      }
       return link;
     } catch (e) {
       print('❌ Error obteniendo link inicial: $e');
@@ -21,16 +27,26 @@ class DeepLinkService {
 
   /// Escuchar cuando la app recibe un deep link
   Stream<Uri> listenToLinks() {
+    print('🔗 DeepLinkService.listenToLinks: Configurando listener...');
     return _appLinks.uriLinkStream;
   }
 
   /// Extraer el ID del producto desde un deep link
   static int? extractProductId(Uri uri) {
+    print('🔍 DeepLinkService.extractProductId - URI completo: $uri');
+    print('🔍 Scheme: ${uri.scheme}, Path: ${uri.path}, Host: ${uri.host}');
+    
     // Soporta ambos formatos: /product/123 y product/123
     final path = uri.path.startsWith('/') ? uri.path : '/${uri.path}';
+    print('🔍 Path procesado: $path');
+    
     if (path.startsWith('/product/')) {
-      return int.tryParse(path.split('/').last);
+      final productId = int.tryParse(path.split('/').last);
+      print('🔍 Product ID extraído: $productId');
+      return productId;
     }
+    
+    print('🔍 No se encontró patrón /product/ en el path');
     return null;
   }
 
