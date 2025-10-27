@@ -140,16 +140,22 @@ class ProductProvider with ChangeNotifier {
   // Obtener detalle de un producto
   Future<void> fetchProductDetail(int productId) async {
     try {
+      print('🔍 ProductProvider.fetchProductDetail: Iniciando carga de producto $productId');
       _clearErrors();
       _isLoading = true;
       notifyListeners();
 
       final response = await ProductService.getProductDetail(productId);
+      print('🔍 ProductProvider: Response recibida: ${response.containsKey('data')}');
 
       if (response['data'] != null) {
         _selectedProduct = Product.fromJson(response['data']);
+        print('✅ ProductProvider: Producto cargado correctamente - ID: ${_selectedProduct?.id}');
+      } else {
+        print('⚠️ ProductProvider: Response no contiene "data"');
       }
     } catch (e) {
+      print('❌ ProductProvider: Error en fetchProductDetail: $e');
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;

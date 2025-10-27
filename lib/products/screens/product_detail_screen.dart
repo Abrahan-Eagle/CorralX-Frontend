@@ -62,14 +62,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     // Si no está en la lista, cargarlo desde la API
     try {
+      print('🔍 ProductDetailScreen: Cargando producto ${widget.productId} desde API');
       await productProvider.fetchProductDetail(widget.productId);
       if (!mounted) return;
       final product = productProvider.selectedProduct;
+      print('🔍 ProductDetailScreen: Producto cargado: ${product != null ? "OK" : "NULL"}');
+      
+      if (product == null) {
+        print('⚠️ ProductDetailScreen: selectedProduct es null, intentando recargar...');
+        // Intentar una vez más
+        await productProvider.fetchProductDetail(widget.productId);
+        final product2 = productProvider.selectedProduct;
+        if (product2 != null) {
+          setState(() {
+            _product = product2;
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+      
+      if (!mounted) return;
       setState(() {
         _product = product;
         _isLoading = false;
       });
     } catch (e) {
+      print('❌ ProductDetailScreen: Error al cargar producto: $e');
       if (!mounted) return;
       setState(() {
         _error = 'Error al cargar el producto: $e';

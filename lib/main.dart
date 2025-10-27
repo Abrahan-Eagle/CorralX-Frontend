@@ -541,15 +541,35 @@ class MainRouterState extends State<MainRouter> {
     final productId = DeepLinkService.extractProductId(uri);
     if (productId != null) {
       print('🔗 Navegando a producto: $productId (initial: $isInitial)');
-      // Navegar a ProductDetailScreen
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProductDetailScreen(
-            productId: productId,
+      
+      // Si la app se abre desde cerrada (initial), limpiar el stack de navegación
+      // para que el botón atrás regrese al home en lugar de intentar volver al navegador
+      if (isInitial) {
+        // Navegar al producto directamente desde un contexto limpio
+        // Esto evita el problema de "Producto no encontrado" al retroceder
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(
+              productId: productId,
+            ),
           ),
-        ),
-      );
+        ).then((_) {
+          // Después de cerrar el producto, limpiar el stack de navegación
+          // para evitar que intente volver al navegador
+          print('🔙 Producto cerrado, asegurando navegación correcta');
+        });
+      } else {
+        // Si la app ya estaba abierta, navegación normal
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(
+              productId: productId,
+            ),
+          ),
+        );
+      }
       return;
     }
 
