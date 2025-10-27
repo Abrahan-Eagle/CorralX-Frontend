@@ -353,6 +353,8 @@ import 'package:zonix/favorites/screens/favorites_screen.dart';
 import 'package:zonix/products/screens/create_screen.dart';
 import 'package:zonix/chat/screens/messages_screen.dart';
 import 'package:zonix/profiles/screens/profile_screen.dart';
+import 'package:zonix/core/deep_link_service.dart';
+import 'package:zonix/products/screens/product_detail_screen.dart';
 
 /*
  * ZONIX EATS - Aplicación Multi-Rol
@@ -504,6 +506,45 @@ class MainRouterState extends State<MainRouter> {
     super.initState();
     _loadProfile();
     _loadLastPosition();
+    _setupDeepLinks();
+  }
+
+  void _setupDeepLinks() {
+    // Escuchar deep links
+    DeepLinkService().listenToLinks().listen((uri) {
+      print('🔗 Deep link recibido: $uri');
+      _handleDeepLink(uri);
+    });
+
+    // Obtener link inicial si la app se abrió con un link
+    DeepLinkService().getInitialLink().then((uri) {
+      if (uri != null) {
+        print('🔗 Link inicial detectado: $uri');
+        _handleDeepLink(uri);
+      }
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    final productId = DeepLinkService.extractProductId(uri);
+    if (productId != null) {
+      // Navegar a ProductDetailScreen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProductDetailScreen(
+            productId: productId,
+          ),
+        ),
+      );
+      return;
+    }
+
+    final ranchId = DeepLinkService.extractRanchId(uri);
+    if (ranchId != null) {
+      print('📱 Deep link a ranch: $ranchId');
+      // TODO: Navegar a ranch detail
+    }
   }
 
   Future<void> _loadProfile() async {
