@@ -642,18 +642,27 @@ class ProductProvider with ChangeNotifier {
       print('🌐 Llamando a FavoriteService.toggleFavorite...');
       final isFavorite = await FavoriteService.toggleFavorite(productId);
       
-      // 3. Si se agregó exitosamente, recargar lista de favoritos para asegurar datos completos
-      if (isFavorite && !wasInFavorites) {
-        print('🔄 Recargando lista de favoritos para actualizar UI...');
-        await fetchFavorites(refresh: false);
-        return; // Ya se actualizó con fetchFavorites, no hacer más
-      }
+      // 3. NO recargar la lista completa de favoritos porque causa duplicados
+      // El optimistic update ya añadió/removió el producto localmente
+      // Solo sincronizar el estado si el backend confirma el cambio
       
-      // 4. Sincronizar estado con respuesta del servidor (solo si no se recargó)
+      // 4. Verificar que el estado coincida con el backend
       if (isFavorite && !_favorites.contains(productId)) {
+        // Si el backend dice que ES favorito pero localmente NO está
         _favorites.add(productId);
+        // Solo agregar a _favoriteProducts si no existe ya
+        if (!_favoriteProducts.any((p) => p.id == productId)) {
+          Product? product;
+          try {
+            product = _products.firstWhere((p) => p.id == productId);
+            _favoriteProducts.add(product);
+          } catch (e) {
+            print('⚠️ Producto no encontrado localmente, se sincronizará en la próxima carga');
+          }
+        }
         print('✅ Sincronizado: Agregado a favoritos');
       } else if (!isFavorite && _favorites.contains(productId)) {
+        // Si el backend dice que NO es favorito pero localmente SÍ está
         _favorites.remove(productId);
         _favoriteProducts.removeWhere((p) => p.id == productId);
         print('✅ Sincronizado: Removido de favoritos');
