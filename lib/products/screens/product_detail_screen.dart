@@ -26,7 +26,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProduct();
+    // ✅ Usar addPostFrameCallback para evitar setState durante build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProduct();
+    });
   }
 
   Future<void> _loadProduct() async {
@@ -35,6 +38,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     // Si ya tenemos el producto, usarlo directamente
     if (widget.product != null) {
+      if (!mounted) return;
       setState(() {
         _product = widget.product;
         _isLoading = false;
@@ -48,6 +52,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         .firstOrNull;
 
     if (existingProduct != null) {
+      if (!mounted) return;
       setState(() {
         _product = existingProduct;
         _isLoading = false;
@@ -58,12 +63,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     // Si no está en la lista, cargarlo desde la API
     try {
       await productProvider.fetchProductDetail(widget.productId);
+      if (!mounted) return;
       final product = productProvider.selectedProduct;
       setState(() {
         _product = product;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'Error al cargar el producto: $e';
         _isLoading = false;
