@@ -810,17 +810,18 @@ class ProductDetailWidget extends StatelessWidget {
 
         if (result == true && context.mounted) {
       try {
-        // Crear URL de deep link
-        final deepLink = 'https://corralx.com/product/${product.id}';
+        // Crear URL web para compartir (servirá como referencia)
+        // Nota: Para deep linking real se requiere configuración adicional de AndroidManifest e iOS
+        final webLink = 'https://corralx.com/product/${product.id}';
         
-        // Crear mensaje para compartir con deep link
+        // Crear mensaje para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'
             '🐄 ${product.title}\n'
             '📋 Tipo: ${product.type.toUpperCase()}\n'
             '🏷️ Raza: ${product.breed}\n'
             '💰 Precio: \$${product.price.toStringAsFixed(2)} ${product.currency}\n\n'
             '📝 ${product.description}\n\n'
-            '🔗 Ver más: $deepLink';
+            '🔗 Ver en la app: $webLink';
         
         // Usar share_plus para compartir
         await Share.share(
