@@ -285,8 +285,9 @@ class _CreateScreenState extends State<CreateScreen> {
       try {
         final ranchProvider = context.read<ProfileProvider>();
         final ranches = ranchProvider.myRanches;
-        final selectedRanch = ranches.firstWhere((r) => r.id == _selectedRanchId);
-        
+        final selectedRanch =
+            ranches.firstWhere((r) => r.id == _selectedRanchId);
+
         // Extraer stateId desde address.city.state.id
         if (selectedRanch.address?.city != null) {
           final city = selectedRanch.address!.city;
