@@ -71,12 +71,12 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- TODO: Cambiar corralx.com por tu dominio real -->
+                <!-- Backend URL para deep links -->
                 <data android:scheme="https"
-                      android:host="corralx.com"
+                      android:host="backend.corralx.com"
                       android:pathPrefix="/product" />
                 <data android:scheme="https"
-                      android:host="corralx.com"
+                      android:host="backend.corralx.com"
                       android:pathPrefix="/ranch" />
             </intent-filter>
             

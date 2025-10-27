@@ -813,7 +813,8 @@ class ProductDetailWidget extends StatelessWidget {
       try {
         // Crear URL para compartir usando HTTPS (funciona mejor con apps)
         // Usar apiUrl que ya incluye el protocolo y dominio correcto
-        final deepLink = '${AppConfig.apiUrl.replaceAll('/api', '')}/product/${product.id}';
+        final deepLink =
+            '${AppConfig.apiUrl.replaceAll('/api', '')}/product/${product.id}';
 
         // Mensaje descriptivo para compartir
         final shareText = '¡Mira este ganado en CorralX!\n\n'
