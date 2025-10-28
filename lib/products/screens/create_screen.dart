@@ -180,8 +180,8 @@ class _CreateScreenState extends State<CreateScreen> {
     });
   }
 
-  // Métodos para manejar imágenes
-  Future<void> _pickImages() async {
+  // Métodos para manejar imágenes (solo cámara)
+  Future<void> _takePhoto() async {
     final theme = Theme.of(context);
 
     if (_selectedImages.length >= 5) {
@@ -194,26 +194,22 @@ class _CreateScreenState extends State<CreateScreen> {
       return;
     }
 
-    final List<XFile> images = await _picker.pickMultiImage();
+    try {
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.rear,
+        maxWidth: 800,
+        maxHeight: 600,
+      );
 
-    if (images.isNotEmpty) {
-      final int availableSlots = 5 - _selectedImages.length;
-      final int imagesToAdd =
-          images.length > availableSlots ? availableSlots : images.length;
-
-      setState(() {
-        _selectedImages.addAll(images.take(imagesToAdd));
-      });
-
-      if (images.length > imagesToAdd) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Solo se agregaron $imagesToAdd de ${images.length} imágenes (máximo 5)'),
-            backgroundColor: theme.colorScheme.error,
-          ),
-        );
+      if (photo != null) {
+        setState(() {
+          _selectedImages.add(photo);
+        });
       }
+    } catch (e) {
+      // Ignorar si el usuario cancela; mostrar solo errores reales
+      debugPrint('Error al tomar foto: $e');
     }
   }
 
@@ -569,10 +565,10 @@ class _CreateScreenState extends State<CreateScreen> {
                         ),
                       if (_selectedImages.isNotEmpty)
                         SizedBox(height: isTablet ? 16 : 12),
-                      // Botón para agregar fotos
+                      // Botón para tomar fotos (cámara)
                       if (_selectedImages.length < 5)
                         GestureDetector(
-                          onTap: _pickImages,
+                          onTap: _takePhoto,
                           child: Container(
                             height: isTablet ? 120 : 100,
                             decoration: BoxDecoration(
@@ -590,13 +586,15 @@ class _CreateScreenState extends State<CreateScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.add_photo_alternate_outlined,
+                                    Icons.photo_camera_outlined,
                                     size: isTablet ? 40 : 36,
                                     color: theme.colorScheme.primary,
                                   ),
                                   SizedBox(height: isTablet ? 10 : 8),
                                   Text(
-                                    'Agregar fotos (${_selectedImages.length}/5)',
+                                    _selectedImages.isEmpty
+                                        ? 'Tomar foto (0/5)'
+                                        : 'Tomar otra (${_selectedImages.length}/5)',
                                     style: TextStyle(
                                       color: theme.colorScheme.primary,
                                       fontSize: isTablet ? 15 : 13,
