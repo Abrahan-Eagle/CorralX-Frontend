@@ -3,10 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:zonix/config/app_config.dart';
-import 'dart:convert';
 import '../providers/profile_provider.dart';
 import '../services/ranch_service.dart';
 import '../../shared/services/location_service.dart';
@@ -51,7 +47,8 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
     'Libre de Aftosa',
     'Certificación HACCP',
   ];
-  String? _businessLicenseUrl;
+  // Documentos PDF (hasta 5)
+  final List<_SelectedDoc> _pendingDocuments = [];
 
   // Campos de ubicación
   late TextEditingController _addressDetailController;
@@ -146,7 +143,7 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
           (country) => country['name'] == 'Venezuela',
           orElse: () => {},
         );
-        
+
         if (venezuela.isNotEmpty && mounted) {
           final venezuelaId = venezuela['id'] as int;
           setState(() {
@@ -271,7 +268,8 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
             : null,
         certifications:
             _selectedCertifications.isNotEmpty ? _selectedCertifications : null,
-        businessLicenseUrl: _businessLicenseUrl,
+        businessLicenseUrl:
+            null, // Ya no se envía aquí, se suben documentos por separado
         contactHours: _selectedSchedule,
         addressId: addressId, // Asignar el address_id al ranch
         deliveryPolicy: _deliveryPolicyController.text.isNotEmpty
@@ -291,6 +289,66 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Subir documentos PDF si fueron seleccionados
+        try {
+          if (_pendingDocuments.isNotEmpty) {
+            final newRanch = result['ranch'] as Map<String, dynamic>? ??
+                result['data'] as Map<String, dynamic>?;
+            final int ranchId = (newRanch?['id'] as int?) ?? 0;
+            if (ranchId > 0) {
+              int successCount = 0;
+              int errorCount = 0;
+
+              for (var doc in _pendingDocuments) {
+                try {
+                  final upload = await RanchService.uploadRanchDocument(
+                    ranchId: ranchId,
+                    filePath: doc.path,
+                    certificationType: doc.certificationType,
+                  );
+                  if (upload['success'] == true) {
+                    successCount++;
+                  } else {
+                    errorCount++;
+                  }
+                } catch (e) {
+                  errorCount++;
+                }
+              }
+
+              if (mounted) {
+                if (successCount > 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          '📄 $successCount documento(s) subido(s) correctamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+                if (errorCount > 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content:
+                          Text('⚠️ Error al subir $errorCount documento(s)'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error subiendo documentos: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
+        }
 
         // Refrescar ranches en ProfileProvider
         await context
@@ -479,13 +537,13 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
     );
   }
 
-  /// Widget para la sección de Documento de Licencia
+  /// Widget para la sección de Documentos (hasta 5 PDFs)
   Widget _buildBusinessLicenseSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Documento de Licencia Comercial',
+          'Documentos de la Hacienda (hasta 5, solo PDF)',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -503,73 +561,89 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_businessLicenseUrl != null) ...[
-                Row(
-                  children: [
-                    Icon(Icons.check_circle,
-                        color: theme.colorScheme.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Documento cargado',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
+              // Documentos pendientes por subir
+              if (_pendingDocuments.isNotEmpty) ...[
+                ..._pendingDocuments.map((doc) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        border: Border.all(color: theme.colorScheme.outline),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _businessLicenseUrl = null;
-                        });
-                      },
-                      icon: Icon(Icons.delete_outline,
-                          color: theme.colorScheme.error),
-                      tooltip: 'Eliminar documento',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _businessLicenseUrl!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ] else ...[
-                Row(
-                  children: [
-                    Icon(Icons.upload_file,
-                        color: theme.colorScheme.onSurfaceVariant, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'No hay documento cargado',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.picture_as_pdf,
+                                  color: theme.colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  doc.fileName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _pendingDocuments.remove(doc);
+                                  });
+                                },
+                                icon: Icon(Icons.delete_outline,
+                                    color: theme.colorScheme.error),
+                                tooltip: 'Eliminar',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: doc.certificationType,
+                            decoration: InputDecoration(
+                              labelText: 'Tipo de certificación (opcional)',
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: theme.colorScheme.surface,
+                            ),
+                            items: _availableCertifications
+                                .map((c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c),
+                                    ))
+                                .toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                doc.certificationType = val;
+                              });
+                            },
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
+                    )),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _businessLicenseUrl == null ? () => _pickDocument() : null,
-                  icon: const Icon(Icons.upload),
-                  label: const Text('Cargar Documento'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 40),
-                    side: BorderSide(color: theme.colorScheme.primary),
-                  ),
-                ),
               ],
+
+              // Botón agregar documento
+              OutlinedButton.icon(
+                onPressed: _pendingDocuments.length >= 5
+                    ? null
+                    : () => _pickDocument(),
+                icon: const Icon(Icons.upload),
+                label: Text(_pendingDocuments.isEmpty
+                    ? 'Agregar Documento (PDF)'
+                    : 'Agregar otro Documento (PDF)'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 40),
+                  side: BorderSide(color: theme.colorScheme.primary),
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
-                'RIF, licencia comercial o certificados sanitarios (PDF o imagen)',
+                'Hasta 5 PDFs (RIF/licencia/certificaciones).',
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -960,118 +1034,119 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
 
                       // Horarios predefinidos
                       ..._predefinedSchedules.map((schedule) {
-                      final isSelected = tempSelectedSchedule == schedule;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          onTap: () {
-                            setModalState(() {
-                              tempSelectedSchedule = schedule;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? theme.colorScheme.primaryContainer
-                                  : theme.colorScheme.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
+                        final isSelected = tempSelectedSchedule == schedule;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: InkWell(
+                            onTap: () {
+                              setModalState(() {
+                                tempSelectedSchedule = schedule;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.outline
-                                        .withOpacity(0.2),
-                                width: 2,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isSelected
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked,
+                                    ? theme.colorScheme.primaryContainer
+                                    : theme.colorScheme.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
                                   color: isSelected
                                       ? theme.colorScheme.primary
-                                      : theme.colorScheme.onSurfaceVariant,
+                                      : theme.colorScheme.outline
+                                          .withOpacity(0.2),
+                                  width: 2,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    schedule,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                      color: isSelected
-                                          ? theme.colorScheme.onPrimaryContainer
-                                          : theme.colorScheme.onSurface,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isSelected
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      schedule,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: isSelected
+                                            ? theme
+                                                .colorScheme.onPrimaryContainer
+                                            : theme.colorScheme.onSurface,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
 
-                    const SizedBox(height: 8),
-                    const Divider(),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 8),
+                      const Divider(),
+                      const SizedBox(height: 16),
 
-                    // Botón para horario personalizado
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final customSchedule =
-                            await _showCustomScheduleDialog(context);
-                        if (customSchedule != null) {
-                          setModalState(() {
-                            tempSelectedSchedule = customSchedule;
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Crear Horario Personalizado'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                        side: BorderSide(color: theme.colorScheme.primary),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Botones de acción
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(dialogContext);
-                          },
-                          child: const Text('Cancelar'),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedSchedule = tempSelectedSchedule;
+                      // Botón para horario personalizado
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final customSchedule =
+                              await _showCustomScheduleDialog(context);
+                          if (customSchedule != null) {
+                            setModalState(() {
+                              tempSelectedSchedule = customSchedule;
                             });
-                            Navigator.pop(dialogContext);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
-                          ),
-                          child: const Text('Guardar'),
+                          }
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Crear Horario Personalizado'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                          side: BorderSide(color: theme.colorScheme.primary),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Botones de acción
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                            },
+                            child: const Text('Cancelar'),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedSchedule = tempSelectedSchedule;
+                              });
+                              Navigator.pop(dialogContext);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                            ),
+                            child: const Text('Guardar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1678,19 +1753,32 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
     );
   }
 
-  /// Seleccionar documento usando file_picker
+  /// Seleccionar documento usando file_picker (solo PDF)
   Future<void> _pickDocument() async {
     try {
+      // Validar que no exceda el límite
+      if (_pendingDocuments.length >= 5) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Máximo 5 documentos permitidos'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        allowedExtensions: ['pdf'],
         allowMultiple: false,
       );
 
       if (result != null && result.files.single.path != null) {
         final file = result.files.single;
-        
-        if (file.size > 10 * 1024 * 1024) { // 10MB
+
+        if (file.size > 10 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1702,18 +1790,30 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
           return;
         }
 
-        // Guardar el path temporal
+        final path = file.path!;
+        if (!path.toLowerCase().endsWith('.pdf')) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Solo se permiten archivos PDF'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
         setState(() {
-          _businessLicenseUrl = file.path;
+          _pendingDocuments.add(_SelectedDoc(
+            path: path,
+            fileName: file.name,
+            certificationType: null,
+          ));
         });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Documento seleccionado correctamente'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+              SnackBar(content: Text('Documento agregado: ${file.name}')));
         }
       }
     } catch (e) {
@@ -1727,6 +1827,14 @@ class _CreateRanchScreenState extends State<CreateRanchScreen> {
       }
     }
   }
+}
+
+class _SelectedDoc {
+  _SelectedDoc(
+      {required this.path, required this.fileName, this.certificationType});
+  final String path;
+  final String fileName;
+  String? certificationType;
 }
 
 // Formatter para RIF venezolano (J-12345678-9)

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
@@ -28,7 +29,6 @@ class RanchService {
   static Future<Map<String, String>> _getHeaders() async {
     final token = await _storage.read(key: 'token');
     return {
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
@@ -53,6 +53,11 @@ class RanchService {
       print('🌐 RanchService.updateRanch iniciado - ranchId: $ranchId');
 
       final headers = await _getHeaders();
+      // Para JSON explícitamente añadimos Content-Type
+      final jsonHeaders = {
+        ...headers,
+        'Content-Type': 'application/json',
+      };
       final uri = Uri.parse('$_baseUrl/api/ranches/$ranchId');
 
       final Map<String, dynamic> body = {};
@@ -76,7 +81,7 @@ class RanchService {
 
       final response = await http.put(
         uri,
-        headers: headers,
+        headers: jsonHeaders,
         body: json.encode(body),
       );
 
@@ -165,6 +170,11 @@ class RanchService {
       print('🌐 RanchService.createRanch iniciado');
 
       final headers = await _getHeaders();
+      // Para JSON explícitamente añadimos Content-Type
+      final jsonHeaders = {
+        ...headers,
+        'Content-Type': 'application/json',
+      };
       final uri = Uri.parse('$_baseUrl/api/ranches');
 
       final Map<String, dynamic> body = {
@@ -187,7 +197,7 @@ class RanchService {
 
       final response = await http.post(
         uri,
-        headers: headers,
+        headers: jsonHeaders,
         body: json.encode(body),
       );
 
@@ -214,6 +224,115 @@ class RanchService {
       }
     } catch (e) {
       print('❌ Error en createRanch: $e');
+      rethrow;
+    }
+  }
+
+  /// POST /api/ranches/{ranch}/document - Subir documento (PDF) de la hacienda
+  static Future<Map<String, dynamic>> uploadRanchDocument({
+    required int ranchId,
+    required String filePath,
+    String? certificationType,
+  }) async {
+    try {
+      print('📄 RanchService.uploadRanchDocument iniciado - ranchId: $ranchId');
+
+      // Validación simple en cliente: solo PDF
+      if (!filePath.toLowerCase().endsWith('.pdf')) {
+        throw Exception('Solo se permiten archivos PDF');
+      }
+
+      final headers = await _getHeaders();
+      final uri = Uri.parse('$_baseUrl/api/ranches/$ranchId/documents');
+
+      final request = http.MultipartRequest('POST', uri);
+      // Copiar headers excepto Content-Type (multipart lo maneja automáticamente)
+      headers.forEach((key, value) {
+        if (key.toLowerCase() != 'content-type') {
+          request.headers[key] = value;
+        }
+      });
+
+      final file = await http.MultipartFile.fromPath(
+        'document',
+        filePath,
+        contentType: MediaType('application', 'pdf'),
+      );
+
+      request.files.add(file);
+
+      // Agregar certification_type si se proporciona
+      if (certificationType != null && certificationType.isNotEmpty) {
+        request.fields['certification_type'] = certificationType;
+      }
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+
+      print('📄 Upload status: ${response.statusCode}');
+      print('📄 Upload body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'document': data['data'],
+        };
+      } else if (response.statusCode == 422) {
+        final data = json.decode(response.body);
+        return {
+          'success': false,
+          'errors': data['errors'] ?? {},
+          'message': data['message'] ?? 'Error de validación',
+        };
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Por favor inicia sesión nuevamente.');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permiso para subir el documento');
+      } else {
+        throw Exception('Error al subir documento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error en uploadRanchDocument: $e');
+      rethrow;
+    }
+  }
+
+  /// DELETE /api/ranches/{ranch}/documents/{document} - Eliminar documento
+  static Future<Map<String, dynamic>> deleteRanchDocument({
+    required int ranchId,
+    required int documentId,
+  }) async {
+    try {
+      print(
+          '🗑️ RanchService.deleteRanchDocument iniciado - ranchId: $ranchId, documentId: $documentId');
+
+      final headers = await _getHeaders();
+      final uri =
+          Uri.parse('$_baseUrl/api/ranches/$ranchId/documents/$documentId');
+
+      final response = await http.delete(uri, headers: headers);
+
+      print('🗑️ Delete status: ${response.statusCode}');
+      print('🗑️ Delete body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Documento eliminado exitosamente',
+        };
+      } else if (response.statusCode == 404) {
+        throw Exception('Documento no encontrado');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permiso para eliminar este documento');
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Por favor inicia sesión nuevamente.');
+      } else {
+        throw Exception('Error al eliminar documento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error en deleteRanchDocument: $e');
       rethrow;
     }
   }

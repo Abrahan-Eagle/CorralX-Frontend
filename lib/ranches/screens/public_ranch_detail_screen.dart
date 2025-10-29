@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../profiles/models/ranch.dart';
 import '../providers/ranch_provider.dart';
 import '../../chat/providers/chat_provider.dart';
@@ -131,6 +132,13 @@ class PublicRanchDetailScreen extends StatelessWidget {
                   if (ranch.certifications != null &&
                       ranch.certifications!.isNotEmpty) ...[
                     _buildCertificationsCard(context, theme, isTablet),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Documentos PDF
+                  if (ranch.documents != null &&
+                      ranch.documents!.isNotEmpty) ...[
+                    _buildDocumentsCard(context, theme, isTablet),
                     const SizedBox(height: 16),
                   ],
 
@@ -920,6 +928,210 @@ class PublicRanchDetailScreen extends StatelessWidget {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Widget _buildDocumentsCard(
+      BuildContext context, ThemeData theme, bool isTablet) {
+    final documents = ranch.documents ?? [];
+
+    if (documents.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    color: theme.colorScheme.primary,
+                    size: isTablet ? 24 : 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Documentos PDF',
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${documents.length}',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...documents.map((doc) {
+              final documentUrl = doc['document_url']?.toString() ?? '';
+              final certificationType = doc['certification_type']?.toString();
+              final originalFilename =
+                  doc['original_filename']?.toString() ?? 'Documento.pdf';
+              final fileSize = doc['file_size'] as int?;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        Icons.picture_as_pdf,
+                        color: Colors.red.shade700,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (certificationType != null &&
+                              certificationType.isNotEmpty)
+                            Text(
+                              certificationType,
+                              style: TextStyle(
+                                fontSize: isTablet ? 14 : 13,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onBackground,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (certificationType != null &&
+                              certificationType.isNotEmpty)
+                            const SizedBox(height: 4),
+                          Text(
+                            originalFilename,
+                            style: TextStyle(
+                              fontSize: isTablet ? 13 : 12,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (fileSize != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatFileSize(fileSize),
+                              style: TextStyle(
+                                fontSize: isTablet ? 11 : 10,
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _openDocument(context, documentUrl),
+                      icon: Icon(
+                        Icons.open_in_new,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                      tooltip: 'Abrir documento',
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) {
+      return '$bytes B';
+    } else if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    } else {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+  }
+
+  Future<void> _openDocument(BuildContext context, String url) async {
+    if (url.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('URL del documento no disponible'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo abrir el documento'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al abrir documento: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

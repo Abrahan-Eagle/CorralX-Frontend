@@ -29,6 +29,7 @@ class Ranch {
   // Relaciones
   final Address? address;
   final Map<String, dynamic>? profile; // Perfil del dueño (eager loading)
+  final List<Map<String, dynamic>>? documents; // Documentos PDF asociados
 
   Ranch({
     required this.id,
@@ -53,6 +54,7 @@ class Ranch {
     this.productsCount,
     this.address,
     this.profile,
+    this.documents,
   });
 
   /// Factory para crear una instancia desde JSON
@@ -83,6 +85,11 @@ class Ranch {
       profile: json['profile'] != null
           ? Map<String, dynamic>.from(json['profile'])
           : null,
+      documents: json['documents'] is List
+          ? (json['documents'] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : null,
     );
   }
 
@@ -109,6 +116,7 @@ class Ranch {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       if (address != null) 'address': address!.toJson(),
+      if (documents != null) 'documents': documents,
     };
   }
 
@@ -187,6 +195,7 @@ class Ranch {
     DateTime? updatedAt,
     Address? address,
     Map<String, dynamic>? profile,
+    List<Map<String, dynamic>>? documents,
   }) {
     return Ranch(
       id: id ?? this.id,
@@ -210,6 +219,7 @@ class Ranch {
       updatedAt: updatedAt ?? this.updatedAt,
       address: address ?? this.address,
       profile: profile ?? this.profile,
+      documents: documents ?? this.documents,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/ranch.dart';
 import '../providers/profile_provider.dart';
 import '../services/ranch_service.dart';
@@ -54,6 +55,8 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     'Certificación HACCP',
   ];
   String? _businessLicenseUrl;
+  List<Map<String, dynamic>> _existingDocuments = [];
+  final List<_SelectedDoc> _pendingDocuments = [];
 
   // Campos de ubicación
   late TextEditingController _addressDetailController;
@@ -76,6 +79,8 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
 
   late bool _isPrimary;
   bool _isSubmitting = false;
+
+  // Clase helper local para documentos pendientes
 
   @override
   void initState() {
@@ -105,6 +110,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     // Inicializar certificaciones y documento
     _selectedCertifications = widget.ranch.certifications ?? [];
     _businessLicenseUrl = widget.ranch.businessLicenseUrl;
+    _existingDocuments = widget.ranch.documents ?? [];
 
     // Inicializar dirección
     _addressDetailController =
@@ -200,7 +206,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             (country) => country['name'] == 'Venezuela',
             orElse: () => {},
           );
-          
+
           if (venezuela.isNotEmpty && mounted) {
             final venezuelaId = venezuela['id'] as int;
             setState(() {
@@ -384,7 +390,10 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             : null,
         certifications:
             _selectedCertifications.isNotEmpty ? _selectedCertifications : null,
-        businessLicenseUrl: _businessLicenseUrl,
+        businessLicenseUrl: (_businessLicenseUrl != null &&
+                !_businessLicenseUrl!.startsWith('http'))
+            ? null
+            : _businessLicenseUrl,
         contactHours: _selectedSchedule,
         addressId: addressId, // Asignar el address_id al ranch
         isPrimary: _isPrimary,
@@ -405,6 +414,41 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Subir documentos pendientes (hasta alcanzar 5)
+        try {
+          for (final doc in _pendingDocuments) {
+            final upload = await RanchService.uploadRanchDocument(
+              ranchId: widget.ranch.id,
+              filePath: doc.path,
+              certificationType: doc.certificationType,
+            );
+            if (upload['success'] == true) {
+              _existingDocuments
+                  .add(Map<String, dynamic>.from(upload['document']));
+            }
+          }
+          if (mounted && _pendingDocuments.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('📄 Documentos subidos correctamente'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          setState(() {
+            _pendingDocuments.clear();
+          });
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error subiendo documentos: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
+        }
 
         // Refrescar ranches en ProfileProvider
         await context
@@ -447,6 +491,68 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
             ? w
             : (w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : '')))
         .join(' ');
+  }
+
+  /// Seleccionar documento usando file_picker (solo PDF)
+  Future<void> _pickDocument() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = result.files.single;
+
+        if (file.size > 10 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('El archivo no puede superar los 10MB'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final path = file.path!;
+        if (!path.toLowerCase().endsWith('.pdf')) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Solo se permiten archivos PDF'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _pendingDocuments.add(_SelectedDoc(
+            path: path,
+            fileName: file.name,
+            certificationType: null,
+          ));
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Documento agregado: ${file.name}')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar documento: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _normalizeName(TextEditingController controller) {
@@ -1030,7 +1136,7 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Documento de Licencia Comercial',
+          'Documentos de la Hacienda (hasta 5, solo PDF)',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -1048,82 +1154,165 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_businessLicenseUrl != null) ...[
-                Row(
-                  children: [
-                    Icon(Icons.check_circle,
-                        color: theme.colorScheme.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Documento cargado',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
+              // Documentos existentes
+              if (_existingDocuments.isNotEmpty) ...[
+                ..._existingDocuments.map((doc) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        border: Border.all(color: theme.colorScheme.outline),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _businessLicenseUrl = null;
-                        });
-                      },
-                      icon: Icon(Icons.delete_outline,
-                          color: theme.colorScheme.error),
-                      tooltip: 'Eliminar documento',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _businessLicenseUrl!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ] else ...[
-                Row(
-                  children: [
-                    Icon(Icons.upload_file,
-                        color: theme.colorScheme.onSurfaceVariant, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'No hay documento cargado',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.picture_as_pdf,
+                              color: theme.colorScheme.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  (doc['original_filename'] ?? 'Documento PDF')
+                                      .toString(),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (doc['certification_type'] != null)
+                                  Text(
+                                    'Certificación: ${doc['certification_type']}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              try {
+                                await RanchService.deleteRanchDocument(
+                                  ranchId: widget.ranch.id,
+                                  documentId: (doc['id'] as int),
+                                );
+                                setState(() {
+                                  _existingDocuments.remove(doc);
+                                });
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Documento eliminado'),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error al eliminar: $e'),
+                                      backgroundColor: theme.colorScheme.error,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            icon: Icon(Icons.delete_outline,
+                                color: theme.colorScheme.error),
+                            tooltip: 'Eliminar',
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
+                    )),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    // TODO: Implementar file picker para subir documento
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Función de carga de documentos próximamente disponible'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.upload),
-                  label: const Text('Cargar Documento'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 40),
-                    side: BorderSide(color: theme.colorScheme.primary),
-                  ),
-                ),
               ],
+
+              // Documentos pendientes por subir
+              if (_pendingDocuments.isNotEmpty) ...[
+                ..._pendingDocuments.map((doc) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        border: Border.all(color: theme.colorScheme.outline),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.picture_as_pdf,
+                                  color: theme.colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  doc.fileName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _pendingDocuments.remove(doc);
+                                  });
+                                },
+                                icon: Icon(Icons.delete_outline,
+                                    color: theme.colorScheme.error),
+                                tooltip: 'Eliminar',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: doc.certificationType,
+                            decoration: InputDecoration(
+                              labelText: 'Tipo de certificación (opcional)',
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: theme.colorScheme.surface,
+                            ),
+                            items: _availableCertifications
+                                .map((c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c),
+                                    ))
+                                .toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                doc.certificationType = val;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    )),
+                const SizedBox(height: 12),
+              ],
+
+              // Botón agregar documento
+              OutlinedButton.icon(
+                onPressed:
+                    (_existingDocuments.length + _pendingDocuments.length) >= 5
+                        ? null
+                        : () => _pickDocument(),
+                icon: const Icon(Icons.upload),
+                label: Text(
+                    (_existingDocuments.length + _pendingDocuments.length) == 0
+                        ? 'Agregar Documento (PDF)'
+                        : 'Agregar otro Documento (PDF)'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 40),
+                  side: BorderSide(color: theme.colorScheme.primary),
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
-                'RIF, licencia comercial o certificados sanitarios (PDF o imagen)',
+                'Hasta 5 PDFs (RIF/licencia/certificaciones).',
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -1824,6 +2013,14 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
       ),
     );
   }
+}
+
+class _SelectedDoc {
+  _SelectedDoc(
+      {required this.path, required this.fileName, this.certificationType});
+  final String path;
+  final String fileName;
+  String? certificationType;
 }
 
 // Formatter para RIF venezolano (J-12345678-9)
