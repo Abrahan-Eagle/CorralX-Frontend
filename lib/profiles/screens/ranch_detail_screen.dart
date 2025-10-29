@@ -3,12 +3,12 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/ranch.dart';
 import 'edit_ranch_screen.dart';
 import '../../products/models/product.dart' hide Ranch;
 import '../../products/screens/product_detail_screen.dart';
 import '../../config/app_config.dart';
+import '../../shared/screens/pdf_viewer_screen.dart';
 
 class RanchDetailScreen extends StatefulWidget {
   final Ranch ranch;
@@ -1232,7 +1232,11 @@ class _RanchDetailScreenState extends State<RanchDetailScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => _openDocument(context, documentUrl),
+                        onPressed: () => _openDocument(
+                          context,
+                          documentUrl,
+                          title: certificationType ?? originalFilename,
+                        ),
                         icon: Icon(
                           Icons.open_in_new,
                           color: theme.colorScheme.primary,
@@ -1261,7 +1265,8 @@ class _RanchDetailScreenState extends State<RanchDetailScreen> {
     }
   }
 
-  Future<void> _openDocument(BuildContext context, String url) async {
+  Future<void> _openDocument(BuildContext context, String url,
+      {String? title}) async {
     if (url.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1274,32 +1279,17 @@ class _RanchDetailScreenState extends State<RanchDetailScreen> {
       return;
     }
 
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No se pudo abrir el documento'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al abrir documento: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    if (!context.mounted) return;
+
+    // Navegar a la pantalla de visor de PDF embebido
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfViewerScreen(
+          pdfUrl: url,
+          title: title,
+        ),
+      ),
+    );
   }
 }

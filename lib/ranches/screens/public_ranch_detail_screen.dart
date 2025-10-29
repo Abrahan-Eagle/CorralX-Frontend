@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../profiles/models/ranch.dart';
 import '../providers/ranch_provider.dart';
 import '../../chat/providers/chat_provider.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../profiles/providers/profile_provider.dart';
+import '../../shared/screens/pdf_viewer_screen.dart';
 
 class PublicRanchDetailScreen extends StatelessWidget {
   final Ranch ranch;
@@ -1065,7 +1065,11 @@ class PublicRanchDetailScreen extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => _openDocument(context, documentUrl),
+                      onPressed: () => _openDocument(
+                        context,
+                        documentUrl,
+                        title: certificationType ?? originalFilename,
+                      ),
                       icon: Icon(
                         Icons.open_in_new,
                         color: theme.colorScheme.primary,
@@ -1093,7 +1097,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _openDocument(BuildContext context, String url) async {
+  Future<void> _openDocument(BuildContext context, String url,
+      {String? title}) async {
     if (url.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1106,32 +1111,17 @@ class PublicRanchDetailScreen extends StatelessWidget {
       return;
     }
 
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No se pudo abrir el documento'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al abrir documento: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    if (!context.mounted) return;
+
+    // Navegar a la pantalla de visor de PDF embebido
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfViewerScreen(
+          pdfUrl: url,
+          title: title,
+        ),
+      ),
+    );
   }
 }
