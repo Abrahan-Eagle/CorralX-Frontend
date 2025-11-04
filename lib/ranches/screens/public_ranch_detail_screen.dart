@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../profiles/models/ranch.dart';
 import '../providers/ranch_provider.dart';
 import '../../chat/providers/chat_provider.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../profiles/providers/profile_provider.dart';
 import '../../shared/screens/pdf_viewer_screen.dart';
+import '../../products/models/product.dart' hide Ranch;
+import '../../products/screens/product_detail_screen.dart';
+import '../../products/widgets/product_card.dart';
+import '../../products/providers/product_provider.dart';
+import '../../config/app_config.dart';
 
-class PublicRanchDetailScreen extends StatelessWidget {
+class PublicRanchDetailScreen extends StatefulWidget {
   final Ranch ranch;
 
   const PublicRanchDetailScreen({
@@ -15,8 +23,79 @@ class PublicRanchDetailScreen extends StatelessWidget {
     required this.ranch,
   });
 
+  @override
+  State<PublicRanchDetailScreen> createState() =>
+      _PublicRanchDetailScreenState();
+}
+
+class _PublicRanchDetailScreenState extends State<PublicRanchDetailScreen> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  List<Product> _ranchProducts = [];
+  bool _isLoadingProducts = false;
+  bool _hasErrorProducts = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRanchProducts();
+  }
+
+  Future<void> _loadRanchProducts() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingProducts = true;
+      _hasErrorProducts = false;
+    });
+
+    try {
+      final token = await _storage.read(key: 'token');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final uri = Uri.parse(
+          '${AppConfig.apiUrl}/api/ranches/${widget.ranch.id}/products');
+
+      final response = await http.get(uri, headers: headers);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          if (mounted) {
+            setState(() {
+              _ranchProducts = (data['data'] as List)
+                  .map((json) => Product.fromJson(json))
+                  .toList();
+              _isLoadingProducts = false;
+            });
+          }
+          return;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _hasErrorProducts = true;
+          _isLoadingProducts = false;
+        });
+      }
+    } catch (e) {
+      print('Error cargando productos del ranch: $e');
+      if (mounted) {
+        setState(() {
+          _hasErrorProducts = true;
+          _isLoadingProducts = false;
+        });
+      }
+    }
+  }
+
   String _getLocationText() {
-    final address = ranch.address;
+    final address = widget.ranch.address;
     if (address == null) return 'Ubicación no especificada';
 
     // Intentar obtener de los campos directos primero
@@ -38,7 +117,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print(
-        '🟢 PublicRanchDetailScreen: Construyendo pantalla para ranch: ${ranch.name} (ID: ${ranch.id})');
+        '🟢 PublicRanchDetailScreen: Construyendo pantalla para ranch: ${widget.ranch.name} (ID: ${widget.ranch.id})');
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
@@ -64,7 +143,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
         actions: [
           Consumer<RanchProvider>(
             builder: (context, ranchProvider, child) {
-              final isFavorite = ranchProvider.isFavorite(ranch.id);
+              final isFavorite = ranchProvider.isFavorite(widget.ranch.id);
               return IconButton(
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -73,7 +152,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                       : theme.colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () {
-                  ranchProvider.toggleFavorite(ranch);
+                  ranchProvider.toggleFavorite(widget.ranch);
                 },
               );
             },
@@ -98,21 +177,21 @@ class PublicRanchDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Información del rancho
-                  if (ranch.legalName != null &&
-                      ranch.legalName!.isNotEmpty) ...[
+                  if (widget.ranch.legalName != null &&
+                      widget.ranch.legalName!.isNotEmpty) ...[
                     _buildDetailCard(
                       context,
                       theme,
                       isTablet,
                       icon: Icons.business,
                       label: 'Razón Social',
-                      value: ranch.legalName!,
+                      value: widget.ranch.legalName!,
                     ),
                     const SizedBox(height: 12),
                   ],
 
                   // Ubicación completa
-                  if (ranch.address != null) ...[
+                  if (widget.ranch.address != null) ...[
                     _buildLocationCard(context, theme, isTablet),
                     const SizedBox(height: 16),
                   ],
@@ -122,46 +201,54 @@ class PublicRanchDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Descripción
-                  if (ranch.businessDescription != null &&
-                      ranch.businessDescription!.isNotEmpty) ...[
+                  if (widget.ranch.businessDescription != null &&
+                      widget.ranch.businessDescription!.isNotEmpty) ...[
                     _buildDescriptionCard(context, theme, isTablet),
                     const SizedBox(height: 16),
                   ],
 
                   // Certificaciones
-                  if (ranch.certifications != null &&
-                      ranch.certifications!.isNotEmpty) ...[
+                  if (widget.ranch.certifications != null &&
+                      widget.ranch.certifications!.isNotEmpty) ...[
                     _buildCertificationsCard(context, theme, isTablet),
                     const SizedBox(height: 16),
                   ],
 
                   // Documentos PDF
-                  if (ranch.documents != null &&
-                      ranch.documents!.isNotEmpty) ...[
+                  if (widget.ranch.documents != null &&
+                      widget.ranch.documents!.isNotEmpty) ...[
                     _buildDocumentsCard(context, theme, isTablet),
                     const SizedBox(height: 16),
                   ],
 
                   // Horarios de contacto
-                  if (ranch.contactHours != null &&
-                      ranch.contactHours!.isNotEmpty) ...[
+                  if (widget.ranch.contactHours != null &&
+                      widget.ranch.contactHours!.isNotEmpty) ...[
                     _buildDetailCard(
                       context,
                       theme,
                       isTablet,
                       icon: Icons.access_time,
                       label: 'Horarios de Contacto',
-                      value: ranch.contactHours!,
+                      value: widget.ranch.contactHours!,
                     ),
                     const SizedBox(height: 16),
                   ],
 
                   // Políticas
-                  if ((ranch.deliveryPolicy != null &&
-                          ranch.deliveryPolicy!.isNotEmpty) ||
-                      (ranch.returnPolicy != null &&
-                          ranch.returnPolicy!.isNotEmpty)) ...[
+                  if ((widget.ranch.deliveryPolicy != null &&
+                          widget.ranch.deliveryPolicy!.isNotEmpty) ||
+                      (widget.ranch.returnPolicy != null &&
+                          widget.ranch.returnPolicy!.isNotEmpty)) ...[
                     _buildPoliciesCard(context, theme, isTablet),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Productos del ranch
+                  if (_ranchProducts.isNotEmpty ||
+                      _isLoadingProducts ||
+                      _hasErrorProducts) ...[
+                    _buildProductsSection(context, theme, isTablet),
                     const SizedBox(height: 16),
                   ],
 
@@ -182,7 +269,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Obtener foto del perfil del dueño
-    final profilePhoto = ranch.profile?['photo_users'];
+    final profilePhoto = widget.ranch.profile?['photo_users'];
     final hasPhoto = profilePhoto != null && profilePhoto.toString().isNotEmpty;
 
     return Container(
@@ -246,14 +333,14 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    ranch.name,
+                    widget.ranch.name,
                     style: TextStyle(
                       fontSize: isTablet ? 24 : 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  if (ranch.address != null) ...[
+                  if (widget.ranch.address != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -293,7 +380,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
       children: [
         // Nombre de la hacienda
         Text(
-          ranch.name,
+          widget.ranch.name,
           style: TextStyle(
             fontSize: isTablet ? 24 : 20,
             fontWeight: FontWeight.bold,
@@ -307,7 +394,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            if (ranch.isPrimary)
+            if (widget.ranch.isPrimary)
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -335,7 +422,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            if (ranch.acceptsVisits)
+            if (widget.ranch.acceptsVisits)
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -371,7 +458,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
 
   Widget _buildLocationCard(
       BuildContext context, ThemeData theme, bool isTablet) {
-    final address = ranch.address!;
+    final address = widget.ranch.address!;
 
     return Card(
       elevation: 2,
@@ -525,7 +612,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 theme,
                 isTablet,
                 Icons.star,
-                ranch.avgRating.toStringAsFixed(1),
+                widget.ranch.avgRating.toStringAsFixed(1),
                 'Rating',
               ),
             ),
@@ -539,7 +626,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 theme,
                 isTablet,
                 Icons.shopping_bag,
-                ranch.totalSales.toString(),
+                widget.ranch.totalSales.toString(),
                 'Ventas',
               ),
             ),
@@ -553,7 +640,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 theme,
                 isTablet,
                 Icons.inventory_2,
-                (ranch.productsCount ?? 0).toString(),
+                (widget.ranch.productsCount ?? 0).toString(),
                 'Productos',
               ),
             ),
@@ -629,7 +716,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              ranch.businessDescription!,
+              widget.ranch.businessDescription!,
               style: TextStyle(
                 fontSize: isTablet ? 16 : 14,
                 color: theme.colorScheme.onSurfaceVariant,
@@ -676,7 +763,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ranch.certifications!.map((cert) {
+              children: widget.ranch.certifications!.map((cert) {
                 return Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -745,8 +832,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
-            if (ranch.deliveryPolicy != null &&
-                ranch.deliveryPolicy!.isNotEmpty) ...[
+            if (widget.ranch.deliveryPolicy != null &&
+                widget.ranch.deliveryPolicy!.isNotEmpty) ...[
               const SizedBox(height: 16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -771,7 +858,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          ranch.deliveryPolicy!,
+                          widget.ranch.deliveryPolicy!,
                           style: TextStyle(
                             fontSize: isTablet ? 14 : 12,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -783,8 +870,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
                 ],
               ),
             ],
-            if (ranch.returnPolicy != null &&
-                ranch.returnPolicy!.isNotEmpty) ...[
+            if (widget.ranch.returnPolicy != null &&
+                widget.ranch.returnPolicy!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -809,7 +896,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          ranch.returnPolicy!,
+                          widget.ranch.returnPolicy!,
                           style: TextStyle(
                             fontSize: isTablet ? 14 : 12,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -854,12 +941,129 @@ class PublicRanchDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildProductsSection(
+      BuildContext context, ThemeData theme, bool isTablet) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.shopping_cart,
+                    color: theme.colorScheme.primary,
+                    size: isTablet ? 24 : 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Productos',
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_ranchProducts.length}',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingProducts)
+              const Center(child: CircularProgressIndicator())
+            else if (_hasErrorProducts)
+              Center(
+                child: Text(
+                  'Error al cargar los productos del rancho.',
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              )
+            else if (_ranchProducts.isEmpty)
+              Center(
+                child: Text(
+                  'No hay productos disponibles para este rancho.',
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              )
+            else
+              Consumer<ProductProvider>(
+                builder: (context, productProvider, child) {
+                                     return GridView.builder(
+                     shrinkWrap: true,
+                     physics: const NeverScrollableScrollPhysics(),
+                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                       crossAxisCount: isTablet ? 2 : 1,
+                       mainAxisSpacing: 12,
+                       crossAxisSpacing: 12,
+                       childAspectRatio: isTablet ? 0.6 : 0.7,
+                     ),
+                    itemCount: _ranchProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = _ranchProducts[index];
+                      final isFavorite = productProvider.favoriteProducts
+                          .any((fav) => fav.id == product.id);
+
+                      return ProductCard(
+                        product: product,
+                        isFavorite: isFavorite,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailScreen(
+                                productId: product.id,
+                                product: product,
+                              ),
+                            ),
+                          );
+                        },
+                        onFavorite: () async {
+                          await productProvider.toggleFavorite(product.id);
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showContactDialog(BuildContext context) async {
     final chatProvider = context.read<ChatProvider>();
     final profileProvider = context.read<ProfileProvider>();
 
     // Obtener ID del perfil del dueño del rancho
-    final sellerId = ranch.profileId;
+    final sellerId = widget.ranch.profileId;
     final currentProfileId = profileProvider.myProfile?.id ?? 0;
 
     if (sellerId == currentProfileId) {
@@ -885,7 +1089,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
       // Abrir o crear conversación (contexto: hacienda)
       final conversation = await chatProvider.openConversation(
         sellerId,
-        ranchId: ranch.id, // Contexto de hacienda
+        ranchId: widget.ranch.id, // Contexto de hacienda
       );
 
       if (!context.mounted) return;
@@ -895,7 +1099,8 @@ class PublicRanchDetailScreen extends StatelessWidget {
 
       if (conversation != null) {
         // Enviar mensaje automático
-        final initialMessage = 'Hola, me interesa tu hacienda "${ranch.name}"';
+        final initialMessage =
+            'Hola, me interesa tu hacienda "${widget.ranch.name}"';
         await chatProvider.sendMessage(conversation.id, initialMessage);
 
         if (!context.mounted) return;
@@ -933,7 +1138,7 @@ class PublicRanchDetailScreen extends StatelessWidget {
 
   Widget _buildDocumentsCard(
       BuildContext context, ThemeData theme, bool isTablet) {
-    final documents = ranch.documents ?? [];
+    final documents = widget.ranch.documents ?? [];
 
     if (documents.isEmpty) return const SizedBox.shrink();
 
