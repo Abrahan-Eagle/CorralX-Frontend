@@ -513,7 +513,6 @@ class MainRouterState extends State<MainRouter> {
   }
 
   void _setupDeepLinks() {
-    
     // Obtener link inicial primero (solo se ejecuta una vez al abrir la app)
     DeepLinkService().getInitialLink().then((uri) {
       if (uri != null && !_hasHandledInitialLink) {
@@ -550,7 +549,7 @@ class MainRouterState extends State<MainRouter> {
     final productId = DeepLinkService.extractProductId(uri);
     if (productId != null) {
       print('🔗 Navegando a producto: $productId (initial: $isInitial)');
-      
+
       // Si la app se abre desde cerrada (initial), limpiar el stack de navegación
       // para que el botón atrás regrese al home en lugar de intentar volver al navegador
       if (isInitial) {
@@ -819,13 +818,22 @@ class MainRouterState extends State<MainRouter> {
           IconButton(
             icon: const Icon(Icons.favorite),
             color: Colors.red, // Color rojo para representar favoritos
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              // Esperar el resultado de FavoritesScreen
+              // Si retorna 0, significa que el usuario quiere ir al marketplace
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const FavoritesScreen(),
                 ),
               );
+              // Si el resultado es 0, cambiar al marketplace (índice 0)
+              if (result == 0 && mounted) {
+                setState(() {
+                  _bottomNavIndex = 0;
+                  _saveLastPosition();
+                });
+              }
             },
             tooltip: 'Favoritos',
           ),

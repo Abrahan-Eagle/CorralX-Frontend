@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/products/models/product.dart';
@@ -136,10 +137,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
-                      onPressed: () {
-                        // No hacer nada, el usuario puede usar el bottom nav directamente
-                        // O podríamos navegar a la pantalla de marketplace
+                      onPressed: () async {
                         print('📱 Usuario presionó Explorar Marketplace');
+                        // Guardar el índice del marketplace (0) en SharedPreferences
+                        // para que MainRouter se posicione en el marketplace al volver
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setInt('bottomNavIndex', 0);
+                        // Volver al MainRouter (que cargará el índice guardado)
+                        if (mounted) {
+                          Navigator.of(context)
+                              .pop(0); // Pasar 0 como resultado
+                        }
                       },
                       icon: const Icon(Icons.explore),
                       label: const Text('Ir al Marketplace'),
