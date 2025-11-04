@@ -39,6 +39,14 @@ class _PublicRanchDetailScreenState extends State<PublicRanchDetailScreen> {
   void initState() {
     super.initState();
     _loadRanchProducts();
+    // Cargar favoritos si no están cargados
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productProvider = context.read<ProductProvider>();
+      if (productProvider.favoriteProducts.isEmpty &&
+          !productProvider.isLoadingFavorites) {
+        productProvider.fetchFavorites(refresh: true);
+      }
+    });
   }
 
   Future<void> _loadRanchProducts() async {
@@ -1015,40 +1023,25 @@ class _PublicRanchDetailScreenState extends State<PublicRanchDetailScreen> {
             else
               Consumer<ProductProvider>(
                 builder: (context, productProvider, child) {
-                                     return GridView.builder(
-                     shrinkWrap: true,
-                     physics: const NeverScrollableScrollPhysics(),
-                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                       crossAxisCount: isTablet ? 2 : 1,
-                       mainAxisSpacing: 12,
-                       crossAxisSpacing: 12,
-                       childAspectRatio: isTablet ? 0.6 : 0.7,
-                     ),
-                    itemCount: _ranchProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _ranchProducts[index];
-                      final isFavorite = productProvider.favoriteProducts
-                          .any((fav) => fav.id == product.id);
+                  return GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.73,
+                    children: _ranchProducts.map((product) {
+                      // Verificar si el producto está en favoritos (usar Set para mejor rendimiento)
+                      final isFavorite =
+                          productProvider.favorites.contains(product.id);
 
-                      return ProductCard(
+                      return _buildCompactProductCard(
+                        context: context,
                         product: product,
                         isFavorite: isFavorite,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(
-                                productId: product.id,
-                                product: product,
-                              ),
-                            ),
-                          );
-                        },
-                        onFavorite: () async {
-                          await productProvider.toggleFavorite(product.id);
-                        },
+                        productProvider: productProvider,
                       );
-                    },
+                    }).toList(),
                   );
                 },
               ),
@@ -1325,6 +1318,118 @@ class _PublicRanchDetailScreenState extends State<PublicRanchDetailScreen> {
         builder: (context) => PdfViewerScreen(
           pdfUrl: url,
           title: title,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactProductCard({
+    required BuildContext context,
+    required Product product,
+    required bool isFavorite,
+    required ProductProvider productProvider,
+  }) {
+    final theme = Theme.of(context);
+    final imageUrl =
+        product.images.isNotEmpty ? product.images.first.fileUrl : '';
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(
+              productId: product.id,
+              product: product,
+            ),
+          ),
+        );
+      },
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen del producto
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 120,
+                  color: Colors.grey[300],
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(Icons.image_not_supported,
+                                  color: Colors.grey),
+                            );
+                          },
+                        )
+                      : const Center(
+                          child: Icon(Icons.image, color: Colors.grey),
+                        ),
+                ),
+                // Botón de favorito
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () async {
+                      await productProvider.toggleFavorite(product.id);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : Colors.grey,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Título y precio
+            Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Título
+                  Text(
+                    product.title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  // Precio
+                  Text(
+                    product.formattedPrice,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
