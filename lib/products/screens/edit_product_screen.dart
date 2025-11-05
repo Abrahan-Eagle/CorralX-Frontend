@@ -87,6 +87,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
     final provider = context.read<ProductProvider>();
 
+    // ✅ Calcular automáticamente peso mínimo y máximo con 15% de variación
+    final weightAvg = _weightAvgController.text.trim().isNotEmpty
+        ? double.tryParse(_weightAvgController.text.trim())
+        : null;
+    final weightMin =
+        weightAvg != null ? (weightAvg * 0.85) : null; // promedio - 15%
+    final weightMax =
+        weightAvg != null ? (weightAvg * 1.15) : null; // promedio + 15%
+
     final success = await provider.updateProduct(
       productId: widget.product.id,
       title: _titleController.text,
@@ -97,7 +106,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
       quantity: int.tryParse(_quantityController.text),
       price: double.tryParse(_priceController.text),
       currency: _selectedCurrency,
-      weightAvg: double.tryParse(_weightAvgController.text),
+      weightAvg: weightAvg,
+      weightMin: weightMin,
+      weightMax: weightMax,
       sex: _selectedSex,
       purpose: _selectedPurpose,
       isVaccinated: _isVaccinated,
@@ -557,7 +568,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Peso promedio
+            // Peso promedio: calcula automáticamente mínimo (promedio - 15%) y máximo (promedio + 15%)
             TextFormField(
               controller: _weightAvgController,
               keyboardType: TextInputType.number,
@@ -570,6 +581,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
               },
               decoration: InputDecoration(
                 labelText: 'Peso Promedio (kg)',
+                hintText: 'El mínimo y máximo se calcularán automáticamente',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -591,7 +603,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 fillColor: theme.colorScheme.surface,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                helperText: 'Máximo 10,000 kg',
+                helperText:
+                    'Máximo 10,000 kg - El mínimo y máximo se calcularán automáticamente (promedio ± 15%)',
               ),
               validator: _validateWeight,
               autovalidateMode: AutovalidateMode.onUserInteraction,

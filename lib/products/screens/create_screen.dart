@@ -24,8 +24,6 @@ class _CreateScreenState extends State<CreateScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _weightAvgController;
-  late TextEditingController _weightMinController; // ✅ NUEVO
-  late TextEditingController _weightMaxController; // ✅ NUEVO
   late TextEditingController _deliveryCostController;
   late TextEditingController _deliveryRadiusController;
 
@@ -99,8 +97,6 @@ class _CreateScreenState extends State<CreateScreen> {
     _descriptionController = TextEditingController();
     _priceController = TextEditingController();
     _weightAvgController = TextEditingController();
-    _weightMinController = TextEditingController(); // ✅ NUEVO
-    _weightMaxController = TextEditingController(); // ✅ NUEVO
     _deliveryCostController = TextEditingController();
     _deliveryRadiusController = TextEditingController();
 
@@ -118,8 +114,6 @@ class _CreateScreenState extends State<CreateScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _weightAvgController.dispose();
-    _weightMinController.dispose(); // ✅ NUEVO
-    _weightMaxController.dispose(); // ✅ NUEVO
     _deliveryCostController.dispose();
     _deliveryRadiusController.dispose();
     super.dispose();
@@ -275,6 +269,14 @@ class _CreateScreenState extends State<CreateScreen> {
       print('  📦 Delivery Method: $_selectedDeliveryMethod');
       print('  🏷️ Featured: $_isFeatured');
       print('  📸 Images: ${_selectedImages.length}');
+      if (_weightAvgController.text.trim().isNotEmpty) {
+        final weightAvg = double.parse(_weightAvgController.text.trim());
+        final weightMin = weightAvg * 0.85;
+        final weightMax = weightAvg * 1.15;
+        print('  ⚖️ Weight Avg: $weightAvg kg');
+        print('  ⚖️ Weight Min (auto-calculated): $weightMin kg (-15%)');
+        print('  ⚖️ Weight Max (auto-calculated): $weightMax kg (+15%)');
+      }
 
       // Obtener el stateId del ranch seleccionado
       int? stateId;
@@ -314,12 +316,15 @@ class _CreateScreenState extends State<CreateScreen> {
         weightAvg: _weightAvgController.text.trim().isNotEmpty
             ? double.parse(_weightAvgController.text.trim())
             : null,
-        weightMin: _weightMinController.text.trim().isNotEmpty
-            ? double.parse(_weightMinController.text.trim())
-            : null, // ✅ NUEVO
-        weightMax: _weightMaxController.text.trim().isNotEmpty
-            ? double.parse(_weightMaxController.text.trim())
-            : null, // ✅ NUEVO
+        // ✅ Calcular automáticamente peso mínimo y máximo con 15% de variación
+        weightMin: _weightAvgController.text.trim().isNotEmpty
+            ? (double.parse(_weightAvgController.text.trim()) *
+                0.85) // promedio - 15%
+            : null,
+        weightMax: _weightAvgController.text.trim().isNotEmpty
+            ? (double.parse(_weightAvgController.text.trim()) *
+                1.15) // promedio + 15%
+            : null,
         sex: _selectedSex, // ✅ NUEVO: male, female, mixed
         purpose: _selectedPurpose, // ✅ NUEVO: breeding, meat, dairy, mixed
         deliveryMethod: _selectedDeliveryMethod,
@@ -376,8 +381,6 @@ class _CreateScreenState extends State<CreateScreen> {
           _quantityController.text = '';
           _priceController.text = '';
           _weightAvgController.text = '';
-          _weightMinController.text = '';
-          _weightMaxController.text = '';
           _deliveryCostController.text = '';
           _deliveryRadiusController.text = '';
 
@@ -1008,7 +1011,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       ),
                       SizedBox(height: isTablet ? 20 : 16),
 
-                      // ✅ NUEVO: Peso Promedio (campo principal)
+                      // ✅ Peso Promedio: calcula automáticamente mínimo (promedio - 15%) y máximo (promedio + 15%)
                       TextFormField(
                         controller: _weightAvgController,
                         keyboardType:
@@ -1025,75 +1028,14 @@ class _CreateScreenState extends State<CreateScreen> {
                                 BorderRadius.circular(isTablet ? 12 : 8),
                           ),
                           labelText: 'Peso Promedio (kg)',
-                          hintText: 'Opcional - Peso promedio del lote',
+                          hintText:
+                              'Opcional - El mínimo y máximo se calcularán automáticamente',
                           prefixIcon: Icon(Icons.monitor_weight_outlined),
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: isTablet ? 16 : 12,
                             vertical: isTablet ? 12 : 8,
                           ),
                         ),
-                      ),
-                      SizedBox(height: isTablet ? 20 : 16),
-
-                      // ✅ NUEVOS: Rango de Peso (Mínimo y Máximo)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _weightMinController,
-                              keyboardType: TextInputType.numberWithOptions(
-                                  decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'^\d+\.?\d{0,2}')),
-                              ],
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: theme.colorScheme.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isTablet ? 12 : 8),
-                                ),
-                                labelText: 'Peso Mínimo (kg)',
-                                hintText: 'Opcional',
-                                prefixIcon: Icon(Icons.arrow_downward_rounded,
-                                    size: 20),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 16 : 12,
-                                  vertical: isTablet ? 12 : 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: isTablet ? 20 : 16),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _weightMaxController,
-                              keyboardType: TextInputType.numberWithOptions(
-                                  decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'^\d+\.?\d{0,2}')),
-                              ],
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: theme.colorScheme.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isTablet ? 12 : 8),
-                                ),
-                                labelText: 'Peso Máximo (kg)',
-                                hintText: 'Opcional',
-                                prefixIcon:
-                                    Icon(Icons.arrow_upward_rounded, size: 20),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 16 : 12,
-                                  vertical: isTablet ? 12 : 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
