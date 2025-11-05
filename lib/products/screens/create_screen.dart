@@ -131,8 +131,8 @@ class _CreateScreenState extends State<CreateScreen> {
     if (age < 0) {
       return 'La edad no puede ser negativa';
     }
-    if (age > 30) {
-      return 'La edad no puede ser mayor a 30 años';
+    if (age > 360) {
+      return 'La edad no puede ser mayor a 360 meses (30 años)';
     }
     return null;
   }
@@ -263,7 +263,7 @@ class _CreateScreenState extends State<CreateScreen> {
       print('  📄 Description: ${_descriptionController.text.trim()}');
       print('  🏷️ Type: $_selectedType');
       print('  🐄 Breed: $_selectedBreed'); // ✅ Mostrar raza del dropdown
-      print('  📅 Age: ${_ageController.text.trim()}');
+      print('  📅 Age (meses): ${_ageController.text.trim()}');
       print('  🔢 Quantity: ${_quantityController.text.trim()}');
       print('  💰 Price: ${_priceController.text.trim()} $_selectedCurrency');
       print('  📦 Delivery Method: $_selectedDeliveryMethod');
@@ -835,7 +835,8 @@ class _CreateScreenState extends State<CreateScreen> {
                               keyboardType: TextInputType.number,
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(2),
+                                LengthLimitingTextInputFormatter(
+                                    3), // Máximo 360 meses
                               ],
                               onChanged: (_) {
                                 _validateForm();
@@ -867,7 +868,8 @@ class _CreateScreenState extends State<CreateScreen> {
                                   borderSide: BorderSide(
                                       color: theme.colorScheme.error, width: 2),
                                 ),
-                                labelText: 'Edad (años) *',
+                                labelText: 'Edad (meses) *',
+                                helperText: 'Ejemplo: 24 meses = 2 años',
                                 contentPadding: EdgeInsets.symmetric(
                                   horizontal: isTablet ? 16 : 12,
                                   vertical: isTablet ? 12 : 8,
