@@ -515,6 +515,145 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     }
   }
 
+  // Normalizar razón social preservando acrónimos en mayúsculas
+  String _normalizeLegalName(String input) {
+    // Lista de acrónimos comunes en Venezuela (en mayúsculas)
+    final acronyms = {
+      'C.A.',
+      'S.A.',
+      'S.R.L.',
+      'C. POR A.',
+      'S.C.S.',
+      'S.C.A.',
+      'R.L.',
+      'E.I.R.L.',
+      'S.A.S.',
+      'C.A',
+      'S.A',
+      'S.R.L',
+      'R.L',
+      // También variaciones sin puntos
+      'CA',
+      'SA',
+      'SRL',
+      'RL',
+    };
+
+    // Solo eliminar espacios al inicio, mantener espacios al final
+    // Normalizar espacios múltiples (pero no eliminar espacios al final)
+    String normalized = input;
+    if (normalized.isNotEmpty) {
+      // Eliminar espacios al inicio
+      normalized = normalized.replaceFirst(RegExp(r'^\s+'), '');
+      // Normalizar espacios múltiples (pero no eliminar espacios al final)
+      normalized = normalized.replaceAll(RegExp(r'[ \t]+'), ' ');
+    }
+
+    // Primero, detectar y reemplazar patrones especiales como "C. por A." antes de dividir
+    // Patrón: una letra, punto opcional, espacio, "por", espacio, una letra, punto opcional
+    normalized = normalized.replaceAllMapped(
+      RegExp(r'\b([A-Z]\.?)\s+por\s+([A-Z]\.?)\b', caseSensitive: false),
+      (match) => '${match.group(1)!.toUpperCase()} POR ${match.group(2)!.toUpperCase()}',
+    );
+
+    // Dividir el texto en palabras
+    final words = normalized.split(' ');
+    final wordsCount = words.length;
+
+    // Procesar cada palabra
+    final processedWords = words.asMap().entries.map((entry) {
+      final index = entry.key;
+      final word = entry.value;
+      final isLastWord = index == wordsCount - 1;
+
+      if (word.isEmpty) return word;
+
+      // Si la palabra es "POR" (parte de "C. POR A."), mantenerla en mayúsculas
+      if (word.toUpperCase() == 'POR') {
+        return 'POR';
+      }
+
+      // Convertir a mayúsculas para comparar con acrónimos
+      final upperWord = word.toUpperCase();
+      final upperWordNoDot = word.replaceAll('.', '').toUpperCase();
+
+      // Si la palabra es un acrónimo conocido (con formato exacto), mantenerla en mayúsculas
+      if (acronyms.contains(upperWord)) {
+        // Ya tiene el formato correcto (con puntos)
+        return upperWord;
+      }
+
+      // Si la palabra sin puntos es un acrónimo conocido Y está al final, formatear
+      if (acronyms.contains(upperWordNoDot) && isLastWord && word.length <= 4) {
+        // Formatear acrónimo: CA -> C.A., SRL -> S.R.L.
+        if (word.length == 2) {
+          return '${word[0].toUpperCase()}.${word[1].toUpperCase()}.';
+        } else if (word.length == 3) {
+          return '${word[0].toUpperCase()}.${word[1].toUpperCase()}.${word[2].toUpperCase()}.';
+        } else if (word.length == 4) {
+          return '${word[0].toUpperCase()}.${word[1].toUpperCase()}.${word[2].toUpperCase()}.${word[3].toUpperCase()}.';
+        }
+        return upperWord;
+      }
+
+      // Detectar patrones de acrónimos con punto (mantener en mayúsculas)
+      // Ejemplos: C., S., C.A., S.A., S.R.L., etc.
+      if (word.contains('.')) {
+        // Si tiene punto, verificar si es un patrón de acrónimo
+        if (RegExp(r'^[A-Z]{1,3}\.?$', caseSensitive: false).hasMatch(word)) {
+          return word.toUpperCase();
+        }
+        // Si tiene múltiples puntos (C.A., S.R.L.), mantener en mayúsculas
+        if (word.split('.').length > 2) {
+          return word.toUpperCase();
+        }
+      }
+
+      // Para palabras normales, capitalizar normalmente
+      return word[0].toUpperCase() +
+          (word.length > 1 ? word.substring(1).toLowerCase() : '');
+    }).toList();
+
+    return processedWords.join(' ');
+  }
+
+  // Normalizar razón social preservando acrónimos
+  void _normalizeLegalNameField(TextEditingController controller) {
+    final original = controller.text;
+    final selection = controller.selection;
+
+    // Permitir letras, números, espacios y puntos
+    final cleaned = original.replaceAll(
+        RegExp(r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.]'), '');
+
+    // Solo eliminar espacios al inicio, mantener espacios al final si el cursor está allí
+    // Normalizar espacios múltiples (pero no eliminar espacios al final)
+    String normalized = cleaned;
+    if (normalized.isNotEmpty) {
+      // Eliminar espacios al inicio
+      normalized = normalized.replaceFirst(RegExp(r'^\s+'), '');
+      // Normalizar espacios múltiples (pero no eliminar espacios al final)
+      normalized = normalized.replaceAll(RegExp(r'[ \t]+'), ' ');
+    }
+
+    // Aplicar normalización preservando acrónimos
+    final finalText = _normalizeLegalName(normalized);
+
+    if (finalText != original) {
+      // Calcular nueva posición del cursor preservando la posición relativa
+      int newOffset = selection.baseOffset;
+      if (newOffset > finalText.length) {
+        newOffset = finalText.length;
+      }
+      controller.value = TextEditingValue(
+        text: finalText,
+        selection: TextSelection.collapsed(offset: newOffset),
+      );
+    } else {
+      controller.selection = selection;
+    }
+  }
+
   Future<void> saveData() async {
     // Forzar validación del formulario
     if (!_formKey.currentState!.validate()) {
@@ -748,11 +887,11 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                             controller: _razonSocialController,
                             inputFormatters: [
                               FilteringTextInputFormatter.allow(RegExp(
-                                  r"[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ#\-.,&()'\s]")),
+                                  r"[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ#\-.,&()'\s]")), // Ya permite puntos
                               LengthLimitingTextInputFormatter(100),
                             ],
                             onChanged: (_) {
-                              _normalizeText(_razonSocialController);
+                              _normalizeLegalNameField(_razonSocialController);
                               _validateForm();
                             },
                             decoration: InputDecoration(
@@ -767,6 +906,7 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                                   width: 2,
                                 ),
                               ),
+                              helperText: 'Ej: Hacienda La Esperanza C.A.',
                             ),
                             validator: _validateRazonSocial,
                           ),
