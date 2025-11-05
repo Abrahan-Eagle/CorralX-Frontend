@@ -46,22 +46,27 @@ class AuthUtils {
     await _storage.deleteAll();
   }
 
-  // Maneja el cierre de sesión
+  // Maneja el cierre de sesión en el backend
+  // Nota: La limpieza local de datos la realiza UserProvider._clearUserData()
   static Future<void> logout() async {
     try {
       final token = await _storage.read(key: 'token');
       if (token != null) {
         final response = await _apiService.logout(token);
         if (response.statusCode == 200) {
-          await _storage.deleteAll();
-          logger.i('Sesión cerrada correctamente');
+          logger.i('Sesión cerrada correctamente en el backend');
         } else {
-          logger.e('Error: ${response.statusCode}');
-          throw Exception('Error en la API al cerrar sesión');
+          logger.w('Error en la API al cerrar sesión: ${response.statusCode}');
+          // No lanzar excepción, permitir que la limpieza local continúe
+          // La limpieza local se hará en UserProvider._clearUserData()
         }
+      } else {
+        logger.w('No hay token almacenado para cerrar sesión en backend');
       }
     } catch (e) {
-      logger.e('Error al cerrar sesión: $e');
+      logger.w('Error al cerrar sesión en backend (continuando limpieza local): $e');
+      // No re-lanzar la excepción, permitir que la limpieza local continúe
+      // La limpieza local se hará en UserProvider._clearUserData()
     }
   }
 

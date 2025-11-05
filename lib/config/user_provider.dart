@@ -219,11 +219,33 @@ class UserProvider with ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      await AuthUtils.logout();
-      await GoogleSignIn().signOut();
+      // Intentar cerrar sesión en el backend (no crítico si falla)
+      try {
+        await AuthUtils.logout();
+      } catch (e) {
+        logger.w('Error al cerrar sesión en backend (continuando limpieza local): $e');
+      }
+
+      // Cerrar sesión de Google (no crítico si falla)
+      try {
+        await GoogleSignIn().signOut();
+      } catch (e) {
+        logger.w('Error al cerrar sesión de Google (continuando limpieza local): $e');
+      }
+
+      // Siempre limpiar datos locales, incluso si falló el backend
       await _clearUserData();
+      
+      logger.i('Logout completado exitosamente');
     } catch (e) {
-      debugPrint('Error al cerrar sesión: $e');
+      logger.e('Error crítico al cerrar sesión: $e');
+      // Aún así intentar limpiar datos locales
+      try {
+        await _clearUserData();
+      } catch (clearError) {
+        logger.e('Error al limpiar datos locales: $clearError');
+      }
+      rethrow; // Re-lanzar para que el UI pueda manejarlo
     } finally {
       notifyListeners();
     }
@@ -231,6 +253,7 @@ class UserProvider with ChangeNotifier {
 
   // Limpia la información del usuario
   Future<void> _clearUserData() async {
+    // Limpiar estado en memoria
     _isAuthenticated = false;
     _profileCreated = false;
     _adresseCreated = false;
@@ -244,15 +267,34 @@ class UserProvider with ChangeNotifier {
     _userId = 0;
     _userGoogleId = '';
 
-    // Limpia en el almacenamiento seguro
-    await _storage.delete(key: 'profileCreated');
-    await _storage.delete(key: 'adresseCreated');
-    await _storage.delete(key: 'documentCreated');
-    await _storage.delete(key: 'gasCylindersCreated');
-    await _storage.delete(key: 'phoneCreated');
-    await _storage.delete(key: 'emailCreated');
-    await _storage.delete(key: 'token');
-    await _storage.delete(key: 'userId');
+    // Limpiar en el almacenamiento seguro (todos los campos relacionados)
+    try {
+      await _storage.delete(key: 'profileCreated');
+      await _storage.delete(key: 'adresseCreated');
+      await _storage.delete(key: 'documentCreated');
+      await _storage.delete(key: 'gasCylindersCreated');
+      await _storage.delete(key: 'phoneCreated');
+      await _storage.delete(key: 'emailCreated');
+      await _storage.delete(key: 'token');
+      await _storage.delete(key: 'userId');
+      await _storage.delete(key: 'userName');
+      await _storage.delete(key: 'userEmail');
+      await _storage.delete(key: 'userPhotoUrl');
+      await _storage.delete(key: 'userGoogleId');
+      await _storage.delete(key: 'role');
+      await _storage.delete(key: 'expiryDate');
+      await _storage.delete(key: 'google_idToken');
+      logger.i('Datos de usuario limpiados correctamente');
+    } catch (e) {
+      logger.e('Error al limpiar almacenamiento seguro: $e');
+      // Si falla la limpieza individual, intentar limpiar todo
+      try {
+        await _storage.deleteAll();
+        logger.i('Limpieza completa del almacenamiento ejecutada');
+      } catch (deleteAllError) {
+        logger.e('Error crítico al limpiar almacenamiento: $deleteAllError');
+      }
+    }
   }
 
   // Bypass de login para tests de integración
