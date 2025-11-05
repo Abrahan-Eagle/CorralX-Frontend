@@ -257,6 +257,24 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     try {
       final countries = await _apiService.getCountries();
 
+      // Si la lista está vacía, usar fallback
+      if (countries.isEmpty) {
+        debugPrint('⚠️ Respuesta de países vacía, usando datos mock');
+        if (mounted) {
+          setState(() {
+            _countries = [
+              {'id': 1, 'name': 'Venezuela'},
+              {'id': 2, 'name': 'Colombia'},
+              {'id': 3, 'name': 'Brasil'},
+            ];
+            _selectedCountry = 'Venezuela';
+            // Cargar estados de Venezuela automáticamente
+            _onCountryChanged('Venezuela');
+          });
+        }
+        return;
+      }
+
       // Filtrar países duplicados por nombre
       final uniqueCountries = <String, Map<String, dynamic>>{};
       for (final country in countries) {
@@ -295,6 +313,8 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
             {'id': 3, 'name': 'Brasil'},
           ];
           _selectedCountry = 'Venezuela';
+          // Cargar estados de Venezuela automáticamente
+          _onCountryChanged('Venezuela');
         });
       }
     }
@@ -304,6 +324,17 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     if (_selectedCountry == null) return;
 
     try {
+      // Limpiar estados y ciudades cuando se empieza a cargar nuevos datos
+      if (mounted) {
+        setState(() {
+          _states = [];
+          _cities = [];
+          _parroquias = [];
+          _selectedCity = null;
+          _selectedParroquia = null;
+        });
+      }
+
       // Buscar el ID del país seleccionado
       final selectedCountryData = _countries.firstWhere(
         (country) => country['name'] == _selectedCountry,
@@ -341,6 +372,16 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     if (_selectedState == null) return;
 
     try {
+      // Limpiar ciudades y parroquias cuando se empieza a cargar nuevos datos
+      if (mounted) {
+        setState(() {
+          _cities = [];
+          _parroquias = [];
+          _selectedCity = null;
+          _selectedParroquia = null;
+        });
+      }
+
       // Buscar el ID del estado seleccionado
       final selectedStateData = _states.firstWhere(
         (state) => state['name'] == _selectedState,
@@ -357,9 +398,6 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       if (mounted) {
         setState(() {
           _cities = cities;
-          // Limpiar parroquias cuando cambia la ciudad
-          _parroquias = [];
-          _selectedParroquia = null;
         });
       }
     } catch (e) {
@@ -435,12 +473,22 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         _selectedCountry = value;
         _selectedState = null;
         _selectedCity = null;
-        _states.clear();
-        _cities.clear();
+        _selectedParroquia = null;
+        // No limpiar las listas aquí, solo limpiar cuando se carguen nuevos datos
       });
     }
     if (value != null) {
+      // Cargar estados y limpiar listas solo cuando se empiece a cargar
       _loadStates();
+    } else {
+      // Solo limpiar si no hay país seleccionado
+      if (mounted) {
+        setState(() {
+          _states.clear();
+          _cities.clear();
+          _parroquias.clear();
+        });
+      }
     }
   }
 
@@ -449,11 +497,21 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       setState(() {
         _selectedState = value;
         _selectedCity = null;
-        _cities.clear();
+        _selectedParroquia = null;
+        // No limpiar las listas aquí, solo limpiar cuando se carguen nuevos datos
       });
     }
     if (value != null) {
+      // Cargar ciudades y limpiar listas solo cuando se empiece a cargar
       _loadCities();
+    } else {
+      // Solo limpiar si no hay estado seleccionado
+      if (mounted) {
+        setState(() {
+          _cities.clear();
+          _parroquias.clear();
+        });
+      }
     }
   }
 
