@@ -4,35 +4,102 @@ import '../services/onboarding_api_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// InputFormatter personalizado para RIF venezolano
+// InputFormatter personalizado para RIF venezolano (V- o J-12345678-9)
 class _RIFVenezuelaInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (newText.isEmpty) {
-      return newValue.copyWith(
+    String text = newValue.text.toUpperCase();
+
+    // Si el texto está vacío, permitir que el usuario escriba V o J
+    if (text.isEmpty) {
+      return newValue;
+    }
+
+    // Detectar si el usuario está borrando para cambiar de prefijo
+    // Si el texto anterior tenía un prefijo y el nuevo texto es más corto,
+    // permitir que el usuario borre y cambie de letra
+    bool isDeleting = newValue.text.length < oldValue.text.length;
+
+    // Si el usuario está borrando y quedó solo una letra o el texto es muy corto,
+    // permitir que pueda cambiar de prefijo
+    if (isDeleting && (text.length <= 2 || text == 'V' || text == 'J')) {
+      // Si solo tiene una letra V o J, permitir que se agregue el guión o cambie
+      if (text == 'V') {
+        return TextEditingValue(
+          text: 'V-',
+          selection: TextSelection.collapsed(offset: 2),
+        );
+      } else if (text == 'J') {
+        return TextEditingValue(
+          text: 'J-',
+          selection: TextSelection.collapsed(offset: 2),
+        );
+      }
+      // Si está vacío o tiene solo una letra diferente, permitir continuar
+      if (text.length <= 1) {
+        return newValue;
+      }
+    }
+
+    // Detectar el tipo de RIF (V- o J-)
+    String? prefix;
+    if (text.startsWith('V-')) {
+      prefix = 'V-';
+    } else if (text.startsWith('J-')) {
+      prefix = 'J-';
+    } else if (text.startsWith('V')) {
+      // Si solo tiene V, agregar el guión
+      return TextEditingValue(
+        text: 'V-',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+    } else if (text.startsWith('J')) {
+      // Si solo tiene J, agregar el guión
+      return TextEditingValue(
         text: 'J-',
-        selection: const TextSelection.collapsed(offset: 2),
+        selection: TextSelection.collapsed(offset: 2),
+      );
+    } else {
+      // Si no empieza con V o J, no permitir escribir
+      return oldValue;
+    }
+
+    // Extraer solo los números después del prefijo
+    String numbers = text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Limitar a 9 dígitos máximo
+    if (numbers.length > 9) {
+      numbers = numbers.substring(0, 9);
+    }
+
+    // Si no hay números aún, retornar solo el prefijo
+    if (numbers.isEmpty) {
+      return TextEditingValue(
+        text: prefix,
+        selection: TextSelection.collapsed(offset: prefix.length),
       );
     }
-    if (newText.length > 9) {
-      newText = newText.substring(0, 9);
-    }
 
+    // Formatear según la cantidad de dígitos
     String formattedText;
-    if (newText.length <= 8) {
-      formattedText = 'J-$newText';
+    if (numbers.length <= 8) {
+      // Si tiene 8 o menos dígitos: V-12345678 o J-12345678
+      formattedText = '$prefix$numbers';
     } else {
-      // Para 9 dígitos: J-12345678-9
-      formattedText = 'J-${newText.substring(0, 8)}-${newText.substring(8)}';
+      // Si tiene 9 dígitos: V-12345678-9 o J-12345678-9
+      formattedText =
+          '$prefix${numbers.substring(0, 8)}-${numbers.substring(8)}';
     }
 
-    return newValue.copyWith(
+    // Calcular la posición del cursor
+    int cursorPosition = formattedText.length;
+
+    return TextEditingValue(
       text: formattedText,
-      selection: TextSelection.collapsed(offset: formattedText.length),
+      selection: TextSelection.collapsed(offset: cursorPosition),
     );
   }
 }
@@ -210,8 +277,7 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     super.initState();
     _apiService = OnboardingApiService();
 
-    // Inicializar campo RIF con prefijo J-
-    _rifController.text = 'J-';
+    // Inicializar campo RIF vacío (el usuario puede escribir V- o J-)
 
     // Agregar listeners para validación en tiempo real
     _haciendaNameController.addListener(_validateForm);
@@ -306,9 +372,10 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     // Validar formato del RIF (obligatorio con formato correcto)
     bool rifValid = false;
     if (_rifController.text.trim().isNotEmpty &&
+        _rifController.text.trim() != 'V-' &&
         _rifController.text.trim() != 'J-') {
-      final rifPattern = RegExp(r'^J-\d{8}-\d$');
-      rifValid = rifPattern.hasMatch(_rifController.text.trim());
+      final rifPattern = RegExp(r'^(V|J)-\d{8}-\d$');
+      rifValid = rifPattern.hasMatch(_rifController.text.trim().toUpperCase());
     }
 
     return hasRequiredContent && rifValid;
@@ -330,6 +397,7 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
 
     if (_haciendaNameController.text.trim().isNotEmpty) completedFields++;
     if (_rifController.text.trim().isNotEmpty &&
+        _rifController.text.trim() != 'V-' &&
         _rifController.text.trim() != 'J-') completedFields++;
     if (_descriptionController.text.trim().isNotEmpty) completedFields++;
     // if (_horarioController.text.trim().isNotEmpty) completedFields++;
@@ -373,14 +441,18 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   }
 
   String? _validateRIF(String? value) {
-    if (value == null || value.trim().isEmpty || value.trim() == 'J-') {
+    if (value == null ||
+        value.trim().isEmpty ||
+        value.trim() == 'V-' ||
+        value.trim() == 'J-') {
       return 'El RIF es obligatorio';
     }
 
     final rif = value.trim().toUpperCase();
-    final rifRegex = RegExp(r'^J-\d{8}-\d$');
+    // Validar formato: V-12345678-9 o J-12345678-9
+    final rifRegex = RegExp(r'^(V|J)-\d{8}-\d$');
     if (!rifRegex.hasMatch(rif)) {
-      return 'Formato: J-12345678-9 (9 dígitos)';
+      return 'Formato: V-12345678-9 o J-12345678-9 (9 dígitos)';
     }
 
     final numbers = rif.replaceAll(RegExp(r'[^0-9]'), '');
@@ -528,6 +600,10 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
           ),
         );
       }
+
+      // ✅ Re-lanzar la excepción para que _saveCurrentPageData() pueda detectarla
+      // y evitar la navegación a la siguiente página
+      rethrow;
     } finally {
       setState(() {});
     }
@@ -700,14 +776,15 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
                           // RIF
                           TextFormField(
                             controller: _rifController,
-                            keyboardType: TextInputType.number, // Solo números
+                            keyboardType: TextInputType.text,
                             inputFormatters: [
-                              _RIFVenezuelaInputFormatter(), // Formato J-
+                              _RIFVenezuelaInputFormatter(), // Formato V- o J-
                             ],
                             onChanged: (_) => _validateForm(),
                             decoration: InputDecoration(
                               labelText: 'RIF *',
-                              hintText: 'J-12345678-9',
+                              hintText: 'V-12345678-9 o J-12345678-9',
+                              helperText: 'V- (persona natural) o J- (empresa)',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),

@@ -755,8 +755,13 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
         orElse: () => {'id': 1},
       )['id'];
 
+      // Obtener el profile_id del perfil creado
+      final profileId = profileResponse['profile']['id'];
+      debugPrint('🔐 FRONTEND: Profile ID obtenido: $profileId');
       debugPrint('🏙️ FRONTEND: City ID seleccionado: $cityId');
+      
       final addressResponse = await _apiService.createAddress(
+        profileId: profileId, // ✅ Pasar el profile_id real
         addresses: _addressController.text.trim(),
         cityId: cityId,
         // Usar coordenadas reales obtenidas por GPS o por defecto
@@ -796,6 +801,10 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
           ),
         );
       }
+      
+      // ✅ Re-lanzar la excepción para que _saveCurrentPageData() pueda detectarla
+      // y evitar la navegación a la siguiente página
+      rethrow;
     } finally {
       // No necesitamos setState aquí ya que el widget se va a destruir
     }

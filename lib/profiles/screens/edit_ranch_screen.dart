@@ -605,11 +605,18 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
 
   String? _validateTaxId(String? value) {
     if (value != null && value.trim().isNotEmpty) {
-      if (value.trim().length < 5) {
-        return 'Mínimo 5 caracteres';
+      final rif = value.trim().toUpperCase();
+
+      // Validar formato: V-12345678-9 o J-12345678-9
+      final rifRegex = RegExp(r'^(V|J)-\d{8}-\d$');
+      if (!rifRegex.hasMatch(rif)) {
+        return 'Formato: V-12345678-9 o J-12345678-9';
       }
-      if (value.trim().length > 20) {
-        return 'Máximo 20 caracteres';
+
+      // Validar que tenga exactamente 9 dígitos
+      final numbers = rif.replaceAll(RegExp(r'[^0-9]'), '');
+      if (numbers.length != 9) {
+        return 'El RIF debe tener 9 dígitos';
       }
     }
     return null;
@@ -1755,15 +1762,8 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
               inputFormatters: [
                 _RIFVenezuelaInputFormatter(),
               ],
-              onChanged: (value) {
+              onChanged: (_) {
                 _validateForm();
-                // Asegurar que siempre tenga el prefijo J-
-                if (!value.startsWith('J-')) {
-                  _taxIdController.value = TextEditingValue(
-                    text: 'J-',
-                    selection: TextSelection.collapsed(offset: 2),
-                  );
-                }
               },
               decoration: InputDecoration(
                 labelText: 'RIF/NIT',
@@ -1788,7 +1788,8 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
                 fillColor: theme.colorScheme.surface,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                helperText: 'Identificación fiscal',
+                helperText:
+                    'Formato: V-12345678-9 (persona natural) o J-12345678-9 (empresa)',
               ),
               validator: _validateTaxId,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -2023,37 +2024,94 @@ class _SelectedDoc {
   String? certificationType;
 }
 
-// Formatter para RIF venezolano (J-12345678-9)
+// Formatter para RIF venezolano (V- o J-12345678-9)
 class _RIFVenezuelaInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Permitir solo números
-    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    String text = newValue.text.toUpperCase();
 
-    // Limitar a 9 dígitos máximo (RIF empresarial)
-    if (newText.length > 9) {
-      newText = newText.substring(0, 9);
+    // Si el texto está vacío, permitir que el usuario escriba V o J
+    if (text.isEmpty) {
+      return newValue;
     }
 
-    // Si está vacío, retornar J-
-    if (newText.isEmpty) {
+    // Detectar si el usuario está borrando para cambiar de prefijo
+    // Si el texto anterior tenía un prefijo y el nuevo texto es más corto,
+    // permitir que el usuario borre y cambie de letra
+    bool isDeleting = newValue.text.length < oldValue.text.length;
+
+    // Si el usuario está borrando y quedó solo una letra o el texto es muy corto,
+    // permitir que pueda cambiar de prefijo
+    if (isDeleting && (text.length <= 2 || text == 'V' || text == 'J')) {
+      // Si solo tiene una letra V o J, permitir que se agregue el guión o cambie
+      if (text == 'V') {
+        return TextEditingValue(
+          text: 'V-',
+          selection: TextSelection.collapsed(offset: 2),
+        );
+      } else if (text == 'J') {
+        return TextEditingValue(
+          text: 'J-',
+          selection: TextSelection.collapsed(offset: 2),
+        );
+      }
+      // Si está vacío o tiene solo una letra diferente, permitir continuar
+      if (text.length <= 1) {
+        return newValue;
+      }
+    }
+
+    // Detectar el tipo de RIF (V- o J-)
+    String? prefix;
+    if (text.startsWith('V-')) {
+      prefix = 'V-';
+    } else if (text.startsWith('J-')) {
+      prefix = 'J-';
+    } else if (text.startsWith('V')) {
+      // Si solo tiene V, agregar el guión
+      return TextEditingValue(
+        text: 'V-',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+    } else if (text.startsWith('J')) {
+      // Si solo tiene J, agregar el guión
       return TextEditingValue(
         text: 'J-',
         selection: TextSelection.collapsed(offset: 2),
       );
+    } else {
+      // Si no empieza con V o J, no permitir escribir
+      return oldValue;
     }
 
-    // Formatear como J-12345678-9
+    // Extraer solo los números después del prefijo
+    String numbers = text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Limitar a 9 dígitos máximo
+    if (numbers.length > 9) {
+      numbers = numbers.substring(0, 9);
+    }
+
+    // Si no hay números aún, retornar solo el prefijo
+    if (numbers.isEmpty) {
+      return TextEditingValue(
+        text: prefix,
+        selection: TextSelection.collapsed(offset: prefix.length),
+      );
+    }
+
+    // Formatear según la cantidad de dígitos
     String formattedText;
-    if (newText.length <= 8) {
-      // Si tiene 8 o menos dígitos, formato: J-12345678
-      formattedText = 'J-$newText';
+    if (numbers.length <= 8) {
+      // Si tiene 8 o menos dígitos: V-12345678 o J-12345678
+      formattedText = '$prefix$numbers';
     } else {
-      // Si tiene 9 dígitos, formato: J-12345678-9
-      formattedText = 'J-${newText.substring(0, 8)}-${newText.substring(8)}';
+      // Si tiene 9 dígitos: V-12345678-9 o J-12345678-9
+      formattedText =
+          '$prefix${numbers.substring(0, 8)}-${numbers.substring(8)}';
     }
 
     // Calcular la posición del cursor

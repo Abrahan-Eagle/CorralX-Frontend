@@ -250,8 +250,22 @@ class OnboardingApiService {
           return json.decode(responseBody);
         } else {
           final errorData = json.decode(responseBody);
-          throw Exception(errorData['message'] ??
-              'Error al crear perfil: ${response.statusCode}');
+          // Mostrar detalles del error de validación
+          String errorMessage = 'Error al crear perfil: ${response.statusCode}';
+          if (errorData['error'] != null) {
+            if (errorData['error'] is Map) {
+              final errors = errorData['error'] as Map;
+              final errorList = errors.entries
+                  .map((e) => '${e.key}: ${(e.value as List).join(', ')}')
+                  .join('; ');
+              errorMessage = 'Error de validación: $errorList';
+            } else {
+              errorMessage = errorData['error'].toString();
+            }
+          } else if (errorData['message'] != null) {
+            errorMessage = errorData['message'];
+          }
+          throw Exception(errorMessage);
         }
       } else {
         // Crear perfil sin imagen
@@ -271,8 +285,22 @@ class OnboardingApiService {
           return json.decode(response.body);
         } else {
           final errorData = json.decode(response.body);
-          throw Exception(errorData['message'] ??
-              'Error al crear perfil: ${response.statusCode}');
+          // Mostrar detalles del error de validación
+          String errorMessage = 'Error al crear perfil: ${response.statusCode}';
+          if (errorData['error'] != null) {
+            if (errorData['error'] is Map) {
+              final errors = errorData['error'] as Map;
+              final errorList = errors.entries
+                  .map((e) => '${e.key}: ${(e.value as List).join(', ')}')
+                  .join('; ');
+              errorMessage = 'Error de validación: $errorList';
+            } else {
+              errorMessage = errorData['error'].toString();
+            }
+          } else if (errorData['message'] != null) {
+            errorMessage = errorData['message'];
+          }
+          throw Exception(errorMessage);
         }
       }
     } catch (e) {
@@ -332,20 +360,18 @@ class OnboardingApiService {
 
   // Crear dirección
   Future<Map<String, dynamic>> createAddress({
+    required int profileId, // ✅ Ahora requiere profile_id directamente
     required String addresses,
     required int cityId,
     double? latitude,
     double? longitude,
   }) async {
     try {
-      // Obtener el user_id del token almacenado
-      final userId = await _getUserIdFromToken();
-
       final response = await http.post(
         Uri.parse('$baseUrl/addresses'),
         headers: _headers,
         body: json.encode({
-          'profile_id': userId, // Enviar el user_id como profile_id
+          'profile_id': profileId, // ✅ Usar el profile_id real
           'adressses': addresses, // Nota: manteniendo el typo del backend
           'city_id': cityId,
           if (latitude != null) 'latitude': latitude,
@@ -357,8 +383,22 @@ class OnboardingApiService {
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ??
-            'Error al crear dirección: ${response.statusCode}');
+        // Mostrar detalles del error de validación
+        String errorMessage = 'Error al crear dirección: ${response.statusCode}';
+        if (errorData['error'] != null) {
+          if (errorData['error'] is Map) {
+            final errors = errorData['error'] as Map;
+            final errorList = errors.entries
+                .map((e) => '${e.key}: ${(e.value as List).join(', ')}')
+                .join('; ');
+            errorMessage = 'Error de validación: $errorList';
+          } else {
+            errorMessage = errorData['error'].toString();
+          }
+        } else if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
       throw Exception('Error al crear dirección: $e');
