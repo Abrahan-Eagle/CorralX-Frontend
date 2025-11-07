@@ -355,6 +355,7 @@ import 'package:zonix/chat/screens/messages_screen.dart';
 import 'package:zonix/profiles/screens/profile_screen.dart';
 import 'package:zonix/core/deep_link_service.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
+import 'package:zonix/admin/screens/advertisements_list_screen.dart';
 
 /*
  * ZONIX EATS - Aplicación Multi-Rol
@@ -669,6 +670,10 @@ class MainRouterState extends State<MainRouter> {
             label: 'Usuarios',
           ),
           const BottomNavigationBarItem(
+            icon: Icon(Icons.campaign),
+            label: 'Publicidad',
+          ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.security),
             label: 'Seguridad',
           ),
@@ -744,7 +749,55 @@ class MainRouterState extends State<MainRouter> {
         size: 20,
       ),
       onPressed: () => _onLevelSelected(level),
+      tooltip: tooltip,
     );
+  }
+
+  // Mapeo de roles a niveles, iconos y nombres
+  Map<String, Map<String, dynamic>> _getRoleMapping() {
+    return {
+      'admin': {
+        'level': 1,
+        'icon': Icons.admin_panel_settings,
+        'name': 'Admin',
+      },
+      'moderator': {
+        'level': 1,
+        'icon': Icons.shield,
+        'name': 'Moderador',
+      },
+      // Agregar más roles aquí si es necesario
+      // 'seller': {
+      //   'level': 1,
+      //   'icon': Icons.store,
+      //   'name': 'Vendedor',
+      // },
+    };
+  }
+
+  // Determinar si se debe mostrar el botón flotante
+  bool _shouldShowFloatingButton(String role) {
+    return role != 'users';
+  }
+
+  // Obtener los botones del nivel flotante según el rol
+  List<Widget> _getLevelButtons(String role) {
+    final roleMapping = _getRoleMapping();
+    
+    // Si el rol no está mapeado o es "users", retornar lista vacía
+    if (role == 'users' || !roleMapping.containsKey(role)) {
+      return [];
+    }
+
+    final roleInfo = roleMapping[role]!;
+    final roleLevel = roleInfo['level'] as int;
+    final roleIcon = roleInfo['icon'] as IconData;
+    final roleName = roleInfo['name'] as String;
+
+    return [
+      _createLevelButton(0, Icons.shopping_bag, 'Users (Compra y Vende)'),
+      _createLevelButton(roleLevel, roleIcon, roleName),
+    ];
   }
 
   Widget _buildComingSoonScreen(String title) {
@@ -784,6 +837,53 @@ class MainRouterState extends State<MainRouter> {
                 fontSize: 14,
                 color: Colors.grey[500],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotAdminScreen() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCFDF7),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.block,
+              size: 80,
+              color: Colors.red[300],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Acceso Restringido',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1C18),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Solo administradores pueden acceder a esta sección',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _selectedLevel = 0;
+                  _bottomNavIndex = 0;
+                });
+              },
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Volver a Usuario'),
             ),
           ],
         ),
@@ -881,19 +981,35 @@ class MainRouterState extends State<MainRouter> {
                   }
                 }
 
-                // Nivel 1: Admin
+                // Nivel 1: Admin u otros roles con nivel 1
                 if (_selectedLevel == 1) {
-                  switch (_bottomNavIndex) {
-                    case 0:
-                      return _buildComingSoonScreen('Panel Admin');
-                    case 1:
-                      return _buildComingSoonScreen('Gestión de Usuarios');
-                    case 2:
-                      return _buildComingSoonScreen('Seguridad');
-                    case 3:
-                      return _buildComingSoonScreen('Sistema');
-                    default:
-                      return _buildComingSoonScreen('Panel Admin');
+                  // Verificar que el usuario tenga un rol válido para nivel 1
+                  final roleMapping = _getRoleMapping();
+                  if (!roleMapping.containsKey(role)) {
+                    return _buildNotAdminScreen();
+                  }
+                  
+                  // Por ahora, solo el rol "admin" tiene funcionalidades específicas
+                  // Otros roles en nivel 1 mostrarán pantallas "Coming Soon"
+                  if (role == 'admin') {
+                    switch (_bottomNavIndex) {
+                      case 0:
+                        return _buildComingSoonScreen('Panel Admin');
+                      case 1:
+                        return _buildComingSoonScreen('Gestión de Usuarios');
+                      case 2:
+                        // Gestión de Publicidad
+                        return const AdvertisementsListScreen();
+                      case 3:
+                        return _buildComingSoonScreen('Seguridad');
+                      case 4:
+                        return _buildComingSoonScreen('Sistema');
+                      default:
+                        return _buildComingSoonScreen('Panel Admin');
+                    }
+                  } else {
+                    // Otros roles en nivel 1 (ej: moderator)
+                    return _buildComingSoonScreen('Panel de ${roleMapping[role]!['name']}');
                   }
                 }
 
@@ -906,15 +1022,31 @@ class MainRouterState extends State<MainRouter> {
           );
         },
       ),
-      floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: ExpandableFab(
-        distance: 80,
-        type: ExpandableFabType.up,
-        children: [
-          _createLevelButton(0, Icons.shopping_bag, 'Users (Compra y Vende)'),
-          _createLevelButton(1, Icons.admin_panel_settings, 'Admin'),
-        ],
+      floatingActionButton: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          final role = userProvider.userRole;
+          
+          // Si el rol es "users", no mostrar el botón flotante
+          if (!_shouldShowFloatingButton(role)) {
+            return const SizedBox.shrink();
+          }
+
+          // Obtener los botones según el rol
+          final levelButtons = _getLevelButtons(role);
+          
+          // Si no hay botones (rol no reconocido), no mostrar
+          if (levelButtons.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          return ExpandableFab(
+            distance: 80,
+            type: ExpandableFabType.up,
+            children: levelButtons,
+          );
+        },
       ),
+      floatingActionButtonLocation: ExpandableFab.location,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,

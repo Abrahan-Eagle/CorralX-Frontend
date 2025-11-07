@@ -629,19 +629,24 @@ class ProductProvider with ChangeNotifier {
   }
   
   // Obtener producto asociado a un anuncio patrocinado
+  // Prioriza el producto que viene en el anuncio (del backend) sobre la lista local
   Product? getProductForSponsoredAd(Advertisement ad) {
     if (!ad.isSponsoredProduct || ad.productId == null) return null;
+    
+    // PRIMERO: Intentar usar el producto que viene en el anuncio (más actualizado)
+    if (ad.product != null) {
+      try {
+        return Product.fromJson(ad.product!);
+      } catch (e) {
+        debugPrint('⚠️ Error al parsear producto del anuncio: $e');
+      }
+    }
+    
+    // SEGUNDO: Buscar en la lista local de productos
     try {
       return _products.firstWhere((p) => p.id == ad.productId);
     } catch (e) {
-      // Si el producto no está en la lista, intentar obtenerlo desde el campo product del anuncio
-      if (ad.product != null) {
-        try {
-          return Product.fromJson(ad.product!);
-        } catch (e2) {
-          return null;
-        }
-      }
+      debugPrint('⚠️ Producto ${ad.productId} no encontrado en la lista local');
       return null;
     }
   }
