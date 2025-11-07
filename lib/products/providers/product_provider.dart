@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Para debugPrint
+import 'dart:math';
 import '../models/product.dart';
+import '../models/advertisement.dart';
 import '../services/product_service.dart';
+import '../services/advertisement_service.dart';
 import 'package:zonix/favorites/services/favorite_service.dart';
 
 class ProductProvider with ChangeNotifier {
+  // Flag para verificar si el provider está disposed
+  bool _disposed = false;
+  
   // Estado de productos
   List<Product> _products = [];
   Product? _selectedProduct;
   List<Product> _myProducts = [];
 
+  // Estado de anuncios
+  List<Advertisement> _advertisements = [];
+  List<MarketplaceItem> _marketplaceItems = []; // Lista mezclada de productos y anuncios
+
   // Estados de carga
   bool _isLoading = false;
+  bool _isLoadingAdvertisements = false;
   bool _isCreating = false;
   bool _isUpdating = false;
   bool _isDeleting = false;
@@ -35,8 +47,11 @@ class ProductProvider with ChangeNotifier {
   List<Product> get products => _products;
   Product? get selectedProduct => _selectedProduct;
   List<Product> get myProducts => _myProducts;
+  List<Advertisement> get advertisements => _advertisements;
+  List<MarketplaceItem> get marketplaceItems => _marketplaceItems;
 
   bool get isLoading => _isLoading;
+  bool get isLoadingAdvertisements => _isLoadingAdvertisements;
   bool get isCreating => _isCreating;
   bool get isUpdating => _isUpdating;
   bool get isDeleting => _isDeleting;
@@ -60,13 +75,141 @@ class ProductProvider with ChangeNotifier {
     _validationErrors = null;
   }
 
+  // Cargar anuncios activos
+  Future<void> fetchAdvertisements() async {
+    try {
+      debugPrint('📢 ProductProvider.fetchAdvertisements iniciado');
+      _isLoadingAdvertisements = true;
+      _safeNotifyListeners();
+
+      final ads = await AdvertisementService.getActiveAdvertisements();
+      _advertisements = ads;
+
+      debugPrint('📢 Anuncios cargados: ${_advertisements.length}');
+      
+      // Mezclar con productos si ya están cargados
+      _mixProductsWithAdvertisements();
+    } catch (e) {
+      debugPrint('❌ Error en fetchAdvertisements: $e');
+      // No mostrar error crítico, solo log
+    } finally {
+      _isLoadingAdvertisements = false;
+      _safeNotifyListeners();
+    }
+  }
+
+  // Mezclar productos con anuncios usando modelo unificado con prioridad
+  // Modelo similar a Instagram: anuncios con mayor prioridad aparecen primero,
+  // pero manteniendo rotación aleatoria dentro de cada nivel de prioridad
+  void _mixProductsWithAdvertisements() {
+    debugPrint('🔄 Mezclando productos con anuncios (modelo unificado con prioridad)...');
+    
+    final random = Random();
+    
+    // Separar anuncios por prioridad
+    final List<MarketplaceItem> highPriorityAds = []; // priority > 50
+    final List<MarketplaceItem> lowPriorityAds = [];  // priority <= 50
+    final List<MarketplaceItem> normalProducts = [];
+
+    // Agregar todos los productos normales
+    // NOTA: Los productos con anuncio patrocinado aparecerán tanto como producto normal
+    // como en su versión patrocinada (según la especificación - Opción A)
+    for (var product in _products) {
+      normalProducts.add(MarketplaceItem.fromProduct(product));
+    }
+
+    // Separar anuncios por prioridad
+    for (var ad in _advertisements) {
+      final adItem = MarketplaceItem.fromAdvertisement(ad);
+      if (ad.priority > 50) {
+        highPriorityAds.add(adItem);
+      } else {
+        lowPriorityAds.add(adItem);
+      }
+    }
+
+    // Ordenar anuncios de alta prioridad por prioridad (mayor primero)
+    // pero aplicar variación aleatoria para rotación
+    highPriorityAds.sort((a, b) {
+      final adA = a.item as Advertisement;
+      final adB = b.item as Advertisement;
+      // Aplicar variación aleatoria del ±20% para rotación
+      final priorityA = adA.priority * (0.8 + random.nextDouble() * 0.4);
+      final priorityB = adB.priority * (0.8 + random.nextDouble() * 0.4);
+      return priorityB.compareTo(priorityA);
+    });
+
+    // Ordenar anuncios de baja prioridad por prioridad (mayor primero)
+    // pero aplicar variación aleatoria para rotación
+    lowPriorityAds.sort((a, b) {
+      final adA = a.item as Advertisement;
+      final adB = b.item as Advertisement;
+      // Aplicar variación aleatoria del ±20% para rotación
+      final priorityA = adA.priority * (0.8 + random.nextDouble() * 0.4);
+      final priorityB = adB.priority * (0.8 + random.nextDouble() * 0.4);
+      return priorityB.compareTo(priorityA);
+    });
+
+    // Mezclar productos normales aleatoriamente
+    normalProducts.shuffle(random);
+
+    // Mezclar anuncios de baja prioridad con productos normales
+    final List<MarketplaceItem> normalAndLowPriority = [];
+    normalAndLowPriority.addAll(normalProducts);
+    normalAndLowPriority.addAll(lowPriorityAds);
+    normalAndLowPriority.shuffle(random);
+
+    // Construir lista final: primero anuncios de alta prioridad, luego el resto mezclado
+    final List<MarketplaceItem> finalItems = [];
+    finalItems.addAll(highPriorityAds);
+    finalItems.addAll(normalAndLowPriority);
+
+    // Aplicar un shuffle final suave para intercalar mejor
+    // (pero manteniendo que los de alta prioridad estén más arriba)
+    if (highPriorityAds.isNotEmpty && normalAndLowPriority.isNotEmpty) {
+      // Intercalar algunos productos normales entre anuncios de alta prioridad
+      // para evitar que todos los anuncios estén al inicio
+      final List<MarketplaceItem> intercalated = [];
+      int highIndex = 0;
+      int normalIndex = 0;
+      
+      // Intercalar: 2-3 anuncios de alta prioridad, luego 1-2 productos normales
+      while (highIndex < highPriorityAds.length || normalIndex < normalAndLowPriority.length) {
+        // Agregar 2-3 anuncios de alta prioridad
+        for (int i = 0; i < 2 + random.nextInt(2) && highIndex < highPriorityAds.length; i++) {
+          intercalated.add(highPriorityAds[highIndex]);
+          highIndex++;
+        }
+        
+        // Agregar 1-2 productos normales/baja prioridad
+        for (int i = 0; i < 1 + random.nextInt(2) && normalIndex < normalAndLowPriority.length; i++) {
+          intercalated.add(normalAndLowPriority[normalIndex]);
+          normalIndex++;
+        }
+      }
+      
+      _marketplaceItems = intercalated;
+    } else {
+      _marketplaceItems = finalItems;
+    }
+    
+    debugPrint('✅ Marketplace items mezclados con prioridad: ${_marketplaceItems.length} (${normalProducts.length} productos normales + ${highPriorityAds.length} anuncios alta prioridad + ${lowPriorityAds.length} anuncios baja prioridad)');
+  }
+  
+  // Verificar si un producto tiene anuncio patrocinado
+  bool isProductSponsored(int productId) {
+    return _advertisements.any(
+      (ad) => ad.isSponsoredProduct && ad.productId == productId && ad.isCurrentlyActive,
+    );
+  }
+
   // Cargar productos con filtros
   Future<void> fetchProducts({
     Map<String, dynamic>? filters,
     bool refresh = false,
   }) async {
     try {
-      print('🔍 ProductProvider.fetchProducts iniciado');
+      debugPrint('🔍 ProductProvider.fetchProducts iniciado');
       _clearErrors();
 
       if (refresh) {
@@ -76,30 +219,30 @@ class ProductProvider with ChangeNotifier {
       }
 
       _isLoading = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       if (filters != null) {
         _currentFilters = filters;
-        print('🔍 Filtros aplicados: $_currentFilters');
+        debugPrint('🔍 Filtros aplicados: $_currentFilters');
       }
 
-      print('🔍 Llamando a ProductService.getProducts...');
+      debugPrint('🔍 Llamando a ProductService.getProducts...');
       final response = await ProductService.getProducts(
         filters: _currentFilters.isNotEmpty ? _currentFilters : null,
         page: _currentPage,
         perPage: 20,
       );
 
-      print('🔍 Respuesta recibida: $response');
+      debugPrint('🔍 Respuesta recibida: $response');
 
       if (response['data'] != null) {
         final List<dynamic> productData = response['data'];
-        print('🔍 Datos de productos: $productData');
+        debugPrint('🔍 Datos de productos: $productData');
 
         final List<Product> newProducts =
             productData.map((json) => Product.fromJson(json)).toList();
 
-        print('🔍 Productos parseados: ${newProducts.length}');
+        debugPrint('🔍 Productos parseados: ${newProducts.length}');
 
         if (refresh) {
           _products = newProducts;
@@ -107,26 +250,29 @@ class ProductProvider with ChangeNotifier {
           _products.addAll(newProducts);
         }
 
-        print('🔍 Total productos en provider: ${_products.length}');
+        debugPrint('🔍 Total productos en provider: ${_products.length}');
 
         // Verificar si hay más páginas
         final pagination = response['meta'];
         if (pagination != null) {
           _hasMorePages = _currentPage < pagination['last_page'];
-          print(
+          debugPrint(
               '🔍 Paginación: página $_currentPage de ${pagination['last_page']}');
         }
 
         _currentPage++;
+        
+        // Mezclar con anuncios después de cargar productos
+        _mixProductsWithAdvertisements();
       } else {
-        print('⚠️ No hay datos en la respuesta');
+        debugPrint('⚠️ No hay datos en la respuesta');
       }
     } catch (e) {
-      print('❌ Error en fetchProducts: $e');
+      debugPrint('❌ Error en fetchProducts: $e');
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -140,37 +286,37 @@ class ProductProvider with ChangeNotifier {
   // Obtener detalle de un producto
   Future<void> fetchProductDetail(int productId) async {
     try {
-      print('🔍 ProductProvider.fetchProductDetail: Iniciando carga de producto $productId');
+      debugPrint('🔍 ProductProvider.fetchProductDetail: Iniciando carga de producto $productId');
       _clearErrors();
       _isLoading = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final response = await ProductService.getProductDetail(productId);
-      print('🔍 ProductProvider: Response recibida: ${response.keys.toList()}');
+      debugPrint('🔍 ProductProvider: Response recibida: ${response.keys.toList()}');
 
       // El backend devuelve el producto directamente o en {data: ...}
       Product? product;
       if (response['data'] != null) {
         product = Product.fromJson(response['data']);
-        print('✅ ProductProvider: Producto cargado desde "data" - ID: ${product.id}');
+        debugPrint('✅ ProductProvider: Producto cargado desde "data" - ID: ${product.id}');
       } else if (response['id'] != null) {
         // El backend devuelve el producto directamente
         product = Product.fromJson(response);
-        print('✅ ProductProvider: Producto cargado directamente - ID: ${product.id}');
+        debugPrint('✅ ProductProvider: Producto cargado directamente - ID: ${product.id}');
       } else {
-        print('⚠️ ProductProvider: Response no contiene ni "data" ni "id"');
+        debugPrint('⚠️ ProductProvider: Response no contiene ni "data" ni "id"');
       }
       
       if (product != null) {
         _selectedProduct = product;
-        print('✅ ProductProvider: Producto asignado a _selectedProduct');
+        debugPrint('✅ ProductProvider: Producto asignado a _selectedProduct');
       }
     } catch (e) {
-      print('❌ ProductProvider: Error en fetchProductDetail: $e');
+      debugPrint('❌ ProductProvider: Error en fetchProductDetail: $e');
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -207,7 +353,7 @@ class ProductProvider with ChangeNotifier {
     try {
       _clearErrors();
       _isCreating = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       // Crear el producto
       final response = await ProductService.createProduct(
@@ -240,43 +386,43 @@ class ProductProvider with ChangeNotifier {
       );
 
       // ✅ Backend devuelve el producto directamente (no en 'data')
-      print('📦 ProductProvider: Response recibida');
+      debugPrint('📦 ProductProvider: Response recibida');
 
       // Intentar obtener el producto desde 'data' o directamente
       final productData = response['data'] ?? response;
-      print('📦 ProductProvider: productData obtenido');
+      debugPrint('📦 ProductProvider: productData obtenido');
 
-      print('📦 ProductProvider: Intentando parsear producto...');
+      debugPrint('📦 ProductProvider: Intentando parsear producto...');
       try {
         final newProduct = Product.fromJson(productData);
-        print(
+        debugPrint(
             '✅ ProductProvider: Producto parseado correctamente - ID: ${newProduct.id}');
         _products.insert(0, newProduct); // Agregar al inicio
 
         // ✅ Subir imágenes si existen (endpoint implementado en backend)
         if (imagePaths != null && imagePaths.isNotEmpty) {
-          print(
+          debugPrint(
               '📸 ProductProvider: Subiendo ${imagePaths.length} imágenes...');
           try {
             await ProductService.uploadImages(
               productId: newProduct.id,
               imagePaths: imagePaths,
             );
-            print('✅ ProductProvider: Imágenes subidas exitosamente');
+            debugPrint('✅ ProductProvider: Imágenes subidas exitosamente');
 
             // Refrescar el producto para obtener las imágenes actualizadas
-            notifyListeners();
+            _safeNotifyListeners();
           } catch (imageError) {
-            print(
+            debugPrint(
                 '⚠️ ProductProvider: Error al subir imágenes (no crítico): $imageError');
             // NO retornar false, el producto ya se creó exitosamente
           }
         }
 
-        print('✅ ProductProvider: ¡Producto creado exitosamente!');
+        debugPrint('✅ ProductProvider: ¡Producto creado exitosamente!');
         return true;
       } catch (parseError) {
-        print('❌ ProductProvider: Error al parsear producto: $parseError');
+        debugPrint('❌ ProductProvider: Error al parsear producto: $parseError');
         _errorMessage = 'Error al procesar respuesta del servidor';
         return false;
       }
@@ -296,7 +442,7 @@ class ProductProvider with ChangeNotifier {
       return false;
     } finally {
       _isCreating = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -331,7 +477,7 @@ class ProductProvider with ChangeNotifier {
     try {
       _clearErrors();
       _isUpdating = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final response = await ProductService.updateProduct(
         productId: productId,
@@ -399,7 +545,7 @@ class ProductProvider with ChangeNotifier {
       return false;
     } finally {
       _isUpdating = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -408,7 +554,7 @@ class ProductProvider with ChangeNotifier {
     try {
       _clearErrors();
       _isDeleting = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       final success = await ProductService.deleteProduct(productId);
 
@@ -431,7 +577,7 @@ class ProductProvider with ChangeNotifier {
       return false;
     } finally {
       _isDeleting = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -445,7 +591,7 @@ class ProductProvider with ChangeNotifier {
       }
 
       _isLoading = true;
-      notifyListeners();
+      _safeNotifyListeners();
 
       // Usar filtros para obtener solo mis productos
       // Esto dependerá de cómo el backend maneje la propiedad
@@ -464,7 +610,7 @@ class ProductProvider with ChangeNotifier {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -474,9 +620,35 @@ class ProductProvider with ChangeNotifier {
     fetchProducts(refresh: true);
   }
 
-  // Refrescar productos
+  // Refrescar productos y anuncios
   Future<void> refreshProducts() async {
-    await fetchProducts(refresh: true);
+    await Future.wait([
+      fetchProducts(refresh: true),
+      fetchAdvertisements(),
+    ]);
+  }
+  
+  // Obtener producto asociado a un anuncio patrocinado
+  Product? getProductForSponsoredAd(Advertisement ad) {
+    if (!ad.isSponsoredProduct || ad.productId == null) return null;
+    try {
+      return _products.firstWhere((p) => p.id == ad.productId);
+    } catch (e) {
+      // Si el producto no está en la lista, intentar obtenerlo desde el campo product del anuncio
+      if (ad.product != null) {
+        try {
+          return Product.fromJson(ad.product!);
+        } catch (e2) {
+          return null;
+        }
+      }
+      return null;
+    }
+  }
+  
+  // Registrar click en anuncio
+  Future<void> registerAdvertisementClick(Advertisement ad) async {
+    await AdvertisementService.registerClick(ad.id);
   }
 
   // Método para aplicar filtros desde el modal
@@ -510,6 +682,8 @@ class ProductProvider with ChangeNotifier {
     _products.clear();
     _selectedProduct = null;
     _myProducts.clear();
+    _advertisements.clear();
+    _marketplaceItems.clear();
     _currentFilters.clear();
     _currentPage = 1;
     _hasMorePages = true;
@@ -549,23 +723,23 @@ class ProductProvider with ChangeNotifier {
     }
 
     if (_isLoadingFavorites) {
-      print('⚠️ Ya se están cargando favoritos, saltando...');
+      debugPrint('⚠️ Ya se están cargando favoritos, saltando...');
       return;
     }
 
     try {
       _isLoadingFavorites = true;
       _clearErrors();
-      notifyListeners();
+      _safeNotifyListeners();
 
-      print('🔍 ProductProvider.fetchFavorites iniciado - Página: $page');
+      debugPrint('🔍 ProductProvider.fetchFavorites iniciado - Página: $page');
 
       final response = await FavoriteService.getMyFavorites(
         page: page,
         perPage: 20,
       );
 
-      print('🔍 Respuesta de favoritos recibida');
+      debugPrint('🔍 Respuesta de favoritos recibida');
 
       // Parsear productos de la respuesta
       final favoritesData = response['data'] as List;
@@ -573,7 +747,7 @@ class ProductProvider with ChangeNotifier {
         return Product.fromJson(fav['product']);
       }).toList();
 
-      print('🔍 Favoritos parseados: ${newFavorites.length}');
+      debugPrint('🔍 Favoritos parseados: ${newFavorites.length}');
 
       if (refresh) {
         _favoriteProducts = newFavorites;
@@ -588,28 +762,28 @@ class ProductProvider with ChangeNotifier {
       _currentFavoritesPage = page;
       _hasMoreFavorites = response['current_page'] < response['last_page'];
 
-      print('✅ Favoritos cargados: ${_favoriteProducts.length} total');
-      print('📊 Página actual: $_currentFavoritesPage, Hay más: $_hasMoreFavorites');
+      debugPrint('✅ Favoritos cargados: ${_favoriteProducts.length} total');
+      debugPrint('📊 Página actual: $_currentFavoritesPage, Hay más: $_hasMoreFavorites');
     } catch (e) {
-      print('❌ Error en fetchFavorites: $e');
+      debugPrint('❌ Error en fetchFavorites: $e');
       _errorMessage = 'Error al cargar favoritos: $e';
     } finally {
       _isLoadingFavorites = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
   /// Toggle favorito (agregar/remover) con sincronización al backend
   Future<void> toggleFavorite(int productId) async {
     try {
-      print('🔄 ProductProvider.toggleFavorite - ProductID: $productId');
+      debugPrint('🔄 ProductProvider.toggleFavorite - ProductID: $productId');
       
       // 1. Optimistic update (actualizar UI inmediatamente)
       final wasInFavorites = _favorites.contains(productId);
       if (wasInFavorites) {
         _favorites.remove(productId);
         _favoriteProducts.removeWhere((p) => p.id == productId);
-        print('🔄 Optimistic: Removido de favoritos localmente');
+        debugPrint('🔄 Optimistic: Removido de favoritos localmente');
       } else {
         _favorites.add(productId);
         // ✅ Solo agregar si no existe ya
@@ -626,7 +800,7 @@ class ProductProvider with ChangeNotifier {
                 product = Product.fromJson(response['data']);
               }
             } catch (e2) {
-              print('⚠️ No se pudo obtener el producto: $e2');
+              debugPrint('⚠️ No se pudo obtener el producto: $e2');
             }
           }
           
@@ -634,12 +808,12 @@ class ProductProvider with ChangeNotifier {
             _favoriteProducts.add(product);
           }
         }
-        print('🔄 Optimistic: Agregado a favoritos localmente (ID: $productId)');
+        debugPrint('🔄 Optimistic: Agregado a favoritos localmente (ID: $productId)');
       }
-      notifyListeners();
+      _safeNotifyListeners();
       
       // 2. Sincronizar con backend
-      print('🌐 Llamando a FavoriteService.toggleFavorite...');
+      debugPrint('🌐 Llamando a FavoriteService.toggleFavorite...');
       final isFavorite = await FavoriteService.toggleFavorite(productId);
       
       // 3. NO recargar la lista completa de favoritos porque causa duplicados
@@ -657,34 +831,34 @@ class ProductProvider with ChangeNotifier {
             product = _products.firstWhere((p) => p.id == productId);
             _favoriteProducts.add(product);
           } catch (e) {
-            print('⚠️ Producto no encontrado localmente, se sincronizará en la próxima carga');
+            debugPrint('⚠️ Producto no encontrado localmente, se sincronizará en la próxima carga');
           }
         }
-        print('✅ Sincronizado: Agregado a favoritos');
+        debugPrint('✅ Sincronizado: Agregado a favoritos');
       } else if (!isFavorite && _favorites.contains(productId)) {
         // Si el backend dice que NO es favorito pero localmente SÍ está
         _favorites.remove(productId);
         _favoriteProducts.removeWhere((p) => p.id == productId);
-        print('✅ Sincronizado: Removido de favoritos');
+        debugPrint('✅ Sincronizado: Removido de favoritos');
       }
       
-      notifyListeners();
-      print('✅ Toggle favorito completado - Estado final: ${isFavorite ? "FAVORITO" : "NO FAVORITO"}');
+      _safeNotifyListeners();
+      debugPrint('✅ Toggle favorito completado - Estado final: ${isFavorite ? "FAVORITO" : "NO FAVORITO"}');
     } catch (e) {
-      print('❌ Error al toggle favorito: $e');
+      debugPrint('❌ Error al toggle favorito: $e');
       
       // Revertir cambio optimista si falló
       final wasInFavorites = _favorites.contains(productId);
       if (wasInFavorites) {
         _favorites.remove(productId);
         _favoriteProducts.removeWhere((p) => p.id == productId);
-        print('🔄 Revirtiendo: Removido de favoritos');
+        debugPrint('🔄 Revirtiendo: Removido de favoritos');
       } else {
         _favorites.add(productId);
-        print('🔄 Revirtiendo: Agregado a favoritos');
+        debugPrint('🔄 Revirtiendo: Agregado a favoritos');
       }
       
-      notifyListeners();
+      _safeNotifyListeners();
       
       _errorMessage = 'Error al actualizar favorito';
       rethrow; // Para que la UI pueda mostrar error si lo desea
@@ -705,7 +879,7 @@ class ProductProvider with ChangeNotifier {
       
       return isFavorite;
     } catch (e) {
-      print('❌ Error al verificar favorito: $e');
+      debugPrint('❌ Error al verificar favorito: $e');
       return _favorites.contains(productId); // Fallback al estado local
     }
   }
@@ -713,10 +887,24 @@ class ProductProvider with ChangeNotifier {
   /// Cargar más favoritos (paginación infinita)
   Future<void> loadMoreFavorites() async {
     if (!_hasMoreFavorites || _isLoadingFavorites) {
-      print('⚠️ No hay más favoritos o ya se están cargando');
+      debugPrint('⚠️ No hay más favoritos o ya se están cargando');
       return;
     }
 
     await fetchFavorites(page: _currentFavoritesPage + 1, refresh: false);
+  }
+  
+  /// Override dispose para manejar correctamente el cleanup
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+  
+  /// Helper para verificar si está disposed antes de notificar
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      notifyListeners();
+    }
   }
 }

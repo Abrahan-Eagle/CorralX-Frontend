@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/product_card.dart';
+import '../widgets/advertisement_card.dart';
 import '../widgets/filters_modal.dart';
+import '../models/advertisement.dart';
+import '../models/product.dart';
 import 'product_detail_screen.dart';
 
 class MarketplaceScreen extends StatefulWidget {
@@ -18,9 +21,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar productos al inicializar
+    // Cargar productos y anuncios al inicializar
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().fetchProducts();
+      final provider = context.read<ProductProvider>();
+      provider.fetchProducts();
+      provider.fetchAdvertisements();
     });
   }
 
@@ -62,8 +67,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           Positioned.fill(
             child: Consumer<ProductProvider>(
               builder: (context, productProvider, child) {
-                if (productProvider.isLoading &&
-                    productProvider.products.isEmpty) {
+                if ((productProvider.isLoading || productProvider.isLoadingAdvertisements) &&
+                    productProvider.marketplaceItems.isEmpty) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
@@ -106,7 +111,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   );
                 }
 
-                if (productProvider.products.isEmpty) {
+                if (productProvider.marketplaceItems.isEmpty &&
+                    !productProvider.isLoading &&
+                    !productProvider.isLoadingAdvertisements) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -274,21 +281,71 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           ),
                         ),
 
-                        // Lista de productos
+                        // Lista de productos y anuncios mezclados
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: productProvider.products.length,
+                          itemCount: productProvider.marketplaceItems.length,
                           itemBuilder: (context, index) {
-                            final product = productProvider.products[index];
-                            // Verificar si el producto está en favoritos
+                            final item = productProvider.marketplaceItems[index];
+
+                            // Si es un anuncio
+                            if (item.isAdvertisement) {
+                              final ad = item.item as Advertisement;
+
+                              // Si es producto patrocinado
+                              if (ad.isSponsoredProduct) {
+                                // Intentar obtener el producto asociado
+                                final product = productProvider.getProductForSponsoredAd(ad);
+                                
+                                return SponsoredProductCard(
+                                  advertisement: ad,
+                                  product: product,
+                                  isFavorite: product != null
+                                      ? productProvider.favoriteProducts
+                                          .any((fav) => fav.id == product.id)
+                                      : false,
+                                  onTap: () {
+                                    if (product != null) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ProductDetailScreen(
+                                            productId: product.id,
+                                            product: product,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  onFavorite: () async {
+                                    if (product != null) {
+                                      await productProvider.toggleFavorite(product.id);
+                                    }
+                                  },
+                                  onAdClick: () {
+                                    productProvider.registerAdvertisementClick(ad);
+                                  },
+                                );
+                              } else {
+                                // Es publicidad externa
+                                return ExternalAdCard(
+                                  advertisement: ad,
+                                  onAdClick: () {
+                                    productProvider.registerAdvertisementClick(ad);
+                                  },
+                                );
+                              }
+                            }
+
+                            // Si es un producto normal
+                            final product = item.item as Product;
                             final isFavorite = productProvider.favoriteProducts
                                 .any((fav) => fav.id == product.id);
 
                             return ProductCard(
                               product: product,
-                              isFavorite:
-                                  isFavorite, // ✅ Verifica si está en favoritos
+                              isFavorite: isFavorite,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -302,8 +359,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               },
                               onFavorite: () async {
                                 final wasInFavorites = isFavorite;
-                                await productProvider
-                                    .toggleFavorite(product.id);
+                                await productProvider.toggleFavorite(product.id);
 
                                 // Mostrar mensaje de confirmación
                                 if (!context.mounted) return;

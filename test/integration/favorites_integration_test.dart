@@ -1,14 +1,43 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/favorites/services/favorite_service.dart';
 import 'package:zonix/config/app_config.dart';
 
 void main() {
+  // Inicializar dotenv antes de todos los tests
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      // Si no existe .env en tests, usar valores mock
+      dotenv.env.addAll({
+        'API_URL_LOCAL': 'http://192.168.27.12:8000',
+        'API_URL_PROD': 'https://backend.corralx.com',
+        'WS_URL_LOCAL': 'ws://192.168.27.12:6001',
+        'WS_URL_PROD': 'wss://backend.corralx.com',
+        'ENVIRONMENT': 'development',
+      });
+    }
+  });
+
   group('Favorites Module - Integration Tests', () {
     late ProductProvider productProvider;
 
     setUp(() {
       productProvider = ProductProvider();
+    });
+    
+    tearDown(() async {
+      // Esperar a que terminen las operaciones async antes de hacer dispose
+      await Future.delayed(const Duration(milliseconds: 200));
+      try {
+        productProvider.dispose();
+      } catch (e) {
+        // Si ya está disposed, ignorar el error
+      }
     });
 
     group('Flujo Completo: Agregar a Favoritos', () {
