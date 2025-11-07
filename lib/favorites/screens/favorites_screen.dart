@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zonix/products/providers/product_provider.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/products/models/product.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 /// FavoritesScreen - Pantalla de productos favoritos del usuario
 ///
@@ -259,7 +260,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       ),
                       color: theme.colorScheme.surfaceVariant,
                     ),
-                    child: primaryImage != null
+                    child: primaryImage != null && !isBlockedImageHost(primaryImage)
                         ? ClipRRect(
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(16),

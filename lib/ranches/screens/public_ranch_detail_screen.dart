@@ -11,9 +11,9 @@ import '../../profiles/providers/profile_provider.dart';
 import '../../shared/screens/pdf_viewer_screen.dart';
 import '../../products/models/product.dart' hide Ranch;
 import '../../products/screens/product_detail_screen.dart';
-import '../../products/widgets/product_card.dart';
 import '../../products/providers/product_provider.dart';
 import '../../config/app_config.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 class PublicRanchDetailScreen extends StatefulWidget {
   final Ranch ranch;
@@ -1360,19 +1360,27 @@ class _PublicRanchDetailScreenState extends State<PublicRanchDetailScreen> {
                   width: double.infinity,
                   height: 120,
                   color: Colors.grey[300],
-                  child: imageUrl.isNotEmpty
+                  child: imageUrl.isNotEmpty && !isBlockedImageHost(imageUrl)
                       ? Image.network(
                           imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.image_not_supported,
-                                  color: Colors.grey),
-                            );
-                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Center(
+                            child: buildImageFallback(
+                              icon: Icons.image_not_supported,
+                              backgroundColor: Colors.grey[300],
+                              iconColor: Colors.grey[600],
+                              iconSize: 40,
+                            ),
+                          ),
                         )
-                      : const Center(
-                          child: Icon(Icons.image, color: Colors.grey),
+                      : Center(
+                          child: buildImageFallback(
+                            icon: Icons.image,
+                            backgroundColor: Colors.grey[300],
+                            iconColor: Colors.grey[500],
+                            iconSize: 40,
+                          ),
                         ),
                 ),
                 // Botón de favorito

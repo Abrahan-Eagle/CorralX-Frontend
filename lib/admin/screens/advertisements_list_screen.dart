@@ -4,6 +4,7 @@ import 'package:zonix/admin/services/advertisement_admin_service.dart';
 import 'package:zonix/admin/screens/create_edit_advertisement_screen.dart';
 import 'package:zonix/admin/screens/advertisement_detail_screen.dart';
 import '../../products/models/advertisement.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 /// Pantalla de listado de anuncios para administradores
 class AdvertisementsListScreen extends StatefulWidget {
@@ -635,20 +636,35 @@ class _AdvertisementCard extends StatelessWidget {
                   // Imagen
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      advertisement.imageUrl,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 80,
-                          height: 80,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image_not_supported),
-                        );
-                      },
-                    ),
+                    child: isBlockedImageHost(advertisement.imageUrl)
+                        ? SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: buildImageFallback(
+                              icon: Icons.image_not_supported,
+                              backgroundColor: Colors.grey[300],
+                              iconColor: Colors.grey[600],
+                              iconSize: 32,
+                            ),
+                          )
+                        : Image.network(
+                            advertisement.imageUrl,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return SizedBox(
+                                width: 80,
+                                height: 80,
+                                child: buildImageFallback(
+                                  icon: Icons.image_not_supported,
+                                  backgroundColor: Colors.grey[300],
+                                  iconColor: Colors.grey[600],
+                                  iconSize: 32,
+                                ),
+                              );
+                            },
+                          ),
                   ),
                   const SizedBox(width: 16),
                   // Información

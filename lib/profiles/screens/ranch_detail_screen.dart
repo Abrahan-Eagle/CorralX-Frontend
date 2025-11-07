@@ -9,6 +9,7 @@ import '../../products/models/product.dart' hide Ranch;
 import '../../products/screens/product_detail_screen.dart';
 import '../../config/app_config.dart';
 import '../../shared/screens/pdf_viewer_screen.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 class RanchDetailScreen extends StatefulWidget {
   final Ranch ranch;
@@ -1022,7 +1023,10 @@ class _RanchDetailScreenState extends State<RanchDetailScreen> {
                           // Imagen del producto (60x60)
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: product.images.isNotEmpty
+                            child: product.images.isNotEmpty &&
+                                    !isBlockedImageHost(
+                                      product.images.first.fileUrl,
+                                    )
                                 ? Image.network(
                                     product.images.first.fileUrl,
                                     width: 60,

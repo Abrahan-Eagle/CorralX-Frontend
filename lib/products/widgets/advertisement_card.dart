@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/advertisement.dart';
 import '../models/product.dart';
 import 'product_card.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 /// Widget para mostrar un producto patrocinado
 /// Similar a ProductCard pero con badge de "Patrocinado"
@@ -179,24 +180,26 @@ class ExternalAdCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(12),
                     ),
-                    child: CachedNetworkImage(
-                      imageUrl: advertisement.imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                  child: isBlockedImageHost(advertisement.imageUrl)
+                      ? buildImageFallback(
+                          icon: Icons.ads_click,
+                          backgroundColor: Colors.grey[200],
+                        )
+                      : CachedNetworkImage(
+                          imageUrl: advertisement.imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              buildImageFallback(
+                            icon: Icons.ads_click,
+                            backgroundColor: Colors.grey[200],
+                          ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.ads_click,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
                   ),
                 ),
                 // Badge de "Publicidad"

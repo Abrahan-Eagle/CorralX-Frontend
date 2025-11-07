@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:zonix/admin/services/advertisement_admin_service.dart';
 import 'package:zonix/products/services/product_service.dart';
 import 'package:zonix/products/models/product.dart';
 import 'package:zonix/products/models/advertisement.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 /// Pantalla para crear o editar un anuncio
 class CreateEditAdvertisementScreen extends StatefulWidget {
@@ -472,39 +472,34 @@ class _CreateEditAdvertisementScreenState extends State<CreateEditAdvertisementS
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              _imageUrlController.text.trim(),
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.broken_image, size: 48, color: Colors.grey[400]),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'No se pudo cargar la imagen',
-                                        style: TextStyle(color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Verifica que la URL sea correcta',
-                                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                                      ),
-                                    ],
+                            child: Builder(
+                              builder: (context) {
+                                final previewUrl = _imageUrlController.text.trim();
+                                if (isBlockedImageHost(previewUrl)) {
+                                    return buildImageFallback(
+                                      icon: Icons.image_not_supported,
+                                      backgroundColor: Colors.grey[200],
+                                    );
+                                }
+
+                                return Image.network(
+                                  previewUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => buildImageFallback(
+                                    icon: Icons.broken_image,
+                                    backgroundColor: Colors.grey[200],
                                   ),
-                                );
-                              },
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    );
+                                  },
                                 );
                               },
                             ),
@@ -576,6 +571,7 @@ class _CreateEditAdvertisementScreenState extends State<CreateEditAdvertisementS
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Icon(
                                       Icons.info_outline,
@@ -583,11 +579,13 @@ class _CreateEditAdvertisementScreenState extends State<CreateEditAdvertisementS
                                       size: 24,
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      'Información del Producto Patrocinado',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.primary,
+                                    Expanded(
+                                      child: Text(
+                                        'Información del Producto Patrocinado',
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.primary,
+                                        ),
                                       ),
                                     ),
                                   ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/product.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -265,7 +266,8 @@ class ProductCard extends StatelessWidget {
             ),
             color: Colors.grey[200],
           ),
-          child: primaryImage != null
+          child: primaryImage != null &&
+                  !isBlockedImageHost(primaryImage.fileUrl)
               ? ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(12),

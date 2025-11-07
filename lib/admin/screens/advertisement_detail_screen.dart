@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:zonix/admin/services/advertisement_admin_service.dart';
 import 'package:zonix/admin/screens/create_edit_advertisement_screen.dart';
 import '../../products/models/advertisement.dart';
+import 'package:zonix/shared/utils/image_utils.dart';
 
 /// Pantalla de detalles del anuncio con estadísticas completas
 class AdvertisementDetailScreen extends StatefulWidget {
@@ -224,27 +225,33 @@ class _AdvertisementDetailScreenState extends State<AdvertisementDetailScreen> {
                             // Imagen principal
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                _advertisement!.imageUrl,
-                                width: double.infinity,
-                                height: 250,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: double.infinity,
-                                    height: 250,
-                                    color: Colors.grey[300],
-                                    child: const Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.image_not_supported, size: 64),
-                                        SizedBox(height: 8),
-                                        Text('Imagen no disponible'),
-                                      ],
+                              child: isBlockedImageHost(_advertisement!.imageUrl)
+                                  ? SizedBox(
+                                      width: double.infinity,
+                                      height: 250,
+                                      child: buildImageFallback(
+                                        icon: Icons.image_not_supported,
+                                        backgroundColor: Colors.grey[300],
+                                        iconColor: Colors.grey[600],
+                                        iconSize: 64,
+                                      ),
+                                    )
+                                  : Image.network(
+                                      _advertisement!.imageUrl,
+                                      width: double.infinity,
+                                      height: 250,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => SizedBox(
+                                        width: double.infinity,
+                                        height: 250,
+                                        child: buildImageFallback(
+                                          icon: Icons.image_not_supported,
+                                          backgroundColor: Colors.grey[300],
+                                          iconColor: Colors.grey[600],
+                                          iconSize: 64,
+                                        ),
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
                             ),
                             const SizedBox(height: 24),
 
