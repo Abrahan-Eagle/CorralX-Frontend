@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corral X - Plataforma Ganadera</title>
+    
+    <!-- Enlaces a librerías y fuentes externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Sección de estilos CSS personalizados -->
+    <style>
+        :root {
+            --md-sys-color-primary: #386A20;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #B7F399;
+            --md-sys-color-on-primary-container: #082100;
+            --md-sys-color-secondary: #55624C;
+            --md-sys-color-on-secondary: #FFFFFF;
+            --md-sys-color-secondary-container: #D9E7CA;
+            --md-sys-color-on-secondary-container: #131F0D;
+            --md-sys-color-error: #BA1A1A;
+            --md-sys-color-on-error: #FFFFFF;
+            --md-sys-color-background: #FCFDF7;
+            --md-sys-color-on-background: #1A1C18;
+            --md-sys-color-surface: #FCFDF7;
+            --md-sys-color-on-surface: #1A1C18;
+            --md-sys-color-surface-variant: #E0E4D7;
+            --md-sys-color-on-surface-variant: #43483E;
+            --md-sys-color-outline: #74796D;
+            --md-sys-color-surface-container-high: #E9E9E2;
+            --md-sys-color-surface-container-low: #F4F4ED;
+        }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--md-sys-color-background); 
+            color: var(--md-sys-color-on-background); 
+            overflow-x: hidden; /* R2. Bloquea el desplazamiento horizontal */
+        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: bottom; }
+        .loader { width: 48px; height: 48px; border: 5px solid var(--md-sys-color-surface-variant); border-bottom-color: var(--md-sys-color-primary); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .view { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .favorite-btn.favorited .material-symbols-outlined { 
+            font-variation-settings: 'FILL' 1, 'wght' 700; 
+            color: var(--md-sys-color-error);
+            animation: pop-heart 0.3s ease-in-out; 
+        }
+        @keyframes pop-heart { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        /* PENSAMIENTO DEL INGENIERO: Se añade esta regla para aplicar el estilo visual al botón de filtro de tipo dentro del modal. */
+        .filter-option-btn.active { 
+            background-color: var(--md-sys-color-primary-container) !important; 
+            color: var(--md-sys-color-on-primary-container) !important; 
+            font-weight: 700;
+        }
+        .rating-star { cursor: pointer; color: var(--md-sys-color-outline); transition: color 0.2s; }
+        .rating-star.filled, .rating-star.hover { color: #FFC700; }
+        .verified-badge { color: var(--md-sys-color-primary); font-size: 1.2em; }
+        .suspended-user { color: var(--md-sys-color-error); }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 64px;
+            background-color: var(--md-sys-color-surface-container-low);
+            border-top: 1px solid var(--md-sys-color-outline);
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+        }
+        .nav-item {
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; color: var(--md-sys-color-on-surface-variant);
+            font-size: 12px; transition: color 0.2s;
+        }
+        .nav-item.active { color: var(--md-sys-color-primary); }
+        .nav-item .material-symbols-outlined { font-size: 28px; }
+        .notification-badge {
+            position: absolute; top: 4px; right: 20px; width: 9px; height: 9px;
+            background-color: var(--md-sys-color-error); border-radius: 50%;
+            border: 1px solid var(--md-sys-color-surface-container-low); display: none;
+        }
+        #app-container { padding-bottom: 80px; }
+
+        /* --- ESTILOS PARA EL ONBOARDING --- */
+        #onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            transition: opacity 0.3s ease;
+        }
+        .onboarding-highlight {
+            position: absolute;
+            border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+            transition: all 0.3s ease-in-out;
+            pointer-events: none;
+        }
+        #onboarding-tooltip {
+            position: absolute;
+            background-color: white;
+            color: black;
+            padding: 1.5rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2001;
+            transition: all 0.3s ease-in-out;
+        }
+        /* ESTILOS PARA MODAL DE FILTROS */
+        #filterModalOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.5); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        #filterModal {
+            background-color: var(--md-sys-color-surface); 
+            border-radius: 16px 16px 0 0;
+            width: 100%; max-width: 450px;
+            position: fixed; bottom: 0;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+        #filterModal.open {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app-container" class="relative min-h-screen">
+        <!-- Vistas se inyectarán aquí dinámicamente -->
+    </div>
+
+    <nav id="bottom-navigation" class="bottom-nav">
+        <button class="nav-item" data-view="marketplace">
+            <span class="material-symbols-outlined">store</span>
+            <span>Mercado</span>
+        </button>
+        <button class="nav-item" data-view="favorites">
+            <span class="material-symbols-outlined">favorite</span>
+            <span>Favoritos</span>
+        </button>
+        <button class="nav-item" data-view="create">
+            <span class="material-symbols-outlined">add_circle</span>
+            <span>Publicar</span>
+        </button>
+        <button class="nav-item" data-view="messages">
+            <span class="material-symbols-outlined">chat</span>
+            <span>Mensajes</span>
+            <div class="notification-badge"></div>
+        </button>
+        <button class="nav-item" data-view="profile" id="navProfileBtn">
+            <span class="material-symbols-outlined">account_circle</span>
+            <span>Perfil</span>
+        </button>
+    </nav>
+    
+    <div id="onboarding-container" class="hidden">
+        <div id="onboarding-overlay"></div>
+        <div id="onboarding-tooltip"></div>
+    </div>
+
+    <!-- Modal de Filtros - Se añade la estructura del modal aquí -->
+    <div id="filterModalOverlay">
+        <div id="filterModal">
+            <!-- Contenido del modal se inyectará aquí -->
+        </div>
+    </div>
+
+
+    <script type="module">
+        // PENSAMIENTO DEL INGENIERO:
+        // El usuario ha solicitado un cambio importante en la arquitectura de la app.
+        // El "Dashboard" o "Panel de Usuario" se va a eliminar y su funcionalidad
+        // se integrará en el "Perfil" del usuario. Esto mejora la experiencia al centralizar
+        // la información y las acciones en un solo lugar.
+        // La implementación se hará en dos pasos:
+        // 1. Mover la lógica del Dashboard a un sistema de pestañas dentro del Profile.
+        // 2. Eliminar la vista y los enlaces al Dashboard una vez que todo esté migrado.
+        //
+        // En este paso, implementaremos la primera parte: el sistema de pestañas.
+        // Esto requerirá modificar la vista `getProfileViewHTML` para incluir los tabs
+        // y la lógica para renderizar el contenido de cada uno. También se debe
+        // actualizar la navegación para que los botones del Dashboard ahora lleven
+        // al perfil con el tab correspondiente.
+
+        // --- MOCK DATABASE & STATE ---
+        let localFarms = {
+            'farm123': {
+                id: 'farm123',
+                ownerId: 'localUser123',
+                name: 'Agropecuaria El Futuro',
+                location: { state: 'Carabobo', city: 'Valencia' },
+                bio: 'Dedicados a la cría de ganado de alta genética. Más de 20 años de experiencia en el campo venezolano.',
+                phone: '0414-1234567',
+                isVerified: true
+            },
+            'farm456': {
+                id: 'farm456',
+                ownerId: 'localUser123',
+                name: 'Hato La Esperanza',
+                location: { state: 'Cojedes', city: 'San Carlos' },
+                bio: 'Especializados en la cría y venta de ganado de engorde de alta calidad.',
+                phone: '0412-9876543',
+                isVerified: false
+            },
+            'farm789': {
+                id: 'farm789',
+                ownerId: 'anotherUser456',
+                name: 'Finca Los Girasoles',
+                location: { state: 'Aragua', city: 'Maracay' },
+                bio: 'Pequeña finca familiar productora de leche y quesos artesanales. Animales criados con amor.',
+                phone: '0424-7654321',
+                isVerified: false
+            }
+        };
+
+        let localUsers = {
+            'localUser123': { 
+                fullName: 'Juan Pérez',
+                email: 'juan.perez@elfuturo.com',
+                dob: '1980-10-25',
+                rating: 4.5, 
+                ratingsCount: 2, 
+                favorites: ['mock2'], 
+                status: 'active',
+                hasUnreadMessages: true, 
+                profilePicture: 'https://aiblockweb.com/img/img_renny/2.png',
+                joinedDate: '2023-05-15',
+                messages: [ { with: 'anotherUser456', messages: [{ from: 'anotherUser456', text: 'Buenas, ¿sigue disponible la Holstein?' }, { from: 'localUser123', text: 'Sí, disponible. A la orden.' }] } ] 
+            },
+            'anotherUser456': { 
+                fullName: 'Ana Rodríguez',
+                email: 'ana.rodriguez@girasoles.com',
+                dob: '1992-03-12',
+                rating: 5, 
+                ratingsCount: 1, 
+                favorites: [], 
+                status: 'active',
+                profilePicture: 'https://aiblockweb.com/img/img_renny/2.png',
+                joinedDate: '2024-01-20',
+                messages: [ { with: 'localUser123', messages: [{ from: 'anotherUser456', text: 'Buenas, ¿sigue disponible la Holstein?' }, { from: 'localUser123', text: 'Sí, disponible. A la orden.' }] } ] 
+            }
+        };
+        let localListings = [
+            { id: 'mock1', type: 'engorde', breed: 'Brahman Rojo', age: 2.5, quantity: 15, farmId: 'farm123', description: 'Lote de 15 novillos Brahman Rojo puros, listos para ceba.', images: ['https://diariolaeconomia.com/media/k2/items/cache/891bc0e45e0849a552d0ba70b9f8ec5e_XL.jpg', 'https://www.agronegocios.co/assets/uploads/2017/02/14/083321-2000-1000-0-0--470-.jpg'], createdAt: { seconds: Date.now() / 1000 - 3600 }, ownerId: 'localUser123', comments: [{user: 'CompradorX', rating: 5, text: 'Excelente ganado.'}], isFeatured: true, views: 124, location: 'Carabobo', reports: [], registration: { status: 'con-registro', certificate: 'https://i.pinimg.com/736x/8c/9b/6c/8c9b6c69ea5fc630a916a2a07525f235.jpg' } },
+            { id: 'mock2', type: 'lechero', breed: 'Holstein', age: 3, quantity: 1, farmId: 'farm789', description: 'Vaca Holstein de primer parto, alta productora de leche.', images: ['https://static.wikia.nocookie.net/silverspoon/images/0/0c/Cow_female_black_white.jpg/revision/latest?cb=20130804033709&path-prefix=es'], createdAt: { seconds: Date.now() / 1000 - 86400 }, ownerId: 'anotherUser456', comments: [], isFeatured: false, views: 88, location: 'Aragua', reports: [], registration: { status: 'sin-registro', certificate: null } },
+            { id: 'mock3', type: 'padrote', breed: 'Guzerat', age: 4, quantity: 1, farmId: 'farm123', description: 'Toro Guzerat probado, ideal para mejorar rebaño.', images: ['https://gruposansimon.com/web/wp-content/uploads/esta.jpg'], createdAt: { seconds: Date.now() / 1000 - 172800 }, ownerId: 'localUser123', comments: [{user: 'GanaderoSur', rating: 4, text: 'Buen animal.'}], isFeatured: false, views: 210, location: 'Carabobo', reports: [], registration: { status: 'sin-registro', certificate: null } },
+        ];
+        let currentUserId = 'localUser123';
+        let currentFilters = { search: '', type: 'all', location: 'all' };
+        let currentRating = 0;
+        let navigationHistory = [];
+        let activityLog = [
+            { timestamp: Date.now() - 60000, userId: 'localUser123', action: 'inicio_sesion', details: 'Acceso a la plataforma' },
+            { timestamp: Date.now() - 50000, userId: 'anotherUser456', action: 'visita_publicacion', details: 'mock1' },
+        ];
+
+
+        const appContainer = document.getElementById('app-container');
+        const bottomNav = document.getElementById('bottom-navigation');
+        const filterModalOverlay = document.getElementById('filterModalOverlay');
+        const filterModal = document.getElementById('filterModal');
+        
+        // --- ONBOARDING MODULE ---
+        const onboardingSteps = [
+            {
+                title: '¡Bienvenido a Corral X!',
+                text: 'Te vamos a mostrar rapidito cómo funciona la vuelta. ¡Es una papaya!',
+                position: 'center'
+            },
+            {
+                elementSelector: '#cattleGrid',
+                title: 'El Mercado',
+                text: 'Aquí ves todo el ganado que está en venta. Puedes echar un ojo y ver las últimas publicaciones que han montado.',
+                position: 'bottom'
+            },
+            {
+                elementSelector: '#searchInput',
+                title: 'Busca lo que necesitas',
+                text: 'Usa esta barra para buscar por raza, tipo o la ubicación que te sirva. ¡Directo al grano!',
+                position: 'bottom'
+            },
+            {
+                elementSelector: 'button[data-view="create"]',
+                title: 'Publica tu Ganado',
+                text: 'Cuando quieras vender, le das a este botón. Montar un anuncio es facilito y rápido.',
+                position: 'top'
+            },
+            {
+                elementSelector: 'button[data-view="favorites"]',
+                title: 'Tus Favoritos',
+                text: 'Si te gusta un animal pero quieres pensarlo, guárdalo aquí para no perderle la pista.',
+                position: 'top'
+            },
+            {
+                elementSelector: 'button[data-view="messages"]',
+                title: 'Habla con la gente',
+                text: 'Por aquí cuadras los negocios. Todos tus chats con compradores y vendedores están en un solo lugar.',
+                position: 'top'
+            },
+            {
+                elementSelector: 'button[data-view="profile"]',
+                title: 'Tu Perfil',
+                text: 'Aquí manejas tu información, ves tus publicaciones y te aseguras de que todo esté al día. ¡Listo el pollo!',
+                position: 'top'
+            }
+        ];
+        let currentOnboardingStep = 0;
+
+        function startOnboarding() {
+            if (localStorage.getItem('onboardingComplete')) {
+                return;
+            }
+            document.getElementById('onboarding-container').classList.remove('hidden');
+            showOnboardingStep(0);
+        }
+
+        function showOnboardingStep(index) {
+            const step = onboardingSteps[index];
+            const tooltip = document.getElementById('onboarding-tooltip');
+            const highlight = document.querySelector('.onboarding-highlight') || document.createElement('div');
+            highlight.className = 'onboarding-highlight';
+            document.getElementById('onboarding-overlay').appendChild(highlight);
+
+            tooltip.innerHTML = `
+                <h3 class="text-xl font-bold mb-2 text-gray-800">${step.title}</h3>
+                <p class="text-gray-600 mb-6">${step.text}</p>
+                <div class="flex justify-between items-center">
+                    <button id="skip-onboarding" class="text-sm text-gray-500 hover:text-gray-800">Saltar</button>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-500">${index + 1} / ${onboardingSteps.length}</span>
+                        ${index > 0 ? '<button id="prev-step" class="px-4 py-2 rounded-full border text-sm">Anterior</button>' : ''}
+                        <button id="next-step" class="px-4 py-2 rounded-full bg-[var(--md-sys-color-primary)] text-white text-sm">${index === onboardingSteps.length - 1 ? 'Finalizar' : 'Siguiente'}</button>
+                    </div>
+                </div>
+            `;
+            
+            const targetElement = step.elementSelector ? document.querySelector(step.elementSelector) : null;
+
+            if (step.position === 'center' || !targetElement) {
+                highlight.style.width = `0px`;
+                highlight.style.height = `0px`;
+                highlight.style.top = `50%`;
+                highlight.style.left = `50%`;
+                
+                tooltip.style.top = `50%`;
+                tooltip.style.left = `50%`;
+                tooltip.style.transform = `translate(-50%, -50%)`;
+            } else {
+                const rect = targetElement.getBoundingClientRect();
+                
+                highlight.style.width = `${rect.width + 8}px`;
+                highlight.style.height = `${rect.height + 8}px`;
+                highlight.style.top = `${rect.top - 4}px`;
+                highlight.style.left = `${rect.left - 4}px`;
+                
+                const tooltipWidth = tooltip.offsetWidth;
+                const windowWidth = window.innerWidth;
+                const padding = 16; 
+
+                let tooltipX = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+
+                if (tooltipX + tooltipWidth > windowWidth - padding) {
+                    tooltipX = windowWidth - tooltipWidth - padding;
+                }
+                if (tooltipX < padding) {
+                    tooltipX = padding;
+                }
+
+                tooltip.style.left = `${tooltipX}px`;
+                tooltip.style.transform = 'translateX(0)';
+
+                if (step.position === 'bottom') {
+                    tooltip.style.top = `${rect.bottom + 15}px`;
+                } else if (step.position === 'top') {
+                    tooltip.style.top = `${rect.top - 15}px`;
+                    tooltip.style.transform = 'translateY(-100%)';
+                }
+            }
+
+            document.getElementById('skip-onboarding').addEventListener('click', endOnboarding);
+            document.getElementById('next-step').addEventListener('click', nextStep);
+            document.getElementById('prev-step')?.addEventListener('click', prevStep);
+        }
+
+        function nextStep() {
+            currentOnboardingStep++;
+            if (currentOnboardingStep >= onboardingSteps.length) {
+                endOnboarding();
+            } else {
+                showOnboardingStep(currentOnboardingStep);
+            }
+        }
+        
+        function prevStep() {
+            currentOnboardingStep--;
+            if (currentOnboardingStep < 0) {
+                currentOnboardingStep = 0;
+            }
+            showOnboardingStep(currentOnboardingStep);
+        }
+
+        function endOnboarding() {
+            document.getElementById('onboarding-container').classList.add('hidden');
+            localStorage.setItem('onboardingComplete', 'true');
+        }
+
+
+        // --- CORE APP LOGIC ---
+        function initializeApp() {
+            // PENSAMIENTO DEL INGENIERO:
+            // Eliminamos la vista del dashboard y la reemplazamos con las vistas
+            // que ahora formarán parte del perfil.
+            appContainer.innerHTML = `
+                <div id="marketplaceView" class="view"></div> <div id="detailView" class="view"></div>
+                <div id="createView" class="view"></div> <div id="profileView" class="view"></div>
+                <div id="editProfileView" class="view"></div> <div id="favoritesView" class="view"></div>
+                <div id="myListingsView" class="view"></div>
+                <div id="messagesView" class="view"></div> <div id="chatView" class="view"></div>
+                <div id="marketPulseView" class="view"></div> <div id="adminDashboardView" class="view"></div>
+                <div id="adminListingsView" class="view"></div> <div id="adminUsersView" class="view"></div>
+                <div id="adminActivityView" class="view"></div> <div id="adminUserSupportView" class="view"></div>
+                <div id="adminReportsView" class="view"></div>
+                <div id="farmsView" class="view"></div>
+                <div id="addFarmView" class="view"></div>
+                <div id="editFarmView" class="view"></div>
+            `;
+            setupEventListeners();
+            navigateTo('marketplace');
+            setTimeout(startOnboarding, 500);
+        }
+
+        function updateBottomNav(activeViewId) {
+            bottomNav.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.view === activeViewId);
+            });
+            document.getElementById('navProfileBtn').dataset.ownerId = currentUserId;
+
+            const messagesNavItem = bottomNav.querySelector('.nav-item[data-view="messages"]');
+            if (messagesNavItem) {
+                const badge = messagesNavItem.querySelector('.notification-badge');
+                const userHasUnread = localUsers[currentUserId]?.hasUnreadMessages;
+                if (badge) {
+                    badge.style.display = userHasUnread ? 'block' : 'none';
+                }
+            }
+        }
+
+        function navigateTo(viewId, params = {}, isGoingBack = false) {
+            const currentView = document.querySelector('.view.active');
+            
+            if (currentView && !isGoingBack) {
+                navigationHistory.push({ viewId: currentView.id.replace('View', ''), params: { ...currentView.dataset } });
+            }
+
+            if (viewId === 'messages') {
+                localUsers[currentUserId].hasUnreadMessages = false;
+            }
+            
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            
+            const viewElement = document.getElementById(viewId + 'View');
+            let viewContent = '';
+
+            for (const key in viewElement.dataset) {
+                delete viewElement.dataset[key];
+            }
+            
+            Object.assign(viewElement.dataset, params);
+            
+            switch (viewId) {
+                case 'marketplace': viewContent = getMarketplaceHTML(); break;
+                case 'detail': viewContent = getDetailViewHTML(params.listingId); break;
+                case 'profile': 
+                    const isCurrentUser = (params.ownerId || currentUserId) === currentUserId;
+                    if (isCurrentUser && params.tab) {
+                        viewContent = getProfileViewHTML(currentUserId, params.tab);
+                    } else {
+                        viewContent = getProfileViewHTML(params.ownerId || currentUserId);
+                    }
+                    break;
+                case 'create': viewContent = getCreateViewHTML(params.listingId); break;
+                case 'editProfile': viewContent = getEditProfileViewHTML(params.userId); break;
+                case 'favorites': viewContent = getFavoritesViewHTML(); break;
+                case 'myListings': viewContent = getMyListingsViewHTML(); break;
+                case 'messages': viewContent = getMessagesHTML(); break;
+                case 'chat': viewContent = getChatHTML(params.withUserId); break;
+                case 'marketPulse': viewContent = getMarketPulseHTML(); break;
+                case 'adminDashboard': viewContent = getAdminDashboardHTML(); break;
+                case 'adminListings': viewContent = getAdminListingsViewHTML(); break;
+                case 'adminUsers': viewContent = getAdminUsersViewHTML(); break;
+                case 'adminActivity': viewContent = getAdminActivityLogViewHTML(); break;
+                case 'adminUserSupport': viewContent = getAdminUserSupportViewHTML(params.userId); break;
+                case 'adminReports': viewContent = getAdminReportsViewHTML(); break;
+                case 'farms': viewContent = getFarmsViewHTML(); break;
+                case 'addFarm': viewContent = getAddFarmHTML(); break;
+                case 'editFarm': viewContent = getEditFarmHTML(params.farmId); break;
+            }
+
+            viewElement.innerHTML = viewContent;
+            viewElement.classList.add('active');
+            window.scrollTo(0, 0);
+            updateBottomNav(viewId);
+
+
+            if (viewId === 'marketplace') {
+                renderMarketplaceListings();
+            }
+            if (viewId === 'marketPulse') {
+                generateMarketPulse();
+            }
+        }
+        
+        function goBack() {
+            if (navigationHistory.length > 0) {
+                const prevView = navigationHistory.pop();
+                navigateTo(prevView.viewId, prevView.params, true);
+            } else {
+                navigateTo('marketplace', {}, true);
+            }
+        }
+
+        function renderMarketplaceListings() {
+            const featuredGrid = document.getElementById('featuredGrid');
+            const grid = document.getElementById('cattleGrid');
+            const loader = document.getElementById('marketplaceLoader');
+            if (!grid || !loader) return;
+
+            loader.style.display = 'block';
+            grid.innerHTML = '';
+            if(featuredGrid) featuredGrid.innerHTML = '';
+            
+            setTimeout(() => {
+                const userFavorites = localUsers[currentUserId].favorites;
+                const allListings = localListings.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+                
+                const featured = allListings.filter(l => l.isFeatured);
+                const regular = allListings.filter(l => !l.isFeatured);
+
+                const filteredListings = regular.filter(l => {
+                    const farm = localFarms[l.farmId];
+                    const searchTerm = currentFilters.search.toLowerCase();
+                    const searchMatch = l.breed.toLowerCase().includes(searchTerm) || 
+                                        l.type.toLowerCase().includes(searchTerm) || 
+                                        farm.location.city.toLowerCase().includes(searchTerm) ||
+                                        farm.location.state.toLowerCase().includes(searchTerm);
+                    const typeMatch = currentFilters.type === 'all' || l.type === currentFilters.type;
+                    const locationMatch = currentFilters.location === 'all' || farm.location.state === currentFilters.location;
+                    return searchMatch && typeMatch && locationMatch;
+                });
+                
+                const featuredSection = document.getElementById('featuredSection');
+                if (featured.length > 0 && featuredGrid && featuredSection) {
+                    featuredSection.style.display = 'block';
+                    featuredGrid.innerHTML = featured.map(l => createCattleCard(l, userFavorites.includes(l.id))).join('');
+                } else if(featuredSection) {
+                    featuredSection.style.display = 'none';
+                }
+
+                if (filteredListings.length === 0) {
+                    grid.innerHTML = `<p class="text-center col-span-full text-gray-500">No se encontraron publicaciones.</p>`;
+                } else {
+                    grid.innerHTML = filteredListings.map(l => createCattleCard(l, userFavorites.includes(l.id))).join('');
+                }
+                loader.style.display = 'none';
+            }, 300);
+        }
+
+        function getCommonHeader(title, showBackButton = true) {
+            return `
+                <header class="bg-[var(--md-sys-color-surface)]/80 backdrop-blur-sm sticky top-0 z-10 border-b">
+                    <div class="container mx-auto px-4 h-16 flex items-center">
+                        ${showBackButton ? `<button class="back-btn p-2 -ml-2 rounded-full hover:bg-gray-200"><span class="material-symbols-outlined">arrow_back</span></button>` : ''}
+                        <h2 class="text-xl font-medium ${showBackButton ? 'ml-4' : ''}">${title}</h2>
+                    </div>
+                </header>`;
+        }
+
+        // PENSAMIENTO DEL INGENIERO:
+        // Se ha simplificado la cabecera de Marketplace.
+        // Se han eliminado el select de ubicación y los botones de filtro de tipo,
+        // moviéndolos al modal de filtros.
+        // El campo de búsqueda y el botón de filtros ahora están en una fila compacta.
+        function getMarketplaceHTML() {
+            const isAdmin = currentUserId === 'localUser123';
+            return `
+                <header class="bg-[var(--md-sys-color-surface)]/80 backdrop-blur-sm sticky top-0 z-40 border-b border-[var(--md-sys-color-outline)]/20">
+                    <div class="container mx-auto px-4">
+                        <div class="h-16 flex justify-between items-center">
+                            <img src="https://aiblockweb.com/img/img_renny/2.png" alt="Corral X" class="h-48">
+                            <div class="flex items-center gap-2">
+                                ${isAdmin ? `<button id="adminNavBtn" class="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]" title="Panel de Administrador"><span class="material-symbols-outlined">admin_panel_settings</span></button>` : ''}
+                            </div>
+                        </div>
+                        <div class="pb-4 flex gap-3">
+                            <input type="search" id="searchInput" placeholder="Buscar por raza, tipo o ubicación..." value="${currentFilters.search}" class="flex-grow h-12 pl-4 pr-4 rounded-full bg-[var(--md-sys-color-surface-container-low)] border border-transparent focus:border-[var(--md-sys-color-primary)] focus:ring-0">
+                            <button id="showFilterModalBtn" class="flex-shrink-0 h-12 w-12 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] flex items-center justify-center hover:bg-[var(--md-sys-color-surface-variant)]" title="Abrir Filtros">
+                                <span class="material-symbols-outlined">tune</span>
+                            </button>
+                            <button id="marketPulseBtn" class="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-[var(--md-sys-color-secondary-container)] text-sm whitespace-nowrap">
+                                <span class="material-symbols-outlined text-base">insights</span> Mercado
+                            </button>
+                        </div>
+                    </div>
+                </header>
+                <main class="container mx-auto px-4 py-8">
+                    <div id="marketplaceLoader" class="text-center py-12"><div class="loader mx-auto"></div></div>
+                    <section id="featuredSection" class="mb-8" style="display: none;">
+                        <h2 class="text-2xl font-bold mb-4">Destacadas</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="featuredGrid"></div>
+                    </section>
+                    <h2 class="text-2xl font-bold mb-4">Recientes</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="cattleGrid"></div>
+                </main>
+            `;
+        }
+
+        function getDetailViewHTML(listingId) {
+            const listing = localListings.find(l => l.id === listingId);
+            if (!listing) return `<h2>Publicación no encontrada</h2><button class="back-btn">Volver</button>`;
+            if (listing.ownerId !== currentUserId) {
+                listing.views = (listing.views || 0) + 1;
+            }
+
+            const farm = localFarms[listing.farmId];
+            const owner = localUsers[listing.ownerId];
+
+            const commentsHTML = listing.comments.map(c => `
+                <div class="bg-[var(--md-sys-color-surface)] p-3 rounded-xl">
+                    <div class="flex items-center gap-1">${Array(c.rating).fill(0).map(() => `<span class="material-symbols-outlined text-yellow-500 text-base">star</span>`).join('')}</div>
+                    <p class="text-sm mt-1">${c.text}</p>
+                    <p class="text-xs text-right text-gray-500 mt-2">- ${c.user}</p>
+                </div>
+            `).join('') || '<p class="text-sm text-gray-500">No hay comentarios aún.</p>';
+            
+            const thumbnailsHTML = listing.images.map((imgSrc, index) => `
+                <img src="${imgSrc}" class="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 ${index === 0 ? 'border-blue-500' : 'border-transparent'} gallery-thumbnail" data-index="${index}">
+            `).join('');
+
+            return `
+                ${getCommonHeader(listing.breed)}
+                <main class="container mx-auto px-4 py-8 max-w-3xl">
+                    <div class="mb-4">
+                        <img id="mainImage" src="${listing.images[0]}" class="w-full h-64 object-cover rounded-3xl mb-2">
+                        <div class="flex gap-2 overflow-x-auto p-1">
+                            ${thumbnailsHTML}
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-2xl font-bold">${listing.breed}</h3>
+                                    ${listing.registration.status === 'con-registro' ? `<span class="inline-flex items-center gap-1 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full mt-2"><span class="material-symbols-outlined text-base">verified</span> Con Registro</span>` : `<span class="text-sm text-gray-500 mt-2">Sin Registro</span>`}
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="favorite-btn ${localUsers[currentUserId].favorites.includes(listing.id) ? 'favorited' : ''} w-10 h-10 rounded-full bg-black/30 text-white flex items-center justify-center" data-id="${listing.id}"><span class="material-symbols-outlined">favorite</span></button>
+                                    <div class="relative">
+                                        <button class="options-menu-btn w-10 h-10 rounded-full bg-black/30 text-white flex items-center justify-center">
+                                            <span class="material-symbols-outlined">more_vert</span>
+                                        </button>
+                                        <div class="options-dropdown absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 hidden">
+                                            <button class="report-btn block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-listing-id="${listing.id}">Reportar Publicación</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Ubicación: ${farm.location.state}</p>
+                            <p class="mt-4">${listing.description}</p>
+                            ${listing.registration.status === 'con-registro' && listing.registration.certificate ? `<button class="view-certificate-btn mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 text-sm" data-src="${listing.registration.certificate}"><span class="material-symbols-outlined">badge</span> Ver Certificado</button>` : ''}
+                        </div>
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl">
+                             <div class="profile-link cursor-pointer flex items-center gap-3" data-owner-id="${listing.ownerId}">
+                                <img src="${owner.profilePicture || 'https://placehold.co/48x48/EFEFE7/43483E?text=Perfil'}" alt="Foto de perfil del vendedor" class="w-12 h-12 rounded-full object-cover">
+                                <div>
+                                    <h4 class="font-bold flex items-center gap-2">${farm.name} ${farm.isVerified ? '<span class="material-symbols-outlined verified-badge" title="Vendedor Verificado">verified</span>' : ''}</h4>
+                                    <p class="text-sm flex items-center gap-1">Calificación: ${owner.rating} <span class="material-symbols-outlined text-base text-yellow-500">star</span></p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mt-4">
+                                <button class="contact-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]" data-recipient-id="${listing.ownerId}">
+                                    <span class="material-symbols-outlined">chat</span> Enviar Mensaje
+                                </button>
+                                ${listing.ownerId === currentUserId ? `
+                                    <div class="flex gap-2">
+                                        <button class="edit-btn inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300" data-listing-id="${listing.id}">
+                                            <span class="material-symbols-outlined">edit</span> Editar
+                                        </button>
+                                        <button class="delete-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]" data-listing-id="${listing.id}">
+                                            <span class="material-symbols-outlined">delete</span> Eliminar
+                                        </button>
+                                    </div>
+                                ` : ``}
+                            </div>
+                        </div>
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl">
+                            <h4 class="font-bold mb-3">Comentarios y Calificaciones</h4>
+                            <div class="space-y-3 mb-4">${commentsHTML}</div>
+                            <div class="border-t pt-4">
+                                <h5 class="font-medium mb-2">Deja tu comentario</h5>
+                                <div id="addRating" class="flex items-center mb-2">${[...Array(5)].map((_, i) => `<span class="rating-star material-symbols-outlined" data-value="${i+1}">star</span>`).join('')}</div>
+                                <textarea id="commentText" class="w-full p-2 border rounded-lg bg-white" placeholder="Escribe tu opinión..."></textarea>
+                                <button id="submitCommentBtn" data-listing-id="${listing.id}" class="mt-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-sm">Enviar</button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function getCreateViewHTML(listingId) {
+            const isEditing = !!listingId;
+            const listing = isEditing ? localListings.find(l => l.id === listingId) : null;
+            const formTitle = isEditing ? 'Editar Publicación' : 'Publicar Nuevo Ganado';
+            const formButtonText = isEditing ? 'Guardar Cambios' : 'Publicar';
+            
+            // PENSAMIENTO DEL INGENIERO:
+            // Ahora la publicación debe estar asociada a una finca.
+            // Para mantener la consistencia, el formulario de creación/edición debe
+            // permitir al usuario seleccionar la finca a la que pertenece la publicación.
+            // Esto se logra creando un select con las fincas del usuario actual.
+            const userFarms = Object.values(localFarms).filter(f => f.ownerId === currentUserId);
+            const farmsOptionsHTML = userFarms.map(f => `<option value="${f.id}" ${listing?.farmId === f.id ? 'selected' : ''}>${f.name}</option>`).join('');
+
+            const existingImagesHTML = isEditing ? listing.images.map(src => `
+                <div class="relative w-24 h-24 flex-shrink-0 image-preview-item">
+                    <img src="${src}" class="w-full h-full object-cover rounded-lg">
+                    <button type="button" class="remove-image-btn absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                </div>
+            `).join('') : '';
+
+            return `
+                ${getCommonHeader(formTitle)}
+                <main class="container mx-auto px-4 py-8 max-w-3xl">
+                    <form id="cattleForm" class="space-y-8" data-listing-id="${listingId || ''}">
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl">
+                             <label class="block text-sm font-medium mb-2">Fotos del Animal (hasta 5)</label>
+                             <p class="text-xs text-gray-500 mb-4">La primera foto será la imagen de portada.</p>
+                             <div id="imagePreviewContainer" class="flex items-center gap-4 flex-wrap">
+                                ${existingImagesHTML}
+                                <div id="uploadBox" class="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100" onclick="document.getElementById('cattlePhotosInput').click();">
+                                    <span class="material-symbols-outlined text-4xl">add_photo_alternate</span>
+                                </div>
+                             </div>
+                             <input type="file" id="cattlePhotosInput" accept="image/*" class="hidden" multiple>
+                        </div>
+
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl">
+                            <label class="block text-sm font-medium mb-4">Registro del Animal</label>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2"><input type="radio" name="registrationStatus" value="con-registro" ${listing?.registration?.status === 'con-registro' ? 'checked' : ''} required> Con Registro</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="registrationStatus" value="sin-registro" ${!listing || listing?.registration?.status === 'sin-registro' ? 'checked' : ''} required> Sin Registro</label>
+                            </div>
+                            <div id="certificateUploadSection" class="mt-4 ${!listing || listing?.registration?.status !== 'con-registro' ? 'hidden' : ''}">
+                                <label class="block text-sm font-medium mb-2">Foto del Certificado</label>
+                                <div id="certificatePreviewContainer" class="relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100" onclick="document.getElementById('certificateInput').click();">
+                                    ${listing?.registration?.certificate ? `<img src="${listing.registration.certificate}" class="w-full h-full object-cover rounded-lg">` : `<span class="material-symbols-outlined text-4xl">add_photo_alternate</span>`}
+                                </div>
+                                <input type="file" id="certificateInput" accept="image/*" class="hidden">
+                            </div>
+                        </div>
+
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <select id="cattleType" required class="w-full bg-white border p-3 rounded-lg"><option value="" disabled selected>Tipo</option>
+                                    <option value="lechero" ${listing?.type === 'lechero' ? 'selected' : ''}>Lechero</option>
+                                    <option value="engorde" ${listing?.type === 'engorde' ? 'selected' : ''}>Engorde</option>
+                                    <option value="padrote" ${listing?.type === 'padrote' ? 'selected' : ''}>Padrote</option>
+                                </select>
+                                <input type="text" id="cattleBreed" required class="w-full border p-3 rounded-lg" placeholder="Raza" value="${listing?.breed || ''}">
+                                <input type="number" id="cattleAge" min="0" step="0.1" required class="w-full border p-3 rounded-lg" placeholder="Edad (años)" value="${listing?.age || ''}">
+                                <input type="number" id="cattleQuantity" min="1" value="${listing?.quantity || ''}" required class="w-full border p-3 rounded-lg" placeholder="Cantidad">
+                            </div>
+                        </div>
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl space-y-6">
+                            <!-- Nuevo campo para seleccionar la finca. -->
+                            <select id="farmId" required class="w-full bg-white border p-3 rounded-lg">
+                                <option value="" disabled selected>Selecciona la Finca</option>
+                                ${userFarms.length === 0 ? '<option value="" disabled>Debes agregar una finca primero</option>' : ''}
+                                ${farmsOptionsHTML}
+                            </select>
+                            <textarea id="additionalInfo" rows="4" class="w-full border p-3 rounded-lg" placeholder="Descripción...">${listing?.description || ''}</textarea>
+                        </div>
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl">
+                            <label class="flex items-center gap-2"><input type="checkbox" id="isFeatured" ${listing?.isFeatured ? 'checked' : ''}> Marcar como Publicación Destacada</label>
+                        </div>
+                        <div class="flex justify-end items-center gap-4 pt-4">
+                            <button type="button" class="back-btn px-6 py-2.5 rounded-full border">Cancelar</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">${formButtonText}</button>
+                        </div>
+                    </form>
+                </main>
+            `;
+        }
+        
+        function getEditProfileViewHTML(userId) {
+            const user = localUsers[userId];
+            if (!user) return `<h2>Usuario no encontrado</h2><button class="back-btn">Volver</button>`;
+            
+            return `
+                ${getCommonHeader('Editar Perfil')}
+                <main class="container mx-auto px-4 py-8 max-w-3xl">
+                    <form id="editProfileForm" class="space-y-8" data-user-id="${userId}">
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl space-y-6">
+                            <div class="flex flex-col items-center gap-4">
+                                <img id="profileImagePreview" src="${user.profilePicture || 'https://placehold.co/128x128/EFEFE7/43483E?text=Perfil'}" alt="Vista previa de perfil" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md">
+                                <button type="button" onclick="document.getElementById('profilePhotoInput').click();" class="px-4 py-2 rounded-full border text-sm">Cambiar Foto</button>
+                                <input type="file" id="profilePhotoInput" accept="image/*" class="hidden">
+                            </div>
+                             <div>
+                                <label for="fullName" class="block text-sm font-medium mb-2">Nombre Completo</label>
+                                <input type="text" id="fullName" required class="w-full border p-3 rounded-lg bg-white" placeholder="Nombre Completo" value="${user.fullName || ''}">
+                            </div>
+                             <div>
+                                <label for="userBio" class="block text-sm font-medium mb-2">Biografía</label>
+                                <textarea id="userBio" rows="4" class="w-full border p-3 rounded-lg bg-white" placeholder="Cuéntanos sobre ti...">${user.bio || ''}</textarea>
+                            </div>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium mb-2">Correo Electrónico</label>
+                                    <input type="email" id="email" required class="w-full border p-3 rounded-lg bg-white" placeholder="tu@correo.com" value="${user.email || ''}">
+                                </div>
+                                <div>
+                                    <label for="dob" class="block text-sm font-medium mb-2">Fecha de Nacimiento</label>
+                                    <input type="date" id="dob" required class="w-full border p-3 rounded-lg bg-white" value="${user.dob || ''}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end items-center gap-4 pt-4">
+                            <button type="button" class="back-btn px-6 py-2.5 rounded-full border">Cancelar</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </main>
+            `;
+        }
+        
+        // PENSAMIENTO DEL INGENIERO:
+        // Se ha eliminado esta función por completo ya que el Dashboard ya no existe.
+        // function getDashboardHTML() { ... }
+        
+        function getMyListingsViewHTML() {
+            const myListings = localListings.filter(l => l.ownerId === currentUserId);
+            const listingsHTML = myListings.length > 0
+                ? myListings.map(l => {
+                    const farm = localFarms[l.farmId];
+                    return `
+                        <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between gap-4">
+                            <img src="${l.images[0]}" alt="${l.breed}" class="w-16 h-16 object-cover rounded-md">
+                            <div class="flex-grow">
+                                <p class="font-medium">${l.breed}</p>
+                                <p class="text-sm text-gray-500">De la finca: ${farm.name}</p>
+                                <p class="text-sm text-gray-500">${l.views || 0} vistas</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="edit-btn p-2 rounded-full hover:bg-gray-200" data-listing-id="${l.id}"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="delete-btn p-2 rounded-full hover:bg-gray-200" data-listing-id="${l.id}"><span class="material-symbols-outlined text-red-600">delete</span></button>
+                            </div>
+                        </div>
+                    `;
+                }).join('')
+                : '<p class="text-center text-gray-500">No tienes publicaciones activas.</p>';
+
+            return `
+                <div class="container mx-auto px-4 py-8">
+                    <div class="space-y-4">
+                        ${listingsHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getFarmsViewHTML() {
+            const myFarms = Object.values(localFarms).filter(f => f.ownerId === currentUserId);
+            const farmsHTML = myFarms.length > 0
+                ? myFarms.map(f => `
+                    <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between gap-4">
+                        <img src="https://placehold.co/64x64/EFEFE7/43483E?text=Finca" class="w-16 h-16 object-cover rounded-md">
+                        <div class="flex-grow">
+                            <p class="font-medium">${f.name}</p>
+                            <p class="text-sm text-gray-500">${f.location.city}, ${f.location.state}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="edit-farm-btn p-2 rounded-full hover:bg-gray-200" data-farm-id="${f.id}"><span class="material-symbols-outlined">edit</span></button>
+                            <button class="delete-farm-btn p-2 rounded-full hover:bg-red-100" data-farm-id="${f.id}"><span class="material-symbols-outlined text-red-600">delete</span></button>
+                        </div>
+                    </div>
+                `).join('')
+                : '<p class="text-center text-gray-500">Aún no tienes fincas registradas.</p>';
+
+            return `
+                <div class="container mx-auto px-4 py-8">
+                    <div class="space-y-4">
+                        <button id="addFarmBtn" class="w-full text-center px-6 py-3 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-medium mb-4">
+                            <span class="material-symbols-outlined">add</span> Agregar Nueva Finca
+                        </button>
+                        ${farmsHTML}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getAddFarmHTML() {
+            return `
+                ${getCommonHeader('Agregar Nueva Finca')}
+                <main class="container mx-auto px-4 py-8 max-w-3xl">
+                    <form id="addFarmForm" class="space-y-8">
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl space-y-6">
+                            <div>
+                                <label for="farmName" class="block text-sm font-medium mb-2">Nombre de la Finca</label>
+                                <input type="text" id="farmName" required class="w-full border p-3 rounded-lg bg-white" placeholder="Ej: Fundo La Cabaña">
+                            </div>
+                            <div>
+                                <label for="farmBio" class="block text-sm font-medium mb-2">Biografía / Descripción</label>
+                                <textarea id="farmBio" rows="4" class="w-full border p-3 rounded-lg bg-white" placeholder="Breve descripción de la finca..."></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="farmState" class="block text-sm font-medium mb-2">Estado</label>
+                                    <input type="text" id="farmState" required class="w-full border p-3 rounded-lg bg-white" placeholder="Ej: Carabobo">
+                                </div>
+                                <div>
+                                    <label for="farmCity" class="block text-sm font-medium mb-2">Ciudad</label>
+                                    <input type="text" id="farmCity" required class="w-full border p-3 rounded-lg bg-white" placeholder="Ej: Valencia">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="farmPhone" class="block text-sm font-medium mb-2">Teléfono de Contacto</label>
+                                <input type="tel" id="farmPhone" required class="w-full border p-3 rounded-lg bg-white" placeholder="Ej: 0414-1234567">
+                            </div>
+                        </div>
+                        <div class="flex justify-end items-center gap-4 pt-4">
+                            <button type="button" class="back-btn px-6 py-2.5 rounded-full border">Cancelar</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">Guardar Finca</button>
+                        </div>
+                    </form>
+                </main>
+            `;
+        }
+        
+        function getEditFarmHTML(farmId) {
+            const farm = localFarms[farmId];
+            if (!farm) return `<h2>Finca no encontrada</h2><button class="back-btn">Volver</button>`;
+            
+            return `
+                ${getCommonHeader('Editar Finca')}
+                <main class="container mx-auto px-4 py-8 max-w-3xl">
+                    <form id="editFarmForm" class="space-y-8" data-farm-id="${farmId}">
+                        <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl space-y-6">
+                            <div>
+                                <label for="farmName" class="block text-sm font-medium mb-2">Nombre de la Finca</label>
+                                <input type="text" id="farmName" required class="w-full border p-3 rounded-lg bg-white" value="${farm.name || ''}">
+                            </div>
+                            <div>
+                                <label for="farmBio" class="block text-sm font-medium mb-2">Biografía / Descripción</label>
+                                <textarea id="farmBio" rows="4" class="w-full border p-3 rounded-lg bg-white">${farm.bio || ''}</textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="farmState" class="block text-sm font-medium mb-2">Estado</label>
+                                    <input type="text" id="farmState" required class="w-full border p-3 rounded-lg bg-white" value="${farm.location.state || ''}">
+                                </div>
+                                <div>
+                                    <label for="farmCity" class="block text-sm font-medium mb-2">Ciudad</label>
+                                    <input type="text" id="farmCity" required class="w-full border p-3 rounded-lg bg-white" value="${farm.location.city || ''}">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="farmPhone" class="block text-sm font-medium mb-2">Teléfono de Contacto</label>
+                                <input type="tel" id="farmPhone" required class="w-full border p-3 rounded-lg bg-white" value="${farm.phone || ''}">
+                            </div>
+                        </div>
+                        <div class="flex justify-end items-center gap-4 pt-4">
+                            <button type="button" class="back-btn px-6 py-2.5 rounded-full border">Cancelar</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </main>
+            `;
+        }
+
+        function getMessagesHTML() {
+            const user = localUsers[currentUserId];
+            const conversations = user.messages.map(thread => {
+                const otherUser = localUsers[thread.with];
+                const lastMessage = thread.messages[thread.messages.length - 1];
+                return `
+                    <div class="chat-link p-4 border-b hover:bg-gray-100 cursor-pointer" data-with-user-id="${thread.with}">
+                        <p class="font-bold">${otherUser.fullName}</p>
+                        <p class="text-sm text-gray-600 truncate">${lastMessage.from === currentUserId ? 'Tú: ' : ''}${lastMessage.text}</p>
+                    </div>
+                `;
+            }).join('');
+            return `
+                ${getCommonHeader('Mensajes', false)}
+                <main class="container mx-auto">
+                    ${conversations || '<p class="p-4">No tienes mensajes.</p>'}
+                </main>
+            `;
+        }
+
+        function getChatHTML(withUserId) {
+            const user = localUsers[currentUserId];
+            const otherUser = localUsers[withUserId];
+            let thread = user.messages.find(t => t.with === withUserId);
+            if (!thread) {
+                thread = { with: withUserId, messages: [] };
+                user.messages.push(thread);
+            }
+
+            const messagesHTML = thread.messages.map(msg => `
+                <div class="p-2 ${msg.from === currentUserId ? 'text-right' : 'text-left'}">
+                    <div class="inline-block px-4 py-2 rounded-2xl ${msg.from === currentUserId ? 'bg-[var(--md-sys-color-primary-container)]' : 'bg-[var(--md-sys-color-surface-container-high)]'}">${msg.text}</div>
+                </div>
+            `).join('');
+            return `
+                <header class="bg-white sticky top-0 z-10 border-b">
+                    <div class="container mx-auto px-4 h-16 flex items-center">
+                        <button class="back-btn p-2 -ml-2 rounded-full"><span class="material-symbols-outlined">arrow_back</span></button>
+                        <h2 class="text-xl font-medium ml-4">${otherUser.fullName}</h2>
+                    </div>
+                </header>
+                <main class="container mx-auto p-4 space-y-2">${messagesHTML}</main>
+                <footer class="sticky bottom-0 bg-white p-4 border-t">
+                    <div class="flex gap-2">
+                        <input id="chatInput" type="text" class="w-full p-2 border rounded-lg" placeholder="Escribe un mensaje...">
+                        <button id="sendMessageBtn" data-recipient-id="${withUserId}" class="px-4 py-2 bg-[var(--md-sys-color-primary)] text-white rounded-lg">Enviar</button>
+                    </div>
+                </footer>
+            `;
+        }
+
+        function getMarketPulseHTML() {
+            return `
+                ${getCommonHeader('Pulso del Mercado (IA)')}
+                <main class="container mx-auto p-4">
+                    <div id="pulseLoader" class="text-center py-12"><div class="loader mx-auto"></div><p>Analizando el mercado...</p></div>
+                    <div id="pulseResult" class="bg-white p-4 rounded-lg shadow-sm" style="display: none;"></div>
+                </main>
+            `;
+        }
+        
+        function getAdminDashboardHTML() {
+            const totalUsers = Object.keys(localUsers).length;
+            const totalListings = localListings.length;
+            const totalViews = localListings.reduce((sum, l) => sum + (l.views || 0), 0);
+            const totalFavorites = Object.values(localUsers).reduce((sum, u) => sum + u.favorites.length, 0);
+            const totalReports = localListings.reduce((sum, l) => sum + (l.reports?.length || 0), 0);
+
+            return `
+                ${getCommonHeader('Panel de Administrador')}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="flex gap-4 mb-8 overflow-x-auto pb-2">
+                        <button id="summaryTabBtn" class="px-4 py-2 rounded-full bg-[var(--md-sys-color-primary-container)] text-sm whitespace-nowrap">Resumen</button>
+                        <button id="listingsTabBtn" class="px-4 py-2 rounded-full bg-[var(--md-sys-color-surface-container-low)] text-sm whitespace-nowrap">Publicaciones</button>
+                        <button id="usersTabBtn" class="px-4 py-2 rounded-full bg-[var(--md-sys-color-surface-container-low)] text-sm whitespace-nowrap">Usuarios</button>
+                        <button id="activityTabBtn" class="px-4 py-2 rounded-full bg-[var(--md-sys-color-surface-container-low)] text-sm whitespace-nowrap">Actividad</button>
+                        <button id="reportsTabBtn" class="px-4 py-2 rounded-full bg-[var(--md-sys-color-surface-container-low)] text-sm whitespace-nowrap">Reportes (${totalReports})</button>
+                    </div>
+                    <div id="adminContent">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl text-center">
+                                <p class="text-3xl font-bold">${totalUsers}</p>
+                                <p class="text-sm">Usuarios</p>
+                            </div>
+                            <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl text-center">
+                                <p class="text-3xl font-bold">${totalListings}</p>
+                                <p class="text-sm">Publicaciones</p>
+                            </div>
+                            <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl text-center">
+                                <p class="text-3xl font-bold">${totalViews}</p>
+                                <p class="text-sm">Vistas</p>
+                            </div>
+                            <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl text-center">
+                                <p class="text-3xl font-bold">${totalReports}</p>
+                                <p class="text-sm">Reportes</p>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Métricas por Tipo</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${['lechero', 'engorde', 'padrote'].map(type => {
+                                const count = localListings.filter(l => l.type === type).length;
+                                return `
+                                    <div class="bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-2xl text-center">
+                                        <p class="text-2xl font-bold">${count}</p>
+                                        <p>${type.charAt(0).toUpperCase() + type.slice(1)}</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function getAdminListingsViewHTML() {
+            const allListings = localListings.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+            return `
+                ${getCommonHeader('Gestión de Publicaciones')}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="overflow-x-auto bg-[var(--md-sys-color-surface-container-low)] rounded-3xl">
+                        <table class="w-full text-left table-auto">
+                            <thead>
+                                <tr class="bg-[var(--md-sys-color-surface-container-high)] text-sm">
+                                    <th class="p-4 rounded-tl-3xl">Raza</th>
+                                    <th class="p-4">Finca</th>
+                                    <th class="p-4 rounded-tr-3xl">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allListings.map(l => {
+                                    const farm = localFarms[l.farmId];
+                                    return `
+                                        <tr class="border-b border-gray-200">
+                                            <td class="p-4">${l.breed}</td>
+                                            <td class="p-4">${farm.name}</td>
+                                            <td class="p-4">
+                                                <button class="detail-link px-3 py-1 rounded-full bg-[var(--md-sys-color-secondary-container)] text-sm" data-id="${l.id}">Ver</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            `;
+        }
+
+        function getAdminUsersViewHTML() {
+            const allUsers = Object.entries(localUsers).map(([id, user]) => ({ id, ...user }));
+            return `
+                ${getCommonHeader('Gestión de Usuarios')}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="overflow-x-auto bg-[var(--md-sys-color-surface-container-low)] rounded-3xl">
+                        <table class="w-full text-left table-auto">
+                            <thead>
+                                <tr class="bg-[var(--md-sys-color-surface-container-high)] text-sm">
+                                    <th class="p-4 rounded-tl-3xl">Nombre</th>
+                                    <th class="p-4">Estado</th>
+                                    <th class="p-4 rounded-tr-3xl">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allUsers.map(u => `
+                                    <tr class="border-b border-gray-200">
+                                        <td class="p-4">${u.fullName}</td>
+                                        <td class="p-4"><span class="${u.status === 'suspended' ? 'suspended-user' : ''}">${u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span></td>
+                                        <td class="p-4 space-x-2">
+                                            <button class="profile-link px-3 py-1 rounded-full bg-[var(--md-sys-color-secondary-container)] text-sm" data-owner-id="${u.id}">Ver</button>
+                                            ${u.status === 'active' ? `
+                                                <button class="suspend-btn px-3 py-1 rounded-full bg-[var(--md-sys-color-error)] text-white text-sm" data-user-id="${u.id}">Suspender</button>
+                                            ` : `
+                                                <button class="activate-btn px-3 py-1 rounded-full bg-[var(--md-sys-color-primary)] text-white text-sm" data-user-id="${u.id}">Activar</button>
+                                            `}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            `;
+        }
+
+        function getAdminActivityLogViewHTML() {
+            const allActivities = activityLog.sort((a, b) => b.timestamp - a.timestamp);
+            return `
+                ${getCommonHeader('Registro de Actividad')}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="overflow-x-auto bg-[var(--md-sys-color-surface-container-low)] rounded-3xl">
+                        <table class="w-full text-left table-auto">
+                            <thead>
+                                <tr class="bg-[var(--md-sys-color-surface-container-high)] text-sm">
+                                    <th class="p-4 rounded-tl-3xl">Fecha</th>
+                                    <th class="p-4">Usuario</th>
+                                    <th class="p-4 rounded-tr-3xl">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allActivities.map(log => `
+                                    <tr class="border-b border-gray-200">
+                                        <td class="p-4 text-sm">${new Date(log.timestamp).toLocaleString()}</td>
+                                        <td class="p-4">${log.userId}</td>
+                                        <td class="p-4">${log.action}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function getAdminUserSupportViewHTML(userId) {
+            const user = localUsers[userId];
+            if (!user) return `<h2>Usuario no encontrado</h2><button class="back-btn">Volver</button>`;
+
+            const userListings = localListings.filter(l => l.ownerId === userId);
+            const userFarms = Object.values(localFarms).filter(f => f.ownerId === userId);
+            const userActivities = activityLog.filter(log => log.userId === userId).sort((a, b) => b.timestamp - a.timestamp);
+
+            return `
+                ${getCommonHeader(`Soporte: ${user.fullName}`)}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl mb-8">
+                        <h3 class="text-2xl font-bold mb-2">Detalles</h3>
+                        <p class="text-sm">ID: ${userId}</p>
+                        <p class="text-sm">Estado: <span class="${user.status === 'suspended' ? 'suspended-user' : ''}">${user.status.charAt(0).toUpperCase() + user.status.slice(1)}</span></p>
+                        <p class="text-sm">Calificación: ${user.rating} (${user.ratingsCount} opiniones)</p>
+                        <div class="flex gap-4 mt-4">
+                            <button class="profile-link px-4 py-2 rounded-full bg-[var(--md-sys-color-secondary-container)] text-sm" data-owner-id="${userId}">Ver Perfil</button>
+                            ${user.status === 'active' ? `<button class="suspend-btn px-4 py-2 rounded-full bg-[var(--md-sys-color-error)] text-white text-sm" data-user-id="${userId}">Suspender</button>` : `<button class="activate-btn px-4 py-2 rounded-full bg-[var(--md-sys-color-primary)] text-white text-sm" data-user-id="${userId}">Activar</button>`}
+                        </div>
+                    </div>
+                    <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl mb-8">
+                        <h3 class="text-2xl font-bold mb-4">Fincas</h3>
+                        <div class="space-y-4">
+                            ${userFarms.map(f => `<div class="bg-white p-4 rounded-lg shadow-sm"><span>${f.name}</span> <span class="text-sm text-gray-500">${f.location.city}</span> ${f.isVerified ? '<span class="material-symbols-outlined verified-badge" title="Finca Verificada">verified</span>' : ''}</div>`).join('') || '<p>No tiene fincas registradas.</p>'}
+                        </div>
+                    </div>
+                    <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl mb-8">
+                        <h3 class="text-2xl font-bold mb-4">Publicaciones</h3>
+                        <div class="space-y-4">
+                            ${userListings.map(l => `<div class="bg-white p-4 rounded-lg shadow-sm flex justify-between"><span>${l.breed}</span><button class="detail-link px-3 py-1 rounded-full bg-[var(--md-sys-color-secondary-container)] text-sm" data-id="${l.id}">Ver</button></div>`).join('') || '<p>No tiene publicaciones.</p>'}
+                        </div>
+                    </div>
+                    <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl">
+                        <h3 class="text-2xl font-bold mb-4">Actividad</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left table-auto">
+                                <thead><tr class="bg-[var(--md-sys-color-surface-container-high)] text-sm"><th class="p-4 rounded-tl-3xl">Fecha</th><th class="p-4">Acción</th><th class="p-4 rounded-tr-3xl">Detalles</th></tr></thead>
+                                <tbody>
+                                    ${userActivities.map(log => `<tr class="border-b border-gray-200"><td class="p-4 text-sm">${new Date(log.timestamp).toLocaleString()}</td><td class="p-4">${log.action}</td><td class="p-4">${log.details}</td></tr>`).join('') || `<tr><td colspan="3" class="p-4 text-center text-gray-500">Sin actividad.</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
+        function getAdminReportsViewHTML() {
+            const reportedListings = localListings.filter(l => l.reports && l.reports.length > 0);
+            
+            const listingsHTML = reportedListings.map(listing => {
+                const reportsHTML = listing.reports.map(report => `
+                    <div class="ml-4 mt-2 p-2 bg-gray-100 rounded">
+                        <p class="text-sm"><span class="font-semibold">Motivo:</span> ${report.reason}</p>
+                        <p class="text-xs text-gray-500">Reportado por: ${report.reporterId} el ${new Date(report.timestamp).toLocaleString('es-ES')}</p>
+                    </div>
+                `).join('');
+                
+                const farm = localFarms[listing.farmId];
+
+                return `
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex items-center justify-between gap-4">
+                            <img src="${listing.images[0]}" alt="${listing.breed}" class="w-16 h-16 object-cover rounded-md">
+                            <div class="flex-grow">
+                                <p class="font-medium">${listing.breed} (ID: ${listing.id})</p>
+                                <p class="text-sm text-gray-500">Publicado por: ${farm.name}</p>
+                            </div>
+                            <button class="detail-link p-2 rounded-full bg-gray-200 hover:bg-gray-300" data-id="${listing.id}" title="Ver Publicación">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <p class="font-semibold">Reportes (${listing.reports.length}):</p>
+                            ${reportsHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-center text-gray-500">No hay publicaciones reportadas.</p>';
+
+            return `
+                ${getCommonHeader('Publicaciones Reportadas')}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="space-y-4">
+                        ${listingsHTML}
+                    </div>
+                </main>
+            `;
+        }
+
+        function getProfileViewHTML(ownerId, activeTab = 'profile') {
+            const owner = localUsers[ownerId];
+            if (!owner) return `<h2>Vendedor no encontrado</h2><button class="back-btn">Volver</button>`;
+            
+            const isCurrentUser = ownerId === currentUserId;
+            const title = isCurrentUser ? 'Mi Perfil' : 'Perfil del Vendedor';
+            
+            let tabContent = '';
+            let tabsHTML = '';
+            
+            if (isCurrentUser) {
+                tabsHTML = `
+                    <div id="profileTabs" class="flex justify-center md:justify-start gap-4 mb-8 overflow-x-auto pb-2">
+                        <button data-tab="profile" class="tab-btn px-4 py-2 rounded-full text-sm whitespace-nowrap ${activeTab === 'profile' ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'bg-[var(--md-sys-color-surface-container-low)]'}">Perfil</button>
+                        <button data-tab="myListings" class="tab-btn px-4 py-2 rounded-full text-sm whitespace-nowrap ${activeTab === 'myListings' ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'bg-[var(--md-sys-color-surface-container-low)]'}">Mis Publicaciones</button>
+                        <button data-tab="farms" class="tab-btn px-4 py-2 rounded-full text-sm whitespace-nowrap ${activeTab === 'farms' ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'bg-[var(--md-sys-color-surface-container-low)]'}">Mis Fincas</button>
+                    </div>
+                `;
+
+                switch (activeTab) {
+                    case 'myListings':
+                        tabContent = getMyListingsViewHTML();
+                        break;
+                    case 'farms':
+                        tabContent = getFarmsViewHTML();
+                        break;
+                    case 'profile':
+                    default:
+                        // PENSAMIENTO DEL INGENIERO: Se han eliminado las secciones de Fincas y Publicaciones de la vista principal del perfil.
+                        tabContent = `
+                            <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl mb-8">
+                                <div class="text-center">
+                                    <img src="${owner.profilePicture || 'https://placehold.co/128x128/EFEFE7/43483E?text=Perfil'}" alt="Foto de perfil" class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-white shadow-md mx-auto">
+                                    <h3 class="text-2xl font-bold flex items-center justify-center gap-2">${owner.fullName}</h3>
+                                    <p class="text-lg flex items-center justify-center gap-1 mt-2">${owner.rating} <span class="material-symbols-outlined text-yellow-500">star</span><span class="text-sm text-gray-600">(${owner.ratingsCount} opiniones)</span></p>
+                                    <p class="mt-4 max-w-2xl mx-auto text-center text-[var(--md-sys-color-on-surface-variant)]">${owner.bio || 'Este usuario no ha agregado una biografía.'}</p>
+                                    <p class="text-sm text-gray-500 mt-4">Miembro desde: ${new Date(owner.joinedDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}</p>
+                                </div>
+                                <div class="mt-6 text-center">
+                                    <button id="editProfileBtn" data-user-id="${ownerId}" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">Editar Perfil</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                }
+            } else {
+                // Contenido para el perfil de otro usuario, sin pestañas
+                const ownerFarms = Object.values(localFarms).filter(f => f.ownerId === ownerId);
+                const ownerListings = localListings.filter(l => l.ownerId === ownerId);
+                const listingsHTML = ownerListings.length > 0
+                    ? ownerListings.map(l => createCattleCard(l, localUsers[currentUserId].favorites.includes(l.id))).join('')
+                    : `<p class="text-center col-span-full text-gray-500">Este vendedor no tiene publicaciones activas.</p>`;
+                
+                tabContent = `
+                    <div class="bg-[var(--md-sys-color-surface-container-low)] p-6 rounded-3xl mb-8">
+                        <div class="text-center">
+                            <img src="${owner.profilePicture || 'https://placehold.co/128x128/EFEFE7/43483E?text=Perfil'}" alt="Foto de perfil" class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-white shadow-md mx-auto">
+                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2">${owner.fullName}</h3>
+                            <p class="text-lg flex items-center justify-center gap-1 mt-2">${owner.rating} <span class="material-symbols-outlined text-yellow-500">star</span><span class="text-sm text-gray-600">(${owner.ratingsCount} opiniones)</span></p>
+                            <p class="mt-4 max-w-2xl mx-auto text-center text-[var(--md-sys-color-on-surface-variant)]">${owner.bio || 'Este usuario no ha agregado una biografía.'}</p>
+                            <p class="text-sm text-gray-500 mt-4">Miembro desde: ${new Date(owner.joinedDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}</p>
+                        </div>
+                        
+                        ${ownerFarms.length > 0 ? `
+                        <div class="border-t my-6"></div>
+                        <h4 class="text-xl font-bold mb-4">Fincas Registradas</h4>
+                        <div class="space-y-4">
+                            ${ownerFarms.map(f => `
+                                <div class="p-4 bg-[var(--md-sys-color-surface)] rounded-2xl flex items-center justify-between">
+                                    <div class="flex-grow">
+                                        <h5 class="font-bold flex items-center gap-2">${f.name} ${f.isVerified ? '<span class="material-symbols-outlined verified-badge text-sm" title="Finca Verificada">verified</span>' : ''}</h5>
+                                        <p class="text-sm text-gray-500">${f.location.city}, ${f.location.state}</p>
+                                        <p class="text-sm text-gray-500">Teléfono: ${f.phone}</p>
+                                    </div>
+                                    <button class="contact-btn p-2 rounded-full bg-gray-200" data-recipient-id="${ownerId}"><span class="material-symbols-outlined">chat</span></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                    <h4 class="text-xl font-bold mb-4">Publicaciones Activas</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${listingsHTML}</div>
+                `;
+            }
+
+            return `
+                ${getCommonHeader(title, !isCurrentUser)}
+                <main class="container mx-auto px-4 py-8">
+                    ${tabsHTML}
+                    <div id="profile-content">
+                        ${tabContent}
+                    </div>
+                </main>
+            `;
+        }
+
+        function getFavoritesViewHTML() {
+            const user = localUsers[currentUserId];
+            const favoriteListings = localListings.filter(l => user.favorites.includes(l.id));
+            const listingsHTML = favoriteListings.length > 0
+                ? favoriteListings.map(l => createCattleCard(l, true)).join('')
+                : '<p class="text-center col-span-full text-gray-500">No tienes publicaciones guardadas en favoritos.</p>';
+            return `
+                ${getCommonHeader('Mis Favoritos', false)}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${listingsHTML}</div>
+                </main>
+            `;
+        }
+
+        // --- COMPONENT FACTORIES ---
+        function createCattleCard(cattle, isFavorited) {
+            const owner = localUsers[cattle.ownerId];
+            const farm = localFarms[cattle.farmId];
+            return `
+                <div class="bg-[var(--md-sys-color-surface-container-low)] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                    <div class="relative">
+                        <img src="${cattle.images[0]}" class="w-full h-40 object-cover cursor-pointer detail-link" data-id="${cattle.id}">
+                        <button class="favorite-btn ${isFavorited ? 'favorited' : ''} absolute top-2 right-2 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center" data-id="${cattle.id}">
+                            <span class="material-symbols-outlined text-xl">favorite</span>
+                        </button>
+                    </div>
+                    <div class="p-3 flex flex-col flex-grow">
+                        <h3 class="text-base font-medium detail-link cursor-pointer" data-id="${cattle.id}">${cattle.breed}</h3>
+                        <div class="flex items-center gap-2 mt-2">
+                            <img src="${owner.profilePicture || 'https://placehold.co/32x32/EFEFE7/43483E?text=Perfil'}" alt="Foto de perfil del vendedor" class="w-6 h-6 rounded-full object-cover">
+                            <p class="text-xs text-gray-500 flex items-center gap-1">
+                                ${farm.name} ${farm.isVerified ? '<span class="material-symbols-outlined verified-badge text-sm" title="Finca Verificada">verified</span>' : ''}
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-3">
+                            <button class="font-bold text-sm text-left w-full detail-link text-[var(--md-sys-color-primary)]" data-id="${cattle.id}">Ver Detalles</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // PENSAMIENTO DEL INGENIERO:
+        // Nueva función para generar el contenido del modal de filtros.
+        // Usamos los valores de `currentFilters` para preseleccionar las opciones.
+        function getFilterModalHTML() {
+            const locations = [...new Set(Object.values(localFarms).map(f => f.location.state))];
+            
+            // Reusamos los tipos de filtro que ya teníamos
+            const filterTypes = [
+                { value: 'all', label: 'Todos' },
+                { value: 'lechero', label: 'Lechero' },
+                { value: 'engorde', label: 'Engorde' },
+                { value: 'padrote', label: 'Padrote' }
+            ];
+
+            const typeOptionsHTML = filterTypes.map(f => `
+                <button type="button" data-filter="type" data-value="${f.value}" class="filter-option-btn ${currentFilters.type === f.value ? 'active' : ''} flex-shrink-0 px-4 py-1.5 rounded-lg text-sm bg-[var(--md-sys-color-surface-container-low)] hover:bg-[var(--md-sys-color-surface-variant)]">
+                    ${f.label}
+                </button>
+            `).join('');
+
+            const locationOptionsHTML = locations.map(loc => `
+                <option value="${loc}" ${currentFilters.location === loc ? 'selected' : ''}>${loc}</option>
+            `).join('');
+
+
+            return `
+                <div class="p-6 space-y-6">
+                    <h3 class="text-xl font-bold flex justify-between items-center">
+                        Filtros de Búsqueda
+                        <button id="closeFilterModalBtn" class="p-2 rounded-full hover:bg-gray-200"><span class="material-symbols-outlined">close</span></button>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <label class="block text-sm font-medium">Ubicación (Estado)</label>
+                        <select id="modalLocationFilter" class="w-full p-3 rounded-lg bg-white border border-gray-300">
+                            <option value="all">Toda Venezuela</option>
+                            ${locationOptionsHTML}
+                        </select>
+                    </div>
+
+                    <div class="space-y-4">
+                        <label class="block text-sm font-medium">Tipo de Ganado</label>
+                        <div id="modalFilterButtons" class="flex flex-wrap gap-2">
+                            ${typeOptionsHTML}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between pt-4 border-t">
+                        <button id="clearFiltersBtn" class="px-6 py-2.5 rounded-full border text-sm">Limpiar</button>
+                        <button id="applyFiltersBtn" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-sm">Aplicar Filtros</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para mostrar el modal de filtros
+        function showFilterModal() {
+            filterModal.innerHTML = getFilterModalHTML();
+            filterModalOverlay.style.display = 'flex';
+            // Usa setTimeout para aplicar la clase 'open' después de que el display se haya cambiado a 'flex'
+            setTimeout(() => filterModal.classList.add('open'), 10);
+            
+            // Bloquea el scroll del cuerpo de la página
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Función para ocultar el modal de filtros
+        function hideFilterModal() {
+            filterModal.classList.remove('open');
+            // Espera a que termine la transición antes de ocultar la superposición
+            setTimeout(() => {
+                filterModalOverlay.style.display = 'none';
+                document.body.style.overflow = ''; // Restaura el scroll
+            }, 300);
+        }
+
+        // Función para aplicar los filtros del modal
+        function applyModalFilters() {
+            const modal = document.getElementById('filterModal');
+            
+            const newLocation = modal.querySelector('#modalLocationFilter').value;
+            // Se lee el valor del botón que tenga la clase 'active'
+            const newType = modal.querySelector('.filter-option-btn.active')?.dataset.value || 'all';
+
+            // Actualizar el estado de los filtros globales
+            currentFilters.location = newLocation;
+            currentFilters.type = newType;
+            
+            // Ejecutar la búsqueda con los nuevos filtros
+            renderMarketplaceListings();
+            
+            // Ocultar el modal
+            hideFilterModal();
+        }
+
+        // Función para limpiar los filtros
+        function clearAllFilters() {
+            currentFilters.search = '';
+            currentFilters.type = 'all';
+            currentFilters.location = 'all';
+            
+            // Reiniciar el campo de búsqueda en la cabecera
+            const searchInput = document.getElementById('searchInput');
+            if(searchInput) searchInput.value = '';
+
+            // Aplicar los filtros limpios
+            renderMarketplaceListings();
+            
+            // Ocultar el modal
+            hideFilterModal();
+        }
+        
+        // --- EVENT LISTENERS ---
+        function setupEventListeners() {
+            bottomNav.addEventListener('click', e => {
+                const navItem = e.target.closest('.nav-item');
+                if (navItem) {
+                    const view = navItem.dataset.view;
+                    if (view === 'profile') {
+                         navigateTo(view, { ownerId: currentUserId });
+                    } else {
+                        navigateTo(view);
+                    }
+                }
+            });
+
+            appContainer.addEventListener('click', e => {
+                const target = e.target.closest('button, .profile-link, .detail-link, .chat-link, .rating-star, .gallery-thumbnail, .remove-image-btn, .edit-farm-btn, .delete-farm-btn, .tab-btn');
+                if (!target) {
+                    document.querySelectorAll('.options-dropdown').forEach(d => d.classList.add('hidden'));
+                    return;
+                }
+                if (target.classList.contains('gallery-thumbnail')) {
+                    const mainImage = document.getElementById('mainImage');
+                    mainImage.src = target.src;
+                    document.querySelectorAll('.gallery-thumbnail').forEach(t => t.classList.remove('border-blue-500', 'border-transparent'));
+                    target.classList.add('border-blue-500');
+                    return;
+                }
+                if (target.classList.contains('remove-image-btn')) {
+                    target.closest('.image-preview-item').remove();
+                    document.getElementById('uploadBox').style.display = 'flex';
+                    return;
+                }
+                if (target.classList.contains('view-certificate-btn')) {
+                    const src = target.dataset.src;
+                    showImageModal(src);
+                    return;
+                }
+
+                if (target.classList.contains('options-menu-btn')) {
+                    document.querySelectorAll('.options-dropdown').forEach(d => {
+                        if (d !== target.nextElementSibling) d.classList.add('hidden');
+                    });
+                    target.nextElementSibling.classList.toggle('hidden');
+                    return; 
+                }
+
+                if(target.closest('.options-dropdown')) {
+                     target.closest('.options-dropdown').classList.add('hidden');
+                }
+
+                const id = target.id;
+                const classList = target.classList;
+
+                // PENSAMIENTO DEL INGENIERO:
+                // Se conecta el nuevo botón de filtro a la función showFilterModal
+                if (id === 'showFilterModalBtn') showFilterModal();
+                else if (id === 'addFarmBtn') navigateTo('addFarm');
+                else if (id === 'editProfileBtn') navigateTo('editProfile', { userId: target.dataset.userId });
+                else if (classList.contains('edit-farm-btn')) navigateTo('editFarm', { farmId: target.dataset.farmId });
+                else if (classList.contains('delete-farm-btn')) showDeleteFarmModal(target.dataset.farmId);
+                else if (id === 'marketPulseBtn') navigateTo('marketPulse');
+                else if (id === 'adminNavBtn') navigateTo('adminDashboard');
+                else if (id === 'summaryTabBtn') navigateTo('adminDashboard');
+                else if (id === 'listingsTabBtn') navigateTo('adminListings');
+                else if (id === 'usersTabBtn') navigateTo('adminUsers');
+                else if (id === 'activityTabBtn') navigateTo('adminActivity');
+                else if (id === 'reportsTabBtn') navigateTo('adminReports');
+                else if (classList.contains('back-btn')) goBack();
+                else if (classList.contains('profile-link')) {
+                    const ownerId = target.dataset.ownerId;
+                    if (ownerId === currentUserId) {
+                        navigateTo('profile', { ownerId, tab: 'profile' });
+                    } else {
+                        navigateTo('profile', { ownerId });
+                    }
+                }
+                else if (classList.contains('detail-link')) navigateTo('detail', { listingId: target.dataset.id });
+                else if (classList.contains('chat-link')) navigateTo('chat', { withUserId: target.dataset.withUserId });
+                else if (classList.contains('contact-btn')) navigateTo('chat', { withUserId: target.dataset.recipientId });
+                else if (classList.contains('favorite-btn')) toggleFavorite(target);
+                else if (classList.contains('edit-btn')) navigateTo('create', { listingId: target.dataset.listingId });
+                else if (id === 'sendMessageBtn') sendMessage(target.dataset.recipientId);
+                else if (id === 'submitCommentBtn') submitComment(target.dataset.listingId);
+                else if (classList.contains('rating-star')) handleRatingClick(e);
+                else if (classList.contains('delete-btn')) handleDeleteClick(target.dataset.listingId);
+                else if (classList.contains('report-btn')) showReportModal(target.dataset.listingId);
+                else if (classList.contains('suspend-btn') || classList.contains('activate-btn')) toggleUserStatus(target.dataset.userId);
+                else if (classList.contains('verify-btn')) toggleUserVerification(target.dataset.userId);
+                else if (classList.contains('tab-btn')) {
+                    const tab = target.dataset.tab;
+                    navigateTo('profile', { ownerId: currentUserId, tab: tab });
+                }
+            });
+
+            appContainer.addEventListener('change', e => {
+                // PENSAMIENTO DEL INGENIERO: Se elimina el listener directo del locationFilter
+                // ya que ahora se maneja en el modal o en el search input principal.
+                // if (e.target.id === 'locationFilter') {
+                //     currentFilters.location = e.target.value;
+                //     renderMarketplaceListings();
+                // }
+                if (e.target.id === 'cattlePhotosInput') {
+                    handlePhotoUpload(e.target.files);
+                }
+                if (e.target.name === 'registrationStatus') {
+                    document.getElementById('certificateUploadSection').classList.toggle('hidden', e.target.value !== 'con-registro');
+                }
+                if (e.target.id === 'certificateInput') {
+                    const file = e.target.files[0];
+                    if(file) handleCertificateUpload(file);
+                }
+
+
+
+
+
+
+
+                curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
+  -H 'Content-Type: application/json' \
+  -H 'X-goog-api-key: AIzaSyBP-vKDhkgcS-GlvDqUIvXppm6VlHexgIs' \
+  -X POST \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "Explain how AI works in a few words"
+          }
+        ]
+      }
+    ]
+  }'
+
+
+
+
+
+
+
+
+
+
+                if (e.target.id === 'profilePhotoInput') { 
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            document.getElementById('profileImagePreview').src = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+            appContainer.addEventListener('input', e => {
+                if (e.target.id === 'searchInput') {
+                    // El campo de búsqueda principal aplica el filtro de forma inmediata
+                    currentFilters.search = e.target.value;
+                    renderMarketplaceListings();
+                }
+            });
+            appContainer.addEventListener('submit', e => {
+                if (e.target.id === 'cattleForm') {
+                    e.preventDefault();
+                    handleFormSubmit(e.target);
+                }
+                if (e.target.id === 'editProfileForm') {
+                    e.preventDefault();
+                    handleProfileFormSubmit(e.target);
+                }
+                if (e.target.id === 'addFarmForm') {
+                    e.preventDefault();
+                    handleAddFarmSubmit(e.target);
+                }
+                if (e.target.id === 'editFarmForm') {
+                    e.preventDefault();
+                    handleEditFarmSubmit(e.target);
+                }
+            });
+
+            // --- LISTENERS DEL MODAL DE FILTROS ---
+            filterModalOverlay.addEventListener('click', e => {
+                // R1. Corrección del cierre del modal: Capturamos la X o cualquier parte del botón.
+                if (e.target.id === 'filterModalOverlay' || e.target.closest('#closeFilterModalBtn')) {
+                    hideFilterModal();
+                } else if (e.target.id === 'applyFiltersBtn') {
+                    applyModalFilters();
+                } else if (e.target.id === 'clearFiltersBtn') {
+                    clearAllFilters();
+                } else if (e.target.classList.contains('filter-option-btn')) {
+                    // PENSAMIENTO DEL INGENIERO: La lógica de activación de filtros de tipo está aquí:
+                    
+                    const parent = e.target.closest('#modalFilterButtons');
+                    const value = e.target.dataset.value;
+
+                    // Siempre limpiamos la clase 'active' de todos los botones.
+                    parent.querySelectorAll('.filter-option-btn').forEach(btn => btn.classList.remove('active'));
+                    
+                    // Si el valor NO es 'all', activamos el botón clickeado Y el botón 'all' lo desactivamos
+                    if (value !== 'all') {
+                        e.target.classList.add('active');
+                        // Nos aseguramos de que 'Todos' no esté activo
+                        parent.querySelector('.filter-option-btn[data-value="all"]')?.classList.remove('active');
+                    } else {
+                        // Si se presiona 'Todos', solo se activa 'Todos'
+                         e.target.classList.add('active');
+                    }
+                }
+            });
+        }
+        
+        // --- ACTIONS & API CALLS ---
+
+        function showConfirmationMessage(title, message) {
+            const messageBox = document.createElement('div');
+            messageBox.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4';
+            messageBox.innerHTML = `
+                <div class="bg-white p-6 rounded-lg text-center max-w-sm shadow-xl">
+                    <p class="text-xl font-bold mb-4">${title}</p>
+                    <p class="mb-6">${message}</p>
+                    <button onclick="this.closest('.fixed').remove()" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">OK</button>
+                </div>
+            `;
+            document.body.appendChild(messageBox);
+        }
+
+        function showImageModal(src) {
+            document.body.style.overflow = 'hidden'; // Lock background scroll
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="relative max-w-3xl w-full">
+                    <div class="bg-white p-2 rounded-lg max-h-[90vh] overflow-y-auto">
+                        <img src="${src}" class="w-full h-auto object-contain">
+                    </div>
+                    <button class="close-modal-btn absolute -top-2 -right-2 bg-white text-black rounded-full w-8 h-8 flex items-center justify-center leading-none text-xl shadow-lg">&times;</button>
+                </div>
+            `;
+            const closeButton = modal.querySelector('.close-modal-btn');
+
+            const closeModal = () => {
+                document.body.style.overflow = ''; // Restore scroll
+                modal.remove();
+            };
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+            closeButton.addEventListener('click', closeModal);
+
+            document.body.appendChild(modal);
+        }
+
+        function handlePhotoUpload(files) {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const uploadBox = document.getElementById('uploadBox');
+            const existingImageCount = previewContainer.querySelectorAll('.image-preview-item').length;
+            const limit = 5;
+
+            if (files.length + existingImageCount > limit) {
+                showConfirmationMessage('Límite alcanzado', `Puedes subir un máximo de ${limit} fotos.`);
+                return;
+            }
+
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative w-24 h-24 flex-shrink-0 image-preview-item';
+                    imgContainer.innerHTML = `
+                        <img src="${event.target.result}" class="w-full h-full object-cover rounded-lg">
+                        <button type="button" class="remove-image-btn absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                    `;
+                    previewContainer.insertBefore(imgContainer, uploadBox);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            if (previewContainer.querySelectorAll('.image-preview-item').length + files.length >= limit) {
+                uploadBox.style.display = 'none';
+            }
+        }
+        
+        function handleCertificateUpload(file) {
+            const previewContainer = document.getElementById('certificatePreviewContainer');
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewContainer.innerHTML = `<img src="${event.target.result}" class="w-full h-full object-cover rounded-lg">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+
+        function showReportModal(listingId) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4';
+            modal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg max-w-sm w-full shadow-xl">
+                    <h3 class="text-xl font-bold mb-4">Reportar Publicación</h3>
+                    <form id="reportForm">
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-2"><input type="radio" name="reportReason" value="Información Falsa" required> Información Falsa</label>
+                            <label class="flex items-center gap-2"><input type="radio" name="reportReason" value="Posible Estafa"> Posible Estafa</label>
+                            <label class="flex items-center gap-2"><input type="radio" name="reportReason" value="Contenido Inapropiado"> Contenido Inapropiado</label>
+                        </div>
+                        <div class="flex gap-4 justify-end mt-6">
+                            <button type="button" class="cancel-report-btn px-6 py-2.5 rounded-full border">Cancelar</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]">Enviar Reporte</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#reportForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const reason = modal.querySelector('input[name="reportReason"]:checked').value;
+                handleReportSubmit(listingId, reason);
+                modal.remove();
+            });
+
+            modal.querySelector('.cancel-report-btn').addEventListener('click', () => {
+                modal.remove();
+            });
+        }
+
+        function handleReportSubmit(listingId, reason) {
+            const listing = localListings.find(l => l.id === listingId);
+            if (listing) {
+                if (!listing.reports) listing.reports = [];
+                
+                listing.reports.push({
+                    reporterId: currentUserId,
+                    reason: reason,
+                    timestamp: Date.now()
+                });
+
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'publicacion_reportada', details: `Listing ${listingId} por: ${reason}` });
+                showConfirmationMessage('Reporte Enviado', 'Gracias por ayudarnos a mantener la comunidad segura. Revisaremos la publicación pronto.');
+            }
+        }
+
+        function handleRatingClick(e) {
+            currentRating = e.target.dataset.value;
+            const stars = e.target.parentElement.querySelectorAll('.rating-star');
+            stars.forEach(star => {
+                star.classList.toggle('filled', star.dataset.value <= currentRating);
+            });
+        }
+
+        function submitComment(listingId) {
+            const listing = localListings.find(l => l.id === listingId);
+            const commentText = document.getElementById('commentText').value;
+            if (!listing || !commentText || currentRating === 0) {
+                 showConfirmationMessage('Error', 'Por favor, selecciona una calificación y escribe un comentario.');
+                return;
+            }
+            listing.comments.push({ user: 'UsuarioActual', rating: parseInt(currentRating), text: commentText });
+            
+            const owner = localUsers[listing.ownerId];
+            const ownerListings = localListings.filter(l => l.ownerId === listing.ownerId);
+            let totalRating = 0;
+            let ratingsCount = 0;
+            ownerListings.forEach(l => {
+                l.comments.forEach(c => {
+                    totalRating += c.rating;
+                    ratingsCount++;
+                });
+            });
+            owner.rating = (totalRating / ratingsCount).toFixed(1);
+            owner.ratingsCount = ratingsCount;
+            
+            activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'comentario_enviado', details: listingId });
+
+            currentRating = 0;
+            navigateTo('detail', { listingId });
+        }
+        
+        function handleFormSubmit(form) {
+            const listingId = form.dataset.listingId;
+            const isEditing = !!listingId;
+            let listing = isEditing ? localListings.find(l => l.id === listingId) : null;
+            
+            const images = [];
+            form.querySelectorAll('.image-preview-item img').forEach(img => images.push(img.src));
+
+            if (images.length === 0) {
+                showConfirmationMessage('Faltan fotos', 'Debes subir al menos una foto del animal.');
+                return;
+            }
+            
+            const registrationStatus = form.querySelector('input[name="registrationStatus"]:checked').value;
+            let certificateImage = null;
+            if(registrationStatus === 'con-registro') {
+                const certImg = form.querySelector('#certificatePreviewContainer img');
+                if(certImg) {
+                    certificateImage = certImg.src;
+                } else {
+                    showConfirmationMessage('Falta certificado', 'Debes subir una foto del certificado si el animal tiene registro.');
+                    return;
+                }
+            }
+
+            const listingData = {
+                images,
+                type: form.querySelector('#cattleType').value,
+                breed: form.querySelector('#cattleBreed').value,
+                age: parseFloat(form.querySelector('#cattleAge').value),
+                quantity: parseInt(form.querySelector('#cattleQuantity').value),
+                description: form.querySelector('#additionalInfo').value,
+                isFeatured: form.querySelector('#isFeatured').checked,
+                farmId: form.querySelector('#farmId').value, // Nuevo campo
+                registration: {
+                    status: registrationStatus,
+                    certificate: certificateImage
+                }
+            };
+
+
+            if (isEditing && listing) {
+                Object.assign(listing, listingData);
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'publicacion_editada', details: listingId });
+            } else {
+                const newListing = {
+                    ...listingData,
+                    id: `mock${Date.now()}`,
+                    createdAt: { seconds: Date.now() / 1000 },
+                    ownerId: currentUserId,
+                    comments: [],
+                    views: 0,
+                    reports: []
+                };
+                localListings.unshift(newListing);
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'publicacion_creada', details: newListing.id });
+            }
+            navigateTo('marketplace');
+        }
+
+        function handleProfileFormSubmit(form) {
+            const userId = form.dataset.userId;
+            const user = localUsers[userId];
+            if (user) {
+                user.fullName = form.querySelector('#fullName').value;
+                user.bio = form.querySelector('#userBio').value;
+                user.email = form.querySelector('#email').value;
+                user.dob = form.querySelector('#dob').value;
+                
+                const imagePreview = form.querySelector('#profileImagePreview');
+                if (imagePreview.src.startsWith('data:image')) {
+                    user.profilePicture = imagePreview.src;
+                }
+
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'perfil_actualizado', details: `Perfil de ${userId} actualizado.` });
+            }
+            navigateTo('profile', { ownerId: userId, tab: 'profile' }); // Redirige al tab de perfil principal.
+        }
+        
+        function handleAddFarmSubmit(form) {
+            const farmData = {
+                id: `farm${Date.now()}`,
+                ownerId: currentUserId,
+                name: form.querySelector('#farmName').value,
+                location: {
+                    state: form.querySelector('#farmState').value,
+                    city: form.querySelector('#farmCity').value
+                },
+                bio: form.querySelector('#farmBio').value,
+                phone: form.querySelector('#farmPhone').value,
+                isVerified: false
+            };
+
+            localFarms[farmData.id] = farmData;
+            activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'finca_creada', details: farmData.id });
+            
+            showConfirmationMessage('Finca Agregada', '¡La nueva finca se ha guardado exitosamente!');
+            navigateTo('profile', { ownerId: currentUserId, tab: 'farms' });
+        }
+
+        function handleEditFarmSubmit(form) {
+            const farmId = form.dataset.farmId;
+            const farm = localFarms[farmId];
+            if (!farm) {
+                 showConfirmationMessage('Error', 'No se pudo encontrar la finca para editar.');
+                 return;
+            }
+            
+            const updatedData = {
+                name: form.querySelector('#farmName').value,
+                location: {
+                    state: form.querySelector('#farmState').value,
+                    city: form.querySelector('#farmCity').value
+                },
+                bio: form.querySelector('#farmBio').value,
+                phone: form.querySelector('#farmPhone').value,
+            };
+
+            Object.assign(farm, updatedData);
+            activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'finca_editada', details: farmId });
+            
+            showConfirmationMessage('Finca Actualizada', 'Los cambios se han guardado exitosamente.');
+            navigateTo('profile', { ownerId: currentUserId, tab: 'farms' });
+        }
+
+        function showDeleteFarmModal(farmId) {
+            const farm = localFarms[farmId];
+            const hasListings = localListings.some(l => l.farmId === farmId);
+            let modalMessage = '';
+            
+            if (hasListings) {
+                modalMessage = `Esta finca tiene publicaciones activas. Debes eliminarlas primero para poder borrar la finca.`;
+            } else {
+                modalMessage = `¿Estás seguro de que deseas eliminar la finca "${farm.name}"? Esta acción no se puede deshacer.`;
+            }
+
+            const modal = document.createElement('div');
+            modal.classList.add('fixed', 'inset-0', 'bg-black/50', 'flex', 'items-center', 'justify-center', 'z-50', 'px-4');
+            modal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg text-center max-w-sm">
+                    <p class="text-xl font-bold mb-4">Eliminar Finca</p>
+                    <p class="mb-6">${modalMessage}</p>
+                    <div class="flex gap-4 justify-center">
+                        <button id="cancelDeleteFarmBtn" class="px-6 py-2.5 rounded-full border">Cancelar</button>
+                        ${!hasListings ? `<button id="confirmDeleteFarmBtn" data-farm-id="${farmId}" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]">Sí, Eliminar</button>` : ''}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('cancelDeleteFarmBtn').addEventListener('click', () => {
+                modal.remove();
+            });
+
+            if (!hasListings) {
+                document.getElementById('confirmDeleteFarmBtn').addEventListener('click', () => {
+                    delete localFarms[farmId];
+                    activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'finca_eliminada', details: farmId });
+                    showConfirmationMessage('Finca Eliminada', 'La finca ha sido eliminada exitosamente.');
+                    modal.remove();
+                    navigateTo('profile', { ownerId: currentUserId, tab: 'farms' });
+                });
+            }
+        }
+        
+        function sendMessage(recipientId) {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (localUsers[recipientId]) {
+                localUsers[recipientId].hasUnreadMessages = true;
+            }
+
+            if (recipientId === currentUserId) {
+                let thread = localUsers[currentUserId].messages.find(t => t.with === recipientId);
+                if (!thread) {
+                    thread = { with: recipientId, messages: [] };
+                    localUsers[currentUserId].messages.push(thread);
+                }
+                thread.messages.push({ from: currentUserId, text });
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'mensaje_enviado', details: recipientId });
+                input.value = '';
+                navigateTo('chat', { withUserId: recipientId });
+                return;
+            }
+
+            let thread = localUsers[currentUserId].messages.find(t => t.with === recipientId);
+            if (!thread) {
+                thread = { with: recipientId, messages: [] };
+                localUsers[currentUserId].messages.push(thread);
+            }
+            thread.messages.push({ from: currentUserId, text });
+
+            let thread2 = localUsers[recipientId].messages.find(t => t.with === currentUserId);
+            if (!thread2) {
+                if (!localUsers[recipientId]) {
+                    console.error("Error: Recipient user does not exist in mock data.");
+                } else {
+                    thread2 = { with: currentUserId, messages: [] };
+                    localUsers[recipientId].messages.push(thread2);
+                }
+            }
+            if (thread2) {
+                thread2.messages.push({ from: currentUserId, text });
+            }
+
+            activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'mensaje_enviado', details: recipientId });
+            
+            input.value = '';
+            navigateTo('chat', { withUserId: recipientId });
+            updateBottomNav('chat');
+        }
+        
+        function handleDeleteClick(listingId) {
+            const modal = document.createElement('div');
+            modal.classList.add('fixed', 'inset-0', 'bg-black/50', 'flex', 'items-center', 'justify-center', 'z-50', 'px-4');
+            modal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg text-center max-w-sm">
+                    <p class="text-xl font-bold mb-4">¿Estás seguro?</p>
+                    <p class="mb-6">Esta acción no se puede deshacer.</p>
+                    <div class="flex gap-4 justify-center">
+                        <button id="confirmDeleteBtn" class="px-6 py-2.5 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]">Sí, Eliminar</button>
+                        <button id="cancelDeleteBtn" class="px-6 py-2.5 rounded-full border">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                deleteListing(listingId);
+                modal.remove();
+            });
+            document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+                modal.remove();
+            });
+        }
+
+        function deleteListing(listingId) {
+            const index = localListings.findIndex(l => l.id === listingId);
+            if (index > -1) {
+                localListings.splice(index, 1);
+            }
+            activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'publicacion_eliminada', details: listingId });
+            
+            navigateTo('marketplace');
+        }
+
+        function toggleFavorite(button) {
+            const listingId = button.dataset.id;
+            const user = localUsers[currentUserId];
+            const favIndex = user.favorites.indexOf(listingId);
+            
+            if (favIndex > -1) {
+                user.favorites.splice(favIndex, 1);
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'eliminar_favorito', details: listingId });
+            } else {
+                user.favorites.push(listingId);
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: 'agregar_favorito', details: listingId });
+            }
+
+            button.classList.toggle('favorited');
+        }
+        
+        function toggleUserStatus(userId) {
+            const user = localUsers[userId];
+            if (user) {
+                user.status = user.status === 'active' ? 'suspended' : 'active';
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: `usuario_${user.status}`, details: userId });
+                navigateTo('adminUsers');
+            }
+        }
+        
+        function toggleUserVerification(userId) {
+            const user = localUsers[userId];
+            if (user) {
+                user.isVerified = !user.isVerified;
+                const action = user.isVerified ? 'usuario_verificado' : 'usuario_desverificado';
+                activityLog.push({ timestamp: Date.now(), userId: currentUserId, action: action, details: userId });
+                navigateTo('adminUsers');
+            }
+        }
+
+        async function generateMarketPulse() {
+            const loader = document.getElementById('pulseLoader');
+            const resultDiv = document.getElementById('pulseResult');
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+            const marketData = localListings.map(l => {
+                const farm = localFarms[l.farmId];
+                return `- ${l.quantity} ${l.breed} (${l.type}) en ${farm.location.state}`;
+            }).join('\n');
+            const prompt = `Actúa como un analista de mercado ganadero en Venezuela. Basado en la siguiente lista de publicaciones activas, genera un breve resumen o "pulso del mercado". Menciona las razas más ofertadas, las ubicaciones con más actividad y cualquier tendencia que observes. Sé conciso y directo.\n\nDatos:\n${marketData}`;
+            
+            try {
+                await new Promise(res => setTimeout(res, 1500));
+                const mockResponse = `
+                    <h3 class="font-bold text-lg mb-2">Pulso del Mercado Actual</h3>
+                    <p>Se observa una fuerte presencia de la raza <strong>Brahman</strong>, especialmente para engorde en el estado Carabobo, indicando alta actividad en la ceba. La oferta de ganado lechero como <strong>Holstein</strong> se mantiene estable en Aragua. Hay una demanda interesante por padrotes <strong>Guzerat</strong> para la mejora genética. En general, el mercado se muestra activo con un foco en la genética de carne.</p>
+                `;
+                resultDiv.innerHTML = mockResponse;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="text-red-600">No se pudo generar el análisis del mercado.</p>`;
+            } finally {
+                loader.style.display = 'none';
+                resultDiv.style.display = 'block';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
+

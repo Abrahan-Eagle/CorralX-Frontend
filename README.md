@@ -1124,6 +1124,14 @@ lib/chat/widgets/
 - [ ] Fix de tests restantes (19 tests)
 - [ ] Optimización de imágenes
 - [ ] Caché inteligente
+- [ ] Lanzar módulo `IA Insights` (panel básico para cuentas free)
+
+#### **IA Insights – Plan de Implementación**
+- ✅ **Fase 0 (estrategia)**: segmentación por rol (free/premium/admin), definición de métricas clave, flujo UI con botón adicional en perfil.
+- 🔄 **Fase 1 (Datos & API)**: inventario y tracking de eventos, endpoints diferenciados por rol, servicio `IAInsightsService`.
+- 🔄 **Fase 2 (Frontend)**: botón IA en el dashboard, `IAInsightsProvider`, tarjetas de highlights, legendas con niveles (Free/Premium/Admin) y recomendaciones en lenguaje natural.
+- 🔄 **Fase 3 (Integración IA)**: conexión con GPT/Gemini/DeepSeek, cacheo de respuestas, prompts seguros sin datos sensibles.
+- ⏭️ **Fase 4 (Premium/Admin)**: filtros avanzados, comparativas de marketplace, alertas automáticas y panel global para administradores.
 
 #### **Mediano Plazo (3-6 meses)**
 - [ ] Pagos integrados (Stripe/PayPal)

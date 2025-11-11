@@ -267,6 +267,27 @@ alwaysApply: true
   - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.
 - Pruebas manuales de integración: el equipo frontend y backend deben realizar pruebas conjuntas de los flujos principales (registro, login, crear publicación, navegar, chatear) en un entorno de staging. Cualquier fallo de integración (discordancia de nombres de campos, comportamiento inesperado) debe reflejarse en ajustes tanto de código como de estas reglas para mantener la documentación actualizada.
 
+## Inteligencia Artificial y Analítica IA Insights
+- Se añade un cuarto botón en el `AppBar` de `ProfileScreen` para abrir la sección `IA Insights`. Mantener consistencia visual y estados activos como los demás botones.
+- La sección `IA Insights` debe consumir métricas centralizadas expuestas por el backend. Al diseñar providers y servicios:
+  - `IAInsightsProvider` gestionará estados de carga, errores y resultados separados por rol (free, premium, admin).
+  - Las respuestas del backend deben incluir métricas crudas y resúmenes generados por IA cuando estén disponibles.
+- **Segmentación por rol:**
+  - `Free`: mostrar KPIs básicos (vistas, favoritos, mensajes) y un único insight en lenguaje natural. Incluir llamado a la acción para actualizar a Premium.
+  - `Premium`: habilitar filtros por fecha, comparativas contra el promedio del marketplace, proyecciones y recomendaciones accionables.
+  - `Admin`: vista global con métricas agregadas por región/categoría, detección de anomalías y alertas operativas.
+- Al integrar GPT/Gemini/DeepSeek:
+  - Encapsular la lógica de prompts en un servicio (`IAInsightsService`) para facilitar el cambio de proveedor.
+  - Cachear resultados recientes para evitar llamadas repetidas y controlar costos.
+  - Garantizar que los prompts nunca expongan datos sensibles (IDs internos, tokens).
+- UI recomendada para `IA Insights`:
+  - Tarjeta de resumen rápido (highlights de la semana).
+  - Lista de recomendaciones priorizadas.
+  - Historial de acciones sugeridas (mostrar si fueron marcadas como completadas).
+  - Filtros de rango de fechas (día, semana, mes, histórico) y selector de hacienda/producto para premium/admin.
+- Definir un inventario de métricas recolectadas (vistas por publicación, clics, contactos abiertos, rating, estado de anuncios, etc.) antes de implementar la pantalla. Documentar cada métrica en el backend y sincronizar naming con el frontend.
+- Actualizar esta guía y el README cuando se agreguen nuevas capacidades (ej. integraciones externas, nuevas recomendaciones).
+
 ## Especificación de UI del Demo (HTML)
 - Navegación inferior: Mercado, Favoritos, Publicar, Mensajes (con badge de no leídos), Perfil.
 - Vistas: `marketplace`, `detail`, `create`, `profile`, `editProfile`, `favorites`, `dashboard`, `myListings`, `messages`, `chat`, `marketPulse`, `admin*`.

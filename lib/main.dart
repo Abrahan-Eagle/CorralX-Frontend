@@ -356,6 +356,8 @@ import 'package:zonix/profiles/screens/profile_screen.dart';
 import 'package:zonix/core/deep_link_service.dart';
 import 'package:zonix/products/screens/product_detail_screen.dart';
 import 'package:zonix/admin/screens/advertisements_list_screen.dart';
+import 'package:zonix/insights/screens/ia_insights_screen.dart';
+import 'package:zonix/insights/providers/ia_insights_provider.dart';
 
 /*
  * ZONIX EATS - Aplicación Multi-Rol
@@ -426,6 +428,7 @@ Future<void> main() async {
           update: (context, profileProvider, chatProvider) =>
               chatProvider ?? ChatProvider(profileProvider),
         ), // ✅ Chat MVP
+        ChangeNotifierProvider(create: (_) => IAInsightsProvider()),
         ChangeNotifierProvider(
             create: (_) => ThemeProvider()..loadThemePreference()),
       ],
@@ -783,7 +786,7 @@ class MainRouterState extends State<MainRouter> {
   // Obtener los botones del nivel flotante según el rol
   List<Widget> _getLevelButtons(String role) {
     final roleMapping = _getRoleMapping();
-    
+
     // Si el rol no está mapeado o es "users", retornar lista vacía
     if (role == 'users' || !roleMapping.containsKey(role)) {
       return [];
@@ -937,6 +940,21 @@ class MainRouterState extends State<MainRouter> {
             },
             tooltip: 'Favoritos',
           ),
+          const SizedBox(width: 4),
+          // Botón de IA Insights
+          IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            color: theme.colorScheme.primary,
+            tooltip: 'IA Insights',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const IAInsightsScreen(),
+                ),
+              );
+            },
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -988,7 +1006,7 @@ class MainRouterState extends State<MainRouter> {
                   if (!roleMapping.containsKey(role)) {
                     return _buildNotAdminScreen();
                   }
-                  
+
                   // Por ahora, solo el rol "admin" tiene funcionalidades específicas
                   // Otros roles en nivel 1 mostrarán pantallas "Coming Soon"
                   if (role == 'admin') {
@@ -1009,7 +1027,8 @@ class MainRouterState extends State<MainRouter> {
                     }
                   } else {
                     // Otros roles en nivel 1 (ej: moderator)
-                    return _buildComingSoonScreen('Panel de ${roleMapping[role]!['name']}');
+                    return _buildComingSoonScreen(
+                        'Panel de ${roleMapping[role]!['name']}');
                   }
                 }
 
@@ -1025,7 +1044,7 @@ class MainRouterState extends State<MainRouter> {
       floatingActionButton: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
           final role = userProvider.userRole;
-          
+
           // Si el rol es "users", no mostrar el botón flotante
           if (!_shouldShowFloatingButton(role)) {
             return const SizedBox.shrink();
@@ -1033,7 +1052,7 @@ class MainRouterState extends State<MainRouter> {
 
           // Obtener los botones según el rol
           final levelButtons = _getLevelButtons(role);
-          
+
           // Si no hay botones (rol no reconocido), no mostrar
           if (levelButtons.isEmpty) {
             return const SizedBox.shrink();
