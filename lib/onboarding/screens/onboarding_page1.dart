@@ -773,13 +773,28 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       debugPrint('✅ FRONTEND: Perfil creado exitosamente: $profileResponse');
       // Guardar profile_id para usarlo en el formulario 2 (ranch)
       try {
-        final createdProfile = profileResponse['profile'];
-        if (createdProfile is Map && createdProfile.containsKey('id')) {
-          final profileId = createdProfile['id'];
-          const storage = FlutterSecureStorage();
-          await storage.write(key: 'profile_id', value: profileId.toString());
+        final dynamic possibleProfile = profileResponse['profile'] ??
+            profileResponse['data']?['profile'] ??
+            profileResponse;
+
+        if (possibleProfile is Map && possibleProfile.containsKey('id')) {
+          final rawProfileId = possibleProfile['id'];
+          final profileId =
+              rawProfileId is int ? rawProfileId : int.tryParse('$rawProfileId');
+
+          if (profileId != null) {
+            const storage = FlutterSecureStorage();
+            await storage.write(
+                key: 'profile_id', value: profileId.toString());
+            debugPrint(
+                '🔐 FRONTEND: profile_id guardado de forma segura: $profileId');
+          } else {
+            debugPrint(
+                '⚠️ FRONTEND: No se pudo convertir profile_id: $rawProfileId');
+          }
+        } else {
           debugPrint(
-              '🔐 FRONTEND: profile_id guardado de forma segura: $profileId');
+              '⚠️ FRONTEND: La respuesta no contiene perfil con ID: $profileResponse');
         }
       } catch (e) {
         debugPrint('⚠️ FRONTEND: No se pudo guardar profile_id: $e');

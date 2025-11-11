@@ -453,12 +453,43 @@ class OnboardingApiService {
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
+      } else if (response.statusCode == 404) {
+        return {};
       } else {
         throw Exception(
             'Error al obtener usuario actual: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error al obtener usuario actual: $e');
+    }
+  }
+
+  // Obtener perfil del usuario autenticado
+  Future<Map<String, dynamic>?> getMyProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/profile'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+        if (data is Map) {
+          return Map<String, dynamic>.from(data);
+        }
+        throw Exception('Formato inesperado al obtener el perfil: $data');
+      } else if (response.statusCode == 404) {
+        // No hay perfil todavía
+        return null;
+      } else {
+        throw Exception(
+            'Error al obtener perfil: ${response.statusCode} (${response.body})');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener perfil: $e');
     }
   }
 

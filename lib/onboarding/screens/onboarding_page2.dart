@@ -334,12 +334,32 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
   // Obtener profile_id del token
   Future<void> _getProfileIdFromToken() async {
     try {
-      final userResponse = await _apiService.getCurrentUser();
+      final profileData = await _apiService.getMyProfile();
 
-      if (userResponse.containsKey('user')) {
-        final user = userResponse['user'];
-        _profileId = user['id'];
-        debugPrint('Profile ID obtenido para Page2: $_profileId');
+      if (profileData != null) {
+        final dynamic rawId =
+            profileData['id'] ?? profileData['profile']?['id'];
+
+        if (rawId != null) {
+          final parsedId = rawId is int ? rawId : int.tryParse('$rawId');
+          if (parsedId != null) {
+            _profileId = parsedId;
+            debugPrint('Profile ID obtenido para Page2: $_profileId');
+
+            // Guardar en SecureStorage para futuros usos
+            const storage = FlutterSecureStorage();
+            await storage.write(
+                key: 'profile_id', value: _profileId.toString());
+          } else {
+            debugPrint(
+                '⚠️ PAGE2: No se pudo convertir el profile_id: $rawId');
+          }
+        } else {
+          debugPrint('⚠️ PAGE2: El perfil no contiene ID: $profileData');
+        }
+      } else {
+        debugPrint(
+            '⚠️ PAGE2: No se encontró perfil para el usuario autenticado');
       }
     } catch (e) {
       debugPrint('Error obteniendo profile ID en Page2: $e');
