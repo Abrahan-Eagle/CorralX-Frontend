@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:zonix/admin/screens/advertisement_detail_screen.dart';
+import 'package:corralx/admin/screens/advertisement_detail_screen.dart';
 
 void main() {
   // Inicializar dotenv antes de todos los tests

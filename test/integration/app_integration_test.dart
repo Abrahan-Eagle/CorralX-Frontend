@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/main.dart';
-import 'package:zonix/config/user_provider.dart';
+import 'package:corralx/main.dart';
+import 'package:corralx/config/user_provider.dart';
 
 void main() {
   // Inicializar dotenv antes de todos los tests

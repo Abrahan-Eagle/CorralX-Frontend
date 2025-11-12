@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zonix/profiles/models/profile.dart';
-import 'package:zonix/profiles/models/ranch.dart';
-import 'package:zonix/profiles/models/address.dart';
+import 'package:corralx/profiles/models/profile.dart';
+import 'package:corralx/profiles/models/ranch.dart';
+import 'package:corralx/profiles/models/address.dart';
 
 void main() {
   group('Profile Model', () {

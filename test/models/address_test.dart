@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zonix/profiles/models/address.dart';
+import 'package:corralx/profiles/models/address.dart';
 
 void main() {
   group('Address Model', () {

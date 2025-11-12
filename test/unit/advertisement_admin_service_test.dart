@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:zonix/admin/services/advertisement_admin_service.dart';
+import 'package:corralx/admin/services/advertisement_admin_service.dart';
 
 void main() {
   // Inicializar dotenv antes de todos los tests

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart';
-import 'package:zonix/products/providers/product_provider.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart';
+import 'package:corralx/products/providers/product_provider.dart';
 
 /// Tests de integración para el módulo de perfiles
 /// 

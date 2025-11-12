@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:zonix/favorites/services/favorite_service.dart';
-import 'package:zonix/config/app_config.dart';
+import 'package:corralx/favorites/services/favorite_service.dart';
+import 'package:corralx/config/app_config.dart';
 
 void main() {
   // Inicializar dotenv antes de todos los tests

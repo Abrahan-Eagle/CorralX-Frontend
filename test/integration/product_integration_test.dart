@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/products/providers/product_provider.dart';
-import 'package:zonix/products/screens/marketplace_screen.dart';
-import 'package:zonix/products/screens/product_detail_screen.dart';
-import 'package:zonix/products/widgets/filters_modal.dart';
-import 'package:zonix/products/models/product.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/products/screens/marketplace_screen.dart';
+import 'package:corralx/products/screens/product_detail_screen.dart';
+import 'package:corralx/products/widgets/filters_modal.dart';
+import 'package:corralx/products/models/product.dart';
 
 void main() {
   setUpAll(() async {

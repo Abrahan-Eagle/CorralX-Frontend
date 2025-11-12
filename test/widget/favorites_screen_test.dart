@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/favorites/screens/favorites_screen.dart';
-import 'package:zonix/products/providers/product_provider.dart';
-import 'package:zonix/products/models/product.dart';
+import 'package:corralx/favorites/screens/favorites_screen.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/products/models/product.dart';
 
 void main() {
   // Inicializar dotenv antes de todos los tests
