@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:zonix/chat/models/message.dart';
-import 'package:zonix/chat/services/chat_service.dart';
+import 'package:corralx/chat/models/message.dart';
+import 'package:corralx/chat/services/chat_service.dart';
 
 /// Servicio de HTTP Polling para chat en tiempo semi-real
 /// 

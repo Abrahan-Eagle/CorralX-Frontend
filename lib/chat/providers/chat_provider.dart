@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:zonix/chat/models/conversation.dart';
-import 'package:zonix/chat/models/message.dart';
-import 'package:zonix/chat/services/chat_service.dart';
-import 'package:zonix/chat/services/pusher_service.dart'; // ✅ Pusher Channels (tiempo real)
-import 'package:zonix/chat/services/polling_service.dart'; // ✅ HTTP Polling (fallback)
-import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
+import 'package:corralx/chat/models/conversation.dart';
+import 'package:corralx/chat/models/message.dart';
+import 'package:corralx/chat/services/chat_service.dart';
+import 'package:corralx/chat/services/pusher_service.dart'; // ✅ Pusher Channels (tiempo real)
+import 'package:corralx/chat/services/polling_service.dart'; // ✅ HTTP Polling (fallback)
+import 'package:corralx/profiles/providers/profile_provider.dart'; // ✅ Para obtener profileId
 
 /// Provider global para gestión del chat
 /// Maneja conversaciones, mensajes, HTTP Polling y notificaciones

@@ -3,9 +3,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:zonix/config/app_config.dart';
+import 'package:corralx/config/app_config.dart';
 
 /// Servicio de Firebase Cloud Messaging para notificaciones push
 ///
@@ -157,13 +158,29 @@ class FirebaseService {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
-  /// Registrar device token en el backend
-  static Future<void> _registerDeviceToken() async {
-    try {
-      final token = await _messaging!.getToken();
+  /// Registrar device token en el backend (método público para re-registrar después del login)
+  static Future<void> registerDeviceToken() async {
+    await _registerDeviceToken();
+  }
 
-      if (token == null) {
+  /// Registrar device token en el backend con retry y manejo robusto de errores
+  static Future<void> _registerDeviceToken({int retryCount = 0}) async {
+    const maxRetries = 3;
+    const retryDelay = Duration(seconds: 2);
+
+    try {
+      // Intentar obtener token con timeout
+      final token = await _messaging!
+          .getToken()
+          .timeout(const Duration(seconds: 10));
+
+      if (token == null || token.isEmpty) {
         print('⚠️ No se pudo obtener device token');
+        if (retryCount < maxRetries) {
+          print('🔄 Reintentando en ${retryDelay.inSeconds} segundos...');
+          await Future.delayed(retryDelay);
+          return _registerDeviceToken(retryCount: retryCount + 1);
+        }
         return;
       }
 
@@ -177,26 +194,52 @@ class FirebaseService {
 
       if (authToken == null) {
         print('⚠️ No hay auth token, no se puede registrar FCM token');
+        // Guardar token localmente para intentar registrarlo después del login
         return;
       }
 
-      final response = await http.post(
-        Uri.parse('$apiUrl/api/fcm/register-token'),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'device_token': token}),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$apiUrl/api/fcm/register-token'),
+            headers: {
+              'Authorization': 'Bearer $authToken',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'device_token': token}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         print('✅ Device token registrado en backend');
       } else {
         print('❌ Error registrando token: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } on TimeoutException {
+      print('⏱️ Timeout obteniendo FCM token (intento ${retryCount + 1}/$maxRetries)');
+      if (retryCount < maxRetries) {
+        await Future.delayed(retryDelay * (retryCount + 1));
+        return _registerDeviceToken(retryCount: retryCount + 1);
+      }
+      print('⚠️ No se pudo obtener FCM token después de $maxRetries intentos');
+    } on PlatformException catch (e) {
+      // Error específico de Firebase/Google Play Services
+      if (e.code == 'SERVICE_NOT_AVAILABLE' || e.message?.contains('SERVICE_NOT_AVAILABLE') == true) {
+        print('⚠️ Google Play Services no disponible o sin conexión');
+        print('💡 El dispositivo necesita Google Play Services actualizado y conexión a Internet');
+        if (retryCount < maxRetries) {
+          print('🔄 Reintentando en ${retryDelay.inSeconds * (retryCount + 1)} segundos...');
+          await Future.delayed(retryDelay * (retryCount + 1));
+          return _registerDeviceToken(retryCount: retryCount + 1);
+        }
+      } else {
+        print('❌ Error de plataforma registrando device token: ${e.code} - ${e.message}');
       }
     } catch (e) {
       print('❌ Error registrando device token: $e');
+      // No bloquear la inicialización de Firebase si falla el registro del token
+      // El token se puede registrar más tarde cuando el usuario esté autenticado
     }
   }
 

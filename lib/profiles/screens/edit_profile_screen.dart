@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart';
 import 'package:intl/intl.dart';
 
 class EditProfileScreen extends StatefulWidget {

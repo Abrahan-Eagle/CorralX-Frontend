@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/config/user_provider.dart';
-import 'package:zonix/insights/models/ia_insight_metric.dart';
-import 'package:zonix/insights/models/ia_insight_recommendation.dart';
-import 'package:zonix/insights/providers/ia_insights_provider.dart';
+import 'package:corralx/config/user_provider.dart';
+import 'package:corralx/insights/models/ia_insight_metric.dart';
+import 'package:corralx/insights/models/ia_insight_recommendation.dart';
+import 'package:corralx/insights/providers/ia_insights_provider.dart';
 
 class IAInsightsScreen extends StatefulWidget {
   const IAInsightsScreen({super.key});

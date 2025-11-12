@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/chat/providers/chat_provider.dart';
+import 'package:corralx/chat/providers/chat_provider.dart';
 
 /// Widget de input para escribir mensajes
 /// Incluye TextField, botón enviar y detección de typing

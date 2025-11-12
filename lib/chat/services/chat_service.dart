@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:zonix/config/app_config.dart';
-import 'package:zonix/chat/models/conversation.dart';
-import 'package:zonix/chat/models/message.dart';
+import 'package:corralx/config/app_config.dart';
+import 'package:corralx/chat/models/conversation.dart';
+import 'package:corralx/chat/models/message.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
 

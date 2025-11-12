@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zonix/chat/models/message.dart';
+import 'package:corralx/chat/models/message.dart';
 import 'package:intl/intl.dart';
 
 /// Burbuja de mensaje diferenciada para enviados/recibidos

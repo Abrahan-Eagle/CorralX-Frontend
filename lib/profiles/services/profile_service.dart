@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:zonix/profiles/models/ranch.dart';
+import 'package:corralx/profiles/models/ranch.dart';
 
 /// Servicio para manejar todas las operaciones relacionadas con perfiles
 class ProfileService {

@@ -8,9 +8,9 @@ import 'onboarding_page3.dart';
 // import 'onboarding_page5.dart';
 // import 'onboarding_page6.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/config/user_provider.dart';
+import 'package:corralx/config/user_provider.dart';
 import 'onboarding_service.dart';
-import 'package:zonix/main.dart';
+import 'package:corralx/main.dart';
 import '../../shared/widgets/amazon_widgets.dart';
 
 final OnboardingService _onboardingService = OnboardingService();

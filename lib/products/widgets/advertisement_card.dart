@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/advertisement.dart';
 import '../models/product.dart';
 import 'product_card.dart';
-import 'package:zonix/shared/utils/image_utils.dart';
+import 'package:corralx/shared/utils/image_utils.dart';
 
 /// Widget para mostrar un producto patrocinado
 /// Similar a ProductCard pero con badge de "Patrocinado"

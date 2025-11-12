@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:zonix/insights/models/ia_insight_recommendation.dart';
-import 'package:zonix/insights/models/ia_insights_payload.dart';
-import 'package:zonix/insights/services/ia_insights_service.dart';
+import 'package:corralx/insights/models/ia_insight_recommendation.dart';
+import 'package:corralx/insights/models/ia_insights_payload.dart';
+import 'package:corralx/insights/services/ia_insights_service.dart';
 
 /// Provider que administra el estado del módulo IA Insights.
 class IAInsightsProvider with ChangeNotifier {

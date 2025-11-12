@@ -1,5 +1,5 @@
-import 'package:zonix/profiles/models/address.dart';
-import 'package:zonix/profiles/models/ranch.dart';
+import 'package:corralx/profiles/models/address.dart';
+import 'package:corralx/profiles/models/ranch.dart';
 
 /// Modelo Profile - Datos del marketplace de ganado
 ///

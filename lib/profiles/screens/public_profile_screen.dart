@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart';
-import 'package:zonix/profiles/services/profile_service.dart';
-import 'package:zonix/products/providers/product_provider.dart';
-import 'package:zonix/products/widgets/product_card.dart';
-import 'package:zonix/products/screens/product_detail_screen.dart';
-import 'package:zonix/chat/providers/chat_provider.dart';
-import 'package:zonix/chat/screens/chat_screen.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart';
+import 'package:corralx/profiles/services/profile_service.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/products/widgets/product_card.dart';
+import 'package:corralx/products/screens/product_detail_screen.dart';
+import 'package:corralx/chat/providers/chat_provider.dart';
+import 'package:corralx/chat/screens/chat_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 

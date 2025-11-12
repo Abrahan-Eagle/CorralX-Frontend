@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:zonix/profiles/models/profile.dart';
-import 'package:zonix/profiles/models/ranch.dart' as ProfileModels;
-import 'package:zonix/profiles/services/profile_service.dart';
-import 'package:zonix/products/models/product.dart';
+import 'package:corralx/profiles/models/profile.dart';
+import 'package:corralx/profiles/models/ranch.dart' as ProfileModels;
+import 'package:corralx/profiles/services/profile_service.dart';
+import 'package:corralx/products/models/product.dart';
 
 /// Provider para gestionar el estado de perfiles
 class ProfileProvider extends ChangeNotifier {

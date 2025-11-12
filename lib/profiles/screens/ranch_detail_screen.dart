@@ -9,7 +9,7 @@ import '../../products/models/product.dart' hide Ranch;
 import '../../products/screens/product_detail_screen.dart';
 import '../../config/app_config.dart';
 import '../../shared/screens/pdf_viewer_screen.dart';
-import 'package:zonix/shared/utils/image_utils.dart';
+import 'package:corralx/shared/utils/image_utils.dart';
 
 class RanchDetailScreen extends StatefulWidget {
   final Ranch ranch;

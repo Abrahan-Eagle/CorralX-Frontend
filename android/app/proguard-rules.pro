@@ -71,8 +71,8 @@
 -dontwarn com.shockwave.**
 
 # Variables de entorno y dotenv
--keep class com.example.zonix.MainActivity { *; }
--keepclassmembers class com.example.zonix.MainActivity {
+-keep class com.corralx.app.MainActivity { *; }
+-keepclassmembers class com.corralx.app.MainActivity {
     *;
 }
 
@@ -87,7 +87,7 @@
 -keepattributes Exceptions
 
 # Mantener clases de modelos de datos
--keep class com.example.zonix.** { *; }
+-keep class com.corralx.app.** { *; }
 
 # Reglas faltantes detectadas por R8
 -dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication

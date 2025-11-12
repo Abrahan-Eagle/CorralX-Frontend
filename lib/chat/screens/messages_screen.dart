@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:zonix/chat/providers/chat_provider.dart';
-import 'package:zonix/chat/screens/chat_screen.dart';
-import 'package:zonix/chat/widgets/conversation_card.dart';
+import 'package:corralx/chat/providers/chat_provider.dart';
+import 'package:corralx/chat/screens/chat_screen.dart';
+import 'package:corralx/chat/widgets/conversation_card.dart';
 
 /// Pantalla de lista de conversaciones estilo WhatsApp
 /// Muestra todas las conversaciones del usuario con diseño exacto de WhatsApp

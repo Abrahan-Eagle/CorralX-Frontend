@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/product.dart';
-import 'package:zonix/shared/utils/image_utils.dart';
+import 'package:corralx/shared/utils/image_utils.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;

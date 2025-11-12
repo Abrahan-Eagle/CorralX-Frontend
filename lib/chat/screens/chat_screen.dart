@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/chat/providers/chat_provider.dart';
-import 'package:zonix/chat/widgets/message_bubble.dart';
-import 'package:zonix/chat/widgets/chat_input.dart';
-import 'package:zonix/chat/widgets/typing_indicator.dart';
-import 'package:zonix/config/app_config.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para obtener el profileId
+import 'package:corralx/chat/providers/chat_provider.dart';
+import 'package:corralx/chat/widgets/message_bubble.dart';
+import 'package:corralx/chat/widgets/chat_input.dart';
+import 'package:corralx/chat/widgets/typing_indicator.dart';
+import 'package:corralx/config/app_config.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart'; // ✅ Para obtener el profileId
 
 /// Pantalla de chat 1:1 con un usuario
 /// Muestra mensajes con HTTP Polling (4 segundos)

@@ -5,7 +5,7 @@ import '../models/product.dart';
 import '../models/advertisement.dart';
 import '../services/product_service.dart';
 import '../services/advertisement_service.dart';
-import 'package:zonix/favorites/services/favorite_service.dart';
+import 'package:corralx/favorites/services/favorite_service.dart';
 
 class ProductProvider with ChangeNotifier {
   // Flag para verificar si el provider está disposed

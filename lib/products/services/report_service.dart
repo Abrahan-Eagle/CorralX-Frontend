@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:zonix/config/app_config.dart';
+import 'package:corralx/config/app_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// ReportService - Servicio para reportar contenido

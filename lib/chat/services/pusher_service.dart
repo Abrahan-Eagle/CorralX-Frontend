@@ -2,7 +2,7 @@ import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:zonix/chat/models/message.dart';
+import 'package:corralx/chat/models/message.dart';
 import 'package:http/http.dart' as http;
 
 /// Servicio de Pusher Channels para chat en tiempo real

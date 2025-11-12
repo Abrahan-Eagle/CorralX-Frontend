@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:zonix/admin/services/advertisement_admin_service.dart';
-import 'package:zonix/admin/screens/create_edit_advertisement_screen.dart';
+import 'package:corralx/admin/services/advertisement_admin_service.dart';
+import 'package:corralx/admin/screens/create_edit_advertisement_screen.dart';
 import '../../products/models/advertisement.dart';
-import 'package:zonix/shared/utils/image_utils.dart';
+import 'package:corralx/shared/utils/image_utils.dart';
 
 /// Pantalla de detalles del anuncio con estadísticas completas
 class AdvertisementDetailScreen extends StatefulWidget {

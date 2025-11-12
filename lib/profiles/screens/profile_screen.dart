@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/config/user_provider.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart';
-import 'package:zonix/profiles/screens/edit_profile_screen.dart';
-import 'package:zonix/profiles/screens/edit_ranch_screen.dart';
-import 'package:zonix/profiles/screens/create_ranch_screen.dart';
-import 'package:zonix/profiles/screens/ranch_detail_screen.dart';
-import 'package:zonix/profiles/services/ranch_service.dart';
-import 'package:zonix/products/providers/product_provider.dart';
-import 'package:zonix/products/screens/product_detail_screen.dart';
-import 'package:zonix/products/screens/edit_product_screen.dart';
-import 'package:zonix/auth/screens/sign_in_screen.dart';
+import 'package:corralx/config/user_provider.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart';
+import 'package:corralx/profiles/screens/edit_profile_screen.dart';
+import 'package:corralx/profiles/screens/edit_ranch_screen.dart';
+import 'package:corralx/profiles/screens/create_ranch_screen.dart';
+import 'package:corralx/profiles/screens/ranch_detail_screen.dart';
+import 'package:corralx/profiles/services/ranch_service.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/products/screens/product_detail_screen.dart';
+import 'package:corralx/products/screens/edit_product_screen.dart';
+import 'package:corralx/auth/screens/sign_in_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 

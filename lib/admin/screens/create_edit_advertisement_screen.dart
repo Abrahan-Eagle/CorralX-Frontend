@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:zonix/admin/services/advertisement_admin_service.dart';
-import 'package:zonix/products/services/product_service.dart';
-import 'package:zonix/products/models/product.dart';
-import 'package:zonix/products/models/advertisement.dart';
-import 'package:zonix/shared/utils/image_utils.dart';
+import 'package:corralx/admin/services/advertisement_admin_service.dart';
+import 'package:corralx/products/services/product_service.dart';
+import 'package:corralx/products/models/product.dart';
+import 'package:corralx/products/models/advertisement.dart';
+import 'package:corralx/shared/utils/image_utils.dart';
 
 /// Pantalla para crear o editar un anuncio
 class CreateEditAdvertisementScreen extends StatefulWidget {

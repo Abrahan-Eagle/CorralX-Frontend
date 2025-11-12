@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zonix/products/providers/product_provider.dart';
-import 'package:zonix/products/screens/product_detail_screen.dart';
-import 'package:zonix/products/models/product.dart';
-import 'package:zonix/shared/utils/image_utils.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/products/screens/product_detail_screen.dart';
+import 'package:corralx/products/models/product.dart';
+import 'package:corralx/shared/utils/image_utils.dart';
 
 /// FavoritesScreen - Pantalla de productos favoritos del usuario
 ///

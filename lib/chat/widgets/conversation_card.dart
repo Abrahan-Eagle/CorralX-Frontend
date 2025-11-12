@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:zonix/chat/models/conversation.dart';
-import 'package:zonix/config/app_config.dart';
+import 'package:corralx/chat/models/conversation.dart';
+import 'package:corralx/config/app_config.dart';
 
 /// Widget Card para una conversación estilo WhatsApp
 /// Diseño exacto de WhatsApp con avatares circulares, estados online y badges

@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/product.dart';
 import '../services/report_service.dart';
-import 'package:zonix/chat/providers/chat_provider.dart';
-import 'package:zonix/chat/screens/chat_screen.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart'; // ✅ Para verificar si es el propio usuario
+import 'package:corralx/chat/providers/chat_provider.dart';
+import 'package:corralx/chat/screens/chat_screen.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart'; // ✅ Para verificar si es el propio usuario
 import '../../config/app_config.dart';
 
 class ProductDetailWidget extends StatelessWidget {

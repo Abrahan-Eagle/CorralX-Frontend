@@ -1,4 +1,4 @@
-import 'package:zonix/profiles/models/address.dart';
+import 'package:corralx/profiles/models/address.dart';
 
 /// Modelo Ranch - Hacienda/Finca en el marketplace
 ///

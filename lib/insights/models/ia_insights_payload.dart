@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
-import 'package:zonix/insights/models/ia_insight_metric.dart';
-import 'package:zonix/insights/models/ia_insight_recommendation.dart';
+import 'package:corralx/insights/models/ia_insight_metric.dart';
+import 'package:corralx/insights/models/ia_insight_recommendation.dart';
 
 /// Contenedor principal de la información entregada por IA Insights.
 @immutable

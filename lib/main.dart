@@ -2,22 +2,22 @@
 // import 'package:logger/logger.dart';
 // import 'package:flutter_native_splash/flutter_native_splash.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:zonix/features/auth/services/api_service.dart';
+// import 'package:corralx/features/auth/services/api_service.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:provider/provider.dart';
-// import 'package:zonix/shared/utils/user_provider.dart';
+// import 'package:corralx/shared/utils/user_provider.dart';
 // import 'package:flutter/services.dart';
-// // import 'package:zonix/features/screens/settings/settings_page_2.dart';
-// import 'package:zonix/features/auth/screens/sign_in_screen.dart';
+// // import 'package:corralx/features/screens/settings/settings_page_2.dart';
+// import 'package:corralx/features/auth/screens/sign_in_screen.dart';
 // import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:zonix/features/DomainProfiles/Profiles/api/profile_service.dart';
-// import 'package:zonix/features/screens/products/products_page.dart';
-// import 'package:zonix/features/screens/cart/cart_page.dart';
-// import 'package:zonix/features/screens/orders/orders_page.dart';
-// import 'package:zonix/features/screens/restaurants/restaurants_page.dart';
-// import 'package:zonix/features/services/cart_service.dart';
-// import 'package:zonix/features/services/order_service.dart';
-// import 'package:zonix/features/screens/orders/commerce_orders_page.dart';
+// import 'package:corralx/features/DomainProfiles/Profiles/api/profile_service.dart';
+// import 'package:corralx/features/screens/products/products_page.dart';
+// import 'package:corralx/features/screens/cart/cart_page.dart';
+// import 'package:corralx/features/screens/orders/orders_page.dart';
+// import 'package:corralx/features/screens/restaurants/restaurants_page.dart';
+// import 'package:corralx/features/services/cart_service.dart';
+// import 'package:corralx/features/services/order_service.dart';
+// import 'package:corralx/features/screens/orders/commerce_orders_page.dart';
 
 // // final ApiService apiService = ApiService();
 
@@ -75,7 +75,7 @@
 //     Provider.of<UserProvider>(context, listen: false).checkAuthentication();
 
 //     return MaterialApp(
-//       title: 'ZONIX',
+//       title: 'CorralX',
 //       debugShowCheckedModeBanner: false,
 //       theme: ThemeData.light(),
 //       darkTheme: ThemeData.dark(),
@@ -327,16 +327,16 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zonix/auth/services/api_service.dart';
+import 'package:corralx/auth/services/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:zonix/config/user_provider.dart';
-import 'package:zonix/config/corral_x_theme.dart';
-import 'package:zonix/config/theme_provider.dart';
-import 'package:zonix/products/providers/product_provider.dart';
-import 'package:zonix/profiles/providers/profile_provider.dart';
-import 'package:zonix/ranches/providers/ranch_provider.dart';
-import 'package:zonix/chat/providers/chat_provider.dart';
-import 'package:zonix/chat/services/firebase_service.dart';
+import 'package:corralx/config/user_provider.dart';
+import 'package:corralx/config/corral_x_theme.dart';
+import 'package:corralx/config/theme_provider.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart';
+import 'package:corralx/ranches/providers/ranch_provider.dart';
+import 'package:corralx/chat/providers/chat_provider.dart';
+import 'package:corralx/chat/services/firebase_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -345,22 +345,22 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'package:zonix/auth/screens/sign_in_screen.dart';
+import 'package:corralx/auth/screens/sign_in_screen.dart';
 
-import 'package:zonix/products/screens/marketplace_screen.dart';
-import 'package:zonix/ranches/screens/ranch_marketplace_screen.dart';
-import 'package:zonix/favorites/screens/favorites_screen.dart';
-import 'package:zonix/products/screens/create_screen.dart';
-import 'package:zonix/chat/screens/messages_screen.dart';
-import 'package:zonix/profiles/screens/profile_screen.dart';
-import 'package:zonix/core/deep_link_service.dart';
-import 'package:zonix/products/screens/product_detail_screen.dart';
-import 'package:zonix/admin/screens/advertisements_list_screen.dart';
-import 'package:zonix/insights/screens/ia_insights_screen.dart';
-import 'package:zonix/insights/providers/ia_insights_provider.dart';
+import 'package:corralx/products/screens/marketplace_screen.dart';
+import 'package:corralx/ranches/screens/ranch_marketplace_screen.dart';
+import 'package:corralx/favorites/screens/favorites_screen.dart';
+import 'package:corralx/products/screens/create_screen.dart';
+import 'package:corralx/chat/screens/messages_screen.dart';
+import 'package:corralx/profiles/screens/profile_screen.dart';
+import 'package:corralx/core/deep_link_service.dart';
+import 'package:corralx/products/screens/product_detail_screen.dart';
+import 'package:corralx/admin/screens/advertisements_list_screen.dart';
+import 'package:corralx/insights/screens/ia_insights_screen.dart';
+import 'package:corralx/insights/providers/ia_insights_provider.dart';
 
 /*
- * ZONIX EATS - Aplicación Multi-Rol
+ * CorralX - Plataforma de Mercado Ganadero
  * 
  * Niveles de usuario:
  * 0 - Comprador: Productos, Carrito, Mis Órdenes, Restaurantes
