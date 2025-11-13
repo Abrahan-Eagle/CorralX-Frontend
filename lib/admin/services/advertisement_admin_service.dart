@@ -12,9 +12,9 @@ class AdvertisementAdminService {
 
   // URL base desde .env
   static String get _baseUrl {
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        dotenv.env['ENVIRONMENT'] == 'production';
+    // Lógica simple: release = producción, debug = local
+    final bool isProduction =
+        kReleaseMode || const bool.fromEnvironment('dart.vm.product');
 
     return isProduction
         ? dotenv.env['API_URL_PROD']!
@@ -53,10 +53,8 @@ class AdvertisementAdminService {
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         final List<dynamic> adsData = decoded['data'] ?? [];
-        
-        return adsData
-            .map((json) => Advertisement.fromJson(json))
-            .toList();
+
+        return adsData.map((json) => Advertisement.fromJson(json)).toList();
       } else if (response.statusCode == 403) {
         throw Exception('No autorizado: Solo administradores pueden acceder');
       } else {
@@ -95,7 +93,8 @@ class AdvertisementAdminService {
   }
 
   /// POST /api/advertisements - Crear nuevo anuncio (admin)
-  static Future<Advertisement> createAdvertisement(Map<String, dynamic> data) async {
+  static Future<Advertisement> createAdvertisement(
+      Map<String, dynamic> data) async {
     try {
       debugPrint('📢 AdvertisementAdminService.createAdvertisement');
 
@@ -112,7 +111,8 @@ class AdvertisementAdminService {
         final decoded = json.decode(response.body);
         return Advertisement.fromJson(decoded['data'] ?? decoded);
       } else if (response.statusCode == 403) {
-        throw Exception('No autorizado: Solo administradores pueden crear anuncios');
+        throw Exception(
+            'No autorizado: Solo administradores pueden crear anuncios');
       } else if (response.statusCode == 422) {
         final decoded = json.decode(response.body);
         final errors = decoded['errors'] ?? {};
@@ -127,7 +127,8 @@ class AdvertisementAdminService {
   }
 
   /// PUT /api/advertisements/{id} - Actualizar anuncio (admin)
-  static Future<Advertisement> updateAdvertisement(int id, Map<String, dynamic> data) async {
+  static Future<Advertisement> updateAdvertisement(
+      int id, Map<String, dynamic> data) async {
     try {
       debugPrint('📢 AdvertisementAdminService.updateAdvertisement - ID: $id');
 
@@ -146,7 +147,8 @@ class AdvertisementAdminService {
       } else if (response.statusCode == 404) {
         throw Exception('Anuncio no encontrado');
       } else if (response.statusCode == 403) {
-        throw Exception('No autorizado: Solo administradores pueden actualizar anuncios');
+        throw Exception(
+            'No autorizado: Solo administradores pueden actualizar anuncios');
       } else if (response.statusCode == 422) {
         final decoded = json.decode(response.body);
         final errors = decoded['errors'] ?? {};
@@ -176,7 +178,8 @@ class AdvertisementAdminService {
       } else if (response.statusCode == 404) {
         throw Exception('Anuncio no encontrado');
       } else if (response.statusCode == 403) {
-        throw Exception('No autorizado: Solo administradores pueden eliminar anuncios');
+        throw Exception(
+            'No autorizado: Solo administradores pueden eliminar anuncios');
       } else {
         throw Exception('Error al eliminar anuncio: ${response.statusCode}');
       }
@@ -186,4 +189,3 @@ class AdvertisementAdminService {
     }
   }
 }
-

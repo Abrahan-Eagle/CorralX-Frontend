@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:corralx/config/app_config.dart';
 import 'package:corralx/chat/models/conversation.dart';
 import 'package:corralx/chat/models/message.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,11 +11,10 @@ import 'package:flutter/foundation.dart';
 class ChatService {
   static const storage = FlutterSecureStorage();
 
-  // URL base con detección robusta del modo producción (igual que ProductService)
+  // URL base - Lógica simple: release = producción, debug = local
   static String get _baseUrl {
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        dotenv.env['ENVIRONMENT'] == 'production';
+    final bool isProduction =
+        kReleaseMode || const bool.fromEnvironment('dart.vm.product');
 
     final String baseUrl = isProduction
         ? dotenv.env['API_URL_PROD']!

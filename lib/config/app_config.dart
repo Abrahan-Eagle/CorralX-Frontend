@@ -58,14 +58,13 @@ class AppConfig {
   static bool get enableWebSockets =>
       dotenv.env['ENABLE_WEBSOCKETS']?.toLowerCase() == 'true';
 
-  // Getters dinámicos con detección robusta de producción
+  // Getters dinámicos - Lógica simple: release = producción, debug = local
   static bool get isProduction {
-    // Detección robusta igual que ProductService y ChatService
-    return kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        environment == 'production';
+    // Si está en modo --release, usar producción
+    // Si NO está en modo release (debug), usar local
+    return kReleaseMode || const bool.fromEnvironment('dart.vm.product');
   }
-  
+
   static bool get isDevelopment => !isProduction;
   static String get apiUrl => isProduction ? apiUrlProd : apiUrlLocal;
   static String get wsUrl => isProduction ? wsUrlProd : wsUrlLocal;

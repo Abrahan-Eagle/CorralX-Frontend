@@ -8,11 +8,10 @@ import 'package:flutter/foundation.dart';
 
 class OnboardingApiService {
   String get baseUrl {
-    // Detección robusta de producción (igual que otros servicios)
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        dotenv.env['ENVIRONMENT'] == 'production';
-    
+    // Lógica simple: release = producción, debug = local
+    final bool isProduction =
+        kReleaseMode || const bool.fromEnvironment('dart.vm.product');
+
     final String apiUrl = isProduction
         ? dotenv.env['API_URL_PROD']!
         : dotenv.env['API_URL_LOCAL']!;
@@ -384,7 +383,8 @@ class OnboardingApiService {
       } else {
         final errorData = json.decode(response.body);
         // Mostrar detalles del error de validación
-        String errorMessage = 'Error al crear dirección: ${response.statusCode}';
+        String errorMessage =
+            'Error al crear dirección: ${response.statusCode}';
         if (errorData['error'] != null) {
           if (errorData['error'] is Map) {
             final errors = errorData['error'] as Map;

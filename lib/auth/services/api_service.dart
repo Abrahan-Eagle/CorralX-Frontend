@@ -8,12 +8,11 @@ import 'package:flutter/foundation.dart';
 final logger = Logger();
 const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-// Detección robusta de producción (igual que otros servicios)
+// Lógica simple: release = producción, debug = local
 String get baseUrl {
-  final bool isProduction = kReleaseMode ||
-      const bool.fromEnvironment('dart.vm.product') ||
-      dotenv.env['ENVIRONMENT'] == 'production';
-  
+  final bool isProduction =
+      kReleaseMode || const bool.fromEnvironment('dart.vm.product');
+
   return isProduction
       ? dotenv.env['API_URL_PROD']!
       : dotenv.env['API_URL_LOCAL']!;

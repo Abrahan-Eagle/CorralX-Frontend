@@ -11,11 +11,10 @@ import 'package:corralx/profiles/models/ranch.dart';
 class ProfileService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  /// URL base desde .env con detección robusta del modo producción
+  /// URL base desde .env - Lógica simple: release = producción, debug = local
   static String get _baseUrl {
     final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        dotenv.env['ENVIRONMENT'] == 'production';
+        const bool.fromEnvironment('dart.vm.product');
 
     final String baseUrl = isProduction
         ? dotenv.env['API_URL_PROD']!

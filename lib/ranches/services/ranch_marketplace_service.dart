@@ -9,9 +9,9 @@ class RanchMarketplaceService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   static String get _baseUrl {
+    // Lógica simple: release = producción, debug = local
     final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        dotenv.env['ENVIRONMENT'] == 'production';
+        const bool.fromEnvironment('dart.vm.product');
     return isProduction
         ? dotenv.env['API_URL_PROD']!
         : dotenv.env['API_URL_LOCAL']!;

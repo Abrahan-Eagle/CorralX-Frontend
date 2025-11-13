@@ -1,25 +1,20 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
+import 'package:corralx/config/app_config.dart';
 
 class ProductService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  // URL base desde .env con detección robusta del modo producción
+  // URL base desde AppConfig - Lógica simple: release = producción, debug = local
   static String get _baseUrl {
-    // Detectar modo producción de forma más robusta
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product') ||
-        dotenv.env['ENVIRONMENT'] == 'production';
-
-    final String baseUrl = isProduction
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
+    final String baseUrl = AppConfig.isProduction
+        ? AppConfig.apiUrlProd
+        : AppConfig.apiUrlLocal;
 
     print(
-        '🔧 ProductService - Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+        '🔧 ProductService - Modo: ${AppConfig.isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
     print('🔧 ProductService - URL Base: $baseUrl');
 
     return baseUrl;
