@@ -3,6 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:corralx/products/providers/product_provider.dart';
 import 'package:corralx/products/models/product.dart';
 
+import '../helpers/test_helpers.dart';
+
 void main() {
   // Inicializar dotenv antes de todos los tests
   setUpAll(() async {
@@ -14,20 +16,25 @@ void main() {
     } catch (e) {
       // Si no existe .env en tests, usar valores mock
       dotenv.env.addAll({
-        'API_URL_LOCAL': 'http://192.168.27.12:8000',
-        'API_URL_PROD': 'https://backend.corralx.com',
+        'API_URL_LOCAL': 'http://127.0.0.1:1',
+        'API_URL_PROD': 'http://127.0.0.1:1',
         'WS_URL_LOCAL': 'ws://192.168.27.12:6001',
         'WS_URL_PROD': 'wss://backend.corralx.com',
         'ENVIRONMENT': 'development',
       });
     }
+
+    dotenv.env['API_URL_LOCAL'] = 'http://127.0.0.1:1';
+    dotenv.env['API_URL_PROD'] = 'http://127.0.0.1:1';
+
+    SecureStorageTestHelper.setupMockStorage();
   });
 
   group('ProductProvider Tests', () {
     late ProductProvider provider;
 
     setUp(() {
-      provider = ProductProvider();
+      provider = ProductProvider(enableNetwork: false);
     });
 
     tearDown(() async {
@@ -76,7 +83,7 @@ void main() {
           'max_price': 2000,
         };
 
-        provider.applyFilters(filters);
+        provider.applyFilters(filters, triggerFetch: false);
         // Esperar a que se actualicen los filtros (puede fallar HTTP pero los filtros se aplican localmente)
         await Future.delayed(const Duration(milliseconds: 150));
 
@@ -91,13 +98,13 @@ void main() {
           'type': 'lechero',
           'location': 'carabobo',
         };
-        provider.applyFilters(filters);
+        provider.applyFilters(filters, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 150)); // Wait for async operations
         // Verificar que los filtros se aplicaron (pueden fallar HTTP pero los filtros locales deben estar)
         expect(provider.currentFilters['type'], equals('lechero'));
 
         // Then clear them
-        provider.clearFilters();
+        provider.clearFilters(triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 150)); // Wait for async operations
         expect(provider.currentFilters, isEmpty);
       });
@@ -107,12 +114,13 @@ void main() {
         expect(provider.activeFiltersCount, equals(0));
 
         // Search filter
-        provider.applyFilters({'search': 'vacas'});
+        provider.applyFilters({'search': 'vacas'}, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(1));
 
         // Type filter
-        provider.applyFilters({'search': 'vacas', 'type': 'lechero'});
+        provider.applyFilters({'search': 'vacas', 'type': 'lechero'},
+            triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(2));
 
@@ -121,7 +129,7 @@ void main() {
           'search': 'vacas',
           'type': 'lechero',
           'location': 'carabobo',
-        });
+        }, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(3));
 
@@ -132,7 +140,7 @@ void main() {
           'location': 'carabobo',
           'min_price': 1000,
           'max_price': 5000,
-        });
+        }, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(5)); // search + type + location + min_price + max_price = 5
 
@@ -144,7 +152,7 @@ void main() {
           'min_price': 1000,
           'max_price': 5000,
           'sort_by': 'price_asc',
-        });
+        }, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(6)); // search + type + location + min_price + max_price + sort_by = 6
 
@@ -157,7 +165,7 @@ void main() {
           'max_price': 5000,
           'sort_by': 'price_asc',
           'quantity': 3,
-        });
+        }, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 100));
         expect(provider.activeFiltersCount, equals(7)); // search + type + location + min_price + max_price + sort_by + quantity = 7
       });
@@ -170,12 +178,12 @@ void main() {
           'max_price': 100000, // Max value
           'sort_by': 'newest', // Default sort
           'quantity': 1, // Minimum quantity
-        });
+        }, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 150));
         expect(provider.activeFiltersCount, equals(0));
 
         // Empty search should not count
-        provider.applyFilters({'search': ''});
+        provider.applyFilters({'search': ''}, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 150));
         expect(provider.activeFiltersCount, equals(0));
       });
@@ -284,7 +292,7 @@ void main() {
         // For now, we test that the public interface works
 
         // Apply filters should clear errors (this is the expected behavior)
-        provider.applyFilters({'type': 'lechero'});
+        provider.applyFilters({'type': 'lechero'}, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 150));
 
         // The error clearing happens internally, we can't test it directly
@@ -305,7 +313,7 @@ void main() {
           'sort_by': 'price_desc',
         };
 
-        provider.applyFilters(complexFilters);
+        provider.applyFilters(complexFilters, triggerFetch: false);
 
         expect(provider.currentFilters, equals(complexFilters));
         expect(provider.activeFiltersCount, equals(7));
@@ -320,7 +328,7 @@ void main() {
           'quantity': 999, // Large quantity
         };
 
-        provider.applyFilters(edgeCaseFilters);
+        provider.applyFilters(edgeCaseFilters, triggerFetch: false);
 
         expect(provider.currentFilters, equals(edgeCaseFilters));
         expect(provider.activeFiltersCount, equals(5));
@@ -337,7 +345,7 @@ void main() {
           'sort_by': null,
         };
 
-        provider.applyFilters(filtersWithNulls);
+        provider.applyFilters(filtersWithNulls, triggerFetch: false);
         await Future.delayed(const Duration(milliseconds: 150));
 
         expect(provider.activeFiltersCount, equals(0));
@@ -348,7 +356,7 @@ void main() {
       test('should dispose without errors', () async {
         // Aplicar filtros (puede fallar por red, pero no debe afectar el test)
         try {
-          provider.applyFilters({'type': 'lechero'});
+          provider.applyFilters({'type': 'lechero'}, triggerFetch: false);
           // Esperar a que termine la operación async
           await Future.delayed(const Duration(milliseconds: 200));
         } catch (e) {
@@ -371,19 +379,19 @@ void main() {
       test('should handle multiple state changes', () async {
         // Apply multiple state changes
         try {
-          provider.applyFilters({'type': 'lechero'});
+          provider.applyFilters({'type': 'lechero'}, triggerFetch: false);
           await Future.delayed(const Duration(milliseconds: 100));
           
           await provider.toggleFavorite(1);
           await Future.delayed(const Duration(milliseconds: 100));
           
-          provider.applyFilters({'location': 'carabobo'});
+          provider.applyFilters({'location': 'carabobo'}, triggerFetch: false);
           await Future.delayed(const Duration(milliseconds: 100));
           
           await provider.toggleFavorite(2);
           await Future.delayed(const Duration(milliseconds: 100));
           
-          provider.clearFilters();
+          provider.clearFilters(triggerFetch: false);
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
           // Ignorar errores de red/Storage
@@ -418,14 +426,14 @@ void main() {
         // Test that all public methods are callable
         // Estos métodos pueden fallar por red/Storage en tests, pero deben ser llamables
         try {
-          provider.applyFilters({'type': 'lechero'});
+          provider.applyFilters({'type': 'lechero'}, triggerFetch: false);
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
           // Ignorar errores de red/Storage en tests
         }
         
         try {
-          provider.clearFilters();
+          provider.clearFilters(triggerFetch: false);
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
           // Ignorar errores de red/Storage en tests
@@ -448,5 +456,9 @@ void main() {
         expect(provider.toggleFavorite, isA<Function>());
       });
     });
+  });
+
+  tearDownAll(() {
+    SecureStorageTestHelper.reset();
   });
 }

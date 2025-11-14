@@ -1,5 +1,8 @@
 
 
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -7,6 +10,14 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
     // Google Services plugin for Firebase
     id "com.google.gms.google-services"
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+} else {
+    println("Advertencia: key.properties no encontrado. Los builds release requerirán este archivo.")
 }
 
 android {
@@ -48,16 +59,20 @@ android {
     
     signingConfigs {
         debug {
-            keyAlias 'androiddebugkey'
-            storePassword '#$AIpp/19217553/'
-            storeFile file('mykey.jks')
-            keyPassword '#$AIpp/19217553/'
+            // Usa el keystore por defecto de Android Studio para builds debug.
+            storeFile file("${System.properties['user.home']}/.android/debug.keystore")
+            storePassword "android"
+            keyAlias "AndroidDebugKey"
+            keyPassword "android"
         }
         release {
-            keyAlias 'androiddebugkey'
-            keyPassword '#$AIpp/19217553/'
-            storeFile file('mykey.jks')
-            storePassword '#$AIpp/19217553/'
+            if (!keystorePropertiesFile.exists()) {
+                throw new GradleException("No se encontró key.properties. Necesario para firmar el release.")
+            }
+            keyAlias keystoreProperties["keyAlias"]
+            keyPassword keystoreProperties["keyPassword"]
+            storeFile file(keystoreProperties["storeFile"])
+            storePassword keystoreProperties["storePassword"]
         }
     }
 

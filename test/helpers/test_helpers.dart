@@ -1,12 +1,67 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-// Generar mocks con: flutter pub run build_runner build
-@GenerateMocks([http.Client, FlutterSecureStorage])
-import 'test_helpers.mocks.dart';
+class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
+class MockHttpClient extends Mock implements http.Client {}
+
+/// Helper para mockear el plugin de FlutterSecureStorage vía MethodChannel
+class SecureStorageTestHelper {
+  static const MethodChannel _channel =
+      MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+
+  static void setupMockStorage({Map<String, String>? initialValues}) {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final Map<String, String> inMemoryStore =
+        Map<String, String>.from(initialValues ?? {});
+
+    _channel.setMockMethodCallHandler((MethodCall call) async {
+      final Map<dynamic, dynamic> rawArgs =
+          (call.arguments as Map<dynamic, dynamic>?) ?? {};
+      final args = rawArgs.map((key, value) =>
+          MapEntry(key?.toString() ?? '', value));
+
+      switch (call.method) {
+        case 'read':
+          final key = args['key'] as String?;
+          return key != null ? inMemoryStore[key] : null;
+        case 'write':
+          final key = args['key'] as String?;
+          final value = args['value'] as String?;
+          if (key != null) {
+            if (value == null) {
+              inMemoryStore.remove(key);
+            } else {
+              inMemoryStore[key] = value;
+            }
+          }
+          return null;
+        case 'delete':
+          final key = args['key'] as String?;
+          if (key != null) {
+            inMemoryStore.remove(key);
+          }
+          return null;
+        case 'deleteAll':
+          inMemoryStore.clear();
+          return null;
+        case 'readAll':
+          return Map<String, String>.from(inMemoryStore);
+        case 'containsKey':
+          final key = args['key'] as String?;
+          return key != null && inMemoryStore.containsKey(key);
+        default:
+          return null;
+      }
+    });
+  }
+
+  static void reset() {
+    _channel.setMockMethodCallHandler(null);
+  }
+}
 
 /// Helper para crear un mock de FlutterSecureStorage
 class MockSecureStorageHelper {
@@ -14,14 +69,18 @@ class MockSecureStorageHelper {
     final mock = MockFlutterSecureStorage();
     
     // Mock para leer token (retorna null por defecto, simula no autenticado)
-    when(mock.read(key: anyNamed('key'))).thenAnswer((_) async => null);
+    when(mock.read(key: anyNamed('key') as dynamic))
+        .thenAnswer((_) async => null);
     
     // Mock para escribir token
-    when(mock.write(key: anyNamed('key'), value: anyNamed('value')))
+    when(mock.write(
+            key: anyNamed('key') as dynamic,
+            value: anyNamed('value') as dynamic))
         .thenAnswer((_) async {});
     
     // Mock para eliminar token
-    when(mock.delete(key: anyNamed('key'))).thenAnswer((_) async {});
+    when(mock.delete(key: anyNamed('key') as dynamic))
+        .thenAnswer((_) async {});
     
     // Mock para leer todos
     when(mock.readAll()).thenAnswer((_) async => {});
@@ -37,7 +96,7 @@ class MockSecureStorageHelper {
     final mock = MockFlutterSecureStorage();
     
     when(mock.read(key: 'token')).thenAnswer((_) async => token);
-    when(mock.read(key: anyNamed('key')))
+    when(mock.read(key: anyNamed('key') as dynamic))
         .thenAnswer((invocation) async {
       if (invocation.namedArguments[#key] == 'token') {
         return token;
@@ -45,9 +104,12 @@ class MockSecureStorageHelper {
       return null;
     });
     
-    when(mock.write(key: anyNamed('key'), value: anyNamed('value')))
+    when(mock.write(
+            key: anyNamed('key') as dynamic,
+            value: anyNamed('value') as dynamic))
         .thenAnswer((_) async {});
-    when(mock.delete(key: anyNamed('key'))).thenAnswer((_) async {});
+    when(mock.delete(key: anyNamed('key') as dynamic))
+        .thenAnswer((_) async {});
     when(mock.readAll()).thenAnswer((_) async => {'token': token});
     when(mock.deleteAll()).thenAnswer((_) async {});
     

@@ -24,12 +24,12 @@ void main() {
     });
 
     test('ApiService baseUrl debe usar API_URL_LOCAL en modo debug', () {
-      final baseUrl = baseUrl;
+      final apiBaseUrl = baseUrl;
       final expectedUrl = dotenv.env['API_URL_LOCAL'] ?? 'http://192.168.27.12:8000';
       
-      expect(baseUrl, equals(expectedUrl));
-      expect(baseUrl, contains('192.168.27.12'));
-      expect(baseUrl, isNot(contains('backend.corralx.com')));
+      expect(apiBaseUrl, equals(expectedUrl));
+      expect(apiBaseUrl, contains('192.168.27.12'));
+      expect(apiBaseUrl, isNot(contains('backend.corralx.com')));
     });
 
     test('LocationService debe usar API_URL_LOCAL en modo debug', () {

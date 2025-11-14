@@ -8,7 +8,7 @@ void main() {
     late ProductProvider productProvider;
 
     setUp(() {
-      productProvider = ProductProvider();
+      productProvider = ProductProvider(enableNetwork: false);
     });
 
     group('favoriteProducts', () {

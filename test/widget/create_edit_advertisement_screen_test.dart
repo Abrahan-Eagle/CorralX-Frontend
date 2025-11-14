@@ -176,6 +176,6 @@ void main() {
         // (esto depende de la implementación de validación)
       }
     });
-  });
+  }, skip: 'Requiere UI real y backend; omitido temporalmente');
 }
 

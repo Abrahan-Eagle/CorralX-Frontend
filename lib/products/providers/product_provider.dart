@@ -10,6 +10,10 @@ import 'package:corralx/favorites/services/favorite_service.dart';
 class ProductProvider with ChangeNotifier {
   // Flag para verificar si el provider está disposed
   bool _disposed = false;
+  final bool _enableNetwork;
+
+  ProductProvider({bool enableNetwork = true})
+      : _enableNetwork = enableNetwork;
   
   // Estado de productos
   List<Product> _products = [];
@@ -62,6 +66,7 @@ class ProductProvider with ChangeNotifier {
   Map<String, dynamic> get currentFilters => _currentFilters;
   bool get hasMorePages => _hasMorePages;
   Set<int> get favorites => _favorites;
+  bool get enableNetwork => _enableNetwork;
   
   // Getters de favoritos
   List<Product> get favoriteProducts => _favoriteProducts;
@@ -81,6 +86,13 @@ class ProductProvider with ChangeNotifier {
       debugPrint('📢 ProductProvider.fetchAdvertisements iniciado');
       _isLoadingAdvertisements = true;
       _safeNotifyListeners();
+
+      if (!_enableNetwork) {
+        _advertisements = [];
+        _isLoadingAdvertisements = false;
+        _safeNotifyListeners();
+        return;
+      }
 
       final ads = await AdvertisementService.getActiveAdvertisements();
       _advertisements = ads;
@@ -226,6 +238,12 @@ class ProductProvider with ChangeNotifier {
         debugPrint('🔍 Filtros aplicados: $_currentFilters');
       }
 
+      if (!_enableNetwork) {
+        _isLoading = false;
+        _safeNotifyListeners();
+        return;
+      }
+
       debugPrint('🔍 Llamando a ProductService.getProducts...');
       final response = await ProductService.getProducts(
         filters: _currentFilters.isNotEmpty ? _currentFilters : null,
@@ -291,6 +309,12 @@ class ProductProvider with ChangeNotifier {
       _isLoading = true;
       _safeNotifyListeners();
 
+      if (!_enableNetwork) {
+        _isLoading = false;
+        _safeNotifyListeners();
+        return;
+      }
+
       final response = await ProductService.getProductDetail(productId);
       debugPrint('🔍 ProductProvider: Response recibida: ${response.keys.toList()}');
 
@@ -351,6 +375,9 @@ class ProductProvider with ChangeNotifier {
     List<String>? imagePaths,
   }) async {
     try {
+      if (!_enableNetwork) {
+        return true;
+      }
       _clearErrors();
       _isCreating = true;
       _safeNotifyListeners();
@@ -475,6 +502,9 @@ class ProductProvider with ChangeNotifier {
     String? status,
   }) async {
     try {
+      if (!_enableNetwork) {
+        return true;
+      }
       _clearErrors();
       _isUpdating = true;
       _safeNotifyListeners();
@@ -552,6 +582,9 @@ class ProductProvider with ChangeNotifier {
   // Eliminar producto
   Future<bool> deleteProduct(int productId) async {
     try {
+      if (!_enableNetwork) {
+        return true;
+      }
       _clearErrors();
       _isDeleting = true;
       _safeNotifyListeners();
@@ -593,6 +626,12 @@ class ProductProvider with ChangeNotifier {
       _isLoading = true;
       _safeNotifyListeners();
 
+      if (!_enableNetwork) {
+        _isLoading = false;
+        _safeNotifyListeners();
+        return;
+      }
+
       // Usar filtros para obtener solo mis productos
       // Esto dependerá de cómo el backend maneje la propiedad
       final response = await ProductService.getProducts(
@@ -615,9 +654,11 @@ class ProductProvider with ChangeNotifier {
   }
 
   // Limpiar filtros
-  void clearFilters() {
+  void clearFilters({bool triggerFetch = true}) {
     _currentFilters.clear();
-    fetchProducts(refresh: true);
+    if (triggerFetch) {
+      fetchProducts(refresh: true);
+    }
   }
 
   // Refrescar productos y anuncios
@@ -653,13 +694,17 @@ class ProductProvider with ChangeNotifier {
   
   // Registrar click en anuncio
   Future<void> registerAdvertisementClick(Advertisement ad) async {
+    if (!_enableNetwork) return;
     await AdvertisementService.registerClick(ad.id);
   }
 
   // Método para aplicar filtros desde el modal
-  void applyFilters(Map<String, dynamic> filters) {
+  void applyFilters(Map<String, dynamic> filters,
+      {bool triggerFetch = true}) {
     _currentFilters = filters;
-    fetchProducts(filters: filters, refresh: true);
+    if (triggerFetch) {
+      fetchProducts(filters: filters, refresh: true);
+    }
   }
 
   // Método para obtener el conteo de filtros activos
@@ -739,6 +784,12 @@ class ProductProvider with ChangeNotifier {
 
       debugPrint('🔍 ProductProvider.fetchFavorites iniciado - Página: $page');
 
+      if (!_enableNetwork) {
+        _isLoadingFavorites = false;
+        _safeNotifyListeners();
+        return;
+      }
+
       final response = await FavoriteService.getMyFavorites(
         page: page,
         perPage: 20,
@@ -799,13 +850,15 @@ class ProductProvider with ChangeNotifier {
             product = _products.firstWhere((p) => p.id == productId);
           } catch (e) {
             // Si no está en _products, obtenerlo del backend
-            try {
-              final response = await ProductService.getProductDetail(productId);
-              if (response['data'] != null) {
-                product = Product.fromJson(response['data']);
+            if (_enableNetwork) {
+              try {
+                final response = await ProductService.getProductDetail(productId);
+                if (response['data'] != null) {
+                  product = Product.fromJson(response['data']);
+                }
+              } catch (e2) {
+                debugPrint('⚠️ No se pudo obtener el producto: $e2');
               }
-            } catch (e2) {
-              debugPrint('⚠️ No se pudo obtener el producto: $e2');
             }
           }
           
@@ -818,6 +871,9 @@ class ProductProvider with ChangeNotifier {
       _safeNotifyListeners();
       
       // 2. Sincronizar con backend
+      if (!_enableNetwork) {
+        return;
+      }
       debugPrint('🌐 Llamando a FavoriteService.toggleFavorite...');
       final isFavorite = await FavoriteService.toggleFavorite(productId);
       

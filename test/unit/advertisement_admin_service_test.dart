@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:corralx/admin/services/advertisement_admin_service.dart';
+import 'package:corralx/products/models/advertisement.dart';
+
+import '../helpers/test_helpers.dart';
 
 void main() {
   // Inicializar dotenv antes de todos los tests
@@ -16,6 +19,17 @@ void main() {
         'ENVIRONMENT': 'development',
       });
     }
+
+    dotenv.env['API_URL_LOCAL'] = 'http://127.0.0.1:1';
+    dotenv.env['API_URL_PROD'] = 'http://127.0.0.1:1';
+
+    SecureStorageTestHelper.setupMockStorage(
+      initialValues: {'token': 'test-admin-token'},
+    );
+  });
+
+  tearDownAll(() {
+    SecureStorageTestHelper.reset();
   });
 
   group('AdvertisementAdminService Tests', () {
@@ -30,39 +44,30 @@ void main() {
         expect(AdvertisementAdminService.deleteAdvertisement, isA<Function>());
       });
 
-      test('getAllAdvertisements should return Future<List<Advertisement>>', () async {
-        expect(
-          AdvertisementAdminService.getAllAdvertisements(),
-          isA<Future<List<dynamic>>>(),
-        );
+      test('getAllAdvertisements signature', () {
+        final method = AdvertisementAdminService.getAllAdvertisements;
+        expect(method, isA<Future<List<Advertisement>> Function()>());
       });
 
-      test('getAdvertisementById should return Future<Advertisement>', () async {
-        expect(
-          AdvertisementAdminService.getAdvertisementById(1),
-          isA<Future<dynamic>>(),
-        );
+      test('getAdvertisementById signature', () {
+        final method = AdvertisementAdminService.getAdvertisementById;
+        expect(method, isA<Future<Advertisement> Function(int)>());
       });
 
-      test('createAdvertisement should accept Map<String, dynamic>', () async {
-        expect(
-          AdvertisementAdminService.createAdvertisement({}),
-          isA<Future<dynamic>>(),
-        );
+      test('createAdvertisement signature', () {
+        final method = AdvertisementAdminService.createAdvertisement;
+        expect(method, isA<Future<Advertisement> Function(Map<String, dynamic>)>());
       });
 
-      test('updateAdvertisement should accept id and data', () async {
-        expect(
-          AdvertisementAdminService.updateAdvertisement(1, {}),
-          isA<Future<dynamic>>(),
-        );
+      test('updateAdvertisement signature', () {
+        final method = AdvertisementAdminService.updateAdvertisement;
+        expect(method,
+            isA<Future<Advertisement> Function(int, Map<String, dynamic>)>());
       });
 
-      test('deleteAdvertisement should accept id', () async {
-        expect(
-          AdvertisementAdminService.deleteAdvertisement(1),
-          isA<Future<void>>(),
-        );
+      test('deleteAdvertisement signature', () {
+        final method = AdvertisementAdminService.deleteAdvertisement;
+        expect(method, isA<Future<void> Function(int)>());
       });
     });
 

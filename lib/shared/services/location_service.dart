@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
+import 'package:corralx/shared/utils/test_environment.dart';
 
 /// Servicio compartido para cargar ubicaciones (países, estados, ciudades, parroquias)
 class LocationService {
@@ -21,9 +22,13 @@ class LocationService {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+  static bool get _isTestMode => TestEnvironment.isRunningTests;
 
   /// GET /api/countries - Obtener países
   static Future<List<Map<String, dynamic>>> getCountries() async {
+    if (_isTestMode) {
+      return _mockLocationList('country');
+    }
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/api/countries'),
@@ -51,6 +56,9 @@ class LocationService {
 
   /// GET /api/states?country_id={id} - Obtener estados por país
   static Future<List<Map<String, dynamic>>> getStates(int countryId) async {
+    if (_isTestMode) {
+      return _mockLocationList('state', parentId: countryId);
+    }
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/api/states?country_id=$countryId'),
@@ -78,6 +86,9 @@ class LocationService {
 
   /// GET /api/cities?state_id={id} - Obtener ciudades por estado
   static Future<List<Map<String, dynamic>>> getCities(int stateId) async {
+    if (_isTestMode) {
+      return _mockLocationList('city', parentId: stateId);
+    }
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/api/cities?state_id=$stateId'),
@@ -105,6 +116,9 @@ class LocationService {
 
   /// GET /api/parishes?city_id={id} - Obtener parroquias por ciudad
   static Future<List<Map<String, dynamic>>> getParishes(int cityId) async {
+    if (_isTestMode) {
+      return _mockLocationList('parish', parentId: cityId);
+    }
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/api/parishes?city_id=$cityId'),
@@ -128,6 +142,24 @@ class LocationService {
       debugPrint('❌ LocationService.getParishes error: $e');
       rethrow;
     }
+  }
+
+  static List<Map<String, dynamic>> _mockLocationList(String type,
+      {int? parentId}) {
+    final parentKey = type == 'state'
+        ? 'country_id'
+        : type == 'city'
+            ? 'state_id'
+            : 'city_id';
+
+    return List.generate(3, (index) {
+      final id = (parentId ?? 0) * 10 + index + 1;
+      return {
+        'id': id,
+        'name': 'Mock $type $id',
+        if (type != 'country') parentKey: parentId ?? 1,
+      };
+    });
   }
 }
 

@@ -33,9 +33,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _loadProduct() async {
-    final productProvider =
-        Provider.of<ProductProvider>(context, listen: false);
-
     // Si ya tenemos el producto, usarlo directamente
     if (widget.product != null) {
       if (!mounted) return;
@@ -45,6 +42,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       });
       return;
     }
+
+    final productProvider =
+        Provider.of<ProductProvider>(context, listen: false);
 
     // Si no, buscar en la lista de productos
     final existingProduct = productProvider.products
