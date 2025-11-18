@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/corral_x_theme.dart';
+import '../models/onboarding_draft.dart';
 import '../services/onboarding_api_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -9,10 +10,10 @@ class OnboardingPage1 extends StatefulWidget {
   const OnboardingPage1({super.key});
 
   @override
-  State<OnboardingPage1> createState() => _OnboardingPage1State();
+  OnboardingPage1State createState() => OnboardingPage1State();
 }
 
-class _OnboardingPage1State extends State<OnboardingPage1> {
+class OnboardingPage1State extends State<OnboardingPage1> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -731,156 +732,161 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     return null;
   }
 
-  Future<void> saveData() async {
-    // Forzar validación del formulario
+  Future<PersonalInfoDraft?> collectFormData() async {
     if (!_formKey.currentState!.validate()) {
       debugPrint('❌ FRONTEND: Formulario no válido - no se puede guardar');
-      return;
+      return null;
     }
 
-    debugPrint('✅ FRONTEND: Formulario válido - iniciando guardado');
+    if (_selectedCountry == null ||
+        _selectedState == null ||
+        _selectedCity == null ||
+        _selectedOperatorCode == null) {
+      _showErrorSnackBar('Completa país, estado, ciudad y código de operador');
+      return null;
+    }
 
+    final operatorCode = _operatorCodes.firstWhere(
+      (code) => code['code'] == _selectedOperatorCode,
+      orElse: () => {},
+    );
+
+    if (operatorCode.isEmpty || operatorCode['id'] == null) {
+      _showErrorSnackBar('No se pudo determinar el código de operador');
+      return null;
+    }
+
+    final city = _cities.firstWhere(
+      (c) => c['name'] == _selectedCity,
+      orElse: () => {},
+    );
+
+    if (city.isEmpty || city['id'] == null) {
+      _showErrorSnackBar('No se pudo determinar la ciudad seleccionada');
+      return null;
+    }
+
+    String backendDate = _dateOfBirthController.text.trim();
+    if (_selectedDate != null) {
+      backendDate =
+          '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
+    } else if (backendDate.isNotEmpty) {
+      final parts = backendDate.split('/');
+      if (parts.length == 3) {
+        backendDate = '${parts[2]}-${parts[1]}-${parts[0]}';
+      }
+    }
+
+    return PersonalInfoDraft(
+      firstName: _firstNameController.text.trim(),
+      middleName: null,
+      lastName: _lastNameController.text.trim(),
+      secondLastName: null,
+      dateOfBirthIso: backendDate,
+      ciNumber: _ciController.text.trim(),
+      operatorCodeId: operatorCode['id'] as int,
+      operatorCode: _selectedOperatorCode!,
+      phoneNumber: _phoneController.text.trim(),
+      address: _addressController.text.trim(),
+      cityId: city['id'] as int,
+      latitude: _currentLatitude ?? 10.4806,
+      longitude: _currentLongitude ?? -66.9036,
+      countryName: _selectedCountry,
+      stateName: _selectedState,
+      cityName: _selectedCity,
+    );
+  }
+
+  // Restaurar datos desde un draft guardado
+  Future<void> restoreFromDraft(PersonalInfoDraft draft) async {
+    debugPrint('🔄 ONBOARDING PAGE1: Restaurando datos desde draft...');
+    
     try {
-      debugPrint('🚀 FRONTEND: Guardando datos del onboarding página 1...');
-
-      // Debug: Mostrar datos que se van a enviar
-      debugPrint('📋 FRONTEND: Datos a enviar:');
-      debugPrint('  - firstName: ${_firstNameController.text.trim()}');
-      debugPrint('  - lastName: ${_lastNameController.text.trim()}');
-      debugPrint('  - dateOfBirth: ${_dateOfBirthController.text.trim()}');
-      debugPrint('  - ciNumber: ${_ciController.text.trim()}');
-      debugPrint('  - phone: ${_phoneController.text.trim()}');
-      debugPrint('  - address: ${_addressController.text.trim()}');
-
-      // 1. Crear perfil
-      debugPrint('📝 FRONTEND: Enviando petición para crear perfil...');
-
-      // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD para el backend
-      String backendDate = _dateOfBirthController.text.trim();
-      if (_selectedDate != null) {
-        backendDate =
-            '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
-      }
-
-      final profileResponse = await _apiService.createProfile(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        dateOfBirth: backendDate,
-        ciNumber: _ciController.text.trim(),
-        photoUsers: null,
-      );
-
-      debugPrint('✅ FRONTEND: Perfil creado exitosamente: $profileResponse');
-      // Guardar profile_id para usarlo en el formulario 2 (ranch)
-      try {
-        final dynamic possibleProfile = profileResponse['profile'] ??
-            profileResponse['data']?['profile'] ??
-            profileResponse;
-
-        if (possibleProfile is Map && possibleProfile.containsKey('id')) {
-          final rawProfileId = possibleProfile['id'];
-          final profileId =
-              rawProfileId is int ? rawProfileId : int.tryParse('$rawProfileId');
-
-          if (profileId != null) {
-            const storage = FlutterSecureStorage();
-            await storage.write(
-                key: 'profile_id', value: profileId.toString());
-            debugPrint(
-                '🔐 FRONTEND: profile_id guardado de forma segura: $profileId');
-          } else {
-            debugPrint(
-                '⚠️ FRONTEND: No se pudo convertir profile_id: $rawProfileId');
+      // Restaurar campos básicos
+      _firstNameController.text = draft.firstName;
+      _lastNameController.text = draft.lastName;
+      _phoneController.text = draft.phoneNumber;
+      _addressController.text = draft.address;
+      _ciController.text = draft.ciNumber;
+      
+      // Restaurar fecha de nacimiento
+      if (draft.dateOfBirthIso.isNotEmpty) {
+        try {
+          final dateParts = draft.dateOfBirthIso.split('-');
+          if (dateParts.length == 3) {
+            _selectedDate = DateTime(
+              int.parse(dateParts[0]),
+              int.parse(dateParts[1]),
+              int.parse(dateParts[2]),
+            );
+            // Formatear fecha para mostrar en el campo (DD/MM/YYYY)
+            _dateOfBirthController.text =
+                '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}';
           }
-        } else {
-          debugPrint(
-              '⚠️ FRONTEND: La respuesta no contiene perfil con ID: $profileResponse');
+        } catch (e) {
+          debugPrint('⚠️ ONBOARDING PAGE1: Error parseando fecha: $e');
         }
-      } catch (e) {
-        debugPrint('⚠️ FRONTEND: No se pudo guardar profile_id: $e');
       }
 
-      // 2. Crear teléfono
-      debugPrint('📞 FRONTEND: Enviando petición para crear teléfono...');
-      final operatorCodeId = _operatorCodes.firstWhere(
-        (code) => code['code'] == _selectedOperatorCode,
-        orElse: () => {'id': 1},
-      )['id'];
+      // Restaurar ubicación
+      _currentLatitude = draft.latitude;
+      _currentLongitude = draft.longitude;
 
-      debugPrint('🔢 FRONTEND: OperatorCode ID seleccionado: $operatorCodeId');
+      // Cargar datos de países/estados/ciudades si no están cargados
+      if (_countries.isEmpty) {
+        await _loadCountries();
+      }
 
-      // Obtener el user_id del perfil creado
-      final userId = profileResponse['profile']['user_id'];
-      debugPrint('👤 FRONTEND: User ID obtenido: $userId');
+      // Restaurar país y cargar estados
+      if (draft.countryName != null) {
+        _onCountryChanged(draft.countryName);
+        // Esperar a que se carguen los estados
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // Restaurar estado y cargar ciudades
+        if (draft.stateName != null && _states.isNotEmpty) {
+          _onStateChanged(draft.stateName);
+          // Esperar a que se carguen las ciudades
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          // Restaurar ciudad
+          if (draft.cityName != null && _cities.isNotEmpty) {
+            _selectedCity = draft.cityName;
+          }
+        }
+      }
 
-      final phoneResponse = await _apiService.createPhone(
-        number: _phoneController.text.trim(),
-        operatorCodeId: operatorCodeId,
-        userId: userId,
-      );
+      // Cargar códigos de operador si no están cargados
+      if (_operatorCodes.isEmpty) {
+        await _loadOperatorCodes();
+      }
 
-      debugPrint('✅ FRONTEND: Teléfono creado exitosamente: $phoneResponse');
+      // Restaurar código de operador
+      if (draft.operatorCode.isNotEmpty && _operatorCodes.isNotEmpty) {
+        _selectedOperatorCode = draft.operatorCode;
+      }
 
-      // 3. Crear dirección
-      debugPrint('🏠 FRONTEND: Enviando petición para crear dirección...');
-      final cityId = _cities.firstWhere(
-        (city) => city['name'] == _selectedCity,
-        orElse: () => {'id': 1},
-      )['id'];
-
-      // Obtener el profile_id del perfil creado
-      final profileId = profileResponse['profile']['id'];
-      debugPrint('🔐 FRONTEND: Profile ID obtenido: $profileId');
-      debugPrint('🏙️ FRONTEND: City ID seleccionado: $cityId');
-      
-      final addressResponse = await _apiService.createAddress(
-        profileId: profileId, // ✅ Pasar el profile_id real
-        addresses: _addressController.text.trim(),
-        cityId: cityId,
-        // Usar coordenadas reales obtenidas por GPS o por defecto
-        latitude: _currentLatitude ?? 10.4806, // GPS real o Caracas por defecto
-        longitude: _currentLongitude ?? -66.9036,
-      );
-
-      debugPrint('✅ FRONTEND: Dirección creada exitosamente: $addressResponse');
-
-      debugPrint('🎉 FRONTEND: ¡TODOS LOS DATOS GUARDADOS EXITOSAMENTE!');
-      debugPrint('📊 FRONTEND: Resumen de respuestas:');
-      debugPrint('  - Profile: $profileResponse');
-      debugPrint('  - Phone: $phoneResponse');
-      debugPrint('  - Address: $addressResponse');
-
+      // Validar formulario para actualizar estado
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Datos personales guardados exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // TODO: Navegar a la siguiente página o completar onboarding
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => OnboardingPage2()));
+        setState(() {
+          _formKey.currentState?.validate();
+        });
       }
+
+      debugPrint('✅ ONBOARDING PAGE1: Datos restaurados exitosamente');
     } catch (e) {
-      debugPrint('❌ FRONTEND: Error al guardar datos: $e');
-      debugPrint('🔍 FRONTEND: Stack trace: ${StackTrace.current}');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error al guardar: $e'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-      
-      // ✅ Re-lanzar la excepción para que _saveCurrentPageData() pueda detectarla
-      // y evitar la navegación a la siguiente página
-      rethrow;
-    } finally {
-      // No necesitamos setState aquí ya que el widget se va a destruir
+      debugPrint('❌ ONBOARDING PAGE1: Error restaurando datos: $e');
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override

@@ -122,7 +122,7 @@
             android:value="@integer/google_play_services_version"/>
         <meta-data
             android:name="com.google.android.gms.auth.api.credentials.API_KEY"
-            android:value="AIzaSyCyVrcmdTiihm5kv0wuAG0xQvPtqL6Ih6s"/>
+            android:value="AIzaSyBhdzSi6Mp-6Yt76U_y_LZsXAgHTlkq_5Q"/>
 
         <meta-data
             android:name="flutterEmbedding"

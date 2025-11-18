@@ -249,21 +249,32 @@ class OnboardingApiService {
           return json.decode(responseBody);
         } else {
           final errorData = json.decode(responseBody);
+          debugPrint('❌ FRONTEND: Error al crear perfil (multipart): $errorData');
+          
           // Mostrar detalles del error de validación
           String errorMessage = 'Error al crear perfil: ${response.statusCode}';
-          if (errorData['error'] != null) {
-            if (errorData['error'] is Map) {
-              final errors = errorData['error'] as Map;
-              final errorList = errors.entries
-                  .map((e) => '${e.key}: ${(e.value as List).join(', ')}')
-                  .join('; ');
-              errorMessage = 'Error de validación: $errorList';
+          
+          // Priorizar mensajes específicos de validación (ci_number, etc.)
+          if (errorData['error'] != null && errorData['error'] is Map) {
+            final errors = errorData['error'] as Map;
+            
+            // Buscar mensaje específico de ci_number si existe
+            if (errors.containsKey('ci_number') && errors['ci_number'] is List) {
+              final ciErrors = errors['ci_number'] as List;
+              if (ciErrors.isNotEmpty) {
+                errorMessage = ciErrors.first.toString();
+              }
             } else {
-              errorMessage = errorData['error'].toString();
+              // Si no hay ci_number, formatear todos los errores
+              final errorListStr = errors.entries
+                  .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value.toString())}')
+                  .join('; ');
+              errorMessage = 'Error de validación: $errorListStr';
             }
           } else if (errorData['message'] != null) {
             errorMessage = errorData['message'];
           }
+          
           throw Exception(errorMessage);
         }
       } else {
@@ -284,21 +295,32 @@ class OnboardingApiService {
           return json.decode(response.body);
         } else {
           final errorData = json.decode(response.body);
+          debugPrint('❌ FRONTEND: Error al crear perfil: $errorData');
+          
           // Mostrar detalles del error de validación
           String errorMessage = 'Error al crear perfil: ${response.statusCode}';
-          if (errorData['error'] != null) {
-            if (errorData['error'] is Map) {
-              final errors = errorData['error'] as Map;
-              final errorList = errors.entries
-                  .map((e) => '${e.key}: ${(e.value as List).join(', ')}')
-                  .join('; ');
-              errorMessage = 'Error de validación: $errorList';
+          
+          // Priorizar mensajes específicos de validación (ci_number, etc.)
+          if (errorData['error'] != null && errorData['error'] is Map) {
+            final errors = errorData['error'] as Map;
+            
+            // Buscar mensaje específico de ci_number si existe
+            if (errors.containsKey('ci_number') && errors['ci_number'] is List) {
+              final ciErrors = errors['ci_number'] as List;
+              if (ciErrors.isNotEmpty) {
+                errorMessage = ciErrors.first.toString();
+              }
             } else {
-              errorMessage = errorData['error'].toString();
+              // Si no hay ci_number, formatear todos los errores
+              final errorListStr = errors.entries
+                  .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value.toString())}')
+                  .join('; ');
+              errorMessage = 'Error de validación: $errorListStr';
             }
           } else if (errorData['message'] != null) {
             errorMessage = errorData['message'];
           }
+          
           throw Exception(errorMessage);
         }
       }
@@ -334,25 +356,51 @@ class OnboardingApiService {
     required int userId,
   }) async {
     try {
+      final requestBody = {
+        'user_id': userId,
+        'number': number,
+        'operator_code_id': operatorCodeId,
+        'is_primary': true,
+      };
+      
+      debugPrint('📞 FRONTEND: Enviando petición para crear teléfono...');
+      debugPrint('📞 FRONTEND: Datos enviados: $requestBody');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/phones'),
         headers: _headers,
-        body: json.encode({
-          'user_id': userId,
-          'number': number,
-          'operator_code_id': operatorCodeId,
-          'is_primary': true,
-        }),
+        body: json.encode(requestBody),
       );
 
+      debugPrint('📞 FRONTEND: Respuesta del servidor: ${response.statusCode}');
+      debugPrint('📞 FRONTEND: Body de respuesta: ${response.body}');
+
       if (response.statusCode == 201 || response.statusCode == 200) {
+        debugPrint('✅ FRONTEND: Teléfono creado exitosamente.');
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ??
-            'Error al crear teléfono: ${response.statusCode}');
+        debugPrint('❌ FRONTEND: Error al crear teléfono: $errorData');
+        
+        // Mostrar detalles del error de validación
+        String errorMessage = 'Error al crear teléfono: ${response.statusCode}';
+        if (errorData['error'] != null) {
+          if (errorData['error'] is Map) {
+            final errors = errorData['error'] as Map;
+            final errorListStr = errors.entries
+                .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value.toString())}')
+                .join('; ');
+            errorMessage = 'Error de validación: $errorListStr';
+          } else {
+            errorMessage = errorData['error'].toString();
+          }
+        } else if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
+      debugPrint('❌ FRONTEND: Excepción al crear teléfono: $e');
       throw Exception('Error al crear teléfono: $e');
     }
   }
@@ -388,10 +436,10 @@ class OnboardingApiService {
         if (errorData['error'] != null) {
           if (errorData['error'] is Map) {
             final errors = errorData['error'] as Map;
-            final errorList = errors.entries
-                .map((e) => '${e.key}: ${(e.value as List).join(', ')}')
+            final errorListStr = errors.entries
+                .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value.toString())}')
                 .join('; ');
-            errorMessage = 'Error de validación: $errorList';
+            errorMessage = 'Error de validación: $errorListStr';
           } else {
             errorMessage = errorData['error'].toString();
           }
@@ -435,8 +483,33 @@ class OnboardingApiService {
         return json.decode(response.body);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ??
-            'Error al crear hacienda: ${response.statusCode}');
+        debugPrint('❌ FRONTEND: Error al crear hacienda: $errorData');
+        
+        // Mostrar detalles del error de validación
+        String errorMessage = 'Error al crear hacienda: ${response.statusCode}';
+        
+        // Priorizar mensajes específicos de validación (tax_id, etc.)
+        if (errorData['error'] != null && errorData['error'] is Map) {
+          final errors = errorData['error'] as Map;
+          
+          // Buscar mensaje específico de tax_id si existe
+          if (errors.containsKey('tax_id') && errors['tax_id'] is List) {
+            final taxErrors = errors['tax_id'] as List;
+            if (taxErrors.isNotEmpty) {
+              errorMessage = taxErrors.first.toString();
+            }
+          } else {
+            // Si no hay tax_id, formatear todos los errores
+            final errorListStr = errors.entries
+                .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value.toString())}')
+                .join('; ');
+            errorMessage = 'Error de validación: $errorListStr';
+          }
+        } else if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        }
+        
+        throw Exception(errorMessage);
       }
     } catch (e) {
       throw Exception('Error al crear hacienda: $e');

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/corral_x_theme.dart';
-import '../services/onboarding_api_service.dart';
+import '../models/onboarding_draft.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // InputFormatter personalizado para RIF venezolano (V- o J-12345678-9)
 class _RIFVenezuelaInputFormatter extends TextInputFormatter {
@@ -108,19 +107,16 @@ class OnboardingPage2 extends StatefulWidget {
   const OnboardingPage2({super.key});
 
   @override
-  State<OnboardingPage2> createState() => _OnboardingPage2State();
+  OnboardingPage2State createState() => OnboardingPage2State();
 }
 
-class _OnboardingPage2State extends State<OnboardingPage2> {
+class OnboardingPage2State extends State<OnboardingPage2> {
   final _formKey = GlobalKey<FormState>();
   final _haciendaNameController = TextEditingController();
   final _razonSocialController = TextEditingController();
   final _rifController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _horarioController = TextEditingController();
-
-  // Variables para almacenar datos del usuario
-  int? _profileId;
 
   // Presets compactos
   final List<String> _schedulePresets = <String>[
@@ -270,13 +266,9 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     );
   }
 
-  late OnboardingApiService _apiService;
-
   @override
   void initState() {
     super.initState();
-    _apiService = OnboardingApiService();
-
     // Inicializar campo RIF vacío (el usuario puede escribir V- o J-)
 
     // Agregar listeners para validación en tiempo real
@@ -285,85 +277,6 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     _rifController.addListener(_validateForm);
     _descriptionController.addListener(_validateForm);
     _horarioController.addListener(_validateForm);
-
-    _loadAuthToken();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Recargar profile_id cuando el usuario llega a esta página
-    _loadAuthToken();
-  }
-
-  // Cargar token de autenticación y obtener profile_id
-  Future<void> _loadAuthToken() async {
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'token');
-      if (token != null) {
-        _apiService.setAuthToken(token);
-        debugPrint(
-            'Token cargado para onboarding Page2: ${token.substring(0, 10)}...');
-
-        // Intentar leer profile_id guardado por el Formulario 1
-        final savedProfileId = await storage.read(key: 'profile_id');
-        debugPrint('🔍 PAGE2: Valor leído de SecureStorage: $savedProfileId');
-        if (savedProfileId != null) {
-          _profileId = int.tryParse(savedProfileId);
-          debugPrint(
-              '🔐 PAGE2: profile_id recuperado del SecureStorage: $_profileId');
-        } else {
-          debugPrint('⚠️ PAGE2: No se encontró profile_id en SecureStorage');
-        }
-        // Si no está, obtener el profile_id desde el backend
-        if (_profileId == null) {
-          debugPrint('🔄 PAGE2: Obteniendo profile_id desde backend...');
-          await _getProfileIdFromToken();
-        } else {
-          debugPrint('✅ PAGE2: profile_id disponible: $_profileId');
-        }
-      } else {
-        debugPrint('No se encontró token de autenticación en Page2');
-      }
-    } catch (e) {
-      debugPrint('Error al cargar token en Page2: $e');
-    }
-  }
-
-  // Obtener profile_id del token
-  Future<void> _getProfileIdFromToken() async {
-    try {
-      final profileData = await _apiService.getMyProfile();
-
-      if (profileData != null) {
-        final dynamic rawId =
-            profileData['id'] ?? profileData['profile']?['id'];
-
-        if (rawId != null) {
-          final parsedId = rawId is int ? rawId : int.tryParse('$rawId');
-          if (parsedId != null) {
-            _profileId = parsedId;
-            debugPrint('Profile ID obtenido para Page2: $_profileId');
-
-            // Guardar en SecureStorage para futuros usos
-            const storage = FlutterSecureStorage();
-            await storage.write(
-                key: 'profile_id', value: _profileId.toString());
-          } else {
-            debugPrint(
-                '⚠️ PAGE2: No se pudo convertir el profile_id: $rawId');
-          }
-        } else {
-          debugPrint('⚠️ PAGE2: El perfil no contiene ID: $profileData');
-        }
-      } else {
-        debugPrint(
-            '⚠️ PAGE2: No se encontró perfil para el usuario autenticado');
-      }
-    } catch (e) {
-      debugPrint('Error obteniendo profile ID en Page2: $e');
-    }
   }
 
   @override
@@ -674,97 +587,47 @@ class _OnboardingPage2State extends State<OnboardingPage2> {
     }
   }
 
-  Future<void> saveData() async {
-    // Forzar validación del formulario
+  Future<RanchInfoDraft?> collectFormData() async {
     if (!_formKey.currentState!.validate()) {
       debugPrint(
           '❌ FRONTEND PAGE2: Formulario no válido - no se puede guardar');
-      return;
+      return null;
     }
 
-    debugPrint('✅ FRONTEND PAGE2: Formulario válido - iniciando guardado');
-    setState(() {});
+    return RanchInfoDraft(
+      name: _haciendaNameController.text.trim(),
+      legalName: _razonSocialController.text.trim(),
+      rif: _rifController.text.trim(),
+      description: _descriptionController.text.trim(),
+      contactHours: _horarioController.text.trim().isNotEmpty
+          ? _horarioController.text.trim()
+          : null,
+    );
+  }
 
+  // Restaurar datos desde un draft guardado
+  Future<void> restoreFromDraft(RanchInfoDraft draft) async {
+    debugPrint('🔄 ONBOARDING PAGE2: Restaurando datos desde draft...');
+    
     try {
-      debugPrint('🚀 FRONTEND PAGE2: Guardando datos de la hacienda...');
-
-      // Debug: Mostrar datos que se van a enviar
-      debugPrint('📋 FRONTEND PAGE2: Datos a enviar:');
-      debugPrint('  - haciendaName: ${_haciendaNameController.text.trim()}');
-      debugPrint('  - razonSocial: ${_razonSocialController.text.trim()}');
-      debugPrint('  - rif: ${_rifController.text.trim()}');
-      debugPrint('  - description: ${_descriptionController.text.trim()}');
-      // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
-      // debugPrint('  - horario: ${_horarioController.text.trim()}');
-
-      // 1. Crear hacienda
-      debugPrint('🏠 FRONTEND PAGE2: Enviando petición para crear hacienda...');
-      debugPrint('🔑 FRONTEND PAGE2: Usando profile_id: $_profileId');
-
-      if (_profileId == null) {
-        throw Exception('No se pudo obtener el profile_id del usuario');
+      _haciendaNameController.text = draft.name;
+      _razonSocialController.text = draft.legalName;
+      _rifController.text = draft.rif;
+      _descriptionController.text = draft.description;
+      if (draft.contactHours != null && draft.contactHours!.isNotEmpty) {
+        _horarioController.text = draft.contactHours!;
       }
 
-      final ranchResponse = await _apiService.createRanch(
-        name: _haciendaNameController.text.trim(),
-        profileId: _profileId!,
-        legalName: _razonSocialController.text.trim().isNotEmpty
-            ? _razonSocialController.text.trim()
-            : null,
-        taxId: _rifController.text.trim().isNotEmpty
-            ? _rifController.text.trim()
-            : null,
-        businessDescription: _descriptionController.text.trim(),
-        // TODO: Re-habilitar campo horario cuando se descomente el TextFormField
-        // contactHours: _horarioController.text.trim(),
-        // TODO: Usar la dirección creada en la página anterior
-        addressId: null,
-      );
-
-      debugPrint(
-          '✅ FRONTEND PAGE2: Hacienda creada exitosamente: $ranchResponse');
-
-      // 2. Completar onboarding
-      // TODO: Obtener el ID del usuario actual
-      // final userId = getCurrentUserId();
-      // await _apiService.completeOnboarding(userId);
-
-      debugPrint('🎉 FRONTEND PAGE2: ¡TODOS LOS DATOS GUARDADOS EXITOSAMENTE!');
-
+      // Validar formulario para actualizar estado
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Perfil completado con éxito!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // TODO: Navegar al dashboard principal
-        // Navigator.pushAndRemoveUntil(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => DashboardScreen()),
-        //   (route) => false,
-        // );
+        setState(() {
+          _formKey.currentState?.validate();
+        });
       }
+
+      debugPrint('✅ ONBOARDING PAGE2: Datos restaurados exitosamente');
     } catch (e) {
-      debugPrint('❌ FRONTEND PAGE2: Error al guardar datos: $e');
-      debugPrint('🔍 FRONTEND PAGE2: Stack trace: ${StackTrace.current}');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error al guardar: $e'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-
-      // ✅ Re-lanzar la excepción para que _saveCurrentPageData() pueda detectarla
-      // y evitar la navegación a la siguiente página
-      rethrow;
-    } finally {
-      setState(() {});
+      debugPrint('❌ ONBOARDING PAGE2: Error restaurando datos: $e');
     }
   }
 

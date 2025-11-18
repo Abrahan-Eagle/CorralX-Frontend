@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "818855614701",
-    "project_id": "corralx777",
-    "storage_bucket": "corralx777.firebasestorage.app"
+    "project_number": "332023551639",
+    "project_id": "corralx-777-aipp",
+    "storage_bucket": "corralx-777-aipp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:818855614701:android:2fc5b43ac8566086b794e4",
+        "mobilesdk_app_id": "1:332023551639:android:6f57a501ac428db853fbd2",
         "android_client_info": {
           "package_name": "com.corralx.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.corralx.app",
+            "certificate_hash": "f689c6994deac00b7ce3caf1b1076eb9f608892c"
+          }
+        },
+        {
+          "client_id": "332023551639-2hpmjjs8j2jn70g7ppdhsfujeosfha7b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDgrmSZdj5BiG9g_4GcsJjRBXhe3Ff4i94"
+          "current_key": "AIzaSyBhdzSi6Mp-6Yt76U_y_LZsXAgHTlkq_5Q"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "332023551639-2hpmjjs8j2jn70g7ppdhsfujeosfha7b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

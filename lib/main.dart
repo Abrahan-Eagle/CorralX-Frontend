@@ -346,7 +346,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:corralx/auth/screens/sign_in_screen.dart';
-
+import 'package:corralx/onboarding/screens/onboarding_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:corralx/products/screens/marketplace_screen.dart';
 import 'package:corralx/ranches/screens/ranch_marketplace_screen.dart';
 import 'package:corralx/favorites/screens/favorites_screen.dart';
@@ -479,7 +480,8 @@ class MyApp extends StatelessWidget {
             builder: (context, userProvider, child) {
               logger.i('isAuthenticated: ${userProvider.isAuthenticated}');
               if (userProvider.isAuthenticated) {
-                return const MainRouter();
+                // Verificar si completó el onboarding
+                return const _InitialRouteChecker();
               } else {
                 return const SignInScreen();
               }
@@ -491,6 +493,68 @@ class MyApp extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+// Widget para verificar si el usuario completó el onboarding
+class _InitialRouteChecker extends StatefulWidget {
+  const _InitialRouteChecker();
+
+  @override
+  State<_InitialRouteChecker> createState() => _InitialRouteCheckerState();
+}
+
+class _InitialRouteCheckerState extends State<_InitialRouteChecker> {
+  bool _isChecking = true;
+  bool _onboardingCompleted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final onboardingStatus = await storage.read(key: 'userCompletedOnboarding');
+      final completed = onboardingStatus == '1';
+      
+      if (mounted) {
+        setState(() {
+          _onboardingCompleted = completed;
+          _isChecking = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error verificando estado de onboarding: $e');
+      if (mounted) {
+        setState(() {
+          _onboardingCompleted = false;
+          _isChecking = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isChecking) {
+      // Mostrar un loading mientras verifica
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Si no completó el onboarding, ir a OnboardingScreen
+    if (!_onboardingCompleted) {
+      return const OnboardingScreen();
+    }
+
+    // Si completó el onboarding, ir a MainRouter
+    return const MainRouter();
   }
 }
 

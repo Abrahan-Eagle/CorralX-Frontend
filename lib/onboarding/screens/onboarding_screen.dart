@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'welcome_page.dart';
 import 'onboarding_page1.dart';
 import 'onboarding_page2.dart';
@@ -12,6 +13,9 @@ import 'package:corralx/config/user_provider.dart';
 import 'onboarding_service.dart';
 import 'package:corralx/main.dart';
 import '../../shared/widgets/amazon_widgets.dart';
+import '../models/onboarding_draft.dart';
+import '../services/onboarding_api_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 final OnboardingService _onboardingService = OnboardingService();
 
@@ -28,8 +32,16 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   bool _isLoading = false;
 
   // GlobalKeys para acceder a los métodos de las páginas
-  final GlobalKey _page1Key = GlobalKey();
-  final GlobalKey _page2Key = GlobalKey();
+  final GlobalKey<OnboardingPage1State> _page1Key =
+      GlobalKey<OnboardingPage1State>();
+  final GlobalKey<OnboardingPage2State> _page2Key =
+      GlobalKey<OnboardingPage2State>();
+
+  final OnboardingApiService _apiService = OnboardingApiService();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  bool _apiTokenInitialized = false;
+  PersonalInfoDraft? _personalInfoDraft;
+  RanchInfoDraft? _ranchInfoDraft;
 
   late final List<Widget> onboardingPages;
 
@@ -46,24 +58,123 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       // OnboardingPage5(),
       // OnboardingPage6(),
     ];
+
+    // Cargar datos guardados si existen
+    _loadSavedDrafts();
+  }
+
+  // Cargar datos guardados del onboarding
+  Future<void> _loadSavedDrafts() async {
+    try {
+      debugPrint('🔄 ONBOARDING: Cargando datos guardados del onboarding...');
+      
+      // Cargar datos personales
+      final personalJson = await _storage.read(key: 'onboarding_personal_draft');
+      if (personalJson != null && personalJson.isNotEmpty) {
+        final personalMap = json.decode(personalJson) as Map<String, dynamic>;
+        _personalInfoDraft = PersonalInfoDraft.fromJson(personalMap);
+        debugPrint('✅ ONBOARDING: Datos personales cargados desde almacenamiento');
+      }
+
+      // Cargar datos de hacienda
+      final ranchJson = await _storage.read(key: 'onboarding_ranch_draft');
+      if (ranchJson != null && ranchJson.isNotEmpty) {
+        final ranchMap = json.decode(ranchJson) as Map<String, dynamic>;
+        _ranchInfoDraft = RanchInfoDraft.fromJson(ranchMap);
+        debugPrint('✅ ONBOARDING: Datos de hacienda cargados desde almacenamiento');
+      }
+
+      // NO restaurar datos automáticamente - el usuario debe comenzar desde 0
+      // Los datos se guardan solo como respaldo, pero no se restauran automáticamente
+      // if (_personalInfoDraft != null || _ranchInfoDraft != null) {
+      //   WidgetsBinding.instance.addPostFrameCallback((_) {
+      //     _restoreSavedData();
+      //   });
+      // }
+    } catch (e) {
+      debugPrint('❌ ONBOARDING: Error cargando datos guardados: $e');
+    }
+  }
+
+  // Restaurar datos guardados en los formularios
+  Future<void> _restoreSavedData() async {
+    try {
+      if (_personalInfoDraft != null) {
+        final page1State = _page1Key.currentState;
+        if (page1State != null) {
+          await page1State.restoreFromDraft(_personalInfoDraft!);
+          debugPrint('✅ ONBOARDING: Datos personales restaurados en formulario');
+          
+          // Si también hay datos de hacienda, navegar a página 2
+          if (_ranchInfoDraft != null) {
+            final page2State = _page2Key.currentState;
+            if (page2State != null) {
+              await page2State.restoreFromDraft(_ranchInfoDraft!);
+              debugPrint('✅ ONBOARDING: Datos de hacienda restaurados en formulario');
+              // Navegar a página 2 si tenemos ambos formularios
+              _navigateToPage(2);
+            } else {
+              // Solo datos personales, navegar a página 1
+              _navigateToPage(1);
+            }
+          } else {
+            // Solo datos personales, navegar a página 1
+            _navigateToPage(1);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ ONBOARDING: Error restaurando datos: $e');
+    }
+  }
+
+  // Guardar datos personales persistentemente
+  Future<void> _savePersonalDraft(PersonalInfoDraft draft) async {
+    try {
+      final jsonString = json.encode(draft.toJson());
+      await _storage.write(key: 'onboarding_personal_draft', value: jsonString);
+      debugPrint('💾 ONBOARDING: Datos personales guardados persistentemente');
+    } catch (e) {
+      debugPrint('❌ ONBOARDING: Error guardando datos personales: $e');
+    }
+  }
+
+  // Guardar datos de hacienda persistentemente
+  Future<void> _saveRanchDraft(RanchInfoDraft draft) async {
+    try {
+      final jsonString = json.encode(draft.toJson());
+      await _storage.write(key: 'onboarding_ranch_draft', value: jsonString);
+      debugPrint('💾 ONBOARDING: Datos de hacienda guardados persistentemente');
+    } catch (e) {
+      debugPrint('❌ ONBOARDING: Error guardando datos de hacienda: $e');
+    }
+  }
+
+  // Limpiar todos los datos guardados
+  Future<void> _clearSavedDrafts() async {
+    try {
+      await _storage.delete(key: 'onboarding_personal_draft');
+      await _storage.delete(key: 'onboarding_ranch_draft');
+      debugPrint('🗑️ ONBOARDING: Datos guardados eliminados');
+    } catch (e) {
+      debugPrint('❌ ONBOARDING: Error eliminando datos guardados: $e');
+    }
   }
 
   Future<void> _completeOnboarding(BuildContext context) async {
     debugPrint("🚀 _completeOnboarding: INICIANDO...");
 
-    // Resetear el estado de carga para permitir la ejecución
-    setState(() => _isLoading = false);
-    debugPrint("✅ _completeOnboarding: Estado de carga reseteado");
+    if (_personalInfoDraft == null || _ranchInfoDraft == null) {
+      _showSnackBar('Faltan datos para completar el onboarding');
+      return;
+    }
 
     setState(() => _isLoading = true);
-    debugPrint("✅ _completeOnboarding: Estado de carga activado");
 
     try {
-//ojoooooooooooooooooooooo
-      // Obtener el userId del UserProvider
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await _ensureApiToken();
 
-      // Asegurar que tenemos los detalles más recientes del usuario
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       final userDetails = await userProvider.getUserDetails();
       final userId = userDetails['userId'];
 
@@ -71,28 +182,79 @@ class OnboardingScreenState extends State<OnboardingScreen> {
         throw Exception("ID de usuario no encontrado");
       }
 
+      await _submitOnboardingData(userId);
       await _onboardingService.completeOnboarding(userId);
+      await _storage.write(key: 'userCompletedOnboarding', value: '1');
+
+      // Limpiar datos guardados del onboarding ya que se completó exitosamente
+      await _clearSavedDrafts();
+
+      userProvider.setProfileCreated(true);
+      userProvider.setPhoneCreated(true);
+      userProvider.setAdresseCreated(true);
+
       if (!mounted) return;
 
-      // await _onboardingService.completeOnboarding(context);
-
-//ojoooooooooooooooooooooo
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainRouter()),
       );
     } catch (e) {
       debugPrint("Error al completar el onboarding: $e");
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al completar el onboarding'),
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(20),
-        ),
-      );
+      
+      if (!mounted) return;
+      
+      // Extraer el mensaje de error de forma más clara
+      String errorMessage = e.toString();
+      String cleanErrorMessage = errorMessage.replaceAll('Exception: ', '').replaceAll('Exception: Exception: ', '');
+      
+      // Detectar el tipo de error y navegar a la página correspondiente
+      if (errorMessage.toLowerCase().contains('cédula') || 
+          errorMessage.toLowerCase().contains('cedula') || 
+          errorMessage.toLowerCase().contains('ci_number') ||
+          errorMessage.toLowerCase().contains('número de cédula')) {
+        // Error de CI -> Navegar a página 1 (datos personales)
+        debugPrint('🔄 ONBOARDING: Error de CI detectado, navegando a página 1');
+        _showSnackBar(cleanErrorMessage);
+        _navigateToPage(1);
+      } else if (errorMessage.toLowerCase().contains('rif') || 
+                 errorMessage.toLowerCase().contains('tax_id')) {
+        // Error de RIF -> Navegar a página 2 (datos de hacienda)
+        debugPrint('🔄 ONBOARDING: Error de RIF detectado, navegando a página 2');
+        _showSnackBar(cleanErrorMessage);
+        _navigateToPage(2);
+      } else if (errorMessage.toLowerCase().contains('number') && 
+                 (errorMessage.toLowerCase().contains('unique') || 
+                  errorMessage.toLowerCase().contains('ya ha sido') || 
+                  errorMessage.toLowerCase().contains('ya existe'))) {
+        // Error de teléfono -> Navegar a página 1 (datos personales)
+        debugPrint('🔄 ONBOARDING: Error de teléfono detectado, navegando a página 1');
+        _showSnackBar(cleanErrorMessage);
+        _navigateToPage(1);
+      } else if (errorMessage.toLowerCase().contains('dirección') || 
+                 errorMessage.toLowerCase().contains('direccion') ||
+                 errorMessage.toLowerCase().contains('address')) {
+        // Error de dirección -> Navegar a página 1 (datos personales) para corregir
+        // Pero si es "ya tiene una dirección", solo mostrar mensaje y continuar (ya se maneja arriba)
+        if (errorMessage.contains('ya tiene') || errorMessage.contains('ya existe')) {
+          debugPrint('ℹ️ ONBOARDING: Dirección ya existe, continuando...');
+          // No navegar, solo mostrar mensaje informativo
+          _showSnackBar('Ya tienes una dirección guardada. Continuando con el onboarding...');
+        } else {
+          debugPrint('🔄 ONBOARDING: Error de dirección detectado, navegando a página 1');
+          _showSnackBar(cleanErrorMessage);
+          _navigateToPage(1);
+        }
+      } else {
+        // Para otros errores, mostrar un mensaje genérico
+        _showSnackBar('Error al completar el onboarding. Por favor, verifique sus datos e intente nuevamente.');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      } else {
+        _isLoading = false;
+      }
     }
   }
 
@@ -166,10 +328,10 @@ class OnboardingScreenState extends State<OnboardingScreen> {
         return true;
       case 1: // OnboardingPage1 - verificar formulario
         final page1State = _page1Key.currentState;
-        return (page1State as dynamic)?.isFormValid ?? false;
+        return page1State?.isFormValid ?? false;
       case 2: // OnboardingPage2 - verificar formulario
         final page2State = _page2Key.currentState;
-        return (page2State as dynamic)?.isFormValid ?? false;
+        return page2State?.isFormValid ?? false;
       case 3: // OnboardingPage3 - siempre válida
         return true;
       default:
@@ -184,13 +346,26 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  // Método para navegar a una página específica
+  void _navigateToPage(int targetPage) {
+    if (targetPage >= 0 && targetPage < onboardingPages.length) {
+      _controller.animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() {
+        _currentPage = targetPage;
+      });
+      debugPrint('🔄 ONBOARDING: Navegando a página $targetPage');
+    }
+  }
+
   // Verificar si se puede navegar a una página específica
   bool _canNavigateToPage(int targetPage) {
-    // NO permitir navegación hacia atrás después de completar formularios
+    // Permitir navegación hacia atrás siempre (para que el usuario pueda corregir errores)
     if (targetPage < _currentPage) {
-      // Solo permitir retroceder si no se han completado formularios
-      // Si estamos en página 2 o superior, no permitir retroceder
-      return _currentPage <= 1;
+      return true;
     }
 
     // Permitir navegación hacia adelante solo si la página actual es válida
@@ -222,24 +397,23 @@ class OnboardingScreenState extends State<OnboardingScreen> {
             return false;
           }
 
-          debugPrint('✅ ONBOARDING SCREEN: Estado de página 1 encontrado');
-
-          // Verificar si el formulario es válido
-          final isFormValid = (page1State as dynamic).isFormValid;
-          debugPrint('🔍 ONBOARDING SCREEN: isFormValid = $isFormValid');
-
-          if (!isFormValid) {
+          if (!page1State.isFormValid) {
             debugPrint(
                 '❌ ONBOARDING SCREEN: Formulario página 1 no válido - campos incompletos');
             return false;
           }
 
-          // Guardar datos reales
+          final draft = await page1State.collectFormData();
+          if (draft == null) {
+            debugPrint(
+                '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 1');
+            return false;
+          }
+          _personalInfoDraft = draft;
+          // Guardar persistentemente
+          await _savePersonalDraft(draft);
           debugPrint(
-              '✅ ONBOARDING SCREEN: Formulario válido, llamando saveData()...');
-          await (page1State as dynamic).saveData();
-          debugPrint(
-              '✅ ONBOARDING SCREEN: Datos de la página 1 guardados exitosamente');
+              '✅ ONBOARDING SCREEN: Datos de la página 1 almacenados en memoria y persistentemente');
           return true;
 
         case 2: // OnboardingPage2 - Datos de Hacienda
@@ -249,16 +423,21 @@ class OnboardingScreenState extends State<OnboardingScreen> {
             return false;
           }
 
-          // Verificar si el formulario es válido
-          if (!(page2State as dynamic).isFormValid) {
+          if (!page2State.isFormValid) {
             debugPrint('Formulario página 2 no válido - campos incompletos');
             return false;
           }
 
-          // Guardar datos reales
-          debugPrint('Guardando datos de la página 2...');
-          await (page2State as dynamic).saveData();
-          debugPrint('Datos de la página 2 guardados exitosamente');
+          final ranchDraft = await page2State.collectFormData();
+          if (ranchDraft == null) {
+            debugPrint(
+                '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 2');
+            return false;
+          }
+          _ranchInfoDraft = ranchDraft;
+          // Guardar persistentemente
+          await _saveRanchDraft(ranchDraft);
+          debugPrint('✅ ONBOARDING SCREEN: Datos de la página 2 almacenados en memoria y persistentemente');
           return true;
 
         case 3: // OnboardingPage3 - Página final
@@ -270,6 +449,195 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       debugPrint("Error guardando datos de página $_currentPage: $e");
       return false;
     }
+  }
+
+  Future<void> _ensureApiToken() async {
+    if (_apiTokenInitialized) return;
+    final token = await _storage.read(key: 'token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Token de autenticación no disponible');
+    }
+    _apiService.setAuthToken(token);
+    _apiTokenInitialized = true;
+  }
+
+  Future<void> _submitOnboardingData(int userId) async {
+    final personal = _personalInfoDraft!;
+    final ranch = _ranchInfoDraft!;
+
+    try {
+      // 1. Crear perfil - Si el CI ya está registrado, detener el proceso
+      debugPrint('📝 ONBOARDING: Paso 1/4 - Creando perfil...');
+      debugPrint('📝 ONBOARDING: Datos personales: firstName=${personal.firstName}, lastName=${personal.lastName}, ciNumber=${personal.ciNumber}');
+      
+      int? profileId;
+      
+      try {
+        debugPrint('📝 ONBOARDING: Creando nuevo perfil...');
+        final profileResponse = await _apiService.createProfile(
+          firstName: personal.firstName,
+          lastName: personal.lastName,
+          dateOfBirth: personal.dateOfBirthIso,
+          ciNumber: personal.ciNumber,
+          photoUsers: null,
+        );
+
+        debugPrint('📝 ONBOARDING: Respuesta de creación de perfil: $profileResponse');
+
+        final profileMap = profileResponse['profile'] ??
+            profileResponse['data']?['profile'] ??
+            profileResponse;
+        profileId = _parseInt(profileMap?['id']);
+
+        if (profileId == null) {
+          debugPrint('❌ ONBOARDING: No se pudo obtener profileId de la respuesta');
+          throw Exception('No se pudo crear el perfil del usuario. Respuesta: $profileResponse');
+        }
+
+        debugPrint('✅ ONBOARDING: Perfil creado exitosamente con ID: $profileId');
+      } catch (e) {
+        // Verificar si el error es por CI duplicado
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('ci_number') || errorMessage.contains('cédula') || 
+            errorMessage.contains('cedula') || errorMessage.contains('número de cédula')) {
+          if (errorMessage.contains('ya ha sido') || errorMessage.contains('ya existe') || 
+              errorMessage.contains('unique') || errorMessage.contains('registrado') ||
+              errorMessage.contains('ya está registrado')) {
+            debugPrint('❌ ONBOARDING: CI ya registrado - deteniendo proceso');
+            // Usar el mensaje del backend si está disponible, de lo contrario usar uno genérico
+            final backendMessage = e.toString().replaceAll('Exception: ', '');
+            if (backendMessage.toLowerCase().contains('cédula') || 
+                backendMessage.toLowerCase().contains('cedula')) {
+              throw Exception(backendMessage);
+            } else {
+              throw Exception('El número de cédula ${personal.ciNumber} ya está registrado en el sistema. Por favor, verifique sus datos o contacte soporte si cree que esto es un error.');
+            }
+          }
+        }
+        // Si es otro error, relanzarlo
+        rethrow;
+      }
+
+      // 2. Crear teléfono (o verificar si ya existe)
+      debugPrint('📞 ONBOARDING: Paso 2/4 - Creando/verificando teléfono...');
+      debugPrint('📞 ONBOARDING: Datos: number=${personal.phoneNumber}, operatorCodeId=${personal.operatorCodeId}, userId=$userId');
+      
+      try {
+        await _apiService.createPhone(
+          number: personal.phoneNumber,
+          operatorCodeId: personal.operatorCodeId,
+          userId: userId,
+        );
+        debugPrint('✅ ONBOARDING: Teléfono creado exitosamente');
+      } catch (e) {
+        // Si el error es porque el número ya existe, continuar sin problema
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('number') && 
+            (errorMessage.contains('unique') || errorMessage.contains('ya ha sido') || errorMessage.contains('ya existe'))) {
+          debugPrint('ℹ️ ONBOARDING: El teléfono ya existe, continuando...');
+        } else {
+          // Si es otro error, relanzarlo
+          rethrow;
+        }
+      }
+
+      // 3. Crear dirección (o verificar si ya existe)
+      debugPrint('🏠 ONBOARDING: Paso 3/4 - Creando/verificando dirección...');
+      debugPrint('🏠 ONBOARDING: Datos: address=${personal.address}, cityId=${personal.cityId}, profileId=$profileId');
+      
+      int? addressId;
+      try {
+        final addressResponse = await _apiService.createAddress(
+          profileId: profileId,
+          addresses: personal.address,
+          cityId: personal.cityId,
+          latitude: personal.latitude,
+          longitude: personal.longitude,
+        );
+
+        debugPrint('🏠 ONBOARDING: Respuesta de creación de dirección: $addressResponse');
+
+        final addressMap = addressResponse['address'] ??
+            addressResponse['data']?['address'] ??
+            addressResponse;
+        addressId = _parseInt(addressMap?['id']);
+
+        debugPrint('✅ ONBOARDING: Dirección creada exitosamente con ID: $addressId');
+      } catch (e) {
+        // Si el error es porque la dirección ya existe o hay un problema de validación, continuar
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('ya existe') || 
+            errorMessage.contains('already exists') || 
+            errorMessage.contains('ya ha sido') ||
+            errorMessage.contains('ya tiene una dirección personal guardada') ||
+            errorMessage.contains('ya tiene') && errorMessage.contains('dirección')) {
+          debugPrint('ℹ️ ONBOARDING: La dirección ya existe o ya hay una dirección guardada, continuando sin addressId...');
+          addressId = null; // Continuar sin addressId
+        } else {
+          // Si es otro error, relanzarlo
+          rethrow;
+        }
+      }
+
+      // 4. Crear hacienda - Si el RIF ya está registrado, detener el proceso
+      debugPrint('🏡 ONBOARDING: Paso 4/4 - Creando hacienda...');
+      debugPrint('🏡 ONBOARDING: Datos: name=${ranch.name}, profileId=$profileId, addressId=$addressId, taxId=${ranch.rif}');
+      
+      try {
+        await _apiService.createRanch(
+          name: ranch.name,
+          profileId: profileId,
+          legalName: ranch.legalName,
+          taxId: ranch.rif,
+          businessDescription: ranch.description,
+          contactHours: ranch.contactHours,
+          addressId: addressId,
+        );
+        debugPrint('✅ ONBOARDING: Hacienda creada exitosamente');
+      } catch (e) {
+        // Verificar si el error es por RIF duplicado
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('tax_id') || errorMessage.contains('rif') || 
+            errorMessage.contains('tax id')) {
+          if (errorMessage.contains('ya ha sido') || errorMessage.contains('ya existe') || 
+              errorMessage.contains('unique') || errorMessage.contains('registrado') ||
+              errorMessage.contains('ya está registrado')) {
+            debugPrint('❌ ONBOARDING: RIF ya registrado - deteniendo proceso');
+            // Usar el mensaje del backend si está disponible, de lo contrario usar uno genérico
+            final backendMessage = e.toString().replaceAll('Exception: ', '');
+            if (backendMessage.toLowerCase().contains('rif') || 
+                backendMessage.toLowerCase().contains('tax_id')) {
+              throw Exception(backendMessage);
+            } else {
+              throw Exception('El RIF ${ranch.rif} ya está registrado en el sistema. Esta hacienda ya existe. Por favor, verifique sus datos o contacte soporte si cree que esto es un error.');
+            }
+          }
+        }
+        // Si es otro error, relanzarlo
+        rethrow;
+      }
+      
+      debugPrint('🎉 ONBOARDING: Proceso de onboarding completado');
+    } catch (e) {
+      debugPrint('❌ ONBOARDING: Error en _submitOnboardingData: $e');
+      rethrow; // Re-lanzar el error para que _completeOnboarding lo maneje
+    }
+  }
+
+  int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    return int.tryParse(value.toString());
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
