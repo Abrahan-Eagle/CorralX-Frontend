@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:corralx/config/auth_utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:corralx/onboarding/screens/onboarding_screen.dart';
+import 'package:corralx/shared/screens/terms_and_conditions_screen.dart';
 
 const FlutterSecureStorage _storage = FlutterSecureStorage();
 final ApiService apiService = ApiService();
@@ -301,23 +302,57 @@ class SignInScreenState extends State<SignInScreen>
                             const TextSpan(
                               text: 'Al continuar, aceptas nuestros ',
                             ),
-                            TextSpan(
-                              text: 'Términos de Servicio',
-                              style: TextStyle(
-                                color: colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
+                            WidgetSpan(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const TermsAndConditionsScreen(
+                                        title: 'Términos y Condiciones',
+                                        type: 'terms',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  'Términos de Servicio',
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                    fontSize: isTablet ? 14 : 12,
+                                  ),
+                                ),
                               ),
                             ),
                             const TextSpan(
                               text: ' y ',
                             ),
-                            TextSpan(
-                              text: 'Política de Privacidad',
-                              style: TextStyle(
-                                color: colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
+                            WidgetSpan(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const TermsAndConditionsScreen(
+                                        title: 'Política de Privacidad',
+                                        type: 'privacy',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  'Política de Privacidad',
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                    fontSize: isTablet ? 14 : 12,
+                                  ),
+                                ),
                               ),
                             ),
                           ],

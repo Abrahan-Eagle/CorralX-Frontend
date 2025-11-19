@@ -13,6 +13,7 @@ import 'package:corralx/products/screens/edit_product_screen.dart';
 import 'package:corralx/auth/screens/sign_in_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:corralx/shared/screens/terms_and_conditions_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -844,6 +845,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         );
                       },
+                    ),
+
+                    SizedBox(height: isTablet ? 20 : 16),
+
+                    // Términos y Condiciones / Política de Privacidad
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: EdgeInsets.all(isTablet ? 20 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.description_outlined,
+                                size: isTablet ? 22 : 20,
+                                color: theme.colorScheme.primary,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Legal',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 18 : 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isTablet ? 16 : 12),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.gavel_outlined,
+                              size: isTablet ? 22 : 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                            title: Text(
+                              'Términos y Condiciones',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              size: isTablet ? 24 : 20,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const TermsAndConditionsScreen(
+                                    title: 'Términos y Condiciones',
+                                    type: 'terms',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          Divider(height: 1),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.privacy_tip_outlined,
+                              size: isTablet ? 22 : 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                            title: Text(
+                              'Política de Privacidad',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              size: isTablet ? 24 : 20,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const TermsAndConditionsScreen(
+                                    title: 'Política de Privacidad',
+                                    type: 'privacy',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
 
                     // Botón de cambiar tema eliminado - El tema ahora se ajusta automáticamente según el sistema
