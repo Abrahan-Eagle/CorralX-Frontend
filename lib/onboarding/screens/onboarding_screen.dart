@@ -131,22 +131,52 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   // Guardar datos personales persistentemente
   Future<void> _savePersonalDraft(PersonalInfoDraft draft) async {
     try {
-      final jsonString = json.encode(draft.toJson());
+      debugPrint('💾 ONBOARDING: Iniciando guardado de datos personales...');
+      final jsonMap = draft.toJson();
+      debugPrint('💾 ONBOARDING: JSON generado: ${jsonMap.toString()}');
+      final jsonString = json.encode(jsonMap);
+      debugPrint('💾 ONBOARDING: String JSON generado (${jsonString.length} caracteres)');
+      
       await _storage.write(key: 'onboarding_personal_draft', value: jsonString);
-      debugPrint('💾 ONBOARDING: Datos personales guardados persistentemente');
-    } catch (e) {
+      debugPrint('💾 ONBOARDING: Datos personales guardados persistentemente en FlutterSecureStorage');
+      
+      // Verificar que se guardó correctamente
+      final verify = await _storage.read(key: 'onboarding_personal_draft');
+      if (verify != null && verify.isNotEmpty) {
+        debugPrint('✅ ONBOARDING: Verificación exitosa - datos personales confirmados en storage');
+      } else {
+        debugPrint('⚠️ ONBOARDING: ADVERTENCIA - No se pudo verificar el guardado de datos personales');
+      }
+    } catch (e, stackTrace) {
       debugPrint('❌ ONBOARDING: Error guardando datos personales: $e');
+      debugPrint('❌ ONBOARDING: Stack trace: $stackTrace');
+      rethrow; // Re-lanzar para que el error sea visible
     }
   }
 
   // Guardar datos de hacienda persistentemente
   Future<void> _saveRanchDraft(RanchInfoDraft draft) async {
     try {
-      final jsonString = json.encode(draft.toJson());
+      debugPrint('💾 ONBOARDING: Iniciando guardado de datos de hacienda...');
+      final jsonMap = draft.toJson();
+      debugPrint('💾 ONBOARDING: JSON generado: ${jsonMap.toString()}');
+      final jsonString = json.encode(jsonMap);
+      debugPrint('💾 ONBOARDING: String JSON generado (${jsonString.length} caracteres)');
+      
       await _storage.write(key: 'onboarding_ranch_draft', value: jsonString);
-      debugPrint('💾 ONBOARDING: Datos de hacienda guardados persistentemente');
-    } catch (e) {
+      debugPrint('💾 ONBOARDING: Datos de hacienda guardados persistentemente en FlutterSecureStorage');
+      
+      // Verificar que se guardó correctamente
+      final verify = await _storage.read(key: 'onboarding_ranch_draft');
+      if (verify != null && verify.isNotEmpty) {
+        debugPrint('✅ ONBOARDING: Verificación exitosa - datos de hacienda confirmados en storage');
+      } else {
+        debugPrint('⚠️ ONBOARDING: ADVERTENCIA - No se pudo verificar el guardado de datos de hacienda');
+      }
+    } catch (e, stackTrace) {
       debugPrint('❌ ONBOARDING: Error guardando datos de hacienda: $e');
+      debugPrint('❌ ONBOARDING: Stack trace: $stackTrace');
+      rethrow; // Re-lanzar para que el error sea visible
     }
   }
 
@@ -411,10 +441,17 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           }
           _personalInfoDraft = draft;
           // Guardar persistentemente
-          await _savePersonalDraft(draft);
-          debugPrint(
-              '✅ ONBOARDING SCREEN: Datos de la página 1 almacenados en memoria y persistentemente');
-          return true;
+          try {
+            await _savePersonalDraft(draft);
+            debugPrint(
+                '✅ ONBOARDING SCREEN: Datos de la página 1 almacenados en memoria y persistentemente');
+            return true;
+          } catch (e) {
+            debugPrint('❌ ONBOARDING SCREEN: Error al guardar datos personales persistentemente: $e');
+            // Aún así retornar true porque los datos están en memoria
+            // El usuario puede continuar aunque falle el guardado persistente
+            return true;
+          }
 
         case 2: // OnboardingPage2 - Datos de Hacienda
           final page2State = _page2Key.currentState;
@@ -436,9 +473,16 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           }
           _ranchInfoDraft = ranchDraft;
           // Guardar persistentemente
-          await _saveRanchDraft(ranchDraft);
-          debugPrint('✅ ONBOARDING SCREEN: Datos de la página 2 almacenados en memoria y persistentemente');
-          return true;
+          try {
+            await _saveRanchDraft(ranchDraft);
+            debugPrint('✅ ONBOARDING SCREEN: Datos de la página 2 almacenados en memoria y persistentemente');
+            return true;
+          } catch (e) {
+            debugPrint('❌ ONBOARDING SCREEN: Error al guardar datos de hacienda persistentemente: $e');
+            // Aún así retornar true porque los datos están en memoria
+            // El usuario puede continuar aunque falle el guardado persistente
+            return true;
+          }
 
         case 3: // OnboardingPage3 - Página final
           return true;

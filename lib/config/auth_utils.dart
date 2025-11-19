@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:corralx/auth/services/api_service.dart';
 import 'package:logger/logger.dart';
@@ -64,9 +66,47 @@ class AuthUtils {
         logger.w('No hay token almacenado para cerrar sesión en backend');
       }
     } catch (e) {
-      logger.w('Error al cerrar sesión en backend (continuando limpieza local): $e');
+      logger.w(
+          'Error al cerrar sesión en backend (continuando limpieza local): $e');
       // No re-lanzar la excepción, permitir que la limpieza local continúe
       // La limpieza local se hará en UserProvider._clearUserData()
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      final token = await _storage.read(key: 'token');
+      if (token == null) {
+        throw Exception('Token no encontrado. El usuario no está autenticado.');
+      }
+
+      final response = await _apiService.deleteAccount(token);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isEmpty) {
+          return {'message': 'Cuenta eliminada permanentemente'};
+        }
+
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+
+        return {'message': 'Cuenta eliminada permanentemente'};
+      }
+
+      String message = 'Error al eliminar la cuenta';
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+      } catch (_) {}
+
+      throw Exception(message);
+    } catch (e) {
+      logger.e('Error al eliminar cuenta: $e');
+      rethrow;
     }
   }
 
@@ -128,8 +168,6 @@ class AuthUtils {
     return await _storage.read(key: 'role');
   }
 }
-
-
 
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:corralx/auth/services/api_service.dart';
@@ -204,7 +242,6 @@ class AuthUtils {
 //     await _storage.write(key: 'userGoogleId', value: userGoogleId);
 //   }
 
-
 //   // Método para obtener el userId como int
 //   static Future<int?> getUserId() async {
 //     final userIdStr = await _storage.read(key: 'userId');
@@ -214,13 +251,9 @@ class AuthUtils {
 //     return null; // Retorna null si no se encuentra o no es un número válido
 //   }
 
-
-
 //   static Future<String?> getUserGoogleId() async {
 //     return await _storage.read(key: 'userGoogleId');
 //   }
-
-  
 
 //   // Métodos para guardar y obtener el nombre de usuario
 //   static Future<void> saveUserName(String userName) async {

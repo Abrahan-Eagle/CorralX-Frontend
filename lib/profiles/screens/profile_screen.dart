@@ -199,6 +199,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _confirmAccountDeletion(BuildContext context) async {
+    final theme = Theme.of(context);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: const Text(
+          'Esta acción eliminará permanentemente tu cuenta, tus haciendas, '
+          'publicaciones, chats y toda la información guardada en CorralX. '
+          'Esta operación no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await userProvider.deleteAccount();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // Cerrar loader
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tu cuenta se eliminó correctamente.'),
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
+        (Route<dynamic> route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // Cerrar loader
+      final errorMessage = e.toString().replaceFirst('Exception: ', '').trim();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar la cuenta: $errorMessage'),
+          backgroundColor: theme.colorScheme.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
   Widget _buildHeaderIcon({
     required IconData icon,
     required bool isActive,
@@ -714,6 +781,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
+                    ),
+
+                    SizedBox(height: isTablet ? 12 : 10),
+
+                    Consumer<UserProvider>(
+                      builder: (context, userProvider, child) {
+                        final isDeleting = userProvider.isDeletingAccount;
+                        return SizedBox(
+                          width: double.infinity,
+                          child: TextButton.icon(
+                            onPressed: isDeleting
+                                ? null
+                                : () => _confirmAccountDeletion(context),
+                            icon: Icon(
+                              Icons.delete_forever_outlined,
+                              size: isTablet ? 20 : 18,
+                            ),
+                            label: isDeleting
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            theme.colorScheme.error,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Eliminando...',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 16 : 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Text(
+                                    'Eliminar cuenta',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 16 : 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: theme.colorScheme.onError,
+                              backgroundColor:
+                                  theme.colorScheme.error.withOpacity(0.12),
+                              padding: EdgeInsets.symmetric(
+                                vertical: isTablet ? 16 : 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     // Botón de cambiar tema eliminado - El tema ahora se ajusta automáticamente según el sistema

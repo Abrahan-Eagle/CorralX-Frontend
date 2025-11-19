@@ -34,7 +34,6 @@
     <uses-feature android:name="android.hardware.wifi" android:required="false"/>
 
     <application
-        android:usesCleartextTraffic="true"
         android:label="CorralX"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"

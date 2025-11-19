@@ -22,6 +22,7 @@ class UserProvider with ChangeNotifier {
   bool _gasCylindersCreated = false;
   bool _phoneCreated = false;
   bool _emailCreated = false;
+  bool _isDeletingAccount = false;
 
   String _userName = '';
   String _userEmail = '';
@@ -38,6 +39,7 @@ class UserProvider with ChangeNotifier {
   bool get gasCylindersCreated => _gasCylindersCreated;
   bool get phoneCreated => _phoneCreated;
   bool get emailCreated => _emailCreated;
+  bool get isDeletingAccount => _isDeletingAccount;
   String get userName => _userName;
   String get userEmail => _userEmail;
   String get userPhotoUrl => _userPhotoUrl;
@@ -223,19 +225,21 @@ class UserProvider with ChangeNotifier {
       try {
         await AuthUtils.logout();
       } catch (e) {
-        logger.w('Error al cerrar sesión en backend (continuando limpieza local): $e');
+        logger.w(
+            'Error al cerrar sesión en backend (continuando limpieza local): $e');
       }
 
       // Cerrar sesión de Google (no crítico si falla)
       try {
         await GoogleSignIn().signOut();
       } catch (e) {
-        logger.w('Error al cerrar sesión de Google (continuando limpieza local): $e');
+        logger.w(
+            'Error al cerrar sesión de Google (continuando limpieza local): $e');
       }
 
       // Siempre limpiar datos locales, incluso si falló el backend
       await _clearUserData();
-      
+
       logger.i('Logout completado exitosamente');
     } catch (e) {
       logger.e('Error crítico al cerrar sesión: $e');
@@ -247,6 +251,30 @@ class UserProvider with ChangeNotifier {
       }
       rethrow; // Re-lanzar para que el UI pueda manejarlo
     } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    _isDeletingAccount = true;
+    notifyListeners();
+
+    try {
+      await AuthUtils.deleteAccount();
+
+      try {
+        await GoogleSignIn().signOut();
+      } catch (e) {
+        logger.w('Error al cerrar sesión de Google tras eliminar cuenta: $e');
+      }
+
+      await _clearUserData();
+      logger.i('Cuenta eliminada exitosamente');
+    } catch (e) {
+      logger.e('Error al eliminar cuenta: $e');
+      rethrow;
+    } finally {
+      _isDeletingAccount = false;
       notifyListeners();
     }
   }
@@ -284,7 +312,13 @@ class UserProvider with ChangeNotifier {
       await _storage.delete(key: 'role');
       await _storage.delete(key: 'expiryDate');
       await _storage.delete(key: 'google_idToken');
-      logger.i('Datos de usuario limpiados correctamente');
+      // Limpiar estado de onboarding para permitir nuevo registro
+      await _storage.delete(key: 'userCompletedOnboarding');
+      // Limpiar drafts del onboarding si existen
+      await _storage.delete(key: 'onboarding_personal_draft');
+      await _storage.delete(key: 'onboarding_ranch_draft');
+      logger.i(
+          'Datos de usuario limpiados correctamente, incluyendo estado de onboarding');
     } catch (e) {
       logger.e('Error al limpiar almacenamiento seguro: $e');
       // Si falla la limpieza individual, intentar limpiar todo

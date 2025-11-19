@@ -44,7 +44,7 @@ android {
         //targetSdk = flutter.targetSdkVersion
         //versionCode = flutter.versionCode
         //versionName = flutter.versionName
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion flutter.minSdkVersion  // Android 5.0 Lollipop - Compatible con ~95% de dispositivos
         targetSdk 36
         versionCode 36
         versionName "3.0.16"
@@ -59,11 +59,20 @@ android {
     
     signingConfigs {
         debug {
-            // Usa el keystore por defecto de Android Studio para builds debug.
-            storeFile file("${System.properties['user.home']}/.android/debug.keystore")
-            storePassword "android"
-            keyAlias "AndroidDebugKey"
-            keyPassword "android"
+            // Usa el mismo keystore de producción para debug y release (un solo SHA-1)
+            if (!keystorePropertiesFile.exists()) {
+                // Fallback al keystore de debug por defecto si no existe key.properties
+                storeFile file("${System.properties['user.home']}/.android/debug.keystore")
+                storePassword "android"
+                keyAlias "AndroidDebugKey"
+                keyPassword "android"
+            } else {
+                // Usa el keystore de producción también para debug
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+                storeFile file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+            }
         }
         release {
             if (!keystorePropertiesFile.exists()) {

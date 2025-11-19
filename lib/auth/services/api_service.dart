@@ -136,6 +136,18 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> deleteAccount(String token) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/auth/account'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+    return response;
+  }
+
   // Método para enviar una solicitud autenticada
   Future<void> sendAuthenticatedRequest() async {
     final token = await _storage.read(key: 'token');
