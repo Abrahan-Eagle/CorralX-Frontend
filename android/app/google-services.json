@@ -14,11 +14,19 @@
       },
       "oauth_client": [
         {
+          "client_id": "332023551639-840baceq4uf1n93d6rc65svha1o0434o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.corralx.app",
+            "certificate_hash": "497fa1f33d89049557f104b95be543ce5ebfc368"
+          }
+        },
+        {
           "client_id": "332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.corralx.app",
-            "certificate_hash": "f689c6994deac00b7ce3caf1b1076eb9f608892c"
+            "certificate_hash": "f8f586285a026ea5724ff7371b9a99943ee228b4"
           }
         },
         {

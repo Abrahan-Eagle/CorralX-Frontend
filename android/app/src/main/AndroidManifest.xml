@@ -115,7 +115,7 @@
 
         <meta-data
             android:name="com.google.android.gms.auth.api.credentials.ClientId"
-            android:value="332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com"/>
+            android:value="${googleOauthClientId}"/>
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version"/>
