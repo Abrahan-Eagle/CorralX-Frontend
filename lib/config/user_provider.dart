@@ -6,6 +6,7 @@ import 'package:corralx/config/auth_utils.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:corralx/chat/services/firebase_service.dart';
 
 final logger = Logger();
 const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -102,6 +103,15 @@ class UserProvider with ChangeNotifier {
         await getUserDetails();
         await _loadUserData();
         logger.i('Final userId: $_userId');
+        
+        // 🔔 Registrar FCM token después de verificar autenticación (auto-login)
+        try {
+          await FirebaseService.registerDeviceToken();
+          logger.i('✅ FCM token registrado después de auto-login');
+        } catch (e) {
+          logger.w('⚠️ Error registrando FCM token después de auto-login: $e');
+          // No bloquear si falla
+        }
       }
     } catch (e) {
       debugPrint('Error al verificar autenticación: $e');
