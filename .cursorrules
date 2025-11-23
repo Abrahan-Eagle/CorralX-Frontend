@@ -267,6 +267,22 @@ alwaysApply: true
   - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.
 - Pruebas manuales de integración: el equipo frontend y backend deben realizar pruebas conjuntas de los flujos principales (registro, login, crear publicación, navegar, chatear) en un entorno de staging. Cualquier fallo de integración (discordancia de nombres de campos, comportamiento inesperado) debe reflejarse en ajustes tanto de código como de estas reglas para mantener la documentación actualizada.
 
+## Configuración de Google OAuth para Play Store (AAB)
+- **Problema crítico:** Cuando se sube un AAB a Play Store, Google Play re-firma la aplicación con su propia App Signing Key (ASK). El SHA-1/SHA-256 que se necesita registrar es el de la ASK de Google Play, NO el del keystore de carga.
+- **Solución implementada:** Sistema de detección automática del tipo de compilación en `build.gradle`:
+  - **Debug APK** (`flutter run -d <device>`): Usa Client ID de Upload Key (`332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com`)
+  - **Release APK Local** (`flutter run -d <device> --release`): Usa Client ID de Upload Key
+  - **AAB Play Store** (`flutter build appbundle --release`): Usa Client ID de Play Store ASK (`332023551639-840baceq4uf1n93d6rc65svha1o0434o.apps.googleusercontent.com`)
+- **Implementación en build.gradle:**
+  - El `buildType.release` detecta automáticamente si se está compilando un bundle (AAB) o un assemble (APK) usando `gradle.startParameter.taskNames.any { it.contains('bundle') }`
+  - Se configuran `manifestPlaceholders` dinámicamente según el tipo de compilación
+  - El `AndroidManifest.xml` usa `${googleOauthClientId}` como placeholder
+- **Configuración requerida en consolas:**
+  - **Google Cloud Console:** Ambos SHA-1 deben estar registrados en el mismo OAuth Client ID (Upload Key SHA-1 y Play Store ASK SHA-1)
+  - **Firebase Console:** Ambos SHA-1 y SHA-256 deben estar agregados en la configuración de la app Android, y se debe descargar un nuevo `google-services.json` que incluya ambos OAuth Client IDs
+  - **Google Play Console:** Obtener SHA-1/SHA-256 de la App Signing Key desde "Integridad de la app" (App Integrity)
+- **Versioning:** El `versionCode` y `versionName` se leen automáticamente desde `pubspec.yaml` usando `flutter.versionCode` y `flutter.versionName` en `build.gradle`. Siempre incrementar el `versionCode` en `pubspec.yaml` antes de compilar un nuevo AAB para Play Store.
+
 ## Inteligencia Artificial y Analítica IA Insights
 - Se añade un cuarto botón en el `AppBar` de `ProfileScreen` para abrir la sección `IA Insights`. Mantener consistencia visual y estados activos como los demás botones.
 - La sección `IA Insights` debe consumir métricas centralizadas expuestas por el backend. Al diseñar providers y servicios:
@@ -290,14 +306,15 @@ alwaysApply: true
 
 ## Especificación de UI del Demo (HTML)
 - Navegación inferior: Mercado, Favoritos, Publicar, Mensajes (con badge de no leídos), Perfil.
-- Vistas: `marketplace`, `detail`, `create`, `profile`, `editProfile`, `favorites`, `dashboard`, `myListings`, `messages`, `chat`, `marketPulse`, `admin*`.
+- Vistas: `marketplace`, `detail`, `create`, `profile`, `editProfile`, `favorites`, `dashboard`, `myListings`, `messages`, `chat`, `marketPulse`, `admin*`, `termsAndConditions`.
 - Marketplace: búsqueda, filtro por tipo (`all|lechero|engorde|padrote`), filtro por ubicación, sección Destacadas y Recientes.
 - Detalle: miniaturas con selección, favorito, reporte, registro del animal (con/sin certificado), vendedor con insignia de verificado, editar/eliminar si es dueño, comentarios con estrellas (1–5) y recálculo de rating promedio del vendedor.
 - Crear/Editar: hasta 5 fotos (primera = portada), validación de certificado si `con-registro`, campos tipo/raza/edad/cantidad/ubicación/descr., toggle Destacado.
-- Perfil: avatar, nombre comercial, full name, bio, rating, verificado, fecha de alta, contacto y ubicación; listado de publicaciones del usuario.
+- Perfil: avatar, nombre comercial, full name, bio, rating, verificado, fecha de alta, contacto y ubicación; listado de publicaciones del usuario; sección "Legal" con acceso a Términos y Condiciones y Política de Privacidad.
 - Favoritos: rejilla de publicaciones marcadas.
 - Dashboard/Mis publicaciones: métricas (publicaciones, vistas, favoritos) y lista editable.
 - Mensajes/Chat: conversaciones con snippet del último mensaje; chat 1:1 con input; al entrar a `messages` se limpian no leídos.
+- Términos y Condiciones: pantalla reutilizable (`TermsAndConditionsScreen`) que muestra Términos de Servicio o Política de Privacidad según el parámetro `type`. Accesible desde `SignInScreen` (links clickeables) y desde `ProfileScreen` (sección Legal).
 - MarketPulse: genera resumen (mock) con tendencias por tipo/ubicación.
 - Admin (mock): dashboard, publicaciones, usuarios, actividad, soporte a usuario y reportes.
 
@@ -307,6 +324,7 @@ alwaysApply: true
 - Límite 5 imágenes y ocultar caja de subida al alcanzar límite.
 - Chips de filtro con estado activo y select de ubicación.
 - Badge de no leídos en nav y limpieza al abrir `messages`.
+- Links de Términos y Condiciones en pantalla de login son clickeables y navegan a `TermsAndConditionsScreen`.
 
 ## Sistema de Colores y Temas
 

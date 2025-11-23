@@ -3,7 +3,8 @@
 
 **Stack:** Flutter (Stable), Provider, HTTP, FlutterSecureStorage, WebSocketChannel  
 **Estado:** ✅ MVP 100% Completado  
-**Última actualización:** 8 de octubre de 2025
+**Versión:** 3.0.17+41  
+**Última actualización:** Diciembre 2025
 
 ---
 
@@ -18,6 +19,8 @@ Conectar a ganaderos de Venezuela en un marketplace confiable y simple. App móv
 - **Publicaciones:** CRUD completo de productos
 - **Favoritos:** Sistema de guardado de productos
 - **Temas:** Light/Dark mode persistente
+- **Términos y Condiciones:** Pantalla dedicada con Términos de Servicio y Política de Privacidad
+- **Google OAuth:** Configuración automática para APK local y AAB de Play Store
 
 ---
 
@@ -170,6 +173,11 @@ lib/
 
 ### Módulo Favoritos
 - `FavoritesScreen`: Grid de productos guardados
+
+### Módulo Legal
+- `TermsAndConditionsScreen`: Pantalla reutilizable para mostrar Términos de Servicio o Política de Privacidad
+  - Accesible desde `SignInScreen` (links clickeables en el texto de aceptación)
+  - Accesible desde `ProfileScreen` (sección "Legal" con opciones para ambos documentos)
 
 ---
 
@@ -738,14 +746,35 @@ final baseUrl = AppConfig.currentEnvironment == 'development'
 ## 🚢 Build y Despliegue
 
 ### Android
-```bash
-# Debug
-flutter run -d 192.168.27.3:5555
 
-# Release
-flutter build apk --release
+#### Comandos de Compilación
+```bash
+# Debug APK (usa Client ID de Upload Key)
+flutter run -d 192.168.27.4:5555
+
+# Release APK Local (usa Client ID de Upload Key)
+flutter run -d 192.168.27.4:5555 --release
+
+# AAB para Play Store (usa Client ID de Play Store ASK)
 flutter build appbundle --release
 ```
+
+#### Configuración de Google OAuth
+El sistema detecta automáticamente el tipo de compilación y usa el OAuth Client ID correcto:
+- **APK (Debug/Release local):** Usa Client ID de Upload Key (`332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh`)
+- **AAB (Play Store):** Usa Client ID de Play Store ASK (`332023551639-840baceq4uf1n93d6rc65svha1o0434o`)
+
+**Configuración requerida:**
+1. **Google Cloud Console:** Ambos SHA-1 registrados en el mismo OAuth Client ID
+2. **Firebase Console:** Ambos SHA-1/SHA-256 agregados, descargar nuevo `google-services.json`
+3. **Google Play Console:** Obtener SHA-1/SHA-256 de App Signing Key desde "Integridad de la app"
+
+**Nota:** Ver detalles de configuración en la sección "Build y Despliegue" más arriba y en `.cursorrules`
+
+#### Versioning
+- El `versionCode` y `versionName` se leen automáticamente desde `pubspec.yaml`
+- **Siempre incrementar `versionCode`** antes de compilar un nuevo AAB para Play Store
+- Formato: `version: X.Y.Z+NNN` (ej: `3.0.17+41`)
 
 ### iOS
 ```bash
@@ -829,6 +858,24 @@ dependencies:
 1. Backend: `php artisan storage:link`
 2. Verificar `.env`: `APP_URL=http://TU_IP:8000`
 3. Verificar URLs en BD coinciden con APP_URL
+
+### Error: Google OAuth no funciona en AAB de Play Store
+**Síntoma:** Google Sign-In funciona en APK local pero no en app descargada de Play Store  
+**Causa:** Google Play re-firma el AAB con su propia App Signing Key (ASK), y el SHA-1 de la ASK no está registrado en Google Cloud Console  
+**Solución:**
+1. Obtener SHA-1/SHA-256 de la App Signing Key desde Google Play Console → "Integridad de la app"
+2. Agregar el SHA-1 de Play Store ASK al OAuth Client ID en Google Cloud Console (sin eliminar el de Upload Key)
+3. Agregar SHA-1/SHA-256 en Firebase Console y descargar nuevo `google-services.json`
+4. El sistema ya está configurado para usar automáticamente el Client ID correcto según el tipo de compilación
+5. Ver detalles de configuración en la sección "Build y Despliegue" y `.cursorrules`
+
+### Error: "Ya se usó el código de la versión X" en Play Console
+**Síntoma:** Play Console rechaza el AAB porque el `versionCode` ya existe  
+**Causa:** Se intenta subir un AAB con un `versionCode` que ya fue usado en una versión anterior  
+**Solución:**
+1. Incrementar el `versionCode` en `pubspec.yaml` (ej: de `3.0.17+41` a `3.0.17+42`)
+2. Recompilar el AAB: `flutter build appbundle --release`
+3. Subir el nuevo AAB a Play Console
 
 ---
 
@@ -1179,6 +1226,16 @@ lib/chat/widgets/
 **Documentación completa:** Ver `.cursorrules` para reglas de desarrollo  
 **Tests:** 110 tests automatizados  
 **Estado:** ✅ Production-Ready (MVP 100%)
+
+## 📚 Configuración de Build
+
+- **Versioning:** Se lee automáticamente desde `pubspec.yaml` (formato: `X.Y.Z+NNN`)
+- **OAuth Client IDs:** Configuración automática según tipo de compilación (APK vs AAB)
+  - Detección automática en `build.gradle` usando `gradle.startParameter.taskNames`
+  - APK (debug/release local): Client ID de Upload Key
+  - AAB (Play Store): Client ID de Play Store ASK
+- **Keystore:** Configurado en `android/key.properties` (no versionado en git)
+- **Google Services:** Archivo `google-services.json` debe incluir ambos OAuth Client IDs
 
 ---
 
