@@ -2,7 +2,7 @@
 ## Marketplace de Ganado Venezolano
 
 **Stack:** Flutter (Stable), Provider, HTTP, FlutterSecureStorage, WebSocketChannel  
-**Estado:** ✅ MVP 100% Completado  
+**Estado:** ⚠️ MVP ~70% Completado (Falta módulo Orders)  
 **Versión:** 3.0.17+41  
 **Última actualización:** Diciembre 2025
 
@@ -26,7 +26,7 @@ Conectar a ganaderos de Venezuela en un marketplace confiable y simple. App móv
 
 ## ✅ Estado Actual del Proyecto
 
-### Módulos Completados (MVP 100%)
+### Módulos Completados (~70% MVP)
 - ✅ **Auth:** Login con Google, registro, token seguro
 - ✅ **Onboarding:** 6 pantallas de configuración inicial
 - ✅ **Perfiles:** Ver, editar, foto, métricas, bio (11/11 funcionalidades)
@@ -34,6 +34,7 @@ Conectar a ganaderos de Venezuela en un marketplace confiable y simple. App móv
 - ✅ **Productos:** Marketplace, detalle, crear, editar, eliminar
 - ✅ **Favoritos:** Marcar/desmarcar productos
 - 🔄 **Chat:** Conversaciones (WebSocket en desarrollo)
+- ❌ **Orders:** Módulo completo faltante (ver sección pendiente abajo)
 
 ### Tests Frontend
 ```
@@ -173,6 +174,26 @@ lib/
 
 ### Módulo Favoritos
 - `FavoritesScreen`: Grid de productos guardados
+
+### Módulo Orders - ⏳ En Desarrollo (Obligatorio para MVP)
+> **Estado:** ❌ No implementado - Backend está 100% completo  
+> **Prioridad:** 🔴 CRÍTICO - Bloquea cierre del ciclo de negocio
+
+**Pantallas requeridas:**
+- ❌ `MyOrdersScreen`: Lista de pedidos con tabs "Como Comprador" / "Como Vendedor"
+- ❌ `OrderDetailScreen`: Detalle de pedido con botones contextuales
+- ❌ `ReceiptScreen`: Comprobante de venta (renderiza `receipt_data`)
+- ❌ `MutualReviewScreen`: Formulario de calificaciones mutuas
+
+**Servicios requeridos:**
+- ❌ `OrderService`: 9 métodos (createOrder, acceptOrder, rejectOrder, etc.)
+- ❌ `OrderProvider`: State management para pedidos
+
+**Integración requerida:**
+- ❌ `ChatScreen`: Agregar botón "Confirmar compra" (FAB)
+- ❌ Modelo `Order` en Flutter
+
+**Ver especificación completa:** `.cursorrules` Frontend (líneas 48-54)
 
 ### Módulo Legal
 - `TermsAndConditionsScreen`: Pantalla reutilizable para mostrar Términos de Servicio o Política de Privacidad
@@ -757,6 +778,13 @@ final baseUrl = AppConfig.currentEnvironment == 'development'
 - [x] Favoritos
 - [x] Métricas visuales
 - [ ] Chat en tiempo real (en desarrollo)
+- [ ] **Orders: Módulo completo (crítico para MVP)**
+  - [ ] MyOrdersScreen
+  - [ ] OrderDetailScreen
+  - [ ] ReceiptScreen
+  - [ ] MutualReviewScreen
+  - [ ] OrderService y OrderProvider
+  - [ ] Botón "Confirmar compra" en ChatScreen
 
 ### Calidad
 - [x] Tests de modelos (20/20)
@@ -1268,18 +1296,19 @@ lib/chat/widgets/
 
 ## 🎉 Conclusión
 
-**El frontend de CorralX está completamente funcional como MVP**, con:
-- ✅ Todas las funcionalidades core implementadas
+**El frontend de CorralX está ~70% completo**, con:
+- ✅ Funcionalidades core implementadas (Auth, Perfiles, Productos, Haciendas, Favoritos)
+- ⚠️ Falta módulo crítico de Orders (Backend está 100% listo)
 - ✅ Testing robusto (85.3% de cobertura)
 - ✅ Sin bugs críticos
 - ✅ UI/UX pulida
 - ✅ Arquitectura escalable
 
-**Listo para:** Beta testing, demos con clientes, desarrollo continuo
+**Para completar MVP:** Implementar módulo Orders completo (ver `.cursorrules` Frontend)
 
 ---
 
 **Preparado por:** Equipo CorralX  
-**Versión:** 1.0.0 (MVP)  
-**Fecha:** 8 de octubre de 2025  
-**Estado:** ✅ MVP 100% Completado
+**Versión:** 1.0.0 (MVP en desarrollo)  
+**Fecha:** Diciembre 2025  
+**Estado:** ⚠️ MVP ~70% Completado (Falta módulo Orders)
