@@ -27,6 +27,32 @@ alwaysApply: true
 - Incluir comentarios y documentación en el código para facilitar la lectura por el equipo (usar `///` para documentar clases y métodos públicos).
 - Usar el patrón **Provider** para gestión de estado por simplicidad en el MVP (evitar patrones más complejos como BLoC o Riverpod a menos que el equipo los prefiera).
 
+## Flujo de pedidos y entrega (sin pagos digitales)
+- La app **coordina** la operación pero **NO procesa pagos**. El intercambio económico ocurre cuando comprador y vendedor se encuentran físicamente.
+- Secuencia completa (documentada a detalle en `CICLO_COMPLETO_LOGIC_DETALLADA.md`):
+  1. Negociación en `ChatScreen`.
+  2. Comprador confirma compra (nuevo diálogo con cantidad + precio + método de delivery).
+  3. Se crea `Order` (`status='pending'`).
+  4. Vendedor acepta/rechaza desde `OrderDetailScreen`.
+  5. Al aceptar se genera automáticamente un **comprobante de venta** (`ReceiptScreen`) que funciona como contrato operativo.
+  6. Se ejecuta el método de delivery acordado (4 opciones descritas abajo).
+  7. Comprador confirma recogida (`markAsDelivered`), luego ambos califican (`MutualReviewScreen`), `Order` pasa a `completed`.
+- **Opciones de delivery** (capturadas en el formulario y mostradas en el comprobante):
+  1. `buyer_transport`: el comprador lleva su transporte (finca u otro punto).
+  2. `seller_transport`: el vendedor entrega en la dirección del comprador.
+  3. `external_delivery`: servicio de terceros (se registra proveedor y costo).
+  4. `corralx_delivery`: logística interna de CorralX (costo/seguimiento propios).
+- El comprobante debe incluir siempre: datos del vendedor (nombre, finca, dirección, contacto), datos del comprador, detalle del producto, método de delivery, direcciones, fecha esperada y notas. También se debe indicar explícitamente que el pago se realiza fuera de la app.
+- Añadir opcionalmente controles futuros en UI (mostrar estado “Confirmación pendiente del vendedor”, permitir subir evidencias, abrir disputas) aunque la primera entrega del MVP solo requiere la confirmación del comprador.
+
+## Nuevos módulos/screen obligatorios
+- `OrderProvider` y `OrderService`: encapsulan llamadas a `/api/orders`, `/api/orders/{id}/receipt`, `/api/orders/{id}/review`, etc. Deben residir en `lib/orders/` o `lib/shared/` (según convenga) y exponer métodos mínimos: `createOrder`, `acceptOrder`, `rejectOrder`, `markAsDelivered`, `getReceipt`, `submitReview`, `loadOrders`.
+- `MyOrdersScreen`: lista de pedidos con Tabs (“Como Comprador”, “Como Vendedor”), estados, filtros y accesos a detalle/comprobante/calificaciones.
+- `OrderDetailScreen`: muestra el pedido, botones contextuales (aceptar/rechazar, confirmar recogida, calificar) y acceso a `ReceiptScreen`.
+- `ReceiptScreen`: consume `Order.receipt_data`, renderiza el comprobante y ofrece acciones “Compartir” y “Descargar PDF”.
+- `MutualReviewScreen`: formulario de calificaciones (producto + vendedor para compradores, comprador para vendedores). Debe validarse que solo se envíe una vez por pedido.
+- `ChatScreen`: mantener el flujo actual e incorporar el FAB/botón “Confirmar compra” (solo visible si no existe un pedido abierto para esa conversación). El diálogo debe construir la carga útil completa para `POST /api/orders` según la selección de delivery.
+
 ## Servicios y Comunicación con la API
 - Centralizar las llamadas HTTP en clases de servicio bajo `lib/services/`:
   - Crear un `ApiService` base que use paquetes como `http` (o `dio` si se prefiere) para manejar peticiones. Este servicio puede gestionar el token de autenticación globalmente (p.ej., adjuntar header `Authorization: Bearer <token>` a cada request tras login).
@@ -262,6 +288,7 @@ alwaysApply: true
   - Implementar reconexión automática con backoff exponencial en caso de pérdida de conexión.
   - Pausar la conexión WebSocket cuando la app está en segundo plano para optimizar recursos.
   - Implementar notificaciones push para mensajes recibidos cuando la app está en background.
+- El flujo de pedidos y entrega debe respetar la regla “pago fuera de la app”: mostrar mensajes claros en comprobante y pantallas relevantes, evitando suposiciones de procesamiento digital.
 - El frontend debe reflejar las reglas del backend en la UI para claridad del usuario:
   - Ej.: Si solo usuarios verificados pueden publicar (si se aplicara), la app debería informar o bloquear esa acción para usuarios no verificados con un mensaje del estilo "Tu cuenta debe ser verificada para publicar anuncios.".
   - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.

@@ -645,6 +645,33 @@ ProfileScreen → Tab "Mis Fincas"
        └─ RanchService.deleteRanch() → Refresh
 ```
 
+### 5. Flujo de Pedido y Entrega (sin pagos digitales)
+> Referencia completa: `docs/CICLO_COMPLETO_LOGIC_DETALLADA.md`
+
+```
+ChatScreen (negociación)
+  ↓
+Confirmar Compra (diálogo con delivery)
+  ↓
+POST /api/orders (status pending)
+  ↓
+OrderDetailScreen (vendedor acepta/rechaza)
+  ↓
+ReceiptScreen (comprobante como contrato físico)
+  ↓
+Encuentro presencial / delivery acordado
+  ↓
+Comprador confirma recogida (markAsDelivered)
+  ↓
+MutualReviewScreen (comprador: producto+vendedor, vendedor: comprador)
+  ↓
+Order.status = completed + ratings actualizados
+```
+
+- La app **no procesa pagos**: el comprobante generado al aceptar el pedido se usa como contrato operativo cuando ambas partes se encuentran físicamente.
+- Los 4 métodos de delivery soportados: `buyer_transport`, `seller_transport`, `external_delivery`, `corralx_delivery`. El formulario y el comprobante deben reflejar los campos específicos de cada opción (direcciones, costos, proveedor, notas).
+- El pedido solo pasa a `completed` cuando ambos usuarios califican; los ratings de producto y vendedor se recalculan automáticamente.
+
 ---
 
 ## ⚠️ Manejo de Errores
