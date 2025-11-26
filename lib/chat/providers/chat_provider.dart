@@ -183,7 +183,11 @@ class ChatProvider extends ChangeNotifier {
 
       // 2. Crear nueva conversación
       print('➕ Creando nueva conversación...');
-      final newConv = await ChatService.createConversation(otherProfileId);
+      final newConv = await ChatService.createConversation(
+        otherProfileId,
+        productId: productId,
+        ranchId: ranchId,
+      );
 
       // Agregar a la lista
       _conversations.insert(0, newConv);

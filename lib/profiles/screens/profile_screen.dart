@@ -14,6 +14,7 @@ import 'package:corralx/auth/screens/sign_in_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:corralx/shared/screens/terms_and_conditions_screen.dart';
+import 'package:corralx/orders/screens/my_orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -746,6 +747,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: EdgeInsets.symmetric(
                               vertical: isTablet ? 16 : 14),
                           elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: isTablet ? 16 : 12),
+
+                    // Botón Mis Pedidos
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyOrdersScreen(),
+                            ),
+                          );
+                        },
+                        icon: Icon(Icons.shopping_bag, size: isTablet ? 20 : 18),
+                        label: Text(
+                          'Mis Pedidos',
+                          style: TextStyle(
+                            fontSize: isTablet ? 16 : 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: theme.colorScheme.primary,
+                          padding: EdgeInsets.symmetric(
+                              vertical: isTablet ? 16 : 14),
+                          side: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 1.5,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

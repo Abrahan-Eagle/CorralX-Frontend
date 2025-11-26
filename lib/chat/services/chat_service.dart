@@ -200,15 +200,31 @@ class ChatService {
 
   /// POST /api/chat/conversations
   /// Crea una nueva conversación con otro usuario
-  static Future<Conversation> createConversation(int otherProfileId) async {
+  static Future<Conversation> createConversation(
+    int otherProfileId, {
+    int? productId,
+    int? ranchId,
+  }) async {
     try {
       final token = await storage.read(key: 'token');
       final baseUrl = _baseUrl;
 
-      print('➕ ChatService.createConversation - ProfileID: $otherProfileId');
+      print('➕ ChatService.createConversation - ProfileID: $otherProfileId, ProductID: $productId, RanchID: $ranchId');
 
       if (token == null || token.isEmpty) {
         throw Exception('Token no disponible');
+      }
+
+      final body = <String, dynamic>{
+        'profile_id_2': otherProfileId,
+      };
+      
+      if (productId != null) {
+        body['product_id'] = productId;
+      }
+      
+      if (ranchId != null) {
+        body['ranch_id'] = ranchId;
       }
 
       final response = await http.post(
@@ -218,9 +234,7 @@ class ChatService {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode({
-          'profile_id_2': otherProfileId,
-        }),
+        body: json.encode(body),
       );
 
       print('📡 Status Code: ${response.statusCode}');

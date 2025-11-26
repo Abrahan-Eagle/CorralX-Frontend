@@ -5,7 +5,12 @@ import 'package:corralx/chat/widgets/message_bubble.dart';
 import 'package:corralx/chat/widgets/chat_input.dart';
 import 'package:corralx/chat/widgets/typing_indicator.dart';
 import 'package:corralx/config/app_config.dart';
-import 'package:corralx/profiles/providers/profile_provider.dart'; // ✅ Para obtener el profileId
+import 'package:corralx/profiles/providers/profile_provider.dart';
+import 'package:corralx/orders/providers/order_provider.dart';
+import 'package:corralx/orders/widgets/confirm_purchase_dialog.dart';
+import 'package:corralx/products/providers/product_provider.dart';
+import 'package:corralx/products/models/product.dart';
+import 'package:corralx/chat/models/conversation.dart';
 
 /// Pantalla de chat 1:1 con un usuario
 /// Muestra mensajes con HTTP Polling (4 segundos)
@@ -38,6 +43,10 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _contactIsVerified = false;
   bool _isLoadingContact = true;
 
+  // Datos de la conversación
+  Conversation? _conversation;
+  bool _hasOpenOrder = false;
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +77,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // Cargar datos del contacto
       _loadContactData();
+
+      // Cargar conversación y verificar pedidos
+      _loadConversationAndCheckOrders();
     });
   }
 
@@ -151,6 +163,124 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
     }
+  }
+
+  /// Cargar conversación y verificar si hay pedidos abiertos
+  Future<void> _loadConversationAndCheckOrders() async {
+    try {
+      final chatProvider = context.read<ChatProvider>();
+      final conversations = chatProvider.conversations;
+      final conversation = conversations.firstWhere(
+        (conv) => conv.id == widget.conversationId,
+        orElse: () => Conversation(
+          id: widget.conversationId,
+          profile1Id: 0,
+          profile2Id: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _conversation = conversation;
+        });
+      }
+
+      // Verificar si hay pedidos abiertos para esta conversación
+      if (conversation.productId != null) {
+        await _checkOpenOrders();
+      }
+    } catch (e) {
+      print('❌ Error cargando conversación: $e');
+    }
+  }
+
+  /// Verificar si hay pedidos abiertos para esta conversación
+  Future<void> _checkOpenOrders() async {
+    try {
+      final orderProvider = context.read<OrderProvider>();
+      final profileProvider = context.read<ProfileProvider>();
+      final myProfileId = profileProvider.myProfile?.id;
+
+      if (myProfileId == null) return;
+
+      // Cargar pedidos como comprador
+      await orderProvider.loadBuyerOrders(refresh: true);
+
+      // Verificar si hay algún pedido abierto (pending, accepted, delivered) para esta conversación
+      final openOrders = orderProvider.buyerOrders.where((order) {
+        return order.conversationId == widget.conversationId &&
+            (order.isPending || order.isAccepted || order.isDelivered);
+      });
+
+      if (mounted) {
+        setState(() {
+          _hasOpenOrder = openOrders.isNotEmpty;
+        });
+      }
+    } catch (e) {
+      print('❌ Error verificando pedidos: $e');
+    }
+  }
+
+  /// Mostrar diálogo de confirmación de compra
+  void _showConfirmPurchaseDialog() {
+    if (_conversation?.productId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: No se puede identificar el producto'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Cargar el producto
+    final productProvider = context.read<ProductProvider>();
+    Product? product;
+
+    // Buscar el producto en la lista de productos cargados
+    product = productProvider.products
+        .firstWhere(
+          (p) => p.id == _conversation!.productId,
+          orElse: () => Product(
+            id: _conversation!.productId!,
+            title: '',
+            description: '',
+            type: '',
+            breed: '',
+            age: 0,
+            quantity: 0,
+            price: 0,
+            currency: 'USD',
+            deliveryMethod: 'pickup',
+            negotiable: false,
+            status: 'active',
+            viewsCount: 0,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            ranchId: 0,
+          ),
+        );
+
+    // Si no está en la lista, intentar cargarlo
+    if (product.id == _conversation!.productId && product.title.isEmpty) {
+      productProvider.fetchProductDetail(_conversation!.productId!);
+      product = productProvider.selectedProduct;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => ConfirmPurchaseDialog(
+        productId: _conversation!.productId!,
+        conversationId: widget.conversationId,
+        product: product,
+      ),
+    ).then((_) {
+      // Refrescar verificación de pedidos después de crear uno
+      _checkOpenOrders();
+    });
   }
 
   /// Enviar mensaje
@@ -277,6 +407,29 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
         ),
+      ),
+      floatingActionButton: Consumer2<ChatProvider, ProfileProvider>(
+        builder: (context, chatProvider, profileProvider, child) {
+          // Mostrar FAB solo si:
+          // 1. La conversación tiene productId
+          // 2. No hay pedido abierto
+          // 3. El usuario actual es comprador (no vendedor)
+          if (_conversation?.productId == null || _hasOpenOrder) {
+            return const SizedBox.shrink();
+          }
+
+          // Verificar que el usuario es comprador (no el vendedor del producto)
+          final myProfileId = profileProvider.myProfile?.id;
+          if (myProfileId == null) return const SizedBox.shrink();
+
+          return FloatingActionButton.extended(
+            onPressed: _showConfirmPurchaseDialog,
+            icon: const Icon(Icons.shopping_cart),
+            label: const Text('Confirmar Compra'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          );
+        },
       ),
     );
   }

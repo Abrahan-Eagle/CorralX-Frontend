@@ -336,6 +336,7 @@ import 'package:corralx/products/providers/product_provider.dart';
 import 'package:corralx/profiles/providers/profile_provider.dart';
 import 'package:corralx/ranches/providers/ranch_provider.dart';
 import 'package:corralx/chat/providers/chat_provider.dart';
+import 'package:corralx/orders/providers/order_provider.dart';
 import 'package:corralx/chat/services/firebase_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -429,6 +430,7 @@ Future<void> main() async {
           update: (context, profileProvider, chatProvider) =>
               chatProvider ?? ChatProvider(profileProvider),
         ), // ✅ Chat MVP
+        ChangeNotifierProvider(create: (_) => OrderProvider()), // ✅ Orders Module
         ChangeNotifierProvider(create: (_) => IAInsightsProvider()),
         ChangeNotifierProvider(
             create: (_) => ThemeProvider()..loadThemePreference()),

@@ -3,6 +3,8 @@ class Conversation {
   final int id;
   final int profile1Id;
   final int profile2Id;
+  final int? productId; // Producto relacionado (si la conversación inició por un producto)
+  final int? ranchId; // Hacienda relacionada
   final String? lastMessage;
   final DateTime? lastMessageAt;
   final int unreadCount;
@@ -17,6 +19,8 @@ class Conversation {
     required this.id,
     required this.profile1Id,
     required this.profile2Id,
+    this.productId,
+    this.ranchId,
     this.lastMessage,
     this.lastMessageAt,
     this.unreadCount = 0,
@@ -36,6 +40,16 @@ class Conversation {
       profile2Id: json['profile_id_2'] is String
           ? int.parse(json['profile_id_2'])
           : json['profile_id_2'] as int,
+      productId: json['product_id'] != null
+          ? (json['product_id'] is String
+              ? int.tryParse(json['product_id'])
+              : json['product_id'] as int?)
+          : null,
+      ranchId: json['ranch_id'] != null
+          ? (json['ranch_id'] is String
+              ? int.tryParse(json['ranch_id'])
+              : json['ranch_id'] as int?)
+          : null,
       lastMessage: json['last_message'] as String?,
       lastMessageAt: json['last_message_at'] != null
           ? DateTime.parse(json['last_message_at'])
@@ -60,6 +74,8 @@ class Conversation {
       'id': id,
       'profile_id_1': profile1Id,
       'profile_id_2': profile2Id,
+      'product_id': productId,
+      'ranch_id': ranchId,
       'last_message': lastMessage,
       'last_message_at': lastMessageAt?.toIso8601String(),
       'unread_count': unreadCount,
@@ -74,6 +90,8 @@ class Conversation {
     int? id,
     int? profile1Id,
     int? profile2Id,
+    int? productId,
+    int? ranchId,
     String? lastMessage,
     DateTime? lastMessageAt,
     int? unreadCount,
@@ -86,6 +104,8 @@ class Conversation {
       id: id ?? this.id,
       profile1Id: profile1Id ?? this.profile1Id,
       profile2Id: profile2Id ?? this.profile2Id,
+      productId: productId ?? this.productId,
+      ranchId: ranchId ?? this.ranchId,
       lastMessage: lastMessage ?? this.lastMessage,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       unreadCount: unreadCount ?? this.unreadCount,
