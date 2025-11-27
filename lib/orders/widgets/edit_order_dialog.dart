@@ -1,68 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:corralx/orders/providers/order_provider.dart';
-import 'package:corralx/products/models/product.dart';
+import 'package:corralx/orders/models/order.dart';
 import 'package:intl/intl.dart';
 
-/// Diálogo para confirmar compra desde el chat
-class ConfirmPurchaseDialog extends StatefulWidget {
-  final int productId;
-  final int conversationId;
-  final Product? product; // Producto opcional si ya está cargado
+/// Diálogo para editar un pedido pendiente (vendedor)
+class EditOrderDialog extends StatefulWidget {
+  final Order order;
 
-  const ConfirmPurchaseDialog({
+  const EditOrderDialog({
     super.key,
-    required this.productId,
-    required this.conversationId,
-    this.product,
+    required this.order,
   });
 
   @override
-  State<ConfirmPurchaseDialog> createState() => _ConfirmPurchaseDialogState();
+  State<EditOrderDialog> createState() => _EditOrderDialogState();
 }
 
-class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
+class _EditOrderDialogState extends State<EditOrderDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _quantityController = TextEditingController(text: '1');
-  final _unitPriceController = TextEditingController();
-  final _deliveryAddressController = TextEditingController();
-  final _pickupAddressController = TextEditingController();
-  final _deliveryProviderController = TextEditingController();
-  final _deliveryTrackingController = TextEditingController();
-  final _deliveryCostController = TextEditingController();
-  final _notesController = TextEditingController();
+  late final TextEditingController _quantityController;
+  late final TextEditingController _unitPriceController;
+  late final TextEditingController _deliveryAddressController;
+  late final TextEditingController _pickupAddressController;
+  late final TextEditingController _deliveryProviderController;
+  late final TextEditingController _deliveryTrackingController;
+  late final TextEditingController _deliveryCostController;
+  late final TextEditingController _sellerNotesController;
+  late final TextEditingController _pickupNotesController;
 
-  Product? _product;
-  String _deliveryMethod = 'buyer_transport';
-  String? _pickupLocation;
+  late String _deliveryMethod;
+  late String? _pickupLocation;
   DateTime? _expectedPickupDate;
 
   @override
   void initState() {
     super.initState();
-    _loadProduct();
-  }
+    // Inicializar valores desde el pedido existente
+    _quantityController = TextEditingController(text: widget.order.quantity.toString());
+    _unitPriceController = TextEditingController(text: widget.order.unitPrice.toStringAsFixed(2));
+    _deliveryAddressController = TextEditingController(text: widget.order.deliveryAddress ?? '');
+    _pickupAddressController = TextEditingController(text: widget.order.pickupAddress ?? '');
+    _deliveryProviderController = TextEditingController(text: widget.order.deliveryProvider ?? '');
+    _deliveryTrackingController = TextEditingController(text: widget.order.deliveryTrackingNumber ?? '');
+    _deliveryCostController = TextEditingController(
+      text: widget.order.deliveryCost != null ? widget.order.deliveryCost!.toStringAsFixed(2) : '',
+    );
+    _sellerNotesController = TextEditingController(text: widget.order.sellerNotes ?? '');
+    _pickupNotesController = TextEditingController(text: widget.order.pickupNotes ?? '');
 
-  Future<void> _loadProduct() async {
-    if (widget.product != null) {
-      setState(() {
-        _product = widget.product;
-        _unitPriceController.text = _product!.price.toStringAsFixed(2);
-      });
-      return;
-    }
-
-    // Cargar producto desde ProductProvider
-    try {
-      // TODO: Cargar producto si no viene
-      // Por ahora usamos el que viene en widget.product
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar producto: $e')),
-        );
-      }
-    }
+    _deliveryMethod = widget.order.deliveryMethod;
+    _pickupLocation = widget.order.pickupLocation;
+    _expectedPickupDate = widget.order.expectedPickupDate;
   }
 
   @override
@@ -74,63 +63,64 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     _deliveryProviderController.dispose();
     _deliveryTrackingController.dispose();
     _deliveryCostController.dispose();
-    _notesController.dispose();
+    _sellerNotesController.dispose();
+    _pickupNotesController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleConfirm() async {
+  Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_product == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Producto no cargado')),
-      );
-      return;
-    }
 
     final orderProvider = context.read<OrderProvider>();
-    final quantity = int.tryParse(_quantityController.text) ?? 1;
-    final unitPrice = double.tryParse(_unitPriceController.text) ?? _product!.price;
+    final quantity = int.tryParse(_quantityController.text) ?? widget.order.quantity;
+    final unitPrice = double.tryParse(_unitPriceController.text) ?? widget.order.unitPrice;
 
-    final success = await orderProvider.createOrder(
-      productId: widget.productId,
-      quantity: quantity,
-      unitPrice: unitPrice,
-      deliveryMethod: _deliveryMethod,
-      conversationId: widget.conversationId,
-      pickupLocation: _pickupLocation,
-      pickupAddress: _pickupAddressController.text.isEmpty
-          ? null
-          : _pickupAddressController.text,
-      deliveryAddress: _deliveryAddressController.text.isEmpty
-          ? null
-          : _deliveryAddressController.text,
-      pickupNotes: _notesController.text.isEmpty ? null : _notesController.text,
-      deliveryCost: _deliveryCostController.text.isEmpty
-          ? null
-          : double.tryParse(_deliveryCostController.text),
-      deliveryCostCurrency: _product!.currency,
-      deliveryProvider: _deliveryProviderController.text.isEmpty
-          ? null
-          : _deliveryProviderController.text,
-      deliveryTrackingNumber: _deliveryTrackingController.text.isEmpty
-          ? null
-          : _deliveryTrackingController.text,
-      expectedPickupDate: _expectedPickupDate,
-      buyerNotes: _notesController.text.isEmpty ? null : _notesController.text,
+    // Solo enviar campos que han cambiado
+    final success = await orderProvider.updateOrder(
+      orderId: widget.order.id,
+      quantity: quantity != widget.order.quantity ? quantity : null,
+      unitPrice: unitPrice != widget.order.unitPrice ? unitPrice : null,
+      deliveryMethod: _deliveryMethod != widget.order.deliveryMethod ? _deliveryMethod : null,
+      pickupLocation: _pickupLocation != widget.order.pickupLocation ? _pickupLocation : null,
+      pickupAddress: _pickupAddressController.text != (widget.order.pickupAddress ?? '')
+          ? (_pickupAddressController.text.isEmpty ? null : _pickupAddressController.text)
+          : null,
+      deliveryAddress: _deliveryAddressController.text != (widget.order.deliveryAddress ?? '')
+          ? (_deliveryAddressController.text.isEmpty ? null : _deliveryAddressController.text)
+          : null,
+      pickupNotes: _pickupNotesController.text != (widget.order.pickupNotes ?? '')
+          ? (_pickupNotesController.text.isEmpty ? null : _pickupNotesController.text)
+          : null,
+      deliveryCost: _deliveryCostController.text.isNotEmpty
+          ? (double.tryParse(_deliveryCostController.text) ?? widget.order.deliveryCost)
+          : null,
+      deliveryCostCurrency: widget.order.currency,
+      deliveryProvider: _deliveryProviderController.text != (widget.order.deliveryProvider ?? '')
+          ? (_deliveryProviderController.text.isEmpty ? null : _deliveryProviderController.text)
+          : null,
+      deliveryTrackingNumber: _deliveryTrackingController.text != (widget.order.deliveryTrackingNumber ?? '')
+          ? (_deliveryTrackingController.text.isEmpty ? null : _deliveryTrackingController.text)
+          : null,
+      expectedPickupDate: _expectedPickupDate != widget.order.expectedPickupDate
+          ? _expectedPickupDate
+          : null,
+      sellerNotes: _sellerNotesController.text != (widget.order.sellerNotes ?? '')
+          ? (_sellerNotesController.text.isEmpty ? null : _sellerNotesController.text)
+          : null,
     );
 
     if (success && mounted) {
-      Navigator.pop(context); // Cerrar diálogo
+      Navigator.pop(context, true); // Retornar true para indicar que se actualizó
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pedido creado exitosamente'),
+          content: Text('Pedido actualizado exitosamente'),
           backgroundColor: Colors.green,
         ),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(orderProvider.errorMessage ?? 'Error al crear pedido'),
+          content: Text(orderProvider.errorMessage ?? 'Error al actualizar pedido'),
           backgroundColor: Colors.red,
         ),
       );
@@ -143,20 +133,13 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth >= 600;
-    
-    // Calcular ancho y alto responsive
-    double dialogWidth;
-    if (isTablet) {
-      final calculatedWidth = screenWidth * 0.7;
-      dialogWidth = calculatedWidth < 600 ? calculatedWidth : 600.0;
-    } else {
-      dialogWidth = screenWidth * 0.95;
-    }
+
+    final dialogWidth = isTablet ? 600.0 : screenWidth * 0.95;
     final dialogHeight = screenHeight * 0.9;
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(
-        horizontal: isTablet 
+        horizontal: isTablet
             ? (screenWidth - dialogWidth) / 2
             : screenWidth * 0.025,
         vertical: screenHeight * 0.05,
@@ -181,11 +164,11 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.shopping_cart, color: theme.colorScheme.onPrimaryContainer),
+                    Icon(Icons.edit, color: theme.colorScheme.onPrimaryContainer),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Confirmar Compra',
+                        'Editar Pedido',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -207,12 +190,29 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Producto
-                      if (_product != null) ...[
-                        Text(
-                          _product!.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                      // Información del producto (solo lectura)
+                      if (widget.order.product != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceVariant,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Producto',
+                                style: theme.textTheme.labelMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.order.product!.title,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -243,7 +243,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                         decoration: InputDecoration(
                           labelText: 'Precio Unitario *',
                           border: const OutlineInputBorder(),
-                          suffixText: _product?.currency ?? 'USD',
+                          suffixText: widget.order.currency,
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -302,7 +302,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                         onTap: () async {
                           final date = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: _expectedPickupDate ?? DateTime.now(),
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
                           );
@@ -314,13 +314,13 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      // Notas
+                      // Notas del vendedor
                       TextFormField(
-                        controller: _notesController,
+                        controller: _sellerNotesController,
                         decoration: const InputDecoration(
-                          labelText: 'Notas adicionales (opcional)',
+                          labelText: 'Notas del vendedor (opcional)',
                           border: OutlineInputBorder(),
-                          hintText: 'Información adicional sobre la compra...',
+                          hintText: 'Comentarios o sugerencias sobre el pedido...',
                         ),
                         maxLines: 3,
                       ),
@@ -347,14 +347,14 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                     Consumer<OrderProvider>(
                       builder: (context, orderProvider, child) {
                         return ElevatedButton(
-                          onPressed: orderProvider.isCreating ? null : _handleConfirm,
-                          child: orderProvider.isCreating
+                          onPressed: orderProvider.isUpdating ? null : _handleSave,
+                          child: orderProvider.isUpdating
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
-                              : const Text('Confirmar Compra'),
+                              : const Text('Guardar Cambios'),
                         );
                       },
                     ),
@@ -372,7 +372,6 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     switch (_deliveryMethod) {
       case 'buyer_transport':
         return [
-          // Pickup location
           Text(
             'Lugar de Recogida *',
             style: theme.textTheme.titleSmall?.copyWith(
@@ -411,6 +410,15 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                   : null,
             ),
           ],
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _pickupNotesController,
+            decoration: const InputDecoration(
+              labelText: 'Notas de recogida (opcional)',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 2,
+          ),
         ];
 
       case 'seller_transport':
@@ -436,7 +444,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             decoration: InputDecoration(
               labelText: 'Costo de entrega (opcional)',
               border: const OutlineInputBorder(),
-              suffixText: _product?.currency ?? 'USD',
+              suffixText: widget.order.currency,
             ),
             keyboardType: TextInputType.number,
           ),
@@ -487,7 +495,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             decoration: InputDecoration(
               labelText: 'Costo de delivery (opcional)',
               border: const OutlineInputBorder(),
-              suffixText: _product?.currency ?? 'USD',
+              suffixText: widget.order.currency,
             ),
             keyboardType: TextInputType.number,
           ),
@@ -523,7 +531,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             decoration: InputDecoration(
               labelText: 'Costo de delivery (opcional)',
               border: const OutlineInputBorder(),
-              suffixText: _product?.currency ?? 'USD',
+              suffixText: widget.order.currency,
             ),
             keyboardType: TextInputType.number,
           ),
@@ -553,6 +561,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
-
 }
+
+
 

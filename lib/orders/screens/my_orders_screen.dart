@@ -265,23 +265,26 @@ class _StatusFilterBottomSheet extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Filtrar por estado',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          ...statuses.map((status) {
-            return RadioListTile<String?>(
-              title: Text(statusLabels[status] ?? 'Todos'),
-              value: status,
-              groupValue: selectedStatus,
-              onChanged: (value) => onStatusSelected(value),
-            );
-          }),
-        ],
+      // Hacemos el contenido scrollable para evitar overflows en pantallas pequeñas
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Filtrar por estado',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            ...statuses.map((status) {
+              return RadioListTile<String?>(
+                title: Text(statusLabels[status] ?? 'Todos'),
+                value: status,
+                groupValue: selectedStatus,
+                onChanged: (value) => onStatusSelected(value),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

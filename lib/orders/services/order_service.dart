@@ -114,6 +114,89 @@ class OrderService {
     }
   }
 
+  /// PUT /api/orders/{id} - Actualizar un pedido pendiente (vendedor)
+  static Future<Map<String, dynamic>> updateOrder({
+    required int orderId,
+    int? quantity,
+    double? unitPrice,
+    String? deliveryMethod,
+    String? pickupLocation,
+    String? pickupAddress,
+    String? deliveryAddress,
+    String? pickupNotes,
+    double? deliveryCost,
+    String? deliveryCostCurrency,
+    String? deliveryProvider,
+    String? deliveryTrackingNumber,
+    DateTime? expectedPickupDate,
+    String? sellerNotes,
+  }) async {
+    if (_isTestMode) {
+      return _buildMockOrder(orderId);
+    }
+    try {
+      final body = <String, dynamic>{};
+
+      if (quantity != null) {
+        body['quantity'] = quantity;
+      }
+      if (unitPrice != null) {
+        body['unit_price'] = unitPrice;
+      }
+      if (deliveryMethod != null) {
+        body['delivery_method'] = deliveryMethod;
+      }
+      if (pickupLocation != null) {
+        body['pickup_location'] = pickupLocation;
+      }
+      if (pickupAddress != null) {
+        body['pickup_address'] = pickupAddress;
+      }
+      if (deliveryAddress != null) {
+        body['delivery_address'] = deliveryAddress;
+      }
+      if (pickupNotes != null) {
+        body['pickup_notes'] = pickupNotes;
+      }
+      if (deliveryCost != null) {
+        body['delivery_cost'] = deliveryCost;
+      }
+      if (deliveryCostCurrency != null) {
+        body['delivery_cost_currency'] = deliveryCostCurrency;
+      }
+      if (deliveryProvider != null) {
+        body['delivery_provider'] = deliveryProvider;
+      }
+      if (deliveryTrackingNumber != null) {
+        body['delivery_tracking_number'] = deliveryTrackingNumber;
+      }
+      if (expectedPickupDate != null) {
+        body['expected_pickup_date'] = expectedPickupDate.toIso8601String();
+      }
+      if (sellerNotes != null) {
+        body['seller_notes'] = sellerNotes;
+      }
+
+      final response = await http
+          .put(
+            Uri.parse('$_baseUrl/api/orders/$orderId'),
+            headers: await _getHeaders(),
+            body: json.encode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        final errorBody = json.decode(response.body);
+        throw Exception(
+            errorBody['message'] ?? 'Error al actualizar pedido: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
   /// POST /api/orders - Crear un pedido nuevo
   static Future<Map<String, dynamic>> createOrder({
     required int productId,
@@ -389,10 +472,37 @@ class OrderService {
         return json.decode(response.body);
       } else {
         final errorBody = json.decode(response.body);
-        throw Exception(
-            errorBody['message'] ?? 'Error al enviar calificación: ${response.statusCode}');
+        String errorMessage = 'Error al enviar calificación';
+        
+        // Extraer mensaje de error del backend
+        if (errorBody['message'] != null) {
+          errorMessage = errorBody['message'].toString();
+        } else if (errorBody['errors'] != null) {
+          // Si hay errores de validación
+          final errors = errorBody['errors'];
+          if (errors is Map && errors.containsKey('order_id')) {
+            errorMessage = errors['order_id'][0] ?? errorMessage;
+          } else {
+            errorMessage = errors.toString();
+          }
+        }
+        
+        throw Exception(errorMessage);
       }
     } catch (e) {
+      // Si el error ya es una Exception con mensaje, propagarlo
+      if (e is Exception && e.toString().contains('Ya registraste')) {
+        throw e;
+      }
+      // Para otros errores de conexión, incluir el mensaje original
+      final errorMsg = e.toString();
+      if (errorMsg.contains('Exception:')) {
+        // Ya tiene formato de Exception, extraer el mensaje
+        final match = RegExp(r'Exception:\s*(.+)$').firstMatch(errorMsg);
+        if (match != null) {
+          throw Exception(match.group(1)!.trim());
+        }
+      }
       throw Exception('Error de conexión: $e');
     }
   }

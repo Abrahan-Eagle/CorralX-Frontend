@@ -5,6 +5,7 @@ import 'package:corralx/profiles/providers/profile_provider.dart';
 import 'package:corralx/orders/models/order.dart';
 import 'package:corralx/orders/screens/receipt_screen.dart';
 import 'package:corralx/orders/screens/mutual_review_screen.dart';
+import 'package:corralx/orders/widgets/edit_order_dialog.dart';
 import 'package:intl/intl.dart';
 
 /// Pantalla que muestra el detalle de un pedido con acciones contextuales
@@ -21,6 +22,10 @@ class OrderDetailScreen extends StatefulWidget {
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  /// Flag local para saber si el usuario actual ya calificó en esta sesión
+  /// (para ocultar el botón "Calificar" después de enviar la calificación).
+  bool _hasCurrentUserReviewed = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +60,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _handleEdit() async {
+    final orderProvider = context.read<OrderProvider>();
+    final order = orderProvider.selectedOrder;
+    
+    if (order == null) return;
+
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (context) => EditOrderDialog(order: order),
+    );
+
+    if (updated == true && mounted) {
+      // Recargar el detalle del pedido para mostrar los cambios
+      await orderProvider.loadOrderDetail(widget.orderId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pedido actualizado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -252,6 +282,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 // Estado del pedido
                 _StatusSection(order: order),
                 const SizedBox(height: 24),
+                // Información del comprador (solo para vendedor)
+                if (isSeller && order.buyer != null) ...[
+                  _BuyerSection(order: order),
+                  const SizedBox(height: 24),
+                ],
                 // Información del producto
                 _ProductSection(order: order),
                 const SizedBox(height: 24),
@@ -270,17 +305,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   order: order,
                   isBuyer: isBuyer,
                   isSeller: isSeller,
+                  hasCurrentUserReviewed: _hasCurrentUserReviewed,
+                  onEdit: _handleEdit,
                   onAccept: _handleAccept,
                   onReject: _handleReject,
                   onDeliver: _handleDeliver,
                   onCancel: _handleCancel,
-                  onReview: () {
-                    Navigator.push(
+                  onReview: () async {
+                    // Navegar a la pantalla de calificación y esperar el resultado
+                    final result = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => MutualReviewScreen(orderId: order.id),
                       ),
                     );
+
+                    // Si la calificación se envió correctamente, marcamos que ya calificó
+                    // y opcionalmente recargamos el detalle del pedido.
+                    if (result == true && mounted) {
+                      setState(() {
+                        _hasCurrentUserReviewed = true;
+                      });
+                      await context.read<OrderProvider>().loadOrderDetail(order.id);
+                    }
                   },
                   onReceipt: () {
                     Navigator.push(
@@ -398,6 +445,96 @@ class _ProductSection extends StatelessWidget {
   }
 }
 
+class _BuyerSection extends StatelessWidget {
+  final Order order;
+
+  const _BuyerSection({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final buyer = order.buyer;
+    if (buyer == null) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Datos del Comprador',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              buyer.displayName,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (buyer.displayName != buyer.fullName) ...[
+              const SizedBox(height: 4),
+              Text(
+                buyer.fullName,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            if (buyer.primaryAddress != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.location_on, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      buyer.primaryAddress!.fullLocation,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (buyer.isVerified) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.verified,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Usuario Verificado',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DeliverySection extends StatelessWidget {
   final Order order;
 
@@ -412,41 +549,188 @@ class _DeliverySection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Método de Entrega',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.local_shipping,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Información de Entrega',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            Text(
+            // Método de entrega
+            _buildInfoRow(
+              theme,
+              'Método de entrega:',
               order.deliveryMethodDisplayName,
-              style: theme.textTheme.bodyLarge,
+              Icons.delivery_dining,
             ),
-            if (order.pickupAddress != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Dirección de recogida: ${order.pickupAddress}',
-                style: theme.textTheme.bodySmall,
-              ),
+            const SizedBox(height: 12),
+            
+            // Información específica según el método de delivery
+            if (order.deliveryMethod == 'buyer_transport') ...[
+              // Transporte del comprador
+              if (order.pickupLocation != null)
+                _buildInfoRow(
+                  theme,
+                  'Lugar de recogida:',
+                  order.pickupLocation == 'ranch' ? 'En la finca' : 'Otro lugar',
+                  Icons.location_on,
+                ),
+              if (order.pickupLocation == 'other' && order.pickupAddress != null) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Dirección de recogida:',
+                  order.pickupAddress!,
+                  Icons.place,
+                ),
+              ],
+              if (order.pickupNotes != null && order.pickupNotes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Notas de recogida:',
+                  order.pickupNotes!,
+                  Icons.note,
+                ),
+              ],
+            ] else if (order.deliveryMethod == 'seller_transport') ...[
+              // Transporte del vendedor
+              if (order.deliveryAddress != null)
+                _buildInfoRow(
+                  theme,
+                  'Dirección de entrega:',
+                  order.deliveryAddress!,
+                  Icons.place,
+                ),
+              if (order.deliveryCost != null && order.deliveryCost! > 0) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Costo de entrega:',
+                  '${order.deliveryCostCurrency ?? (order.currency == 'USD' ? '\$' : 'Bs')} ${order.deliveryCost!.toStringAsFixed(2)}',
+                  Icons.attach_money,
+                ),
+              ],
+            ] else if (order.deliveryMethod == 'external_delivery') ...[
+              // Delivery externo
+              if (order.deliveryAddress != null)
+                _buildInfoRow(
+                  theme,
+                  'Dirección de entrega:',
+                  order.deliveryAddress!,
+                  Icons.place,
+                ),
+              if (order.deliveryProvider != null && order.deliveryProvider!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Proveedor de delivery:',
+                  order.deliveryProvider!,
+                  Icons.business,
+                ),
+              ],
+              if (order.deliveryTrackingNumber != null && order.deliveryTrackingNumber!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Número de tracking:',
+                  order.deliveryTrackingNumber!,
+                  Icons.qr_code,
+                ),
+              ],
+              if (order.deliveryCost != null && order.deliveryCost! > 0) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Costo de delivery:',
+                  '${order.deliveryCostCurrency ?? (order.currency == 'USD' ? '\$' : 'Bs')} ${order.deliveryCost!.toStringAsFixed(2)}',
+                  Icons.attach_money,
+                ),
+              ],
+            ] else if (order.deliveryMethod == 'corralx_delivery') ...[
+              // Delivery CorralX
+              if (order.deliveryAddress != null)
+                _buildInfoRow(
+                  theme,
+                  'Dirección de entrega:',
+                  order.deliveryAddress!,
+                  Icons.place,
+                ),
+              if (order.deliveryTrackingNumber != null && order.deliveryTrackingNumber!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Número de tracking CorralX:',
+                  order.deliveryTrackingNumber!,
+                  Icons.qr_code,
+                ),
+              ],
+              if (order.deliveryCost != null && order.deliveryCost! > 0) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  theme,
+                  'Costo de delivery:',
+                  '${order.deliveryCostCurrency ?? (order.currency == 'USD' ? '\$' : 'Bs')} ${order.deliveryCost!.toStringAsFixed(2)}',
+                  Icons.attach_money,
+                ),
+              ],
             ],
-            if (order.deliveryAddress != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Dirección de entrega: ${order.deliveryAddress}',
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
+            
+            // Fecha esperada (común para todos)
             if (order.expectedPickupDate != null) ...[
+              const SizedBox(height: 12),
+              const Divider(),
               const SizedBox(height: 8),
-              Text(
-                'Fecha esperada: ${DateFormat('dd/MM/yyyy').format(order.expectedPickupDate!)}',
-                style: theme.textTheme.bodySmall,
+              _buildInfoRow(
+                theme,
+                'Fecha esperada:',
+                DateFormat('dd/MM/yyyy').format(order.expectedPickupDate!),
+                Icons.calendar_today,
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(ThemeData theme, String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -584,6 +868,8 @@ class _ActionButtons extends StatelessWidget {
   final Order order;
   final bool isBuyer;
   final bool isSeller;
+  final bool hasCurrentUserReviewed;
+  final VoidCallback? onEdit;
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onDeliver;
@@ -595,6 +881,8 @@ class _ActionButtons extends StatelessWidget {
     required this.order,
     required this.isBuyer,
     required this.isSeller,
+    required this.hasCurrentUserReviewed,
+    this.onEdit,
     required this.onAccept,
     required this.onReject,
     required this.onDeliver,
@@ -610,6 +898,23 @@ class _ActionButtons extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Botón Editar Pedido (vendedor, pedido pendiente)
+            if (isSeller && order.canBeAccepted && onEdit != null)
+              OutlinedButton.icon(
+                onPressed: orderProvider.isUpdating ? null : onEdit,
+                icon: orderProvider.isUpdating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.edit),
+                label: const Text('Editar Pedido'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            if (isSeller && order.canBeAccepted && onEdit != null) const SizedBox(height: 8),
             // Botones para vendedor
             if (isSeller && order.canBeAccepted)
               ElevatedButton.icon(
@@ -675,7 +980,7 @@ class _ActionButtons extends StatelessWidget {
               ),
             ],
             // Botón de calificación
-            if (order.canBeReviewed) ...[
+            if (order.canBeReviewed && !hasCurrentUserReviewed) ...[
               const SizedBox(height: 8),
               ElevatedButton.icon(
                 onPressed: onReview,

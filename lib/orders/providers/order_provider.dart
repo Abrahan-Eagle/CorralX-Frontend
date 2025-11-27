@@ -21,6 +21,7 @@ class OrderProvider with ChangeNotifier {
   bool _isCreating = false;
   bool _isAccepting = false;
   bool _isRejecting = false;
+  bool _isUpdating = false;
   bool _isDelivering = false;
   bool _isCancelling = false;
   bool _isSubmittingReview = false;
@@ -46,6 +47,7 @@ class OrderProvider with ChangeNotifier {
   bool get isCreating => _isCreating;
   bool get isAccepting => _isAccepting;
   bool get isRejecting => _isRejecting;
+  bool get isUpdating => _isUpdating;
   bool get isDelivering => _isDelivering;
   bool get isCancelling => _isCancelling;
   bool get isSubmittingReview => _isSubmittingReview;
@@ -304,6 +306,70 @@ class OrderProvider with ChangeNotifier {
     }
   }
 
+  /// Actualizar un pedido pendiente (vendedor)
+  Future<bool> updateOrder({
+    required int orderId,
+    int? quantity,
+    double? unitPrice,
+    String? deliveryMethod,
+    String? pickupLocation,
+    String? pickupAddress,
+    String? deliveryAddress,
+    String? pickupNotes,
+    double? deliveryCost,
+    String? deliveryCostCurrency,
+    String? deliveryProvider,
+    String? deliveryTrackingNumber,
+    DateTime? expectedPickupDate,
+    String? sellerNotes,
+  }) async {
+    try {
+      _isUpdating = true;
+      _clearErrors();
+      _safeNotifyListeners();
+
+      final response = await OrderService.updateOrder(
+        orderId: orderId,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        deliveryMethod: deliveryMethod,
+        pickupLocation: pickupLocation,
+        pickupAddress: pickupAddress,
+        deliveryAddress: deliveryAddress,
+        pickupNotes: pickupNotes,
+        deliveryCost: deliveryCost,
+        deliveryCostCurrency: deliveryCostCurrency,
+        deliveryProvider: deliveryProvider,
+        deliveryTrackingNumber: deliveryTrackingNumber,
+        expectedPickupDate: expectedPickupDate,
+        sellerNotes: sellerNotes,
+      );
+
+      final Order updatedOrder = Order.fromJson(response['data'] ?? response);
+
+      // Actualizar en listas
+      _updateOrderInLists(updatedOrder);
+      if (_selectedOrder?.id == orderId) {
+        _selectedOrder = updatedOrder;
+      }
+
+      _isUpdating = false;
+      _safeNotifyListeners();
+      return true;
+    } catch (e) {
+      _isUpdating = false;
+      _errorMessage = e.toString();
+
+      // Parsear errores de validación si existen
+      if (e.toString().contains('validation')) {
+        _validationErrors = {'general': [e.toString()]};
+      }
+
+      _safeNotifyListeners();
+      return false;
+    }
+  }
+
   /// Marcar como entregado
   Future<bool> markAsDelivered(int orderId) async {
     try {
@@ -391,7 +457,34 @@ class OrderProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _isSubmittingReview = false;
-      _errorMessage = e.toString();
+      // Extraer mensaje de error más amigable
+      String errorMsg = e.toString();
+      
+      // Si el error contiene información del servidor, intentar extraer el mensaje
+      if (errorMsg.contains('Ya registraste')) {
+        // Extraer el mensaje del backend
+        final match = RegExp(r'Ya registraste[^\.]*\.').firstMatch(errorMsg);
+        if (match != null) {
+          errorMsg = match.group(0)!;
+        }
+      } else if (errorMsg.contains('Duplicate entry') || errorMsg.contains('duplicate')) {
+        errorMsg = 'Ya registraste tus calificaciones para este pedido.';
+      } else if (errorMsg.contains('product_id') && errorMsg.contains('cannot be null')) {
+        errorMsg = 'Error: No se pudo identificar el producto. Por favor intenta de nuevo.';
+      } else if (errorMsg.contains('Connection error') || errorMsg.contains('Error de conexión')) {
+        // Intentar extraer el mensaje real del error anidado
+        final match = RegExp(r'Exception:\s*(.+?)(?:\n|$)').firstMatch(errorMsg);
+        if (match != null) {
+          final innerError = match.group(1)!.trim();
+          if (innerError.contains('Ya registraste')) {
+            errorMsg = innerError;
+          } else {
+            errorMsg = 'Error de conexión. Por favor intenta de nuevo.';
+          }
+        }
+      }
+      
+      _errorMessage = errorMsg;
       _safeNotifyListeners();
       return false;
     }

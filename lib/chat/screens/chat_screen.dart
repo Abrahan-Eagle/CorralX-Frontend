@@ -8,6 +8,7 @@ import 'package:corralx/config/app_config.dart';
 import 'package:corralx/profiles/providers/profile_provider.dart';
 import 'package:corralx/orders/providers/order_provider.dart';
 import 'package:corralx/orders/widgets/confirm_purchase_dialog.dart';
+import 'package:corralx/orders/screens/order_detail_screen.dart';
 import 'package:corralx/products/providers/product_provider.dart';
 import 'package:corralx/products/models/product.dart';
 import 'package:corralx/chat/models/conversation.dart';
@@ -46,6 +47,8 @@ class _ChatScreenState extends State<ChatScreen> {
   // Datos de la conversación
   Conversation? _conversation;
   bool _hasOpenOrder = false;
+  bool _isSeller = false; // Si el usuario actual es el vendedor del producto
+  int? _pendingOrderId; // ID del pedido pendiente (para vendedor o comprador)
 
   @override
   void initState() {
@@ -187,8 +190,9 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
 
-      // Verificar si hay pedidos abiertos para esta conversación
+      // Verificar si hay pedidos abiertos para esta conversación y cargar producto
       if (conversation.productId != null) {
+        await _loadProductAndCheckSeller();
         await _checkOpenOrders();
       }
     } catch (e) {
@@ -196,7 +200,61 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Cargar producto y verificar si el usuario actual es el vendedor
+  Future<void> _loadProductAndCheckSeller() async {
+    try {
+      final productProvider = context.read<ProductProvider>();
+      final profileProvider = context.read<ProfileProvider>();
+      final myProfileId = profileProvider.myProfile?.id;
+
+      if (myProfileId == null || _conversation?.productId == null) return;
+
+      // Buscar el producto en la lista cargada o cargarlo
+      Product? product = productProvider.products
+          .firstWhere(
+            (p) => p.id == _conversation!.productId,
+            orElse: () => Product(
+              id: _conversation!.productId!,
+              title: '',
+              description: '',
+              type: '',
+              breed: '',
+              age: 0,
+              quantity: 0,
+              price: 0,
+              currency: 'USD',
+              deliveryMethod: 'pickup',
+              negotiable: false,
+              status: 'active',
+              viewsCount: 0,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+              ranchId: 0,
+            ),
+          );
+
+      // Si el producto no está completamente cargado, obtenerlo del backend
+      if (product.ranch == null || product.ranch?.profileId == null) {
+        await productProvider.fetchProductDetail(_conversation!.productId!);
+        product = productProvider.selectedProduct;
+      }
+
+      if (product != null && mounted) {
+        final sellerProfileId = product.ranch?.profileId;
+        setState(() {
+          _isSeller = sellerProfileId != null && sellerProfileId == myProfileId;
+        });
+      }
+    } catch (e) {
+      print('❌ Error cargando producto: $e');
+    }
+  }
+
   /// Verificar si hay pedidos abiertos para esta conversación
+  /// 
+  /// El botón "Confirmar Compra" NO aparece si hay un pedido ACTIVO (pending, accepted, delivered)
+  /// El botón SÍ aparece cuando el pedido está terminado (completed, cancelled, rejected)
+  /// Esto evita que el comprador cree múltiples pedidos para el mismo producto
   Future<void> _checkOpenOrders() async {
     try {
       final orderProvider = context.read<OrderProvider>();
@@ -205,18 +263,43 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (myProfileId == null) return;
 
-      // Cargar pedidos como comprador
-      await orderProvider.loadBuyerOrders(refresh: true);
+      // Cargar pedidos como comprador Y vendedor
+      await Future.wait([
+        orderProvider.loadBuyerOrders(refresh: true),
+        orderProvider.loadSellerOrders(refresh: true),
+      ]);
 
-      // Verificar si hay algún pedido abierto (pending, accepted, delivered) para esta conversación
-      final openOrders = orderProvider.buyerOrders.where((order) {
+      // Verificar si hay algún pedido ABIERTO/ACTIVO como comprador
+      // Estados que BLOQUEAN el botón "Confirmar Compra":
+      // - pending: Esperando respuesta del vendedor
+      // - accepted: Vendedor aceptó, en proceso de entrega
+      // - delivered: Comprador confirmó recogida, esperando calificaciones
+      // Estados que PERMITEN crear nuevo pedido:
+      // - completed: Pedido completado (ambos calificaron)
+      // - cancelled: Pedido cancelado
+      // - rejected: Pedido rechazado por el vendedor
+      final buyerActiveOrders = orderProvider.buyerOrders.where((order) {
         return order.conversationId == widget.conversationId &&
             (order.isPending || order.isAccepted || order.isDelivered);
       });
 
+      // Verificar si hay algún pedido pendiente como vendedor (solo pending para que pueda aceptar/rechazar/editar)
+      final sellerPendingOrders = orderProvider.sellerOrders.where((order) {
+        return order.conversationId == widget.conversationId && order.isPending;
+      });
+
       if (mounted) {
         setState(() {
-          _hasOpenOrder = openOrders.isNotEmpty;
+          // Si hay un pedido activo (pending, accepted, delivered), ocultar el botón "Confirmar Compra"
+          // Solo mostrar el botón si el pedido está completado, cancelado o rechazado
+          _hasOpenOrder = buyerActiveOrders.isNotEmpty;
+          
+          // Si es vendedor y hay un pedido pendiente, guardar el ID para poder navegar al detalle
+          if (_isSeller && sellerPendingOrders.isNotEmpty) {
+            _pendingOrderId = sellerPendingOrders.first.id;
+          } else {
+            _pendingOrderId = null;
+          }
         });
       }
     } catch (e) {
@@ -339,6 +422,144 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Indicador de estado de conexión (HTTP Polling)
                 _buildConnectionBanner(theme, chatProvider.isConnected),
 
+                // Banner "Confirmar Compra" (SOLO para COMPRADOR)
+                Consumer2<ChatProvider, ProfileProvider>(
+                  builder: (context, chatProvider, profileProvider, child) {
+                    // Mostrar banner solo si:
+                    // 1. La conversación tiene productId
+                    // 2. NO hay pedido activo (pending, accepted, delivered) - el botón desaparece hasta que termine o se anule
+                    // 3. El usuario actual NO es el vendedor (es comprador)
+                    if (_conversation?.productId == null || _hasOpenOrder || _isSeller) {
+                      return const SizedBox.shrink();
+                    }
+
+                    // Verificar que el usuario es comprador (no el vendedor del producto)
+                    final myProfileId = profileProvider.myProfile?.id;
+                    if (myProfileId == null) return const SizedBox.shrink();
+                    
+                    // ✅ Verificación adicional: asegurar que no hay pedido activo
+                    // El botón solo aparece cuando NO hay pedidos en proceso (pending, accepted, delivered)
+
+                    return InkWell(
+                      onTap: _showConfirmPurchaseDialog,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.shopping_cart,
+                              color: theme.colorScheme.onPrimaryContainer,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Confirmar Compra',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: theme.colorScheme.onPrimaryContainer,
+                              size: 14,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                
+                // Banner "Ver Solicitud de Compra" (SOLO para VENDEDOR)
+                Consumer2<ChatProvider, ProfileProvider>(
+                  builder: (context, chatProvider, profileProvider, child) {
+                    // Mostrar banner solo si:
+                    // 1. El usuario actual ES el vendedor
+                    // 2. Hay un pedido pendiente en esta conversación
+                    if (!_isSeller || _pendingOrderId == null) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OrderDetailScreen(orderId: _pendingOrderId!),
+                          ),
+                        ).then((_) {
+                          // Refrescar después de volver del detalle del pedido
+                          _checkOpenOrders();
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade700,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.notifications_active,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Tienes una solicitud de compra pendiente - Toca para revisar',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
                 // Lista de mensajes
                 Expanded(
                   child: messages.isEmpty
@@ -407,29 +628,6 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
         ),
-      ),
-      floatingActionButton: Consumer2<ChatProvider, ProfileProvider>(
-        builder: (context, chatProvider, profileProvider, child) {
-          // Mostrar FAB solo si:
-          // 1. La conversación tiene productId
-          // 2. No hay pedido abierto
-          // 3. El usuario actual es comprador (no vendedor)
-          if (_conversation?.productId == null || _hasOpenOrder) {
-            return const SizedBox.shrink();
-          }
-
-          // Verificar que el usuario es comprador (no el vendedor del producto)
-          final myProfileId = profileProvider.myProfile?.id;
-          if (myProfileId == null) return const SizedBox.shrink();
-
-          return FloatingActionButton.extended(
-            onPressed: _showConfirmPurchaseDialog,
-            icon: const Icon(Icons.shopping_cart),
-            label: const Text('Confirmar Compra'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          );
-        },
       ),
     );
   }
