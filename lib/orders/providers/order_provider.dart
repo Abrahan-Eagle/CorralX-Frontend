@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/order.dart';
 import '../services/order_service.dart';
+import 'package:corralx/chat/services/pusher_service.dart';
+import 'package:corralx/profiles/providers/profile_provider.dart';
 
 /// Provider para gestionar el estado de los pedidos
 class OrderProvider with ChangeNotifier {
@@ -36,6 +38,16 @@ class OrderProvider with ChangeNotifier {
   bool _hasMoreBuyerPages = true;
   bool _hasMoreSellerPages = true;
 
+  // Pusher para eventos en tiempo real (singleton compartido)
+  final PusherService _pusherService = PusherService.instance;
+  bool _isPusherInitialized = false;
+  
+  // Referencia al ProfileProvider para obtener el profileId actual
+  ProfileProvider? _profileProvider;
+  
+  // Callback para cuando se acepta una orden (para mostrar diálogo al comprador)
+  Function(Order)? onOrderAccepted;
+
   // Getters
   List<Order> get buyerOrders => _buyerOrders;
   List<Order> get sellerOrders => _sellerOrders;
@@ -57,6 +69,136 @@ class OrderProvider with ChangeNotifier {
 
   bool get hasMoreBuyerPages => _hasMoreBuyerPages;
   bool get hasMoreSellerPages => _hasMoreSellerPages;
+
+  /// Inicializar Pusher y suscribirse a eventos de Orders
+  Future<void> initializePusher(ProfileProvider profileProvider) async {
+    if (_isPusherInitialized) {
+      return;
+    }
+
+    try {
+      print('🔧 OrderProvider: Inicializando Pusher para Orders...');
+      
+      // ✅ Guardar referencia al ProfileProvider para usarla en eventos
+      _profileProvider = profileProvider;
+      
+      // Inicializar Pusher si no está inicializado
+      if (!_pusherService.isInitialized) {
+        await _pusherService.initialize();
+      }
+
+      // Obtener profileId del usuario actual
+      final profileId = profileProvider.myProfile?.id;
+      if (profileId == null) {
+        print('⚠️ OrderProvider: No hay profileId disponible');
+        return;
+      }
+
+      // Suscribirse al canal de perfil
+      await _pusherService.subscribeToProfile(
+        profileId,
+        onOrderEvent: _handleOrderEvent,
+      );
+
+      _isPusherInitialized = true;
+      print('✅ OrderProvider: Pusher inicializado y suscrito a perfil $profileId');
+    } catch (e) {
+      print('❌ Error inicializando Pusher en OrderProvider: $e');
+    }
+  }
+
+  /// Manejar eventos de Orders recibidos vía Pusher
+  void _handleOrderEvent(String eventName, Map<String, dynamic> data) {
+    try {
+      print('📨 OrderProvider: Evento recibido - $eventName');
+      
+      // Extraer el order del payload
+      final orderData = data['order'];
+      if (orderData == null) {
+        print('⚠️ OrderProvider: Evento sin datos de order');
+        return;
+      }
+
+      final Map<String, dynamic> orderMap = orderData is Map<String, dynamic>
+          ? orderData
+          : Map<String, dynamic>.from(orderData as Map);
+      
+      final Order updatedOrder = Order.fromJson(orderMap);
+
+      // ✅ Obtener profileId del usuario actual para determinar si es comprador o vendedor
+      final currentProfileId = _profileProvider?.myProfile?.id;
+      if (currentProfileId == null) {
+        print('⚠️ OrderProvider: No se puede determinar profileId actual, agregando a ambas listas');
+        // Fallback: agregar a ambas listas si no hay profileId
+        if (!_buyerOrders.any((o) => o.id == updatedOrder.id) &&
+            !_sellerOrders.any((o) => o.id == updatedOrder.id)) {
+          _buyerOrders.insert(0, updatedOrder);
+          _sellerOrders.insert(0, updatedOrder);
+          _safeNotifyListeners();
+        }
+        return;
+      }
+
+      // Actualizar según el tipo de evento
+      switch (eventName) {
+        case 'OrderCreated':
+          // ✅ Agregar el pedido solo a la lista correcta (comprador o vendedor)
+          if (!_buyerOrders.any((o) => o.id == updatedOrder.id) &&
+              !_sellerOrders.any((o) => o.id == updatedOrder.id)) {
+            
+            // Si el usuario actual es el comprador
+            if (updatedOrder.buyerProfileId == currentProfileId) {
+              _buyerOrders.insert(0, updatedOrder);
+              print('✅ OrderProvider: Pedido ${updatedOrder.id} agregado a buyerOrders');
+            }
+            
+            // Si el usuario actual es el vendedor
+            if (updatedOrder.sellerProfileId == currentProfileId) {
+              _sellerOrders.insert(0, updatedOrder);
+              print('✅ OrderProvider: Pedido ${updatedOrder.id} agregado a sellerOrders');
+            }
+            
+            // Notificar cambios para que la UI se actualice
+            _safeNotifyListeners();
+          }
+          break;
+
+        case 'OrderAccepted':
+          // Actualizar pedido existente en las listas
+          _updateOrderInLists(updatedOrder);
+          
+          // Si es el pedido seleccionado, actualizarlo también
+          if (_selectedOrder?.id == updatedOrder.id) {
+            _selectedOrder = updatedOrder;
+          }
+          
+          // ✅ Ejecutar callback para mostrar diálogo al comprador
+          if (onOrderAccepted != null) {
+            onOrderAccepted!(updatedOrder);
+          }
+          break;
+          
+        case 'OrderRejected':
+        case 'OrderUpdated':
+        case 'OrderDelivered':
+        case 'OrderCompleted':
+        case 'OrderCancelled':
+          // Actualizar pedido existente en las listas
+          _updateOrderInLists(updatedOrder);
+          
+          // Si es el pedido seleccionado, actualizarlo también
+          if (_selectedOrder?.id == updatedOrder.id) {
+            _selectedOrder = updatedOrder;
+          }
+          break;
+      }
+
+      _safeNotifyListeners();
+      print('✅ OrderProvider: Estado actualizado por evento $eventName');
+    } catch (e) {
+      print('❌ Error procesando evento de Order: $e');
+    }
+  }
 
   /// Limpiar errores
   void clearErrors() {
@@ -538,6 +680,12 @@ class OrderProvider with ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    // Desuscribirse de Pusher si está inicializado
+    if (_isPusherInitialized) {
+      // El PusherService se limpia automáticamente cuando se dispose
+      // pero podemos desuscribirnos explícitamente si es necesario
+      _isPusherInitialized = false;
+    }
     super.dispose();
   }
 }

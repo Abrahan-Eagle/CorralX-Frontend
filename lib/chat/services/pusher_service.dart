@@ -1,9 +1,7 @@
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:corralx/chat/models/message.dart';
-import 'package:http/http.dart' as http;
 
 /// Servicio de Pusher Channels para chat en tiempo real
 ///
@@ -13,7 +11,19 @@ import 'package:http/http.dart' as http;
 /// - Online/Offline status
 ///
 /// Con fallback automático a HTTP Polling si falla la conexión
+/// 
+/// ✅ Singleton para que todos los providers compartan la misma instancia
 class PusherService {
+  // ✅ Singleton instance
+  static PusherService? _instance;
+  static PusherService get instance {
+    _instance ??= PusherService._();
+    return _instance!;
+  }
+  
+  // ✅ Constructor privado para singleton
+  PusherService._();
+  
   PusherChannelsFlutter? _pusher;
   String? _currentChannelName;
   bool _isConnected = false;
@@ -24,6 +34,12 @@ class PusherService {
   Function(int userId, String userName)? _onTypingStarted;
   Function(int userId)? _onTypingStopped;
   Function(bool)? _onConnectionChange;
+  
+  // Callback genérico para eventos de Orders
+  Function(String eventName, Map<String, dynamic> data)? _onOrderEvent;
+  
+  // Canales suscritos (múltiples)
+  final Set<String> _subscribedChannels = {};
 
   /// Estado de conexión
   bool get isConnected => _isConnected;
@@ -111,10 +127,54 @@ class PusherService {
     if (_currentChannelName != null) {
       try {
         await _pusher!.unsubscribe(channelName: _currentChannelName!);
+        _subscribedChannels.remove(_currentChannelName);
         _currentChannelName = null;
         print('✅ PusherService: Desuscrito del canal');
       } catch (e) {
         print('❌ Error desuscribiendo: $e');
+      }
+    }
+  }
+  
+  /// Suscribirse a un canal de perfil para eventos de Orders
+  Future<bool> subscribeToProfile(
+    int profileId, {
+    required Function(String eventName, Map<String, dynamic> data) onOrderEvent,
+  }) async {
+    try {
+      print('🔗 PusherService: Suscribiendo a perfil $profileId');
+      
+      _onOrderEvent = onOrderEvent;
+      
+      final channelName = 'profile.$profileId';
+      
+      // Si ya está suscrito, no hacer nada
+      if (_subscribedChannels.contains(channelName)) {
+        print('⚠️ Ya está suscrito a $channelName');
+        return true;
+      }
+      
+      await _pusher!.subscribe(channelName: channelName);
+      _subscribedChannels.add(channelName);
+      
+      print('✅ PusherService: Suscrito a canal de perfil $channelName');
+      return true;
+    } catch (e) {
+      print('❌ Error suscribiendo a perfil: $e');
+      return false;
+    }
+  }
+  
+  /// Desuscribirse de un canal de perfil
+  Future<void> unsubscribeFromProfile(int profileId) async {
+    final channelName = 'profile.$profileId';
+    if (_subscribedChannels.contains(channelName)) {
+      try {
+        await _pusher!.unsubscribe(channelName: channelName);
+        _subscribedChannels.remove(channelName);
+        print('✅ PusherService: Desuscrito de perfil $profileId');
+      } catch (e) {
+        print('❌ Error desuscribiendo de perfil: $e');
       }
     }
   }
@@ -184,6 +244,29 @@ class PusherService {
           }
           break;
 
+        // Eventos de Orders
+        case 'OrderCreated':
+        case 'OrderAccepted':
+        case 'OrderRejected':
+        case 'OrderUpdated':
+        case 'OrderDelivered':
+        case 'OrderCompleted':
+        case 'OrderCancelled':
+          print('🔍 PusherService: Procesando evento de Order - ${event.eventName}');
+          print('🔍 _onOrderEvent es null: ${_onOrderEvent == null}');
+          print('🔍 data.isEmpty: ${data.isEmpty}');
+          if (_onOrderEvent != null) {
+            if (data.isNotEmpty) {
+              _onOrderEvent!(event.eventName, data);
+              print('✅ Evento de pedido recibido y procesado: ${event.eventName}');
+            } else {
+              print('⚠️ Evento de pedido sin datos: ${event.eventName}');
+            }
+          } else {
+            print('⚠️ _onOrderEvent callback no está configurado para evento: ${event.eventName}');
+          }
+          break;
+
         default:
           print('⚠️ Evento no manejado: ${event.eventName}');
       }
@@ -247,5 +330,7 @@ class PusherService {
     _onTypingStarted = null;
     _onTypingStopped = null;
     _onConnectionChange = null;
+    _onOrderEvent = null;
+    _subscribedChannels.clear();
   }
 }

@@ -47,8 +47,8 @@ class ChatProvider extends ChangeNotifier {
   /// Usuarios que están escribiendo (por conversación)
   final Map<int, Set<int>> _typingUsers = {};
 
-  /// Servicio de Pusher (principal - tiempo real)
-  final PusherService _pusherService = PusherService();
+  /// Servicio de Pusher (principal - tiempo real) - Singleton compartido
+  final PusherService _pusherService = PusherService.instance;
 
   /// Servicio de Polling (fallback si Pusher falla)
   final PollingService _pollingService = PollingService();

@@ -491,12 +491,37 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 
                 // Banner "Ver Solicitud de Compra" (SOLO para VENDEDOR)
-                Consumer2<ChatProvider, ProfileProvider>(
-                  builder: (context, chatProvider, profileProvider, child) {
+                Consumer3<ChatProvider, ProfileProvider, OrderProvider>(
+                  builder: (context, chatProvider, profileProvider, orderProvider, child) {
+                    // ✅ Verificar pedidos pendientes reactivamente desde OrderProvider
+                    final sellerPendingOrders = orderProvider.sellerOrders.where((order) {
+                      return order.conversationId == widget.conversationId && order.isPending;
+                    }).toList();
+                    
+                    final currentPendingOrderId = sellerPendingOrders.isNotEmpty 
+                        ? sellerPendingOrders.first.id 
+                        : null;
+                    
+                    // ✅ Actualizar estado local inmediatamente si cambió (sin addPostFrameCallback)
+                    if (currentPendingOrderId != _pendingOrderId) {
+                      // Usar un microtask para evitar modificar estado durante build
+                      final newPendingOrderId = currentPendingOrderId;
+                      Future.microtask(() {
+                        if (mounted && newPendingOrderId != _pendingOrderId) {
+                          setState(() {
+                            _pendingOrderId = newPendingOrderId;
+                            print('🔄 ChatScreen: _pendingOrderId actualizado a $newPendingOrderId');
+                          });
+                        }
+                      });
+                    }
+                    
                     // Mostrar banner solo si:
                     // 1. El usuario actual ES el vendedor
                     // 2. Hay un pedido pendiente en esta conversación
-                    if (!_isSeller || _pendingOrderId == null) {
+                    final shouldShow = _isSeller && currentPendingOrderId != null;
+                    
+                    if (!shouldShow) {
                       return const SizedBox.shrink();
                     }
 
@@ -505,7 +530,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => OrderDetailScreen(orderId: _pendingOrderId!),
+                            builder: (context) => OrderDetailScreen(orderId: currentPendingOrderId!),
                           ),
                         ).then((_) {
                           // Refrescar después de volver del detalle del pedido

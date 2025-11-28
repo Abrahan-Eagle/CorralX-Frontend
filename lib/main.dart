@@ -337,7 +337,11 @@ import 'package:corralx/profiles/providers/profile_provider.dart';
 import 'package:corralx/ranches/providers/ranch_provider.dart';
 import 'package:corralx/chat/providers/chat_provider.dart';
 import 'package:corralx/orders/providers/order_provider.dart';
+import 'package:corralx/orders/models/order.dart';
+import 'package:corralx/orders/screens/my_orders_screen.dart';
 import 'package:corralx/chat/services/firebase_service.dart';
+import 'package:corralx/chat/screens/chat_screen.dart';
+import 'package:corralx/orders/screens/order_detail_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -580,6 +584,109 @@ class MainRouterState extends State<MainRouter> {
     _loadProfile();
     _loadLastPosition();
     _setupDeepLinks();
+    _initializeOrderProvider();
+    _setupNotificationCallbacks();
+  }
+  
+  /// Configurar callbacks de notificaciones push
+  void _setupNotificationCallbacks() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Callback para notificaciones de chat
+        FirebaseService.onNotificationTap((conversationId) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(conversationId: conversationId),
+              ),
+            );
+          }
+        });
+        
+        // Callback para notificaciones de pedidos
+        FirebaseService.onOrderNotificationTap((orderId) {
+          if (mounted) {
+            // Navegar al detalle del pedido
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderDetailScreen(orderId: orderId),
+              ),
+            );
+          }
+        });
+      }
+    });
+  }
+
+  /// Inicializar OrderProvider con Pusher para eventos en tiempo real
+  void _initializeOrderProvider() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        
+        // ✅ Configurar callback para cuando se acepte una orden
+        orderProvider.onOrderAccepted = (Order acceptedOrder) {
+          // Verificar que el usuario actual es el comprador
+          final myProfileId = profileProvider.myProfile?.id;
+          if (myProfileId != null && acceptedOrder.buyerProfileId == myProfileId) {
+            // Mostrar diálogo de confirmación
+            _showOrderAcceptedDialog(acceptedOrder);
+          }
+        };
+        
+        // Asegurar que el perfil esté cargado antes de inicializar Pusher
+        profileProvider.fetchMyProfile().then((_) {
+          orderProvider.initializePusher(profileProvider);
+        });
+      }
+    });
+  }
+  
+  /// Mostrar diálogo cuando se acepta una orden y navegar a Mis Pedidos
+  void _showOrderAcceptedDialog(Order order) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text('¡Solicitud Aceptada!'),
+            ),
+          ],
+        ),
+        content: Text(
+          'El vendedor ha aceptado tu solicitud de compra. '
+          'Puedes ver los detalles en "Mis Pedidos".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Cerrar diálogo
+              // Navegar a Mis Pedidos
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyOrdersScreen(),
+                ),
+              );
+            },
+            child: const Text('Ver Mis Pedidos'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _setupDeepLinks() {

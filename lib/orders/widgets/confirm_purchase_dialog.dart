@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:corralx/orders/providers/order_provider.dart';
 import 'package:corralx/products/models/product.dart';
+import 'package:corralx/products/providers/product_provider.dart';
 import 'package:intl/intl.dart';
 
 /// Diálogo para confirmar compra desde el chat
@@ -52,14 +53,37 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
       return;
     }
 
-    // Cargar producto desde ProductProvider
+    // Cargar producto desde ProductProvider si no viene
     try {
-      // TODO: Cargar producto si no viene
-      // Por ahora usamos el que viene en widget.product
+      final productProvider = context.read<ProductProvider>();
+      await productProvider.fetchProductDetail(widget.productId);
+      
+      if (mounted) {
+        final loadedProduct = productProvider.selectedProduct;
+        if (loadedProduct != null) {
+          setState(() {
+            _product = loadedProduct;
+            _unitPriceController.text = _product!.price.toStringAsFixed(2);
+          });
+        } else {
+          // Si no se pudo cargar, mostrar error
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No se pudo cargar la información del producto'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar producto: $e')),
+          SnackBar(
+            content: Text('Error al cargar producto: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
