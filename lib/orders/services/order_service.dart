@@ -122,7 +122,11 @@ class OrderService {
     String? deliveryMethod,
     String? pickupLocation,
     String? pickupAddress,
+    double? pickupLatitude,
+    double? pickupLongitude,
     String? deliveryAddress,
+    double? deliveryLatitude,
+    double? deliveryLongitude,
     String? pickupNotes,
     double? deliveryCost,
     String? deliveryCostCurrency,
@@ -152,8 +156,20 @@ class OrderService {
       if (pickupAddress != null) {
         body['pickup_address'] = pickupAddress;
       }
+      if (pickupLatitude != null) {
+        body['pickup_latitude'] = pickupLatitude;
+      }
+      if (pickupLongitude != null) {
+        body['pickup_longitude'] = pickupLongitude;
+      }
       if (deliveryAddress != null) {
         body['delivery_address'] = deliveryAddress;
+      }
+      if (deliveryLatitude != null) {
+        body['delivery_latitude'] = deliveryLatitude;
+      }
+      if (deliveryLongitude != null) {
+        body['delivery_longitude'] = deliveryLongitude;
       }
       if (pickupNotes != null) {
         body['pickup_notes'] = pickupNotes;
@@ -206,7 +222,11 @@ class OrderService {
     int? conversationId,
     String? pickupLocation,
     String? pickupAddress,
+    double? pickupLatitude,
+    double? pickupLongitude,
     String? deliveryAddress,
+    double? deliveryLatitude,
+    double? deliveryLongitude,
     String? pickupNotes,
     double? deliveryCost,
     String? deliveryCostCurrency,
@@ -235,8 +255,20 @@ class OrderService {
       if (pickupAddress != null) {
         body['pickup_address'] = pickupAddress;
       }
+      if (pickupLatitude != null) {
+        body['pickup_latitude'] = pickupLatitude;
+      }
+      if (pickupLongitude != null) {
+        body['pickup_longitude'] = pickupLongitude;
+      }
       if (deliveryAddress != null) {
         body['delivery_address'] = deliveryAddress;
+      }
+      if (deliveryLatitude != null) {
+        body['delivery_latitude'] = deliveryLatitude;
+      }
+      if (deliveryLongitude != null) {
+        body['delivery_longitude'] = deliveryLongitude;
       }
       if (pickupNotes != null) {
         body['pickup_notes'] = pickupNotes;
@@ -260,6 +292,9 @@ class OrderService {
         body['buyer_notes'] = buyerNotes;
       }
 
+      // Log del body que se está enviando
+      debugPrint('🔍 OrderService.createOrder - Body enviado: ${json.encode(body)}');
+      
       final response = await http
           .post(
             Uri.parse('$_baseUrl/api/orders'),
@@ -268,12 +303,33 @@ class OrderService {
           )
           .timeout(const Duration(seconds: 30));
 
+      debugPrint('🔍 OrderService.createOrder - Status: ${response.statusCode}');
+      debugPrint('🔍 OrderService.createOrder - Response: ${response.body}');
+
       if (response.statusCode == 201) {
         return json.decode(response.body);
       } else {
         final errorBody = json.decode(response.body);
-        throw Exception(
-            errorBody['message'] ?? 'Error al crear pedido: ${response.statusCode}');
+        String errorMessage = errorBody['message'] ?? 'Error al crear pedido: ${response.statusCode}';
+        
+        // Si hay errores de validación, agregarlos al mensaje
+        if (errorBody['errors'] != null && errorBody['errors'] is Map) {
+          final errors = errorBody['errors'] as Map<String, dynamic>;
+          final errorList = <String>[];
+          errors.forEach((key, value) {
+            if (value is List) {
+              errorList.addAll(value.map((e) => '$key: $e'));
+            } else {
+              errorList.add('$key: $value');
+            }
+          });
+          if (errorList.isNotEmpty) {
+            errorMessage = errorList.join('\n');
+          }
+        }
+        
+        debugPrint('❌ OrderService.createOrder - Error: $errorMessage');
+        throw Exception(errorMessage);
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
