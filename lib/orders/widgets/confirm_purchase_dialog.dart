@@ -57,7 +57,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     try {
       final productProvider = context.read<ProductProvider>();
       await productProvider.fetchProductDetail(widget.productId);
-      
+
       if (mounted) {
         final loadedProduct = productProvider.selectedProduct;
         if (loadedProduct != null) {
@@ -113,7 +113,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
 
     final orderProvider = context.read<OrderProvider>();
     final quantity = int.tryParse(_quantityController.text) ?? 1;
-    final unitPrice = double.tryParse(_unitPriceController.text) ?? _product!.price;
+    final unitPrice =
+        double.tryParse(_unitPriceController.text) ?? _product!.price;
 
     final success = await orderProvider.createOrder(
       productId: widget.productId,
@@ -167,7 +168,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth >= 600;
-    
+
     // Calcular ancho y alto responsive
     double dialogWidth;
     if (isTablet) {
@@ -180,9 +181,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(
-        horizontal: isTablet 
-            ? (screenWidth - dialogWidth) / 2
-            : screenWidth * 0.025,
+        horizontal:
+            isTablet ? (screenWidth - dialogWidth) / 2 : screenWidth * 0.025,
         vertical: screenHeight * 0.05,
       ),
       child: Container(
@@ -201,11 +201,13 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.shopping_cart, color: theme.colorScheme.onPrimaryContainer),
+                    Icon(Icons.shopping_cart,
+                        color: theme.colorScheme.onPrimaryContainer),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -283,32 +285,40 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                       ),
                       const SizedBox(height: 24),
                       // Método de delivery
-                      Text(
-                        'Método de Entrega *',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      DropdownButtonFormField<String>(
+                        value: _deliveryMethod,
+                        decoration: const InputDecoration(
+                          labelText: 'Método de Entrega *',
+                          border: OutlineInputBorder(),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildDeliveryMethodOption(
-                        theme,
-                        'Transporte del comprador',
-                        'buyer_transport',
-                      ),
-                      _buildDeliveryMethodOption(
-                        theme,
-                        'Transporte del vendedor',
-                        'seller_transport',
-                      ),
-                      _buildDeliveryMethodOption(
-                        theme,
-                        'Delivery externo',
-                        'external_delivery',
-                      ),
-                      _buildDeliveryMethodOption(
-                        theme,
-                        'Delivery CorralX',
-                        'corralx_delivery',
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'buyer_transport',
+                            child: Text('Transporte del comprador'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'seller_transport',
+                            child: Text('Transporte del vendedor'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'external_delivery',
+                            child: Text('Delivery externo'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _deliveryMethod = value;
+                              _pickupLocation = null;
+                            });
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Selecciona un método de entrega';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
                       // Campos dinámicos según método de delivery
@@ -319,7 +329,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                         title: const Text('Fecha esperada (opcional)'),
                         subtitle: Text(
                           _expectedPickupDate != null
-                              ? DateFormat('dd/MM/yyyy').format(_expectedPickupDate!)
+                              ? DateFormat('dd/MM/yyyy')
+                                  .format(_expectedPickupDate!)
                               : 'No seleccionada',
                         ),
                         trailing: const Icon(Icons.calendar_today),
@@ -328,7 +339,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                             context: context,
                             initialDate: DateTime.now(),
                             firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
                           );
                           if (date != null && mounted) {
                             setState(() {
@@ -357,7 +369,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   border: Border(
-                    top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+                    top: BorderSide(
+                        color: theme.colorScheme.outline.withOpacity(0.2)),
                   ),
                 ),
                 child: Row(
@@ -371,12 +384,14 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                     Consumer<OrderProvider>(
                       builder: (context, orderProvider, child) {
                         return ElevatedButton(
-                          onPressed: orderProvider.isCreating ? null : _handleConfirm,
+                          onPressed:
+                              orderProvider.isCreating ? null : _handleConfirm,
                           child: orderProvider.isCreating
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('Confirmar Compra'),
                         );
@@ -397,26 +412,36 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
       case 'buyer_transport':
         return [
           // Pickup location
-          Text(
-            'Lugar de Recogida *',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+          DropdownButtonFormField<String>(
+            value: _pickupLocation,
+            decoration: const InputDecoration(
+              labelText: 'Lugar de Recogida *',
+              border: OutlineInputBorder(),
             ),
-          ),
-          RadioListTile<String>(
-            title: const Text('En la finca'),
-            value: 'ranch',
-            groupValue: _pickupLocation,
-            onChanged: (value) => setState(() => _pickupLocation = value),
-          ),
-          RadioListTile<String>(
-            title: const Text('Otro lugar'),
-            value: 'other',
-            groupValue: _pickupLocation,
-            onChanged: (value) => setState(() => _pickupLocation = value),
+            items: const [
+              DropdownMenuItem(
+                value: 'ranch',
+                child: Text('En la finca'),
+              ),
+              DropdownMenuItem(
+                value: 'other',
+                child: Text('Otro lugar'),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _pickupLocation = value;
+              });
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Selecciona un lugar de recogida';
+              }
+              return null;
+            },
           ),
           if (_pickupLocation == 'other') ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _pickupAddressController,
               decoration: const InputDecoration(
@@ -517,66 +542,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           ),
         ];
 
-      case 'corralx_delivery':
-        return [
-          TextFormField(
-            controller: _deliveryAddressController,
-            decoration: const InputDecoration(
-              labelText: 'Dirección de entrega *',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 2,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Ingresa la dirección de entrega';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _deliveryTrackingController,
-            decoration: const InputDecoration(
-              labelText: 'Número de tracking CorralX (opcional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _deliveryCostController,
-            decoration: InputDecoration(
-              labelText: 'Costo de delivery (opcional)',
-              border: const OutlineInputBorder(),
-              suffixText: _product?.currency ?? 'USD',
-            ),
-            keyboardType: TextInputType.number,
-          ),
-        ];
-
       default:
         return [];
     }
   }
-
-  Widget _buildDeliveryMethodOption(
-    ThemeData theme,
-    String title,
-    String value,
-  ) {
-    return RadioListTile<String>(
-      title: Text(title),
-      value: value,
-      groupValue: _deliveryMethod,
-      onChanged: (value) {
-        setState(() {
-          _deliveryMethod = value!;
-          _pickupLocation = null;
-        });
-      },
-      dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-    );
-  }
-
 }
-
