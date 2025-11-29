@@ -33,6 +33,36 @@ class _EditOrderDialogState extends State<EditOrderDialog> {
   late String? _pickupLocation;
   DateTime? _expectedPickupDate;
 
+  /// Construir la dirección completa de la finca
+  String? _getRanchFullAddress() {
+    // Intentar obtener la dirección desde order.ranch primero (tiene address completo)
+    // Si no está disponible, intentar desde product.ranch (puede no tener address)
+    final ranch = widget.order.ranch;
+    if (ranch == null || ranch.address == null) return null;
+
+    final address = ranch.address!;
+    final parts = <String>[];
+
+    // Dirección base
+    if (address.addresses.isNotEmpty) {
+      parts.add(address.addresses);
+    }
+
+    // Ciudad, Estado
+    if (address.fullLocation.isNotEmpty &&
+        address.fullLocation != 'Ubicación no disponible') {
+      parts.add(address.fullLocation);
+    }
+
+    // Coordenadas (opcional, solo si están disponibles)
+    if (address.latitude != null && address.longitude != null) {
+      parts.add(
+          '📍 ${address.latitude!.toStringAsFixed(6)}, ${address.longitude!.toStringAsFixed(6)}');
+    }
+
+    return parts.isNotEmpty ? parts.join(', ') : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +95,16 @@ class _EditOrderDialogState extends State<EditOrderDialog> {
         : widget.order.deliveryMethod;
     _pickupLocation = widget.order.pickupLocation;
     _expectedPickupDate = widget.order.expectedPickupDate;
+
+    // Si pickup_location es 'ranch' y no hay pickup_address, prellenar con dirección de la finca
+    if (_pickupLocation == 'ranch' &&
+        (_pickupAddressController.text.isEmpty ||
+            _pickupAddressController.text == widget.order.pickupAddress)) {
+      final ranchAddress = _getRanchFullAddress();
+      if (ranchAddress != null && _pickupAddressController.text.isEmpty) {
+        _pickupAddressController.text = ranchAddress;
+      }
+    }
   }
 
   @override
@@ -446,6 +486,17 @@ class _EditOrderDialogState extends State<EditOrderDialog> {
             onChanged: (value) {
               setState(() {
                 _pickupLocation = value;
+                // Prellenar dirección de la finca cuando se selecciona "En la finca"
+                if (value == 'ranch') {
+                  final ranchAddress = _getRanchFullAddress();
+                  if (ranchAddress != null) {
+                    _pickupAddressController.text = ranchAddress;
+                  }
+                } else if (value == 'other' &&
+                    widget.order.pickupLocation == 'ranch') {
+                  // Si cambia de "ranch" a "other", limpiar solo si venía de ranch
+                  _pickupAddressController.clear();
+                }
               });
             },
             validator: (value) {
@@ -455,6 +506,84 @@ class _EditOrderDialogState extends State<EditOrderDialog> {
               return null;
             },
           ),
+          // Mostrar dirección de la finca cuando se selecciona "En la finca"
+          if (_pickupLocation == 'ranch') ...[
+            const SizedBox(height: 16),
+            Builder(
+              builder: (context) {
+                final ranchAddress = _getRanchFullAddress();
+                if (ranchAddress == null) {
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'La dirección de la finca no está disponible',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Dirección de la finca',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        ranchAddress,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
           if (_pickupLocation == 'other') ...[
             const SizedBox(height: 16),
             TextFormField(

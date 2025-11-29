@@ -285,6 +285,8 @@ class Ranch {
   final double? avgRating;
   final int? totalSales;
   final DateTime? lastSaleAt;
+  // Address data (opcional, solo si viene del backend)
+  final Map<String, dynamic>? addressData; // Para almacenar address si viene en JSON
 
   Ranch({
     required this.id,
@@ -296,9 +298,17 @@ class Ranch {
     this.avgRating,
     this.totalSales,
     this.lastSaleAt,
+    this.addressData,
   });
 
   factory Ranch.fromJson(Map<String, dynamic> json) {
+    // Debug: verificar si address viene en el JSON
+    if (json['address'] != null) {
+      print('✅ Ranch.fromJson: address encontrado: ${json['address']}');
+    } else {
+      print('⚠️ Ranch.fromJson: address NO encontrado en JSON. Keys disponibles: ${json.keys.toList()}');
+    }
+    
     return Ranch(
       id: Product._parseInt(json['id']) ?? 0,
       profileId: Product._parseInt(json['profile_id']),
@@ -310,6 +320,10 @@ class Ranch {
       totalSales: Product._parseInt(json['total_sales']),
       lastSaleAt: json['last_sale_at'] != null
           ? DateTime.parse(json['last_sale_at'])
+          : null,
+      // Almacenar address si viene en el JSON (aunque no lo parseamos completamente)
+      addressData: json['address'] != null 
+          ? Map<String, dynamic>.from(json['address']) 
           : null,
     );
   }
@@ -325,6 +339,7 @@ class Ranch {
       'avg_rating': avgRating,
       'total_sales': totalSales,
       'last_sale_at': lastSaleAt?.toIso8601String(),
+      if (addressData != null) 'address': addressData,
     };
   }
 

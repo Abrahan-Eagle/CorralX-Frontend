@@ -1,5 +1,6 @@
 import 'package:corralx/products/models/product.dart';
 import 'package:corralx/profiles/models/profile.dart';
+import 'package:corralx/profiles/models/ranch.dart' as ProfileRanch;
 
 /// Modelo que representa un pedido en el sistema
 class Order {
@@ -57,7 +58,7 @@ class Order {
   final Product? product;
   final Profile? buyer;
   final Profile? seller;
-  final Ranch? ranch;
+  final ProfileRanch.Ranch? ranch;
 
   Order({
     required this.id,
@@ -153,7 +154,7 @@ class Order {
       product: json['product'] != null ? Product.fromJson(json['product']) : null,
       buyer: json['buyer'] != null ? Profile.fromJson(json['buyer']) : null,
       seller: json['seller'] != null ? Profile.fromJson(json['seller']) : null,
-      ranch: json['ranch'] != null ? Ranch.fromJson(json['ranch']) : null,
+      ranch: json['ranch'] != null ? ProfileRanch.Ranch.fromJson(json['ranch']) : null,
     );
   }
 

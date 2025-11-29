@@ -4,6 +4,8 @@ import 'package:corralx/orders/providers/order_provider.dart';
 import 'package:corralx/products/models/product.dart';
 import 'package:corralx/products/providers/product_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 /// Diálogo para confirmar compra desde el chat
 class ConfirmPurchaseDialog extends StatefulWidget {
@@ -38,22 +40,107 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
   String? _pickupLocation;
   DateTime? _expectedPickupDate;
 
+  /// Construir la dirección completa de la finca
+  String? _getRanchFullAddress() {
+    final ranch = _product?.ranch;
+    if (ranch == null) {
+      debugPrint('⚠️ _getRanchFullAddress: ranch es null');
+      return null;
+    }
+
+    // El Ranch simplificado ahora puede tener addressData si el backend lo carga
+    final addressData = ranch.addressData;
+    debugPrint(
+        '🔍 _getRanchFullAddress: addressData = ${addressData?.toString()}');
+    if (addressData == null) {
+      debugPrint('⚠️ _getRanchFullAddress: addressData es null');
+      return null;
+    }
+
+    final parts = <String>[];
+
+    // Dirección base (puede venir como 'adressses' o 'addresses')
+    final addresses = addressData['adressses'] ?? addressData['addresses'];
+    if (addresses != null && addresses.toString().isNotEmpty) {
+      parts.add(addresses.toString());
+    }
+
+    // Ciudad, Estado (puede venir directamente o desde relaciones anidadas)
+    String? cityName;
+    String? stateName;
+
+    // Intentar obtener desde address directamente
+    if (addressData['city_name'] != null) {
+      cityName = addressData['city_name'].toString();
+    } else if (addressData['city'] != null && addressData['city'] is Map) {
+      cityName = addressData['city']['name']?.toString();
+    }
+
+    if (addressData['state_name'] != null) {
+      stateName = addressData['state_name'].toString();
+    } else if (addressData['city'] != null &&
+        addressData['city'] is Map &&
+        addressData['city']['state'] != null &&
+        addressData['city']['state'] is Map) {
+      stateName = addressData['city']['state']['name']?.toString();
+    }
+
+    if (cityName != null || stateName != null) {
+      final locationParts = <String>[];
+      if (cityName != null && cityName.isNotEmpty) locationParts.add(cityName);
+      if (stateName != null && stateName.isNotEmpty)
+        locationParts.add(stateName);
+      if (locationParts.isNotEmpty) parts.add(locationParts.join(', '));
+    }
+
+    // Nota: Las coordenadas ya no se incluyen en el texto, se mostrarán en un mapa
+
+    return parts.isNotEmpty ? parts.join(', ') : null;
+  }
+
+  /// Obtener las coordenadas del ranch (si están disponibles)
+  LatLng? _getRanchCoordinates() {
+    final ranch = _product?.ranch;
+    if (ranch == null) return null;
+
+    final addressData = ranch.addressData;
+    if (addressData == null) return null;
+
+    final latitude = addressData['latitude'];
+    final longitude = addressData['longitude'];
+    if (latitude == null || longitude == null) return null;
+
+    final lat = latitude is double
+        ? latitude
+        : (latitude is int
+            ? latitude.toDouble()
+            : double.tryParse(latitude.toString()));
+    final lng = longitude is double
+        ? longitude
+        : (longitude is int
+            ? longitude.toDouble()
+            : double.tryParse(longitude.toString()));
+
+    if (lat != null && lng != null) {
+      return LatLng(lat, lng);
+    }
+
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadProduct();
+    // Cargar el producto después del primer frame para evitar setState durante build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProduct();
+    });
   }
 
   Future<void> _loadProduct() async {
-    if (widget.product != null) {
-      setState(() {
-        _product = widget.product;
-        _unitPriceController.text = _product!.price.toStringAsFixed(2);
-      });
-      return;
-    }
-
-    // Cargar producto desde ProductProvider si no viene
+    // Siempre cargar el producto completo desde el backend para asegurar
+    // que tenemos la relación address del ranch (necesaria para mostrar
+    // la dirección de la finca en el diálogo)
     try {
       final productProvider = context.read<ProductProvider>();
       await productProvider.fetchProductDetail(widget.productId);
@@ -64,6 +151,13 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           setState(() {
             _product = loadedProduct;
             _unitPriceController.text = _product!.price.toStringAsFixed(2);
+            // Si ya está seleccionado "En la finca", prellenar la dirección
+            if (_pickupLocation == 'ranch') {
+              final ranchAddress = _getRanchFullAddress();
+              if (ranchAddress != null) {
+                _pickupAddressController.text = ranchAddress;
+              }
+            }
           });
         } else {
           // Si no se pudo cargar, mostrar error
@@ -431,6 +525,15 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             onChanged: (value) {
               setState(() {
                 _pickupLocation = value;
+                // Prellenar dirección de la finca cuando se selecciona "En la finca"
+                if (value == 'ranch') {
+                  final ranchAddress = _getRanchFullAddress();
+                  if (ranchAddress != null) {
+                    _pickupAddressController.text = ranchAddress;
+                  }
+                } else {
+                  _pickupAddressController.clear();
+                }
               });
             },
             validator: (value) {
@@ -440,6 +543,147 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
               return null;
             },
           ),
+          // Mostrar dirección de la finca cuando se selecciona "En la finca"
+          if (_pickupLocation == 'ranch') ...[
+            const SizedBox(height: 16),
+            Builder(
+              builder: (context) {
+                final ranchAddress = _getRanchFullAddress();
+                if (ranchAddress == null) {
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'La dirección de la finca no está disponible',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Dirección de la finca',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        ranchAddress,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      // Mostrar mapa si hay coordenadas disponibles
+                      Builder(
+                        builder: (context) {
+                          final coordinates = _getRanchCoordinates();
+                          if (coordinates != null) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Ubicación en el mapa:',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: theme.colorScheme.outline
+                                          .withOpacity(0.3),
+                                    ),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: FlutterMap(
+                                    options: MapOptions(
+                                      initialCenter: coordinates,
+                                      initialZoom: 15.0,
+                                      minZoom: 5.0,
+                                      maxZoom: 18.0,
+                                    ),
+                                    children: [
+                                      TileLayer(
+                                        urlTemplate:
+                                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                        userAgentPackageName: 'com.corralx.app',
+                                      ),
+                                      MarkerLayer(
+                                        markers: [
+                                          Marker(
+                                            point: coordinates,
+                                            width: 40,
+                                            height: 40,
+                                            child: Icon(
+                                              Icons.location_on,
+                                              color: theme.colorScheme.primary,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
           if (_pickupLocation == 'other') ...[
             const SizedBox(height: 16),
             TextFormField(
