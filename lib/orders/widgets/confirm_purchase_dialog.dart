@@ -269,87 +269,156 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth >= 600;
+    final viewPadding = MediaQuery.of(context).viewPadding;
 
     // Calcular ancho y alto responsive
     double dialogWidth;
     if (isTablet) {
-      final calculatedWidth = screenWidth * 0.7;
-      dialogWidth = calculatedWidth < 600 ? calculatedWidth : 600.0;
+      final calculatedWidth = screenWidth * 0.65;
+      dialogWidth = calculatedWidth < 550 ? calculatedWidth : 550.0;
     } else {
-      dialogWidth = screenWidth * 0.95;
+      dialogWidth = screenWidth * 0.92;
     }
-    final dialogHeight = screenHeight * 0.9;
+    
+    // Altura máxima más conservadora para mejor posicionamiento
+    final maxDialogHeight = screenHeight * 0.85;
+    final minDialogHeight = 400.0;
 
     return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      elevation: 8,
       insetPadding: EdgeInsets.symmetric(
-        horizontal:
-            isTablet ? (screenWidth - dialogWidth) / 2 : screenWidth * 0.025,
-        vertical: screenHeight * 0.05,
+        horizontal: isTablet ? (screenWidth - dialogWidth) / 2 : screenWidth * 0.04,
+        vertical: viewPadding.top + 20, // Mejor posicionamiento desde arriba
       ),
       child: Container(
         width: dialogWidth,
         constraints: BoxConstraints(
           maxWidth: dialogWidth,
-          maxHeight: dialogHeight,
+          maxHeight: maxDialogHeight,
+          minHeight: minDialogHeight,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
+              // Header mejorado
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.shopping_cart,
-                        color: theme.colorScheme.onPrimaryContainer),
-                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.shopping_cart_rounded,
+                        color: theme.colorScheme.onPrimaryContainer,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         'Confirmar Compra',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.onPrimaryContainer,
+                          fontSize: 20,
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
                       onPressed: () => Navigator.pop(context),
-                      color: theme.colorScheme.onPrimaryContainer,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 24,
                     ),
                   ],
                 ),
               ),
-              // Content
+              // Content mejorado
               Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Producto
+                      // Producto con mejor presentación
                       if (_product != null) ...[
-                        Text(
-                          _product!.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _product!.title,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                       ],
                       // Cantidad
                       TextFormField(
                         controller: _quantityController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Cantidad *',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -363,14 +432,31 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
                       // Precio unitario
                       TextFormField(
                         controller: _unitPriceController,
                         decoration: InputDecoration(
                           labelText: 'Precio Unitario *',
-                          border: const OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
                           suffixText: _product?.currency ?? 'USD',
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -388,11 +474,30 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                       // Método de delivery
                       DropdownButtonFormField<String>(
                         value: _deliveryMethod,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Método de Entrega *',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
                           hintText: 'Seleccionar...',
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                         ),
+                        borderRadius: BorderRadius.circular(12),
+                        dropdownColor: theme.colorScheme.surface,
                         items: const [
                           DropdownMenuItem(
                             value: null,
@@ -434,16 +539,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                       // Campos dinámicos según método de delivery
                       ..._buildDeliveryFields(theme),
                       const SizedBox(height: 16),
-                      // Fecha esperada
-                      ListTile(
-                        title: const Text('Fecha esperada (opcional)'),
-                        subtitle: Text(
-                          _expectedPickupDate != null
-                              ? DateFormat('dd/MM/yyyy')
-                                  .format(_expectedPickupDate!)
-                              : 'No seleccionada',
-                        ),
-                        trailing: const Icon(Icons.calendar_today),
+                      // Fecha esperada mejorada
+                      InkWell(
                         onTap: () async {
                           final date = await showDatePicker(
                             context: context,
@@ -458,15 +555,85 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                             });
                           }
                         },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Fecha esperada (opcional)',
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _expectedPickupDate != null
+                                          ? DateFormat('dd/MM/yyyy')
+                                              .format(_expectedPickupDate!)
+                                          : 'No seleccionada',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: _expectedPickupDate != null
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: _expectedPickupDate != null
+                                            ? theme.colorScheme.onSurface
+                                            : theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      // Notas
+                      const SizedBox(height: 18),
+                      // Notas mejoradas
                       TextFormField(
                         controller: _notesController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Notas adicionales (opcional)',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
                           hintText: 'Información adicional sobre la compra...',
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                         ),
                         maxLines: 3,
                       ),
@@ -474,48 +641,88 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                   ),
                 ),
               ),
-              // Footer con botones
+              // Footer con botones mejorado
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
                   border: Border(
                     top: BorderSide(
-                        color: theme.colorScheme.outline.withOpacity(0.2)),
+                      color: theme.colorScheme.outline.withOpacity(0.15),
+                      width: 1,
+                    ),
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancelar'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Consumer<OrderProvider>(
-                        builder: (context, orderProvider, child) {
-                          return ElevatedButton(
-                            onPressed:
-                                orderProvider.isCreating ? null : _handleConfirm,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(
+                              color: theme.colorScheme.outline.withOpacity(0.5),
                             ),
-                            child: orderProvider.isCreating
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Comprar'),
-                          );
-                        },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancelar',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: Consumer<OrderProvider>(
+                          builder: (context, orderProvider, child) {
+                            return ElevatedButton(
+                              onPressed:
+                                  orderProvider.isCreating ? null : _handleConfirm,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: orderProvider.isCreating
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          theme.colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Comprar',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -536,11 +743,30 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           // Pickup location
           DropdownButtonFormField<String>(
             value: _pickupLocation,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Lugar de Recogida *',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
               hintText: 'Seleccionar...',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
+            borderRadius: BorderRadius.circular(12),
+            dropdownColor: theme.colorScheme.surface,
             items: const [
               DropdownMenuItem(
                 value: null,
@@ -724,10 +950,27 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _pickupAddressController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Dirección de recogida *',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
                 hintText: 'Dirección completa donde se recogerá',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
               ),
               maxLines: 2,
               validator: _pickupLocation == 'other'
@@ -746,10 +989,27 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
         return [
           TextFormField(
             controller: _deliveryAddressController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Dirección de entrega *',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
               hintText: 'Dirección donde el vendedor entregará',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
             maxLines: 2,
             validator: (value) {
@@ -764,8 +1024,25 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             controller: _deliveryCostController,
             decoration: InputDecoration(
               labelText: 'Costo de entrega (opcional)',
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
               suffixText: _product?.currency ?? 'USD',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
             keyboardType: TextInputType.number,
           ),
@@ -775,9 +1052,26 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
         return [
           TextFormField(
             controller: _deliveryAddressController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Dirección de entrega *',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
             maxLines: 2,
             validator: (value) {
@@ -790,10 +1084,27 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _deliveryProviderController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Proveedor de delivery *',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
               hintText: 'Ej: MRW, Domesa, etc.',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -805,9 +1116,26 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _deliveryTrackingController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Número de tracking (opcional)',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
           ),
           const SizedBox(height: 16),
@@ -815,8 +1143,25 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
             controller: _deliveryCostController,
             decoration: InputDecoration(
               labelText: 'Costo de delivery (opcional)',
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
               suffixText: _product?.currency ?? 'USD',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
             ),
             keyboardType: TextInputType.number,
           ),
