@@ -14,6 +14,7 @@ class Product {
   final double? weightMax;
   final String? sex; // 'male', 'female', 'mixed'
   final String? purpose; // 'breeding', 'meat', 'dairy', 'mixed'
+  final String? feedingType; // ✅ NUEVO: 'pastura_natural', 'pasto_corte', 'concentrado', 'mixto', 'otro'
   final String? healthCertificateUrl;
   final String? vaccinesApplied;
   final bool? documentationIncluded;
@@ -48,6 +49,7 @@ class Product {
     this.weightMax,
     this.sex,
     this.purpose,
+    this.feedingType, // ✅ NUEVO
     this.healthCertificateUrl,
     this.vaccinesApplied,
     this.documentationIncluded,
@@ -82,6 +84,7 @@ class Product {
       weightMax: _parseDouble(json['weight_max']),
       sex: json['sex'],
       purpose: json['purpose'],
+      feedingType: json['feeding_type'], // ✅ NUEVO
       healthCertificateUrl: json['health_certificate_url'],
       vaccinesApplied: json['vaccines_applied'],
       documentationIncluded: _parseBool(json['documentation_included']),

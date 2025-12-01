@@ -18,7 +18,7 @@ class ChatProvider extends ChangeNotifier {
   // ============================================
 
   /// Referencia al ProfileProvider para obtener el profileId actual
-  ProfileProvider? _profileProvider;
+  final ProfileProvider? _profileProvider;
 
   /// Lista de conversaciones del usuario
   List<Conversation> _conversations = [];
@@ -52,9 +52,6 @@ class ChatProvider extends ChangeNotifier {
 
   /// Servicio de Polling (fallback si Pusher falla)
   final PollingService _pollingService = PollingService();
-
-  /// ID de conversación actualmente abierta (para marcar como leído automático)
-  int? _activeConversationId;
 
   /// Indicador de servicio activo
   bool _isUsingPusher = false;
@@ -428,23 +425,8 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  /// INCREMENTAR contador de no leídos
-  void _incrementUnreadCount(int convId) {
-    final index = _conversations.indexWhere((c) => c.id == convId);
-
-    if (index != -1) {
-      final currentUnread = _conversations[index].unreadCount;
-      _conversations[index] =
-          _conversations[index].copyWith(unreadCount: currentUnread + 1);
-
-      _unreadCount++;
-    }
-  }
-
   /// ESTABLECER conversación activa (para marcar como leído automático)
   void setActiveConversation(int? conversationId) {
-    _activeConversationId = conversationId;
-
     if (conversationId != null) {
       print('👁️ Conversación activa: $conversationId');
       markAsRead(conversationId);
@@ -477,8 +459,6 @@ class ChatProvider extends ChangeNotifier {
 
   /// SUSCRIBIRSE con HTTP Polling a una conversación
   Future<void> subscribeToConversation(int conversationId) async {
-    _activeConversationId = conversationId;
-
     if (_isUsingPusher) {
       print('📡 ChatProvider: Suscribiendo a Pusher para conv $conversationId');
 
@@ -540,7 +520,6 @@ class ChatProvider extends ChangeNotifier {
     }
 
     _pollingService.stopPolling();
-    _activeConversationId = null;
   }
 
   /// Manejar mensaje recibido via Pusher
@@ -592,10 +571,7 @@ class ChatProvider extends ChangeNotifier {
             m.id.toString().startsWith('temp-'))
         .toList();
 
-    // 2. Crear mapa de mensajes del servidor por ID
-    final serverMessagesMap = {for (var msg in messages) msg.id: msg};
-
-    // 3. Actualizar o agregar mensajes del servidor
+    // 2. Actualizar o agregar mensajes del servidor
     final updatedMessages = <Message>[];
 
     // Agregar todos los mensajes del servidor
@@ -674,7 +650,6 @@ class ChatProvider extends ChangeNotifier {
     _messagesByConv.clear();
     _unreadCount = 0;
     _typingUsers.clear();
-    _activeConversationId = null;
     _errorMessage = null;
     notifyListeners();
   }

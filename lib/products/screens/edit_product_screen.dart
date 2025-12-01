@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/product_provider.dart';
+import '../services/product_service.dart'; // ✅ NUEVO: para obtener tasa BCV
 
 class EditProductScreen extends StatefulWidget {
   final Product product;
@@ -25,17 +26,71 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late TextEditingController _quantityController;
   late TextEditingController _ageController;
   late TextEditingController _weightAvgController;
+  late TextEditingController _otherBreedController; // ✅ NUEVO: controlador para raza "Otra"
 
-  late String _selectedType;
   late String _selectedBreed;
   late String _selectedCurrency;
   late String _selectedSex;
   late String _selectedPurpose;
+  late String? _selectedFeedingType; // ✅ NUEVO: tipo de alimento
   late String _selectedDeliveryMethod;
   late String _selectedStatus;
   late bool _isVaccinated;
-  late bool _negotiable;
   late bool _documentationIncluded;
+  
+  // ✅ NUEVO: Tasa de cambio USD a Bs
+  double _exchangeRate = 36.5; // Valor por defecto
+  bool _isLoadingExchangeRate = false;
+  
+  // Lista completa de razas según backend
+  static const List<String> _breedOptions = [
+    'Brahman',
+    'Holstein',
+    'Guzerat',
+    'Gyr',
+    'Nelore',
+    'Jersey',
+    'Angus',
+    'Simmental',
+    'Pardo Suizo',
+    'Charolais',
+    'Limousin',
+    'Santa Gertrudis',
+    'Brangus',
+    'Girolando',
+    'Carora',
+    'Criollo Limonero',
+    'Mosaico Perijanero',
+    'Indubrasil',
+    'Sardo Negro',
+    'Senepol',
+    'Romosinuano',
+    'Sahiwal',
+    'Búfalo Murrah',
+    'Búfalo Jafarabadi',
+    'Búfalo Mediterráneo',
+    'Búfalo Carabao',
+    'Búfalo Nili-Ravi',
+    'Búfalo Surti',
+    'Búfalo Pandharpuri',
+    'Búfalo Nagpuri',
+    'Búfalo Mehsana',
+    'Búfalo Bhadawari',
+    'Búfalo Toda',
+    'Búfalo Kundi',
+    'Búfalo Nili',
+    'Búfalo Ravi',
+    'Otra',
+  ];
+  
+  // Lista de opciones de tipo de alimento
+  static const List<Map<String, String>> _feedingTypeOptions = [
+    {'value': 'pastura_natural', 'label': 'Pastura natural'},
+    {'value': 'pasto_corte', 'label': 'Pasto de corte'},
+    {'value': 'concentrado', 'label': 'Concentrado'},
+    {'value': 'mixto', 'label': 'Mixto (pasto + suplemento)'},
+    {'value': 'otro', 'label': 'Otro (especificar en descripción)'},
+  ];
 
   bool _isSubmitting = false;
 
@@ -54,28 +109,77 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _ageController = TextEditingController(text: widget.product.age.toString());
     _weightAvgController =
         TextEditingController(text: widget.product.weightAvg?.toString() ?? '');
+    
+    // ✅ Inicializar controlador de raza "Otra"
+    final breed = widget.product.breed;
+    _otherBreedController = TextEditingController(
+      text: _breedOptions.contains(breed) ? '' : breed,
+    );
 
-    _selectedType = widget.product.type;
-    _selectedBreed = widget.product.breed;
+    _selectedBreed = _breedOptions.contains(breed) ? breed : 'Otra';
     _selectedCurrency = widget.product.currency;
     _selectedSex = widget.product.sex ?? 'mixed';
     _selectedPurpose = widget.product.purpose ?? 'mixed';
+    _selectedFeedingType = widget.product.feedingType; // ✅ NUEVO: tipo de alimento
     _selectedDeliveryMethod = widget.product.deliveryMethod;
     _selectedStatus = widget.product.status;
     _isVaccinated = widget.product.isVaccinated ?? false;
-    _negotiable = widget.product.negotiable;
     _documentationIncluded = widget.product.documentationIncluded ?? false;
+    
+    // ✅ Cargar tasa de cambio
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExchangeRate();
+    });
+    
+    // ✅ Escuchar cambios en precio para actualizar conversión
+    _priceController.addListener(_updatePriceConversion);
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _priceController.removeListener(_updatePriceConversion); // ✅ NUEVO
     _priceController.dispose();
     _quantityController.dispose();
     _ageController.dispose();
     _weightAvgController.dispose();
+    _otherBreedController.dispose(); // ✅ NUEVO
     super.dispose();
+  }
+  
+  // ✅ NUEVO: Cargar tasa de cambio del BCV
+  Future<void> _loadExchangeRate() async {
+    setState(() {
+      _isLoadingExchangeRate = true;
+    });
+    try {
+      final rate = await ProductService.getExchangeRate();
+      if (mounted) {
+        setState(() {
+          _exchangeRate = rate;
+          _isLoadingExchangeRate = false;
+        });
+        _updatePriceConversion();
+      }
+    } catch (e) {
+      print('⚠️ Error cargando tasa BCV: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingExchangeRate = false;
+        });
+      }
+    }
+  }
+  
+  // ✅ NUEVO: Actualizar conversión USD a Bs cuando cambia el precio
+  void _updatePriceConversion() {
+    if (_selectedCurrency == 'USD' && _priceController.text.isNotEmpty) {
+      final price = double.tryParse(_priceController.text);
+      if (price != null && mounted) {
+        setState(() {}); // Forzar rebuild para mostrar conversión
+      }
+    }
   }
 
   Future<void> _handleSubmit() async {
@@ -96,12 +200,50 @@ class _EditProductScreenState extends State<EditProductScreen> {
     final weightMax =
         weightAvg != null ? (weightAvg * 1.15) : null; // promedio + 15%
 
+    // ✅ Determinar raza final (si es "Otra", usar el texto del autocompletado)
+    final finalBreed = _selectedBreed == 'Otra' 
+        ? _otherBreedController.text.trim()
+        : _selectedBreed;
+    
+    if (finalBreed.isEmpty && _selectedBreed == 'Otra') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Por favor ingresa el nombre de la raza'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+    
+    // ✅ Validar propósito y tipo de alimento
+    if (_selectedPurpose.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Por favor selecciona el propósito'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+    
+    if (_selectedFeedingType == null || _selectedFeedingType!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Por favor selecciona el tipo de alimento'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+
     final success = await provider.updateProduct(
       productId: widget.product.id,
       title: _titleController.text,
       description: _descriptionController.text,
-      type: _selectedType,
-      breed: _selectedBreed,
+      breed: finalBreed, // ✅ Raza final (puede ser del dropdown o texto personalizado)
       age: int.tryParse(_ageController.text),
       quantity: int.tryParse(_quantityController.text),
       price: double.tryParse(_priceController.text),
@@ -111,9 +253,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
       weightMax: weightMax,
       sex: _selectedSex,
       purpose: _selectedPurpose,
+      feedingType: _selectedFeedingType, // ✅ NUEVO: tipo de alimento
       isVaccinated: _isVaccinated,
       deliveryMethod: _selectedDeliveryMethod,
-      negotiable: _negotiable,
+      // ✅ Eliminado: negotiable (se guarda como false por defecto)
       documentationIncluded: _documentationIncluded,
       status: _selectedStatus,
     );
@@ -166,22 +309,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
     return null;
   }
 
-  String? _validateBreed(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'La raza es obligatoria';
-    }
-    if (value.trim().length < 2) {
-      return 'Mínimo 2 caracteres';
-    }
-    if (value.trim().length > 50) {
-      return 'Máximo 50 caracteres';
-    }
-    // Validar que solo contenga letras y espacios
-    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
-      return 'Solo se permiten letras';
-    }
-    return null;
-  }
 
   String? _validateAge(String? value) {
     if (value != null && value.trim().isNotEmpty) {
@@ -345,69 +472,96 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Tipo
+            // ✅ Raza (con autocompletado si selecciona "Otra")
             DropdownButtonFormField<String>(
-              value: _selectedType,
-              decoration: const InputDecoration(
-                labelText: 'Tipo *',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'lechero', child: Text('Lechero')),
-                DropdownMenuItem(value: 'engorde', child: Text('Engorde')),
-                DropdownMenuItem(value: 'padrote', child: Text('Padrote')),
-                DropdownMenuItem(value: 'equipment', child: Text('Equipo')),
-                DropdownMenuItem(value: 'feed', child: Text('Alimento')),
-                DropdownMenuItem(value: 'other', child: Text('Otro')),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedType = value);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Raza
-            TextFormField(
-              initialValue: _selectedBreed,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(
-                    RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
-                LengthLimitingTextInputFormatter(50),
-              ],
-              onChanged: (value) {
-                _selectedBreed = value;
-                _validateForm();
-              },
+              value: _selectedBreed,
+              isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Raza *',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: theme.colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: theme.colorScheme.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: theme.colorScheme.error, width: 2),
-                ),
                 filled: true,
                 fillColor: theme.colorScheme.surface,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                helperText: 'Solo letras, máximo 50 caracteres',
               ),
-              validator: _validateBreed,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
+              items: _breedOptions.map((breed) {
+                return DropdownMenuItem<String>(
+                  value: breed,
+                  child: Text(breed),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedBreed = value;
+                    if (value != 'Otra') {
+                      _otherBreedController.clear();
+                    }
+                  });
+                }
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'La raza es obligatoria';
+                }
+                return null;
+              },
             ),
+            // ✅ Campo de texto para raza "Otra" con autocompletado
+            if (_selectedBreed == 'Otra') ...[
+              const SizedBox(height: 16),
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  if (textEditingValue.text.isEmpty) {
+                    return const Iterable<String>.empty();
+                  }
+                  return _breedOptions.where((breed) {
+                    return breed.toLowerCase().contains(
+                          textEditingValue.text.toLowerCase(),
+                        ) &&
+                        breed != 'Otra';
+                  });
+                },
+                fieldViewBuilder: (
+                  BuildContext context,
+                  TextEditingController textEditingController,
+                  FocusNode focusNode,
+                  VoidCallback onFieldSubmitted,
+                ) {
+                  // Sincronizar con nuestro controlador
+                  if (textEditingController.text != _otherBreedController.text) {
+                    _otherBreedController.text = textEditingController.text;
+                  }
+                  return TextFormField(
+                    controller: textEditingController,
+                    focusNode: focusNode,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre de la raza *',
+                      hintText: 'Escribe el nombre de la raza',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                    validator: (value) {
+                      if (_selectedBreed == 'Otra' &&
+                          (value == null || value.trim().isEmpty)) {
+                        return 'Ingresa el nombre de la raza';
+                      }
+                      return null;
+                    },
+                  );
+                },
+                onSelected: (String selection) {
+                  _otherBreedController.text = selection;
+                },
+              ),
+            ],
             const SizedBox(height: 16),
 
             // Edad y Cantidad
@@ -500,70 +654,77 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Precio y Moneda
-            Row(
+            // ✅ Precio con conversión USD a Bs
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _priceController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    onChanged: (_) {
-                      _validateForm();
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Precio *',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: theme.colorScheme.outline),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.primary, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: theme.colorScheme.error, width: 2),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      helperText: 'Solo números',
+                TextFormField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                  ],
+                  onChanged: (_) {
+                    _validateForm();
+                    _updatePriceConversion();
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Precio (USD) *',
+                    prefixText: '\$ ',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    validator: _validatePrice,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedCurrency,
-                    decoration: const InputDecoration(
-                      labelText: 'Moneda',
-                      border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          BorderSide(color: theme.colorScheme.outline),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'USD', child: Text('USD')),
-                      DropdownMenuItem(value: 'VES', child: Text('VES')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedCurrency = value);
-                      }
-                    },
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: theme.colorScheme.primary, width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: theme.colorScheme.error, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: theme.colorScheme.surface,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                   ),
+                  validator: _validatePrice,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
+                // ✅ Mostrar conversión a Bs cuando hay precio en USD
+                if (_selectedCurrency == 'USD' &&
+                    _priceController.text.isNotEmpty &&
+                    !_isLoadingExchangeRate)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 16),
+                    child: Text(
+                      '≈ ${(_exchangeRate * (double.tryParse(_priceController.text) ?? 0)).toStringAsFixed(2)} Bs',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                if (_isLoadingExchangeRate)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 16),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -631,23 +792,57 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Propósito
+            // ✅ Propósito (obligatorio)
             DropdownButtonFormField<String>(
               value: _selectedPurpose,
               decoration: const InputDecoration(
-                labelText: 'Propósito',
+                labelText: 'Propósito *',
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(value: 'breeding', child: Text('Cría')),
+                DropdownMenuItem(value: 'breeding', child: Text('Reproducción')),
                 DropdownMenuItem(value: 'meat', child: Text('Carne')),
-                DropdownMenuItem(value: 'dairy', child: Text('Leche')),
+                DropdownMenuItem(value: 'dairy', child: Text('Lechería')),
                 DropdownMenuItem(value: 'mixed', child: Text('Mixto')),
               ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() => _selectedPurpose = value);
                 }
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'El propósito es obligatorio';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // ✅ Tipo de alimento (obligatorio)
+            DropdownButtonFormField<String>(
+              value: _selectedFeedingType,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Tipo de alimento *',
+                border: OutlineInputBorder(),
+              ),
+              items: _feedingTypeOptions.map((option) {
+                return DropdownMenuItem<String>(
+                  value: option['value'],
+                  child: Text(option['label']!),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedFeedingType = value);
+                }
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'El tipo de alimento es obligatorio';
+                }
+                return null;
               },
             ),
             const SizedBox(height: 16),
@@ -695,16 +890,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Switches
+            // ✅ Switches (eliminado "Precio Negociable")
             SwitchListTile(
               title: const Text('Vacunado'),
               value: _isVaccinated,
               onChanged: (value) => setState(() => _isVaccinated = value),
-            ),
-            SwitchListTile(
-              title: const Text('Precio Negociable'),
-              value: _negotiable,
-              onChanged: (value) => setState(() => _negotiable = value),
             ),
             SwitchListTile(
               title: const Text('Incluye Documentación'),

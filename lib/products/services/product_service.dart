@@ -103,6 +103,33 @@ class ProductService {
     }
   }
 
+  // GET /api/exchange-rate - Obtener tasa de cambio USD a Bs del BCV
+  static Future<double> getExchangeRate() async {
+    if (_isTestMode) {
+      return 36.5; // Tasa mock para tests
+    }
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/api/exchange-rate'),
+            headers: await _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 5)); // Reducido a 5 segundos
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return (data['rate'] as num).toDouble();
+      } else {
+        // Error silencioso: usar tasa por defecto
+        return 36.5;
+      }
+    } catch (e) {
+      // Error silencioso: usar tasa por defecto sin loguear
+      // El timeout es esperado en algunos casos (red lenta)
+      return 36.5;
+    }
+  }
+
   // GET /api/products/{id} - Obtener detalle de un producto
   static Future<Map<String, dynamic>> getProductDetail(int productId) async {
     if (_isTestMode) {
@@ -134,7 +161,6 @@ class ProductService {
     int? stateId, // ✅ NUEVO: ID del estado del ranch
     required String title,
     required String description,
-    required String type,
     required String breed,
     required int age,
     required int quantity,
@@ -145,16 +171,15 @@ class ProductService {
     double? weightMax,
     String? sex,
     String? purpose,
+    String? feedingType, // ✅ NUEVO: tipo de alimento
     String? healthCertificateUrl,
     String? vaccinesApplied,
     bool? documentationIncluded,
     String? geneticTestResults,
     bool? isVaccinated,
-    bool? isFeatured, // ✅ NUEVO: destacado
     required String deliveryMethod,
     double? deliveryCost,
     double? deliveryRadiusKm,
-    required bool negotiable,
     String? status,
   }) async {
     if (_isTestMode) {
@@ -168,7 +193,7 @@ class ProductService {
         'state_id': stateId, // ✅ NUEVO: estado del ranch
         'title': title,
         'description': description,
-        'type': type, // Backend espera: engorde, lechero, padrote
+        // 'type' eliminado - ahora se usa solo 'purpose'
         'breed': breed,
         'age': age, // ✅ Backend espera "age" (no "age_months")
         'quantity': quantity,
@@ -179,17 +204,17 @@ class ProductService {
         'weight_max': weightMax,
         'sex': sex,
         'purpose': purpose,
+        'feeding_type': feedingType, // ✅ NUEVO: tipo de alimento
         'health_certificate_url': healthCertificateUrl,
         'vaccines_applied': vaccinesApplied,
         'documentation_included': documentationIncluded,
         'genetic_test_results': geneticTestResults,
         'is_vaccinated':
             isVaccinated ?? false, // ✅ Default false si no se especifica
-        'is_featured': isFeatured ?? false, // ✅ NUEVO: destacado
+        // ✅ Eliminados: is_featured y negotiable (se guardan como false por defecto en backend)
         'delivery_method': deliveryMethod,
         'delivery_cost': deliveryCost,
         'delivery_radius_km': deliveryRadiusKm,
-        'negotiable': negotiable,
         'status': status ?? 'active',
       };
 
@@ -234,7 +259,6 @@ class ProductService {
     int? ranchId,
     String? title,
     String? description,
-    String? type,
     String? breed,
     int? age,
     int? quantity,
@@ -245,6 +269,7 @@ class ProductService {
     double? weightMax,
     String? sex,
     String? purpose,
+    String? feedingType, // ✅ NUEVO: tipo de alimento
     String? healthCertificateUrl,
     String? vaccinesApplied,
     bool? documentationIncluded,
@@ -253,7 +278,6 @@ class ProductService {
     String? deliveryMethod,
     double? deliveryCost,
     double? deliveryRadiusKm,
-    bool? negotiable,
     String? status,
   }) async {
     if (_isTestMode) {
@@ -266,7 +290,7 @@ class ProductService {
       if (ranchId != null) body['ranch_id'] = ranchId;
       if (title != null) body['title'] = title;
       if (description != null) body['description'] = description;
-      if (type != null) body['type'] = type;
+      // 'type' eliminado - ahora se usa solo 'purpose'
       if (breed != null) body['breed'] = breed;
       if (age != null) body['age'] = age;
       if (quantity != null) body['quantity'] = quantity;
@@ -277,6 +301,7 @@ class ProductService {
       if (weightMax != null) body['weight_max'] = weightMax;
       if (sex != null) body['sex'] = sex;
       if (purpose != null) body['purpose'] = purpose;
+      if (feedingType != null) body['feeding_type'] = feedingType; // ✅ NUEVO
       if (healthCertificateUrl != null)
         body['health_certificate_url'] = healthCertificateUrl;
       if (vaccinesApplied != null) body['vaccines_applied'] = vaccinesApplied;
@@ -289,7 +314,7 @@ class ProductService {
       if (deliveryCost != null) body['delivery_cost'] = deliveryCost;
       if (deliveryRadiusKm != null)
         body['delivery_radius_km'] = deliveryRadiusKm;
-      if (negotiable != null) body['negotiable'] = negotiable;
+      // 'negotiable' eliminado - se guarda como false por defecto
       if (status != null) body['status'] = status;
 
       final response = await http

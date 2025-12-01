@@ -350,7 +350,6 @@ class ProductProvider with ChangeNotifier {
     int? stateId, // ✅ NUEVO: ID del estado del ranch
     required String title,
     required String description,
-    required String type,
     required String breed,
     required int age,
     required int quantity,
@@ -361,16 +360,15 @@ class ProductProvider with ChangeNotifier {
     double? weightMax, // ✅ Corregido de maxWeight a weightMax
     String? sex,
     String? purpose,
+    String? feedingType, // ✅ NUEVO: tipo de alimento obligatorio
     String? healthCertificateUrl,
     String? vaccinesApplied,
     bool? documentationIncluded,
     String? geneticTestResults,
     bool? isVaccinated,
-    bool? isFeatured, // ✅ NUEVO: destacado
     required String deliveryMethod,
     double? deliveryCost,
     double? deliveryRadiusKm,
-    required bool negotiable,
     String? status,
     List<String>? imagePaths,
   }) async {
@@ -388,7 +386,6 @@ class ProductProvider with ChangeNotifier {
         stateId: stateId, // ✅ NUEVO: pasar stateId
         title: title,
         description: description,
-        type: type,
         breed: breed,
         age: age,
         quantity: quantity,
@@ -399,16 +396,15 @@ class ProductProvider with ChangeNotifier {
         weightMax: weightMax, // ✅ Corregido
         sex: sex,
         purpose: purpose,
+        feedingType: feedingType, // ✅ NUEVO: tipo de alimento
         healthCertificateUrl: healthCertificateUrl,
         vaccinesApplied: vaccinesApplied,
         documentationIncluded: documentationIncluded,
         geneticTestResults: geneticTestResults,
         isVaccinated: isVaccinated,
-        isFeatured: isFeatured, // ✅ NUEVO
         deliveryMethod: deliveryMethod,
         deliveryCost: deliveryCost,
         deliveryRadiusKm: deliveryRadiusKm,
-        negotiable: negotiable,
         status: status,
       );
 
@@ -479,7 +475,6 @@ class ProductProvider with ChangeNotifier {
     int? ranchId,
     String? title,
     String? description,
-    String? type,
     String? breed,
     int? age,
     int? quantity,
@@ -490,6 +485,7 @@ class ProductProvider with ChangeNotifier {
     double? weightMax,
     String? sex,
     String? purpose,
+    String? feedingType, // ✅ NUEVO: tipo de alimento
     String? healthCertificateUrl,
     String? vaccinesApplied,
     bool? documentationIncluded,
@@ -498,7 +494,6 @@ class ProductProvider with ChangeNotifier {
     String? deliveryMethod,
     double? deliveryCost,
     double? deliveryRadiusKm,
-    bool? negotiable,
     String? status,
   }) async {
     try {
@@ -514,7 +509,6 @@ class ProductProvider with ChangeNotifier {
         ranchId: ranchId,
         title: title,
         description: description,
-        type: type,
         breed: breed,
         age: age,
         quantity: quantity,
@@ -525,6 +519,7 @@ class ProductProvider with ChangeNotifier {
         weightMax: weightMax,
         sex: sex,
         purpose: purpose,
+        feedingType: feedingType, // ✅ NUEVO: tipo de alimento
         healthCertificateUrl: healthCertificateUrl,
         vaccinesApplied: vaccinesApplied,
         documentationIncluded: documentationIncluded,
@@ -533,7 +528,6 @@ class ProductProvider with ChangeNotifier {
         deliveryMethod: deliveryMethod,
         deliveryCost: deliveryCost,
         deliveryRadiusKm: deliveryRadiusKm,
-        negotiable: negotiable,
         status: status,
       );
 
