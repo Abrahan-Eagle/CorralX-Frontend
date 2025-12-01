@@ -82,6 +82,24 @@ Archivo: `env_config.json`
 }
 ```
 
+### Testing multi-dispositivo (chat y push)
+
+- Permite probar el chat en tiempo real y las notificaciones push entre dos usuarios usando **dos dispositivos Android** en la misma red.
+- Ejemplo de dispositivos usados en las pruebas:
+  - Dispositivo 1: `192.168.27.8:5555`
+  - Dispositivo 2: `192.168.27.5:5555`
+- Casos de prueba recomendados:
+  - Chat 1:1 (envío/recepción de mensajes, typing indicators, feedback optimista).
+  - Notificaciones push con la app en foreground, background y cerrada.
+
+### Firebase / FCM en frontend
+
+- El frontend usa Firebase Cloud Messaging con `google-services.json` alineado al proyecto configurado en el backend para evitar errores de *SenderId mismatch*.
+- Recomendaciones:
+  - Mantener `google-services.json` actualizado y fuera de control de versiones público.
+  - Tras cambiar credenciales/proyecto en backend, recompilar la app y forzar re-login para regenerar el token FCM.
+  - Probar notificaciones enviando mensajes reales desde el chat y verificando la navegación correcta al tocar la notificación.
+
 ---
 
 ## 🏗️ Arquitectura Modular
