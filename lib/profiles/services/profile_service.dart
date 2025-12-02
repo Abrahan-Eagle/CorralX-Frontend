@@ -343,6 +343,40 @@ class ProfileService {
     }
   }
 
+  /// GET /api/me/completeness - Verificar completitud del perfil y hacienda para publicar
+  static Future<Map<String, dynamic>> checkCompleteness() async {
+    try {
+      print('🌐 ProfileService.checkCompleteness iniciado');
+
+      final headers = await _getHeaders();
+      final uri = Uri.parse('$_baseUrl/api/me/completeness');
+
+      print('🌐 URL: $uri');
+
+      final response = await http.get(uri, headers: headers);
+
+      print('🌐 Status code: ${response.statusCode}');
+      print('🌐 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else if (response.statusCode == 401) {
+        throw Exception('No autorizado. Por favor inicia sesión nuevamente.');
+      } else if (response.statusCode == 404) {
+        throw Exception('Perfil no encontrado.');
+      } else {
+        throw Exception('Error al verificar completitud: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error en checkCompleteness: $e');
+      rethrow;
+    }
+  }
+
   /// GET /api/profiles/{profileId}/ranches - Obtener ranches de un perfil específico
   static Future<List<Ranch>> getRanchesByProfile(int profileId) async {
     try {

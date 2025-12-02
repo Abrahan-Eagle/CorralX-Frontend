@@ -359,6 +359,7 @@ import 'package:corralx/favorites/screens/favorites_screen.dart';
 import 'package:corralx/products/screens/create_screen.dart';
 import 'package:corralx/chat/screens/messages_screen.dart';
 import 'package:corralx/profiles/screens/profile_screen.dart';
+import 'package:corralx/profiles/services/profile_service.dart';
 import 'package:corralx/core/deep_link_service.dart';
 import 'package:corralx/products/screens/product_detail_screen.dart';
 import 'package:corralx/admin/screens/advertisements_list_screen.dart';
@@ -872,7 +873,7 @@ class MainRouterState extends State<MainRouter> {
   }
 
   // Función para manejar el tap en el BottomNavigationBar
-  void _onBottomNavTapped(int index, int itemCount) {
+  void _onBottomNavTapped(int index, int itemCount) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     logger.i('Bottom navigation tapped: $index, Total items: $itemCount');
 
@@ -885,6 +886,119 @@ class MainRouterState extends State<MainRouter> {
           builder: (context) => const ProfileScreen(),
         ),
       );
+    } 
+    // ✅ Validar completitud antes de navegar a "Publicar" (índice 2)
+    else if (index == 2) {
+      try {
+        // Validar completitud del perfil y hacienda
+        final result = await ProfileService.checkCompleteness();
+        final data = result['data'] as Map<String, dynamic>;
+        final canPublish = data['can_publish'] as bool? ?? false;
+
+        if (!canPublish) {
+          // Mostrar diálogo de advertencia
+          final missingProfileFields = data['missing_profile_fields'] as List<dynamic>? ?? [];
+          final missingRanchFields = data['missing_ranch_fields'] as List<dynamic>? ?? [];
+          final profileComplete = data['profile_complete'] as bool? ?? false;
+          final ranchComplete = data['ranch_complete'] as bool? ?? false;
+
+          if (!mounted) return;
+
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Perfil Incompleto'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!profileComplete) ...[
+                      const Text(
+                        'Debes completar tu perfil antes de publicar productos.',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      if (missingProfileFields.isNotEmpty)
+                        Text(
+                          'Campos faltantes: ${missingProfileFields.join(", ")}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (!ranchComplete) ...[
+                      const Text(
+                        'Debes completar los datos de tu hacienda principal antes de publicar productos.',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      if (missingRanchFields.isNotEmpty)
+                        Text(
+                          'Campos faltantes: ${missingRanchFields.join(", ")}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      // Redirigir según lo que falte
+                      if (!profileComplete) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
+                          ),
+                        );
+                      } else if (!ranchComplete) {
+                        // Navegar a ProfileScreen donde puede crear/editar haciendas
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
+                          ),
+                        );
+                      }
+                    },
+                    child: Text(!profileComplete ? 'Ir a Mi Perfil' : 'Ir a Mis Haciendas'),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          // Si está completo, navegar normalmente a CreateScreen
+          setState(() {
+            _bottomNavIndex = index;
+            logger.i('Bottom nav index changed to: $_bottomNavIndex');
+            _saveLastPosition();
+          });
+        }
+      } catch (e) {
+        // Si hay error al validar, mostrar mensaje pero permitir navegar
+        logger.e('Error validando completitud: $e');
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al validar perfil: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        
+        // Permitir navegar de todas formas (fallback)
+        setState(() {
+          _bottomNavIndex = index;
+          logger.i('Bottom nav index changed to: $_bottomNavIndex');
+          _saveLastPosition();
+        });
+      }
     } else {
       setState(() {
         _bottomNavIndex = index; // Actualiza el índice seleccionado

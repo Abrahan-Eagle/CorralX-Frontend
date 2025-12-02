@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import '../models/ranch.dart';
 import '../providers/profile_provider.dart';
 import '../services/ranch_service.dart';
+import '../services/profile_service.dart';
 import '../../shared/services/location_service.dart';
 import '../../profiles/services/address_service.dart';
 
@@ -80,6 +81,13 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
   late bool _isPrimary;
   bool _isSubmitting = false;
 
+  // Estado de completitud
+  bool _isCheckingCompleteness = false;
+  bool _profileComplete = true;
+  bool _ranchComplete = true;
+  List<String> _missingProfileFields = [];
+  List<String> _missingRanchFields = [];
+
   // Clase helper local para documentos pendientes
 
   @override
@@ -133,6 +141,41 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
 
     // Capturar GPS automáticamente (silencioso)
     _captureGPSAutomatically();
+
+    // Verificar completitud al cargar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkCompleteness();
+    });
+  }
+
+  /// Verificar completitud del perfil y hacienda
+  Future<void> _checkCompleteness() async {
+    setState(() {
+      _isCheckingCompleteness = true;
+    });
+
+    try {
+      final result = await ProfileService.checkCompleteness();
+      if (result['success'] == true && result['data'] != null) {
+        final data = result['data'] as Map<String, dynamic>;
+        setState(() {
+          _profileComplete = data['profile_complete'] ?? true;
+          _ranchComplete = data['ranch_complete'] ?? true;
+          _missingProfileFields = List<String>.from(
+            data['missing_profile_fields'] ?? [],
+          );
+          _missingRanchFields = List<String>.from(
+            data['missing_ranch_fields'] ?? [],
+          );
+          _isCheckingCompleteness = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error al verificar completitud: $e');
+      setState(() {
+        _isCheckingCompleteness = false;
+      });
+    }
   }
 
   /// Captura GPS automáticamente en segundo plano
@@ -454,6 +497,9 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
         await context
             .read<ProfileProvider>()
             .fetchMyRanches(forceRefresh: true);
+
+        // Verificar completitud después de guardar
+        await _checkCompleteness();
 
         if (mounted) {
           // Volver a la vista anterior (lista de haciendas en Mi Perfil)
@@ -1795,6 +1841,151 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
     );
   }
 
+  /// Widget de banner de completitud
+  Widget _buildCompletenessBanner(ThemeData theme) {
+    if (_isCheckingCompleteness) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Verificando completitud...',
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_profileComplete && _ranchComplete) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '✅ Tu perfil y hacienda están completos. Puedes publicar productos.',
+                style: TextStyle(
+                  color: Colors.green.shade700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Hay campos faltantes
+    final allMissingFields = <String>[];
+    if (!_profileComplete) {
+      allMissingFields.addAll(_missingProfileFields.map((field) {
+        final fieldNames = {
+          'firstName': 'Primer Nombre',
+          'middleName': 'Segundo Nombre',
+          'lastName': 'Primer Apellido',
+          'secondLastName': 'Segundo Apellido',
+          'date_of_birth': 'Fecha de Nacimiento',
+          'ci_number': 'Cédula de Identidad',
+          'sex': 'Sexo',
+          'user_type': 'Tipo de Usuario',
+          'photo_users': 'Foto de Perfil',
+        };
+        return fieldNames[field] ?? field;
+      }));
+    }
+    if (!_ranchComplete) {
+      allMissingFields.addAll(_missingRanchFields.map((field) {
+        final fieldNames = {
+          'name': 'Nombre de la Hacienda',
+          'address': 'Dirección',
+          'address.city': 'Ciudad de la Dirección',
+          'address.adressses': 'Dirección Detallada',
+          'ranch': 'Hacienda Principal',
+        };
+        return fieldNames[field] ?? field;
+      }));
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '⚠️ Para publicar productos, completa los siguientes campos:',
+                  style: TextStyle(
+                    color: Colors.orange.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (allMissingFields.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...allMissingFields.map((field) => Padding(
+                  padding: const EdgeInsets.only(left: 32, top: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.circle, size: 6, color: Colors.orange.shade700),
+                      const SizedBox(width: 8),
+                      Text(
+                        field,
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1810,6 +2001,9 @@ class _EditRanchScreenState extends State<EditRanchScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Banner de completitud
+            _buildCompletenessBanner(theme),
+            
             // Nombre de la hacienda
             TextFormField(
               controller: _nameController,

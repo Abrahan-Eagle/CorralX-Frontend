@@ -198,7 +198,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     super.initState();
     // Cargar el producto y el perfil del comprador después del primer frame para evitar setState durante build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadProduct();
+    _loadProduct();
       _loadBuyerProfile();
     });
   }
@@ -290,9 +290,9 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
       if (mounted) {
         final loadedProduct = productProvider.selectedProduct;
         if (loadedProduct != null) {
-          setState(() {
+      setState(() {
             _product = loadedProduct;
-            _unitPriceController.text = _product!.price.toStringAsFixed(2);
+        _unitPriceController.text = _product!.price.toStringAsFixed(2);
             // Si ya está seleccionado "En la finca", prellenar la dirección
             if (_pickupLocation == 'ranch') {
               final ranchAddress = _getRanchFullAddress();
@@ -462,7 +462,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
     final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth >= 600;
     final viewPadding = MediaQuery.of(context).viewPadding;
-
+    
     // Calcular ancho y alto responsive
     double dialogWidth;
     if (isTablet) {
@@ -538,7 +538,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                     IconButton(
                       icon: Icon(
                         Icons.close_rounded,
-                        color: theme.colorScheme.onPrimaryContainer,
+                      color: theme.colorScheme.onPrimaryContainer,
                       ),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
@@ -576,9 +576,9 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  _product!.title,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                          _product!.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
                                 ),
@@ -682,8 +682,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                             borderSide: BorderSide(
                               color: theme.colorScheme.primary,
                               width: 2,
-                            ),
-                          ),
+                        ),
+                      ),
                           hintText: 'Seleccionar...',
                           filled: true,
                           fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
@@ -706,7 +706,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                           DropdownMenuItem(
                             value: 'external_delivery',
                             child: Text('Delivery externo'),
-                          ),
+                      ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -858,12 +858,12 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                 ),
                 child: SafeArea(
                   top: false,
-                  child: Row(
+                child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                  children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(
@@ -881,13 +881,13 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                             ),
                           ),
                         ),
-                      ),
+                    ),
                       const SizedBox(width: 12),
                       Expanded(
                         flex: 2,
                         child: Consumer<OrderProvider>(
-                          builder: (context, orderProvider, child) {
-                            return ElevatedButton(
+                      builder: (context, orderProvider, child) {
+                        return ElevatedButton(
                               onPressed:
                                   orderProvider.isCreating ? null : _handleConfirm,
                               style: ElevatedButton.styleFrom(
@@ -899,17 +899,17 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: orderProvider.isCreating
+                          child: orderProvider.isCreating
                                   ? SizedBox(
-                                      width: 20,
-                                      height: 20,
+                                  width: 20,
+                                  height: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
                                         valueColor: AlwaysStoppedAnimation<Color>(
                                           theme.colorScheme.onPrimary,
                                         ),
                                       ),
-                                    )
+                                )
                                   : const Text(
                                       'Comprar',
                                       style: TextStyle(
@@ -917,11 +917,11 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                                         fontSize: 16,
                                       ),
                                     ),
-                            );
-                          },
+                        );
+                      },
                         ),
-                      ),
-                    ],
+                    ),
+                  ],
                   ),
                 ),
               ),
@@ -964,7 +964,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
               hintText: 'Seleccionar...',
               filled: true,
               fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-            ),
+          ),
             borderRadius: BorderRadius.circular(12),
             dropdownColor: theme.colorScheme.surface,
             items: const [
@@ -973,11 +973,11 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                 child: Text('Seleccionar...'),
               ),
               DropdownMenuItem(
-                value: 'ranch',
+            value: 'ranch',
                 child: Text('En la finca'),
-              ),
+          ),
               DropdownMenuItem(
-                value: 'other',
+            value: 'other',
                 child: Text('Otro lugar'),
               ),
             ],
@@ -1072,7 +1072,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+            const SizedBox(height: 8),
                       Text(
                         ranchAddress,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -1607,10 +1607,10 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           // Campo de dirección manual y GPS cuando se selecciona "Otro lugar"
           if (_deliveryLocation == 'other') ...[
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _deliveryAddressController,
+          TextFormField(
+            controller: _deliveryAddressController,
               decoration: InputDecoration(
-                labelText: 'Dirección de entrega *',
+              labelText: 'Dirección de entrega *',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1728,18 +1728,18 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                   },
                   tooltip: 'Usar GPS para obtener ubicación',
                 ),
-              ),
-              maxLines: 2,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ingresa la dirección de entrega';
-                }
-                return null;
-              },
             ),
+            maxLines: 2,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Ingresa la dirección de entrega';
+              }
+              return null;
+            },
+          ),
             // Mostrar mapa si hay coordenadas GPS seleccionadas
             if (_selectedDeliveryCoordinates != null) ...[
-              const SizedBox(height: 16),
+          const SizedBox(height: 16),
               Row(
                 children: [
                   Icon(
@@ -1837,7 +1837,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                                 Icons.location_on,
                                 color: theme.colorScheme.primary,
                                 size: 30,
-                              ),
+          ),
                             ),
                           ),
                         ),
@@ -1984,7 +1984,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
           ),
           // Mostrar mapa si hay coordenadas seleccionadas
           if (_selectedDeliveryCoordinates != null) ...[
-            const SizedBox(height: 16),
+          const SizedBox(height: 16),
             Row(
               children: [
                 Icon(
@@ -2045,8 +2045,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                               '${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}';
                         });
                       }
-                    },
-                  ),
+            },
+          ),
                   children: [
                     TileLayer(
                       urlTemplate:
@@ -2084,8 +2084,8 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
                                 color: theme.colorScheme.primary,
                                 size: 30,
                               ),
-                            ),
-                          ),
+            ),
+          ),
                         ),
                       ],
                     ),
@@ -2101,7 +2101,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
               labelText: 'Proveedor de delivery *',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-              ),
+            ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
@@ -2133,7 +2133,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
               labelText: 'Número de tracking (opcional)',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-              ),
+          ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
