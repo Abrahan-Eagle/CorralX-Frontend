@@ -103,30 +103,65 @@ class ProductService {
     }
   }
 
-  // GET /api/exchange-rate - Obtener tasa de cambio USD a Bs del BCV
-  static Future<double> getExchangeRate() async {
+  // GET /api/exchange-rate - Obtener tasa de cambio USD a Bs del BCV automáticamente
+  // Retorna null si no se puede obtener (NO HAY VALORES HARDCODEADOS)
+  static Future<double?> getExchangeRate() async {
     if (_isTestMode) {
-      return 36.5; // Tasa mock para tests
+      // Solo en tests usar un valor mock
+      return 247.40;
     }
     try {
+      // Intentar obtener el valor real del backend (que obtiene automáticamente del BCV)
       final response = await http
           .get(
             Uri.parse('$_baseUrl/api/exchange-rate'),
             headers: await _getHeaders(),
           )
-          .timeout(const Duration(seconds: 5)); // Reducido a 5 segundos
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return (data['rate'] as num).toDouble();
+        
+        // Verificar si hay error en la respuesta
+        if (data.containsKey('error')) {
+          if (kDebugMode) {
+            print('⚠️ Backend reporta error: ${data['error']}');
+          }
+          return null; // No hay tasa disponible
+        }
+        
+        final rate = (data['rate'] as num).toDouble();
+        
+        // Validar que el valor sea razonable (entre 1 y 1,000,000)
+        if (rate > 0 && rate < 1000000) {
+          return rate;
+        } else {
+          // Valor inválido del backend
+          if (kDebugMode) {
+            print('⚠️ Tasa BCV inválida recibida del backend: $rate');
+          }
+          return null; // No usar valores inválidos
+        }
+      } else if (response.statusCode == 503) {
+        // Service Unavailable - El backend no pudo obtener la tasa del BCV
+        if (kDebugMode) {
+          print('⚠️ Backend no pudo obtener tasa BCV (503)');
+        }
+        return null; // No hay tasa disponible
       } else {
-        // Error silencioso: usar tasa por defecto
-        return 36.5;
+        // Error del servidor
+        if (kDebugMode) {
+          print('⚠️ Error del servidor al obtener tasa BCV: ${response.statusCode}');
+        }
+        return null; // No usar valores hardcodeados
       }
     } catch (e) {
-      // Error silencioso: usar tasa por defecto sin loguear
-      // El timeout es esperado en algunos casos (red lenta)
-      return 36.5;
+      // Error de conexión o timeout
+      if (kDebugMode) {
+        print('⚠️ Error de conexión al obtener tasa BCV: $e');
+      }
+      // NO RETORNAR VALOR HARDCODEADO - Retornar null para indicar que no hay tasa disponible
+      return null;
     }
   }
 

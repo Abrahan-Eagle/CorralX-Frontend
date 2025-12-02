@@ -39,7 +39,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late bool _documentationIncluded;
   
   // ✅ NUEVO: Tasa de cambio USD a Bs
-  double _exchangeRate = 36.5; // Valor por defecto
+  double? _exchangeRate; // Se carga automáticamente desde el backend (BCV) - SIN VALORES HARDCODEADOS
   bool _isLoadingExchangeRate = false;
   
   // Lista completa de razas según backend
@@ -148,7 +148,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.dispose();
   }
   
-  // ✅ NUEVO: Cargar tasa de cambio del BCV
+  // ✅ NUEVO: Cargar tasa de cambio del BCV automáticamente (SIN VALORES HARDCODEADOS)
   Future<void> _loadExchangeRate() async {
     setState(() {
       _isLoadingExchangeRate = true;
@@ -157,15 +157,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
       final rate = await ProductService.getExchangeRate();
       if (mounted) {
         setState(() {
-          _exchangeRate = rate;
+          _exchangeRate = rate; // Puede ser null si no se pudo obtener del BCV
           _isLoadingExchangeRate = false;
         });
-        _updatePriceConversion();
+        if (rate != null) {
+          _updatePriceConversion(); // Actualizar conversión solo si hay tasa válida
+        }
       }
     } catch (e) {
-      print('⚠️ Error cargando tasa BCV: $e');
       if (mounted) {
         setState(() {
+          _exchangeRate = null; // No hay tasa disponible
           _isLoadingExchangeRate = false;
         });
       }
@@ -697,14 +699,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   validator: _validatePrice,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
-                // ✅ Mostrar conversión a Bs cuando hay precio en USD
+                // ✅ Mostrar conversión a Bs cuando hay precio en USD y tasa válida del BCV
                 if (_selectedCurrency == 'USD' &&
                     _priceController.text.isNotEmpty &&
-                    !_isLoadingExchangeRate)
+                    !_isLoadingExchangeRate &&
+                    _exchangeRate != null &&
+                    _exchangeRate! > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 8, left: 16),
                     child: Text(
-                      '≈ ${(_exchangeRate * (double.tryParse(_priceController.text) ?? 0)).toStringAsFixed(2)} Bs',
+                      '≈ ${(_exchangeRate! * (double.tryParse(_priceController.text) ?? 0)).toStringAsFixed(2)} Bs',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 12,
@@ -722,6 +726,21 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(
                           theme.colorScheme.primary,
                         ),
+                      ),
+                    ),
+                  ),
+                // ✅ Mostrar mensaje si no se pudo obtener la tasa del BCV
+                if (!_isLoadingExchangeRate &&
+                    _selectedCurrency == 'USD' &&
+                    _priceController.text.isNotEmpty &&
+                    _exchangeRate == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 16),
+                    child: Text(
+                      'No se pudo obtener la tasa de cambio del BCV',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                        fontSize: 11,
                       ),
                     ),
                   ),
