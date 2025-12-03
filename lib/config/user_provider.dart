@@ -179,6 +179,13 @@ class UserProvider with ChangeNotifier {
         _userGoogleId = userDetails['google_id'] ?? '';
         _userId = userDetails['id'] ?? 0;
         _role = userDetails['role'] ?? '';
+        
+        // Actualizar email si viene en la respuesta
+        if (userDetails['email'] != null) {
+          _userEmail = userDetails['email'] ?? '';
+          await AuthUtils.saveUserEmail(_userEmail);
+          logger.i('✅ Email actualizado desde backend: $_userEmail');
+        }
 
         logger.i('User details: $userDetails');
         logger.i('User role: $_role');
@@ -227,6 +234,24 @@ class UserProvider with ChangeNotifier {
     _userName = name;
     _userEmail = email;
     _userPhotoUrl = photoUrl;
+  }
+
+  /// Recargar el email del backend (útil después de actualizar el perfil)
+  Future<void> refreshUserEmail() async {
+    try {
+      logger.i('🔄 Refrescando email del usuario desde backend...');
+      await getUserDetails();
+      
+      // El email ya se actualizó en getUserDetails() si venía en la respuesta
+      // Pero también actualizamos desde storage por si acaso
+      await _loadUserData();
+      
+      logger.i('✅ Email refrescado: $_userEmail');
+      notifyListeners();
+    } catch (e) {
+      logger.w('⚠️ Error al refrescar email: $e');
+      // No lanzar error, solo loguear
+    }
   }
 
   Future<void> logout() async {

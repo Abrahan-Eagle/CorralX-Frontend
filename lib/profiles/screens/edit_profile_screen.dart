@@ -319,6 +319,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       maritalStatus: _selectedMaritalStatus,
       sex: _selectedSex,
       ciNumber: _ciNumberController.text.trim(),
+      context: context, // Pasar contexto para refrescar email
     );
 
     if (mounted) {

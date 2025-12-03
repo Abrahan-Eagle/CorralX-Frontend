@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:corralx/profiles/models/profile.dart';
 import 'package:corralx/profiles/models/ranch.dart' as ProfileModels;
 import 'package:corralx/profiles/services/profile_service.dart';
 import 'package:corralx/products/models/product.dart';
+import 'package:corralx/config/user_provider.dart';
 
 /// Provider para gestionar el estado de perfiles
 class ProfileProvider extends ChangeNotifier {
@@ -116,6 +118,7 @@ class ProfileProvider extends ChangeNotifier {
     bool? acceptsWhatsapp,
     bool? acceptsEmails,
     String? whatsappNumber,
+    BuildContext? context, // Contexto opcional para refrescar email
   }) async {
     print('🔍 ProfileProvider.updateProfile iniciado');
     _isUpdating = true;
@@ -146,6 +149,21 @@ class ProfileProvider extends ChangeNotifier {
         _updateError = null;
         _validationErrors = null;
         print('✅ ProfileProvider: Perfil actualizado exitosamente');
+        
+        // Recargar el email en UserProvider para que se actualice en tiempo real
+        // Esto es necesario porque el email puede cambiar en el backend
+        if (context != null) {
+          try {
+            // Obtener UserProvider antes del await para evitar usar context después de async gap
+            final userProvider = Provider.of<UserProvider>(context, listen: false);
+            await userProvider.refreshUserEmail();
+            print('✅ Email refrescado en UserProvider');
+          } catch (e) {
+            print('⚠️ Error al refrescar email: $e');
+            // No bloquear si falla
+          }
+        }
+        
         notifyListeners();
         return true;
       } else {
