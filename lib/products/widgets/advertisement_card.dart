@@ -98,7 +98,7 @@ class SponsoredProductCard extends StatelessWidget {
         // Si no tenemos el producto aún (no debería pasar con la nueva lógica),
         // mostrar un placeholder mientras se carga
         return Card(
-          margin: const EdgeInsets.all(8.0),
+          margin: const EdgeInsets.only(bottom: 16.0),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -138,7 +138,7 @@ class ExternalAdCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.all(8.0),
+      margin: const EdgeInsets.only(bottom: 16.0),
       elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
