@@ -307,13 +307,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     // Luego, actualizar el perfil
     final success = await profileProvider.updateProfile(
       firstName: _firstNameController.text.trim(),
-      middleName: _middleNameController.text.trim().isNotEmpty
-          ? _middleNameController.text.trim()
-          : null,
+      middleName:
+          _middleNameController.text.trim(), // ✅ Obligatorio - siempre se envía
       lastName: _lastNameController.text.trim(),
-      secondLastName: _secondLastNameController.text.trim().isNotEmpty
-          ? _secondLastNameController.text.trim()
-          : null,
+      secondLastName: _secondLastNameController.text
+          .trim(), // ✅ Obligatorio - siempre se envía
       bio: _bioController.text.trim().isNotEmpty
           ? _bioController.text.trim()
           : null,
@@ -327,7 +325,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (success) {
         // Verificar completitud después de guardar
         await _checkCompleteness();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Perfil actualizado exitosamente'),
@@ -474,7 +472,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   padding: EdgeInsets.only(left: 32, top: 4),
                   child: Row(
                     children: [
-                      Icon(Icons.circle, size: 6, color: Colors.orange.shade700),
+                      Icon(Icons.circle,
+                          size: 6, color: Colors.orange.shade700),
                       SizedBox(width: 8),
                       Text(
                         field,
@@ -530,7 +529,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   // Banner de completitud
                   _buildCompletenessBanner(theme, isTablet),
-                  
+
                   // Foto de perfil
                   Center(
                     child: Stack(
