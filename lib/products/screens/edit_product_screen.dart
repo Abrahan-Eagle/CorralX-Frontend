@@ -109,7 +109,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _ageController = TextEditingController(text: widget.product.age.toString());
     _weightAvgController =
         TextEditingController(text: widget.product.weightAvg?.toString() ?? '');
-    
+
     // ✅ Inicializar controlador de raza "Otra"
     final breed = widget.product.breed;
     _otherBreedController = TextEditingController(
@@ -513,7 +513,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             // ✅ Campo de texto para raza "Otra" con autocompletado
             if (_selectedBreed == 'Otra') ...[
-              const SizedBox(height: 16),
+            const SizedBox(height: 16),
               Autocomplete<String>(
                 optionsBuilder: (TextEditingValue textEditingValue) {
                   if (textEditingValue.text.isEmpty) {
@@ -539,17 +539,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   return TextFormField(
                     controller: textEditingController,
                     focusNode: focusNode,
-                    decoration: InputDecoration(
+              decoration: InputDecoration(
                       labelText: 'Nombre de la raza *',
                       hintText: 'Escribe el nombre de la raza',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
                     validator: (value) {
                       if (_selectedBreed == 'Otra' &&
                           (value == null || value.trim().isEmpty)) {
@@ -562,7 +562,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 onSelected: (String selection) {
                   _otherBreedController.text = selection;
                 },
-              ),
+            ),
             ],
             const SizedBox(height: 16),
 
@@ -661,44 +661,44 @@ class _EditProductScreenState extends State<EditProductScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextFormField(
-                  controller: _priceController,
+                    controller: _priceController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
+                    inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                  onChanged: (_) {
-                    _validateForm();
+                    ],
+                    onChanged: (_) {
+                      _validateForm();
                     _updatePriceConversion();
-                  },
-                  decoration: InputDecoration(
+                    },
+                    decoration: InputDecoration(
                     labelText: 'Precio (USD) *',
                     prefixText: '\$ ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: theme.colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.error, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          BorderSide(color: theme.colorScheme.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: theme.colorScheme.primary, width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: theme.colorScheme.error, width: 2),
-                    ),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
+                    validator: _validatePrice,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
-                  validator: _validatePrice,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                ),
                 // ✅ Mostrar conversión a Bs cuando hay precio en USD y tasa válida del BCV
                 if (_selectedCurrency == 'USD' &&
                     _priceController.text.isNotEmpty &&
@@ -726,7 +726,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(
                           theme.colorScheme.primary,
                         ),
-                      ),
+                    ),
                     ),
                   ),
                 // ✅ Mostrar mensaje si no se pudo obtener la tasa del BCV
@@ -742,8 +742,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         color: theme.colorScheme.error,
                         fontSize: 11,
                       ),
-                    ),
                   ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -820,9 +820,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
               ),
               items: const [
                 DropdownMenuItem(value: 'breeding', child: Text('Reproducción')),
-                DropdownMenuItem(value: 'meat', child: Text('Carne')),
-                DropdownMenuItem(value: 'dairy', child: Text('Lechería')),
                 DropdownMenuItem(value: 'mixed', child: Text('Mixto')),
+                DropdownMenuItem(value: 'meat', child: Text('Engorde')),
+                DropdownMenuItem(value: 'dairy', child: Text('Lechera')),
               ],
               onChanged: (value) {
                 if (value != null) {

@@ -47,7 +47,8 @@ class _CreateScreenState extends State<CreateScreen> {
 
   // ✅ NUEVO: Tasa de cambio USD a Bs (se carga automáticamente del BCV vía backend)
   // null = no disponible, > 0 = tasa válida obtenida del BCV
-  double? _exchangeRate; // Se carga automáticamente desde el backend (BCV) - SIN VALORES HARDCODEADOS
+  double?
+      _exchangeRate; // Se carga automáticamente desde el backend (BCV) - SIN VALORES HARDCODEADOS
   bool _isLoadingExchangeRate = false;
 
   // Lista completa de razas según backend (ProductController línea 268-269)
@@ -578,7 +579,7 @@ class _CreateScreenState extends State<CreateScreen> {
                 // Header eliminado completamente - Diseño minimalista sin títulos
                 // Photos section
                 _buildSection(
-                  title: 'S (hasta 5)',
+                  title: 'Fotos (hasta 5)',
                   subtitle: 'La primera foto será la imagen de portada.',
                   child: Column(
                     children: [
@@ -1027,7 +1028,6 @@ class _CreateScreenState extends State<CreateScreen> {
                                       color: theme.colorScheme.error, width: 2),
                                 ),
                                 labelText: 'Edad (meses) *',
-                                helperText: 'Ejemplo: 24 meses = 2 años',
                                 contentPadding: EdgeInsets.symmetric(
                                   horizontal: isTablet ? 16 : 12,
                                   vertical: isTablet ? 12 : 8,
@@ -1152,11 +1152,11 @@ class _CreateScreenState extends State<CreateScreen> {
                                     value: 'breeding',
                                     child: Text('Reproducción')),
                                 DropdownMenuItem(
-                                    value: 'meat', child: Text('Carne')),
-                                DropdownMenuItem(
-                                    value: 'dairy', child: Text('Lechería')),
-                                DropdownMenuItem(
                                     value: 'mixed', child: Text('Mixto')),
+                                DropdownMenuItem(
+                                    value: 'meat', child: Text('Engorde')),
+                                DropdownMenuItem(
+                                    value: 'dairy', child: Text('Lechera')),
                               ],
                               onChanged: (value) {
                                 setState(() {
@@ -1441,71 +1441,37 @@ class _CreateScreenState extends State<CreateScreen> {
                 SafeArea(
                   child: Padding(
                     padding: EdgeInsets.only(bottom: isTablet ? 20 : 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isSubmitting
-                                ? null
-                                : () => Navigator.of(context).pop(),
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: isTablet ? 16 : 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(isTablet ? 12 : 10),
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _handleSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        padding:
+                            EdgeInsets.symmetric(vertical: isTablet ? 16 : 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(isTablet ? 12 : 10),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? SizedBox(
+                              height: isTablet ? 20 : 18,
+                              width: isTablet ? 20 : 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.onPrimary,
+                                ),
                               ),
-                              side: BorderSide(
-                                color: theme.colorScheme.outline,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              'Cancelar',
+                            )
+                          : Text(
+                              'Publicar',
                               style: TextStyle(
                                 fontSize: isTablet ? 16 : 14,
-                                fontWeight: FontWeight.w500,
-                                color: theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ),
-                        SizedBox(width: isTablet ? 16 : 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _handleSubmit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              padding: EdgeInsets.symmetric(
-                                  vertical: isTablet ? 16 : 14),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(isTablet ? 12 : 10),
-                              ),
-                            ),
-                            child: _isSubmitting
-                                ? SizedBox(
-                                    height: isTablet ? 20 : 18,
-                                    width: isTablet ? 20 : 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        theme.colorScheme.onPrimary,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'Publicar',
-                                    style: TextStyle(
-                                      fontSize: isTablet ? 16 : 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
