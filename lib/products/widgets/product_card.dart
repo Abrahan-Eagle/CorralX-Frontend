@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/product.dart';
 import 'package:corralx/shared/utils/image_utils.dart';
@@ -108,8 +109,8 @@ class ProductCard extends StatelessWidget {
                   // Detalles adicionales
                   Row(
                     children: [
-                      Icon(
-                        Icons.pets,
+                      FaIcon(
+                        FontAwesomeIcons.cow,
                         size: 16,
                         color: Colors.grey[600],
                       ),
@@ -266,22 +267,32 @@ class ProductCard extends StatelessWidget {
             ),
             color: Colors.grey[200],
           ),
-          child: primaryImage != null &&
-                  !isBlockedImageHost(primaryImage.fileUrl)
-              ? ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  child: CachedNetworkImage(
-                    imageUrl: primaryImage.fileUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
+          child:
+              primaryImage != null && !isBlockedImageHost(primaryImage.fileUrl)
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
                       ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
+                      child: CachedNetworkImage(
+                        imageUrl: primaryImage.fileUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.pets,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
                       color: Colors.grey[200],
                       child: const Icon(
                         Icons.pets,
@@ -289,16 +300,6 @@ class ProductCard extends StatelessWidget {
                         color: Colors.grey,
                       ),
                     ),
-                  ),
-                )
-              : Container(
-                  color: Colors.grey[200],
-                  child: const Icon(
-                    Icons.pets,
-                    size: 50,
-                    color: Colors.grey,
-                  ),
-                ),
         ),
 
         // Badge de estado
