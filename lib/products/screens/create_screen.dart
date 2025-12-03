@@ -785,45 +785,45 @@ class _CreateScreenState extends State<CreateScreen> {
                       SizedBox(height: isTablet ? 20 : 16),
                       // ✅ Raza (con autocompletado si selecciona "Otra")
                       DropdownButtonFormField<String>(
-                              value: _selectedBreed,
+                        value: _selectedBreed,
                         isExpanded: true,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: theme.colorScheme.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isTablet ? 12 : 8),
-                                ),
-                                labelText: 'Raza *',
-                                contentPadding: EdgeInsets.symmetric(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(isTablet ? 12 : 8),
+                          ),
+                          labelText: 'Raza *',
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: isTablet ? 16 : 12,
                             vertical: isTablet ? 12 : 8,
-                                ),
-                              ),
-                              items: _breedOptions.map((breed) {
-                                return DropdownMenuItem<String>(
-                                  value: breed,
-                                  child: Text(
-                                    breed,
+                          ),
+                        ),
+                        items: _breedOptions.map((breed) {
+                          return DropdownMenuItem<String>(
+                            value: breed,
+                            child: Text(
+                              breed,
                               overflow: TextOverflow.ellipsis,
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedBreed = value!;
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBreed = value!;
                             if (value != 'Otra') {
                               _otherBreedController.clear();
                             }
-                                });
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'La raza es obligatoria';
-                                }
-                                return null;
-                              },
-                            ),
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'La raza es obligatoria';
+                          }
+                          return null;
+                        },
+                      ),
                       // ✅ Campo de texto para raza "Otra" con autocompletado
                       if (_selectedBreed == 'Otra') ...[
                         SizedBox(height: isTablet ? 16 : 12),
@@ -887,46 +887,46 @@ class _CreateScreenState extends State<CreateScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _priceController,
-                              keyboardType: TextInputType.numberWithOptions(
-                                  decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'^\d+\.?\d{0,2}')),
-                              ],
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: theme.colorScheme.surface,
-                                border: OutlineInputBorder(
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  controller: _priceController,
+                                  keyboardType: TextInputType.numberWithOptions(
+                                      decimal: true),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'^\d+\.?\d{0,2}')),
+                                  ],
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: theme.colorScheme.surface,
+                                    border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
                                           isTablet ? 12 : 8),
-                                ),
+                                    ),
                                     labelText: 'Precio (USD) *',
-                                prefixText: '\$ ',
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 16 : 12,
-                                  vertical: isTablet ? 12 : 8,
+                                    prefixText: '\$ ',
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: isTablet ? 16 : 12,
+                                      vertical: isTablet ? 12 : 8,
+                                    ),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'El precio es obligatorio';
+                                    }
+                                    final price = double.tryParse(value.trim());
+                                    if (price == null || price <= 0) {
+                                      return 'Ingrese un precio válido';
+                                    }
+                                    return null;
+                                  },
+                                  autovalidateMode:
+                                      AutovalidateMode.onUserInteraction,
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'El precio es obligatorio';
-                                }
-                                final price = double.tryParse(value.trim());
-                                if (price == null || price <= 0) {
-                                  return 'Ingrese un precio válido';
-                                }
-                                return null;
-                              },
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
-                            ),
-                          ),
                             ],
                           ),
                           // ✅ Mostrar conversión a Bs cuando hay precio en USD y tasa válida del BCV
@@ -946,14 +946,14 @@ class _CreateScreenState extends State<CreateScreen> {
                                   color: theme.colorScheme.onSurfaceVariant,
                                   fontSize: isTablet ? 13 : 11,
                                 ),
-                                ),
+                              ),
                             ),
                           if (_isLoadingExchangeRate)
                             Padding(
                               padding: EdgeInsets.only(
                                 top: isTablet ? 8 : 6,
                                 left: isTablet ? 16 : 12,
-                                ),
+                              ),
                               child: SizedBox(
                                 width: 16,
                                 height: 16,
@@ -981,8 +981,8 @@ class _CreateScreenState extends State<CreateScreen> {
                                   color: theme.colorScheme.error,
                                   fontSize: isTablet ? 12 : 10,
                                 ),
+                              ),
                             ),
-                          ),
                         ],
                       ),
                       SizedBox(height: isTablet ? 20 : 16),
@@ -1441,37 +1441,42 @@ class _CreateScreenState extends State<CreateScreen> {
                 SafeArea(
                   child: Padding(
                     padding: EdgeInsets.only(bottom: isTablet ? 20 : 16),
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _handleSubmit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                        padding:
-                            EdgeInsets.symmetric(vertical: isTablet ? 16 : 14),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(isTablet ? 12 : 10),
-                              ),
-                            ),
-                            child: _isSubmitting
-                                ? SizedBox(
-                                    height: isTablet ? 20 : 18,
-                                    width: isTablet ? 20 : 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        theme.colorScheme.onPrimary,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'Publicar',
-                                    style: TextStyle(
-                                      fontSize: isTablet ? 16 : 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _handleSubmit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: EdgeInsets.symmetric(
+                            vertical: isTablet ? 18 : 16,
+                            horizontal: isTablet ? 32 : 24,
+                          ),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(isTablet ? 12 : 10),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? SizedBox(
+                                height: isTablet ? 24 : 20,
+                                width: isTablet ? 24 : 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    theme.colorScheme.onPrimary,
                                   ),
+                                ),
+                              )
+                            : Text(
+                                'Publicar',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 18 : 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
                     ),
                   ),
                 ),
