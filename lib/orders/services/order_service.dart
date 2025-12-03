@@ -294,7 +294,7 @@ class OrderService {
 
       // Log del body que se está enviando
       debugPrint('🔍 OrderService.createOrder - Body enviado: ${json.encode(body)}');
-      
+
       final response = await http
           .post(
             Uri.parse('$_baseUrl/api/orders'),
