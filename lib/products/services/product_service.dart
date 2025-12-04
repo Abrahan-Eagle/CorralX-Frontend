@@ -277,7 +277,24 @@ class ProductService {
       } else if (response.statusCode == 422) {
         // Errores de validación
         final errors = json.decode(response.body);
-        throw Exception('Errores de validación: ${errors['errors']}');
+        
+        // Manejar específicamente errores de KYC
+        if (errors['error'] == 'kyc_incomplete' || 
+            (errors['errors'] != null && errors['errors'].toString().contains('KYC'))) {
+          final kycStatus = errors['kyc_status'] ?? 'no_verified';
+          String message = 'Debes completar la verificación de identidad (KYC) antes de publicar productos.';
+          
+          if (kycStatus == 'pending') {
+            message = 'Tu verificación KYC está en revisión. Por favor espera a que se complete antes de publicar productos.';
+          } else if (kycStatus == 'rejected') {
+            final reason = errors['rejection_reason'] ?? '';
+            message = 'Tu verificación KYC fue rechazada. ${reason.isNotEmpty ? "Razón: $reason" : ""} Por favor, completa nuevamente el proceso de verificación.';
+          }
+          
+          throw Exception(message);
+        }
+        
+        throw Exception('Errores de validación: ${errors['errors'] ?? errors['message'] ?? 'Datos inválidos'}');
       } else if (response.statusCode == 401) {
         throw Exception('No autorizado. Inicia sesión nuevamente.');
       } else {

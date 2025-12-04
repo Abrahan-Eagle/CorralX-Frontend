@@ -15,6 +15,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:corralx/shared/screens/terms_and_conditions_screen.dart';
 import 'package:corralx/orders/screens/my_orders_screen.dart';
+import 'package:corralx/kyc/providers/kyc_provider.dart';
+import 'package:corralx/onboarding/screens/kyc_onboarding_intro_page.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -716,6 +718,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
 
                     SizedBox(height: isTablet ? 8 : 6),
+
+                    // Widget de estado KYC
+                    Consumer<UserProvider>(
+                      builder: (context, userProvider, child) {
+                        final kycStatus = userProvider.userKycStatus.isNotEmpty
+                            ? userProvider.userKycStatus
+                            : 'no_verified';
+                        return _buildKycStatusCard(
+                          context,
+                          kycStatus: kycStatus,
+                          isTablet: isTablet,
+                          theme: theme,
+                        );
+                      },
+                    ),
+
+                    SizedBox(height: isTablet ? 24 : 20),
 
                     // Botones de acción - Estilo minimalista
                     SizedBox(
@@ -2083,6 +2102,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildKycStatusCard(
+    BuildContext context, {
+    required String kycStatus,
+    required bool isTablet,
+    required ThemeData theme,
+  }) {
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+    String? actionText;
+    VoidCallback? onAction;
+
+    switch (kycStatus) {
+      case 'verified':
+        statusText = 'Identidad verificada';
+        statusColor = Colors.green;
+        statusIcon = Icons.verified_user;
+        break;
+      case 'pending':
+        statusText = 'Verificación en revisión';
+        statusColor = Colors.orange;
+        statusIcon = Icons.pending;
+        break;
+      case 'rejected':
+        statusText = 'Verificación rechazada';
+        statusColor = theme.colorScheme.error;
+        statusIcon = Icons.cancel;
+        actionText = 'Reintentar';
+        onAction = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const KycOnboardingIntroPage(),
+            ),
+          );
+        };
+        break;
+      default:
+        statusText = 'Verificación pendiente';
+        statusColor = theme.colorScheme.onSurfaceVariant;
+        statusIcon = Icons.verified_user_outlined;
+        actionText = 'Verificar';
+        onAction = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const KycOnboardingIntroPage(),
+            ),
+          );
+        };
+    }
+
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: statusColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                statusIcon,
+                color: statusColor,
+                size: isTablet ? 28 : 24,
+              ),
+              SizedBox(width: isTablet ? 12 : 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Estado de Verificación KYC',
+                      style: TextStyle(
+                        fontSize: isTablet ? 12 : 11,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (actionText != null && onAction != null)
+                TextButton(
+                  onPressed: onAction,
+                  style: TextButton.styleFrom(
+                    foregroundColor: statusColor,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 16 : 12,
+                      vertical: isTablet ? 8 : 6,
+                    ),
+                  ),
+                  child: Text(
+                    actionText,
+                    style: TextStyle(
+                      fontSize: isTablet ? 14 : 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (kycStatus == 'rejected')
+            Consumer<KycProvider>(
+              builder: (context, kyc, child) {
+                if (kyc.rejectionReason != null &&
+                    kyc.rejectionReason!.isNotEmpty) {
+                  return Padding(
+                    padding: EdgeInsets.only(top: isTablet ? 12 : 10),
+                    child: Container(
+                      padding: EdgeInsets.all(isTablet ? 12 : 10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: isTablet ? 18 : 16,
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                          SizedBox(width: isTablet ? 8 : 6),
+                          Expanded(
+                            child: Text(
+                              kyc.rejectionReason!,
+                              style: TextStyle(
+                                fontSize: isTablet ? 13 : 12,
+                                color: theme.colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+        ],
+      ),
     );
   }
 }
