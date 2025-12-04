@@ -174,6 +174,7 @@ lib/
 - `OnboardingPage1`: Datos personales
 - `OnboardingPage2`: Datos comerciales
 - `OnboardingPage3`: Configuración de ubicación
+- Páginas KYC integradas al flujo (documentos CI/RIF + selfies con guía visual y liveness)
 
 ### Módulo Perfiles (11/11 funcionalidades ✅)
 - `ProfileScreen`: Ver perfil propio con tabs
@@ -1247,6 +1248,7 @@ lib/chat/widgets/
 - [ ] Optimización de imágenes
 - [ ] Caché inteligente
 - [ ] Lanzar módulo `IA Insights` (panel básico para cuentas free)
+- [ ] Consolidar flujo KYC 100% automático en frontend (sin revisión manual en UI), aprovechando datos OCR de CI/RIF y estados del backend
 
 #### **IA Insights – Plan de Implementación**
 - ✅ **Fase 0 (estrategia)**: segmentación por rol (free/premium/admin), definición de métricas clave, flujo UI con botón adicional en perfil.
@@ -1257,7 +1259,7 @@ lib/chat/widgets/
 
 #### **Mediano Plazo (3-6 meses)**
 - [ ] Pagos integrados (Stripe/PayPal)
-- [ ] Sistema de verificación automático (selfie + CI)
+- [ ] Sistema de verificación automático (selfie + CI) con evaluación de consistencia vía IA (Gemini) expuesta por el backend
 - [ ] Analítica de mercado (precios, tendencias)
 - [ ] Panel de administración web
 

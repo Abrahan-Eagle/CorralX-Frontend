@@ -132,6 +132,17 @@ alwaysApply: true
     - “Tu verificación está en revisión. Te avisaremos cuando se complete.”
     - “Tu verificación fue rechazada. Revisa el motivo y vuelve a intentarlo.”
 
+### Evolución: KYC 100% automático con IA (plan)
+- El objetivo del proyecto es que la verificación KYC sea **totalmente automática**, sin revisión manual en el flujo normal del usuario:
+  - El frontend captura CI, RIF, selfie y selfie con documento.
+  - El backend consolida los datos estructurados (OCR CI/RIF + metadatos + paths de imágenes) y decide `kyc_status`.
+- Desde frontend:
+  - No se implementan pantallas de revisión manual; solo se consumen `kyc_status`, `kyc_rejection_reason` y flags (`has_document`, `has_selfie`, etc.).
+  - Cualquier evaluación “inteligente” (IA) se hace **solo en backend** y se expone como resultado ya procesado.
+- IA y restricciones de servicios:
+  - La única IA externa planificada para KYC es **Gemini**, consumida por el backend (no se añaden servicios pagos extra como Vision/Rekognition).
+  - El frontend nunca envía imágenes crudas a Gemini; solo usa los estados/decisiones que devuelve la API del backend (`kyc_status`, motivos, recomendaciones).
+
 ## Flujo de pedidos y entrega (sin pagos digitales)
 - La app **coordina** la operación pero **NO procesa pagos**. El intercambio económico ocurre cuando comprador y vendedor se encuentran físicamente.
 - Secuencia completa (documentada a detalle en `CICLO_COMPLETO_LOGIC_DETALLADA.md`):

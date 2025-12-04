@@ -6,6 +6,7 @@ import 'dart:io';
 import '../providers/product_provider.dart';
 import '../services/product_service.dart'; // ✅ NUEVO: para obtener tasa BCV
 import '../../profiles/providers/profile_provider.dart';
+import '../../config/user_provider.dart';
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key});
@@ -276,6 +277,28 @@ class _CreateScreenState extends State<CreateScreen> {
   // Método para enviar el formulario
   Future<void> _handleSubmit() async {
     final theme = Theme.of(context);
+
+    // ✅ Validar KYC antes de cualquier otra cosa
+    try {
+      final userProvider = context.read<UserProvider>();
+      final kycStatus = userProvider.userKycStatus;
+
+      if (kycStatus != 'verified') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Debes completar la verificación de identidad (KYC) antes de publicar productos.',
+            ),
+            backgroundColor: theme.colorScheme.error,
+          ),
+        );
+        return;
+      }
+    } catch (e) {
+      // Si por alguna razón no se puede leer el estado KYC, continuamos
+      // y dejamos que el backend haga la validación final.
+      debugPrint('⚠️ No se pudo obtener userKycStatus en frontend: $e');
+    }
 
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
