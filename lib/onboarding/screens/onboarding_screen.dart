@@ -5,6 +5,10 @@ import 'welcome_page.dart';
 import 'onboarding_page1.dart';
 import 'onboarding_page2.dart';
 import 'onboarding_page3.dart';
+import 'kyc_onboarding_intro_page.dart';
+import 'kyc_onboarding_document_page.dart';
+import 'kyc_onboarding_selfie_page.dart';
+import 'kyc_onboarding_selfie_with_doc_page.dart';
 // import 'onboarding_page4.dart';
 // import 'onboarding_page5.dart';
 // import 'onboarding_page6.dart';
@@ -36,6 +40,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       GlobalKey<OnboardingPage1State>();
   final GlobalKey<OnboardingPage2State> _page2Key =
       GlobalKey<OnboardingPage2State>();
+  // Las páginas KYC no necesitan GlobalKey por ahora; solo bloquean avance si falta imagen.
 
   final OnboardingApiService _apiService = OnboardingApiService();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -51,6 +56,12 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
     onboardingPages = [
       const WelcomePage(),
+      // KYC completo primero
+      const KycOnboardingIntroPage(),
+      const KycOnboardingSelfiePage(),
+      const KycOnboardingDocumentPage(), // CI + RIF juntos
+      const KycOnboardingSelfieWithDocPage(),
+      // Formularios pre-llenados con datos extraídos del OCR
       OnboardingPage1(key: _page1Key),
       OnboardingPage2(key: _page2Key),
       const OnboardingPage3(),
@@ -105,21 +116,21 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           await page1State.restoreFromDraft(_personalInfoDraft!);
           debugPrint('✅ ONBOARDING: Datos personales restaurados en formulario');
           
-          // Si también hay datos de hacienda, navegar a página 2
+          // Si también hay datos de hacienda, navegar a página 6
           if (_ranchInfoDraft != null) {
             final page2State = _page2Key.currentState;
             if (page2State != null) {
               await page2State.restoreFromDraft(_ranchInfoDraft!);
               debugPrint('✅ ONBOARDING: Datos de hacienda restaurados en formulario');
-              // Navegar a página 2 si tenemos ambos formularios
-              _navigateToPage(2);
+              // Navegar a página 6 si tenemos ambos formularios
+              _navigateToPage(6);
             } else {
-              // Solo datos personales, navegar a página 1
-              _navigateToPage(1);
+              // Solo datos personales, navegar a página 5
+              _navigateToPage(5);
             }
           } else {
-            // Solo datos personales, navegar a página 1
-            _navigateToPage(1);
+            // Solo datos personales, navegar a página 5
+            _navigateToPage(5);
           }
         }
       }
@@ -243,37 +254,37 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           errorMessage.toLowerCase().contains('cedula') || 
           errorMessage.toLowerCase().contains('ci_number') ||
           errorMessage.toLowerCase().contains('número de cédula')) {
-        // Error de CI -> Navegar a página 1 (datos personales)
-        debugPrint('🔄 ONBOARDING: Error de CI detectado, navegando a página 1');
+        // Error de CI -> Navegar a página 5 (datos personales)
+        debugPrint('🔄 ONBOARDING: Error de CI detectado, navegando a página 5');
         _showSnackBar(cleanErrorMessage);
-        _navigateToPage(1);
+        _navigateToPage(5);
       } else if (errorMessage.toLowerCase().contains('rif') || 
                  errorMessage.toLowerCase().contains('tax_id')) {
-        // Error de RIF -> Navegar a página 2 (datos de hacienda)
-        debugPrint('🔄 ONBOARDING: Error de RIF detectado, navegando a página 2');
+        // Error de RIF -> Navegar a página 6 (datos de hacienda)
+        debugPrint('🔄 ONBOARDING: Error de RIF detectado, navegando a página 6');
         _showSnackBar(cleanErrorMessage);
-        _navigateToPage(2);
+        _navigateToPage(6);
       } else if (errorMessage.toLowerCase().contains('number') && 
                  (errorMessage.toLowerCase().contains('unique') || 
                   errorMessage.toLowerCase().contains('ya ha sido') || 
                   errorMessage.toLowerCase().contains('ya existe'))) {
-        // Error de teléfono -> Navegar a página 1 (datos personales)
-        debugPrint('🔄 ONBOARDING: Error de teléfono detectado, navegando a página 1');
+        // Error de teléfono -> Navegar a página 5 (datos personales)
+        debugPrint('🔄 ONBOARDING: Error de teléfono detectado, navegando a página 5');
         _showSnackBar(cleanErrorMessage);
-        _navigateToPage(1);
+        _navigateToPage(5);
       } else if (errorMessage.toLowerCase().contains('dirección') || 
                  errorMessage.toLowerCase().contains('direccion') ||
                  errorMessage.toLowerCase().contains('address')) {
-        // Error de dirección -> Navegar a página 1 (datos personales) para corregir
+        // Error de dirección -> Navegar a página 5 (datos personales) para corregir
         // Pero si es "ya tiene una dirección", solo mostrar mensaje y continuar (ya se maneja arriba)
         if (errorMessage.contains('ya tiene') || errorMessage.contains('ya existe')) {
           debugPrint('ℹ️ ONBOARDING: Dirección ya existe, continuando...');
           // No navegar, solo mostrar mensaje informativo
           _showSnackBar('Ya tienes una dirección guardada. Continuando con el onboarding...');
         } else {
-          debugPrint('🔄 ONBOARDING: Error de dirección detectado, navegando a página 1');
+          debugPrint('🔄 ONBOARDING: Error de dirección detectado, navegando a página 5');
           _showSnackBar(cleanErrorMessage);
-          _navigateToPage(1);
+          _navigateToPage(5);
         }
       } else {
         // Para otros errores, mostrar un mensaje genérico
@@ -356,13 +367,21 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     switch (_currentPage) {
       case 0: // WelcomePage - siempre válida
         return true;
-      case 1: // OnboardingPage1 - verificar formulario
+      case 1: // KycOnboardingIntroPage - siempre válida
+        return true;
+      case 2: // KycOnboardingSelfiePage - validación se hace en la página misma
+        return true;
+      case 3: // KycOnboardingDocumentPage - validación se hace en la página misma
+        return true;
+      case 4: // KycOnboardingSelfieWithDocPage - validación se hace en la página misma
+        return true;
+      case 5: // OnboardingPage1 - verificar formulario
         final page1State = _page1Key.currentState;
         return page1State?.isFormValid ?? false;
-      case 2: // OnboardingPage2 - verificar formulario
+      case 6: // OnboardingPage2 - verificar formulario
         final page2State = _page2Key.currentState;
         return page2State?.isFormValid ?? false;
-      case 3: // OnboardingPage3 - siempre válida
+      case 7: // OnboardingPage3 - siempre válida
         return true;
       default:
         return true;
@@ -417,26 +436,42 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           debugPrint(
               '✅ ONBOARDING SCREEN: Página 0 (Welcome) - no necesita guardado');
           return true;
-        case 1: // OnboardingPage1 - Datos Personales
+        case 1: // KycOnboardingIntroPage - no necesita guardado
           debugPrint(
-              '📝 ONBOARDING SCREEN: Procesando página 1 (Datos Personales)');
+              '✅ ONBOARDING SCREEN: Página 1 (KYC Intro) - no necesita guardado');
+          return true;
+        case 2: // KycOnboardingSelfiePage - el guardado se hace automáticamente
+          debugPrint(
+              '✅ ONBOARDING SCREEN: Página 2 (KYC Selfie) - guardado automático');
+          return true;
+        case 3: // KycOnboardingDocumentPage - el guardado se hace automáticamente
+          debugPrint(
+              '✅ ONBOARDING SCREEN: Página 3 (KYC Document) - guardado automático');
+          return true;
+        case 4: // KycOnboardingSelfieWithDocPage - el guardado se hace automáticamente
+          debugPrint(
+              '✅ ONBOARDING SCREEN: Página 4 (KYC Selfie with Doc) - guardado automático');
+          return true;
+        case 5: // OnboardingPage1 - Datos Personales
+          debugPrint(
+              '📝 ONBOARDING SCREEN: Procesando página 5 (Datos Personales)');
           final page1State = _page1Key.currentState;
           if (page1State == null) {
             debugPrint(
-                '❌ ONBOARDING SCREEN: Error: No se pudo acceder al estado de la página 1');
+                '❌ ONBOARDING SCREEN: Error: No se pudo acceder al estado de la página 5');
             return false;
           }
 
           if (!page1State.isFormValid) {
             debugPrint(
-                '❌ ONBOARDING SCREEN: Formulario página 1 no válido - campos incompletos');
+                '❌ ONBOARDING SCREEN: Formulario página 5 no válido - campos incompletos');
             return false;
           }
 
           final draft = await page1State.collectFormData();
           if (draft == null) {
             debugPrint(
-                '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 1');
+                '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 5');
             return false;
           }
           _personalInfoDraft = draft;
@@ -444,7 +479,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           try {
             await _savePersonalDraft(draft);
             debugPrint(
-                '✅ ONBOARDING SCREEN: Datos de la página 1 almacenados en memoria y persistentemente');
+                '✅ ONBOARDING SCREEN: Datos de la página 5 almacenados en memoria y persistentemente');
             return true;
           } catch (e) {
             debugPrint('❌ ONBOARDING SCREEN: Error al guardar datos personales persistentemente: $e');
@@ -453,29 +488,29 @@ class OnboardingScreenState extends State<OnboardingScreen> {
             return true;
           }
 
-        case 2: // OnboardingPage2 - Datos de Hacienda
+        case 6: // OnboardingPage2 - Datos de Hacienda
           final page2State = _page2Key.currentState;
           if (page2State == null) {
-            debugPrint('Error: No se pudo acceder al estado de la página 2');
+            debugPrint('Error: No se pudo acceder al estado de la página 6');
             return false;
           }
 
           if (!page2State.isFormValid) {
-            debugPrint('Formulario página 2 no válido - campos incompletos');
+            debugPrint('Formulario página 6 no válido - campos incompletos');
             return false;
           }
 
           final ranchDraft = await page2State.collectFormData();
           if (ranchDraft == null) {
             debugPrint(
-                '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 2');
+                '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 6');
             return false;
           }
           _ranchInfoDraft = ranchDraft;
           // Guardar persistentemente
           try {
             await _saveRanchDraft(ranchDraft);
-            debugPrint('✅ ONBOARDING SCREEN: Datos de la página 2 almacenados en memoria y persistentemente');
+            debugPrint('✅ ONBOARDING SCREEN: Datos de la página 6 almacenados en memoria y persistentemente');
             return true;
           } catch (e) {
             debugPrint('❌ ONBOARDING SCREEN: Error al guardar datos de hacienda persistentemente: $e');
@@ -484,7 +519,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
             return true;
           }
 
-        case 3: // OnboardingPage3 - Página final
+        case 7: // OnboardingPage3 - Página final
           return true;
         default:
           return true;

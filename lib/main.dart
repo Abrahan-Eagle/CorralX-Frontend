@@ -332,6 +332,7 @@ import 'package:provider/provider.dart';
 import 'package:corralx/config/user_provider.dart';
 import 'package:corralx/config/corral_x_theme.dart';
 import 'package:corralx/config/theme_provider.dart';
+import 'package:corralx/kyc/providers/kyc_provider.dart';
 import 'package:corralx/products/providers/product_provider.dart';
 import 'package:corralx/profiles/providers/profile_provider.dart';
 import 'package:corralx/ranches/providers/ranch_provider.dart';
@@ -426,6 +427,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => KycProvider()),
         ChangeNotifierProvider(
             create: (_) => RanchProvider()), // ✅ Ranch Marketplace
         ChangeNotifierProxyProvider<ProfileProvider, ChatProvider>(

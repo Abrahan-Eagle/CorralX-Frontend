@@ -27,6 +27,111 @@ alwaysApply: true
 - Incluir comentarios y documentación en el código para facilitar la lectura por el equipo (usar `///` para documentar clases y métodos públicos).
 - Usar el patrón **Provider** para gestión de estado por simplicidad en el MVP (evitar patrones más complejos como BLoC o Riverpod a menos que el equipo los prefiera).
 
+## Módulo de KYC / Verificación de Identidad (MVP)
+
+### Objetivo
+- Implementar un flujo de verificación de identidad tipo Binance pero **adaptado al MVP** y **obligatorio** para todos los usuarios:
+  - Verificación de **documento de identidad** (foto frontal, opción dorso).
+  - Verificación de **rostro** (selfie).
+  - **Selfie sosteniendo el documento** (prueba adicional de vínculo persona–documento).
+- En el MVP se prioriza la **Cédula de Identidad venezolana (CI, formato V-/E-)** como documento principal de persona.
+- La verificación KYC también considera los datos fiscales de la hacienda (RIF) capturados en `OnboardingPage2` para asegurar coherencia persona–negocio.
+- Sin tablas redundantes: el estado KYC y metadatos mínimos se reflejan en el **perfil del usuario**, no en nuevas tablas complejas.
+- El flujo de KYC se integra **dentro del onboarding inicial** y es un paso obligatorio antes de entrar al `MainRouter`.
+
+### Alcance del MVP Frontend
+- El módulo KYC tendrá:
+  - Reglas de negocio y estado reflejados vía `kyc_status` proveniente del backend.
+  - Pantallas integradas al `OnboardingScreen` actual (antes de finalizar).
+  - Bloqueo suave de ciertas acciones (por ejemplo, publicar) si el KYC no está verificado, con mensajes claros.
+
+### Ubicación y organización de código
+- **Lógica y comunicación API KYC (reutilizable):**
+  - `lib/kyc/services/kyc_service.dart`
+    - Encapsula llamadas HTTP a los endpoints `/api/kyc/*`.
+  - `lib/kyc/providers/kyc_provider.dart`
+    - Maneja el estado del KYC (status, flags, errors, loading).
+  - `lib/kyc/widgets/`
+    - Widgets reutilizables: overlays de cámara, headers de pasos, indicadores de estado.
+- **Pantallas de KYC dentro del onboarding (flujo inicial):**
+  - `lib/onboarding/screens/kyc_onboarding_intro_page.dart`
+  - `lib/onboarding/screens/kyc_onboarding_document_page.dart`
+  - `lib/onboarding/screens/kyc_onboarding_selfie_page.dart`
+  - `lib/onboarding/screens/kyc_onboarding_selfie_with_doc_page.dart`
+  - Estas vistas se integran en la lista `onboardingPages` de `OnboardingScreen` y usan `KycProvider`/`KycService` para hablar con el backend.
+
+### Estados y contrato con backend
+- `KycProvider` expone al menos:
+  - `String kycStatus`:
+    - Valores esperados: `no_verified`, `pending`, `verified`, `rejected`.
+  - `bool hasDocument`, `hasSelfie`, `hasSelfieWithDoc`.
+  - `String? rejectionReason`.
+  - `bool isLoading`, `isUploading`.
+  - `String? errorMessage`.
+- Métodos principales de `KycProvider`:
+  - `Future<void> loadStatus()`
+  - `Future<void> startKyc({String? documentType, String? countryCode})`
+  - `Future<void> submitDocument({required XFile front, XFile? back, required String documentType, String? documentNumber, String? countryCode})`
+  - `Future<void> submitSelfie(XFile selfie)`
+  - `Future<void> submitSelfieWithDoc(XFile selfieWithDoc)`
+- `KycService` implementa las llamadas HTTP/multipart reales hacia:
+  - `GET /api/kyc/status`
+  - `POST /api/kyc/start`
+  - `POST /api/kyc/upload-document`
+  - `POST /api/kyc/upload-selfie`
+  - `POST /api/kyc/upload-selfie-with-doc`
+
+### Integración con Onboarding (`lib/onboarding/screens/onboarding_screen.dart`)
+- `OnboardingScreen` ya usa un `PageView` con páginas:
+  - `WelcomePage`
+  - `OnboardingPage1` (datos personales: CI, teléfono, dirección, ubicación…)
+  - `OnboardingPage2` (datos de hacienda: nombre, razón social, RIF, descripción…)
+  - `OnboardingPage3` (pantalla final “¡Todo listo!”)
+- Para el KYC MVP se debe:
+  - Insertar las páginas KYC **entre la página de hacienda y la página final**, por ejemplo:
+    - `WelcomePage`
+    - `OnboardingPage1`
+    - `OnboardingPage2`
+    - `KycOnboardingIntroPage`
+    - `KycOnboardingDocumentPage`
+    - `KycOnboardingSelfiePage`
+    - `KycOnboardingSelfieWithDocPage`
+    - `OnboardingPage3`
+  - Reutilizar la infraestructura actual:
+    - `onboardingPages` se expande con las nuevas vistas.
+    - `_handleNext()` sigue siendo el único punto de avance, y delega en `_saveCurrentPageData()` para validar/guardar cada paso.
+    - `_completeOnboarding()` se ejecuta **solo después** de pasar los pasos de KYC y de que el backend acepte la creación de perfil + teléfono + dirección + hacienda (incluyendo RIF).
+- Reglas UX del onboarding con KYC:
+  - No permitir avanzar de una página KYC si no se ha cargado la imagen requerida (mostrar mensaje claro).
+  - Mostrar estados simples (por ejemplo, check visual cuando un paso KYC esté completado).
+  - Los errores provenientes del backend (ej. documento ilegible, inconsistencia básica) se mostrarán como `SnackBar` o texto rojo, y mantendrán al usuario en la misma página.
+
+### Integración con `UserProvider` y `ProfileScreen`
+- `UserProvider`:
+  - Debe almacenar `kycStatus` cuando llame a `getUserDetails()`.
+  - Expone un getter tipo `String get userKycStatus`.
+- `ProfileScreen`:
+  - Sección “Verificación de identidad” con:
+    - Badge según `kycStatus`:
+      - `No verificado`, `Pendiente`, `Verificado`, `Rechazado`.
+    - Botones:
+      - `No verificado` o `Rechazado`: botón “Verificar identidad” → flujo KYC (puede reutilizar páginas de onboarding, o versiones simplificadas reusando los mismos widgets de `lib/kyc/widgets/`).
+      - `Pendiente`: botón “Ver estado KYC”.
+  - Esta entrada desde perfil es secundaria en el MVP (completar KYC desde onboarding es prioridad), pero se debe dejar preparada la estructura para que no se duplique código.
+
+### Reglas de negocio (frontend) relacionadas con KYC
+- **Publicar productos**:
+  - Además de validar perfil + hacienda completos (`ProfileService.checkCompleteness()`), se debe revisar `kycStatus`.
+  - Si `kycStatus != 'verified'`:
+    - Mostrar `AlertDialog` explicando que debe completar la verificación de identidad.
+    - Ofrecer botón “Ir a verificación” que lleve a la pantalla KYC adecuada (o a un resumen con botón para iniciar/reintentar).
+    - No permitir cambiar la pestaña a `CreateScreen` en el `BottomNavigationBar`.
+- **Mensajes claros para el usuario**:
+  - El frontend nunca habla de “compliance” o términos técnicos; usar texto claro tipo:
+    - “Para publicar productos necesitas verificar tu identidad (selfie + documento).”
+    - “Tu verificación está en revisión. Te avisaremos cuando se complete.”
+    - “Tu verificación fue rechazada. Revisa el motivo y vuelve a intentarlo.”
+
 ## Flujo de pedidos y entrega (sin pagos digitales)
 - La app **coordina** la operación pero **NO procesa pagos**. El intercambio económico ocurre cuando comprador y vendedor se encuentran físicamente.
 - Secuencia completa (documentada a detalle en `CICLO_COMPLETO_LOGIC_DETALLADA.md`):

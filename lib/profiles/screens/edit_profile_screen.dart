@@ -211,15 +211,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'El segundo nombre es obligatorio';
     }
-    if (value.trim().length < 2) {
-      return 'Mínimo 2 caracteres';
-    }
-    if (value.trim().length > 50) {
-      return 'Máximo 50 caracteres';
-    }
-    // Validar que solo contenga letras y espacios
-    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
-      return 'Solo se permiten letras';
+      if (value.trim().length < 2) {
+        return 'Mínimo 2 caracteres';
+      }
+      if (value.trim().length > 50) {
+        return 'Máximo 50 caracteres';
+      }
+      // Validar que solo contenga letras y espacios
+      if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+        return 'Solo se permiten letras';
     }
     return null;
   }
@@ -228,15 +228,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'El segundo apellido es obligatorio';
     }
-    if (value.trim().length < 2) {
-      return 'Mínimo 2 caracteres';
-    }
-    if (value.trim().length > 50) {
-      return 'Máximo 50 caracteres';
-    }
-    // Validar que solo contenga letras y espacios
-    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
-      return 'Solo se permiten letras';
+      if (value.trim().length < 2) {
+        return 'Mínimo 2 caracteres';
+      }
+      if (value.trim().length > 50) {
+        return 'Máximo 50 caracteres';
+      }
+      // Validar que solo contenga letras y espacios
+      if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value.trim())) {
+        return 'Solo se permiten letras';
     }
     return null;
   }

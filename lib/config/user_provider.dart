@@ -31,6 +31,7 @@ class UserProvider with ChangeNotifier {
   int _userId = 0;
   String _userGoogleId = '';
   String _role = '';
+  String _kycStatus = 'no_verified';
 
   // Getters para obtener la información del usuario
   bool get isAuthenticated => _isAuthenticated;
@@ -47,6 +48,7 @@ class UserProvider with ChangeNotifier {
   int get userId => _userId;
   String get userGoogleId => _userGoogleId;
   String get userRole => _role;
+  String get userKycStatus => _kycStatus;
 
   // Getter para obtener el usuario completo
   Map<String, dynamic> get user => {
@@ -179,6 +181,14 @@ class UserProvider with ChangeNotifier {
         _userGoogleId = userDetails['google_id'] ?? '';
         _userId = userDetails['id'] ?? 0;
         _role = userDetails['role'] ?? '';
+        // KYC status puede venir anidado en profile o directamente
+        if (userDetails['profile'] != null &&
+            userDetails['profile'] is Map<String, dynamic>) {
+          final profile = userDetails['profile'] as Map<String, dynamic>;
+          _kycStatus = (profile['kyc_status'] ?? 'no_verified').toString();
+        } else {
+          _kycStatus = (userDetails['kyc_status'] ?? 'no_verified').toString();
+        }
         
         // Actualizar email si viene en la respuesta
         if (userDetails['email'] != null) {

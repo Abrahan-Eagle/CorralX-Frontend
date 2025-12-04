@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import '../../config/corral_x_theme.dart';
 import '../models/onboarding_draft.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // InputFormatter personalizado para RIF venezolano (V- o J-12345678-9)
 class _RIFVenezuelaInputFormatter extends TextInputFormatter {
@@ -277,6 +280,52 @@ class OnboardingPage2State extends State<OnboardingPage2> {
     _rifController.addListener(_validateForm);
     _descriptionController.addListener(_validateForm);
     _horarioController.addListener(_validateForm);
+
+    // Cargar datos extraídos del OCR después de inicializar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadOCRData();
+    });
+  }
+
+  // Cargar datos extraídos del OCR del RIF
+  Future<void> _loadOCRData() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final rifDataJson = await storage.read(key: 'kyc_extracted_rif_data');
+      
+      if (rifDataJson != null && rifDataJson.isNotEmpty) {
+        final rifData = jsonDecode(rifDataJson) as Map<String, dynamic>;
+        
+        debugPrint('📋 Datos RIF del OCR recibidos: $rifData');
+        
+        // Solo pre-llenar RIF; el usuario llena manualmente nombre de hacienda y razón social.
+        // Pre-llenar RIF si está vacío o solo tiene 'V-' o 'J-'
+        if ((_rifController.text.isEmpty || 
+             _rifController.text.trim() == 'V-' || 
+             _rifController.text.trim() == 'J-') && 
+            rifData['rifNumber'] != null && (rifData['rifNumber'] as String).isNotEmpty) {
+          final rifNumber = (rifData['rifNumber'] as String).trim().toUpperCase();
+          // Asegurar formato correcto V-12345678-9 o J-12345678-9
+          if (rifNumber.startsWith('V') || rifNumber.startsWith('J')) {
+            _rifController.text = rifNumber;
+            debugPrint('✅ RIF pre-llenado: ${_rifController.text}');
+          }
+        }
+        
+        if (mounted) {
+          setState(() {
+            _formKey.currentState?.validate();
+          });
+        }
+        
+        debugPrint('✅ Datos RIF del OCR cargados y pre-llenados correctamente');
+      } else {
+        debugPrint('⚠️ No se encontraron datos RIF del OCR para pre-llenar');
+      }
+    } catch (e) {
+      debugPrint('❌ Error cargando datos del OCR: $e');
+      // No mostrar error al usuario, solo log
+    }
   }
 
   @override

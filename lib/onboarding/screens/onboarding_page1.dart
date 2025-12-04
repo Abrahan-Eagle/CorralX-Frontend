@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import '../../config/corral_x_theme.dart';
 import '../models/onboarding_draft.dart';
@@ -59,6 +61,101 @@ class OnboardingPage1State extends State<OnboardingPage1> {
     _ciController.addListener(_validateForm);
 
     _initializeData();
+    // Cargar datos extraídos del OCR después de inicializar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadOCRData();
+    });
+  }
+
+  // Cargar datos extraídos del OCR de la CI
+  Future<void> _loadOCRData() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final ciDataJson = await storage.read(key: 'kyc_extracted_ci_data');
+      
+      if (ciDataJson != null && ciDataJson.isNotEmpty) {
+        final ciData = jsonDecode(ciDataJson) as Map<String, dynamic>;
+        
+        debugPrint('📋 Datos CI del OCR recibidos: $ciData');
+        
+        // Pre-llenar campos solo si están vacíos o tienen valores por defecto
+        if ((_firstNameController.text.isEmpty || _firstNameController.text.trim().isEmpty) && 
+            ciData['firstName'] != null && (ciData['firstName'] as String).isNotEmpty) {
+          _firstNameController.text = (ciData['firstName'] as String).trim();
+          debugPrint('✅ Primer nombre pre-llenado: ${_firstNameController.text}');
+        }
+        
+        if ((_lastNameController.text.isEmpty || _lastNameController.text.trim().isEmpty) && 
+            ciData['lastName'] != null && (ciData['lastName'] as String).isNotEmpty) {
+          _lastNameController.text = (ciData['lastName'] as String).trim();
+          debugPrint('✅ Apellido pre-llenado: ${_lastNameController.text}');
+        }
+        
+        // Pre-llenar CI si está vacío o solo tiene 'V-'
+        if ((_ciController.text.isEmpty || _ciController.text == 'V-') && 
+            ciData['ciNumber'] != null && (ciData['ciNumber'] as String).isNotEmpty) {
+          final ciNumber = (ciData['ciNumber'] as String).trim().toUpperCase();
+          // Asegurar formato correcto V-12345678
+          if (ciNumber.startsWith('V') || ciNumber.startsWith('E')) {
+            _ciController.text = ciNumber;
+            debugPrint('✅ CI pre-llenada: ${_ciController.text}');
+          }
+        }
+        
+        // Pre-llenar fecha de nacimiento si está disponible
+        if (_dateOfBirthController.text.isEmpty && ciData['dateOfBirth'] != null) {
+          final dateStr = (ciData['dateOfBirth'] as String).trim();
+          // Formato esperado: DD/MM/YYYY
+          try {
+            final parts = dateStr.split('/');
+            if (parts.length == 3) {
+              _selectedDate = DateTime(
+                int.parse(parts[2]),
+                int.parse(parts[1]),
+                int.parse(parts[0]),
+              );
+              _dateOfBirthController.text = dateStr;
+            }
+          } catch (e) {
+            debugPrint('Error parseando fecha del OCR: $e');
+          }
+        }
+        
+        // Pre-llenar sexo si está disponible (aunque no hay campo visible, se puede usar internamente)
+        if (ciData['sex'] != null) {
+          // Guardar para uso futuro si se necesita
+          debugPrint('Sexo extraído del OCR: ${ciData['sex']}');
+        }
+        
+        if (mounted) {
+          setState(() {
+            _formKey.currentState?.validate();
+          });
+        }
+        
+        debugPrint('✅ Datos CI del OCR cargados y pre-llenados');
+      }
+
+      // También intentar usar la dirección extraída del RIF para pre-llenar la dirección,
+      // pero sin tocar los selects anidados (país/estado/ciudad/parroquia).
+      final rifDataJson = await storage.read(key: 'kyc_extracted_rif_data');
+      if (rifDataJson != null && rifDataJson.isNotEmpty) {
+        final rifData = jsonDecode(rifDataJson) as Map<String, dynamic>;
+        debugPrint('📋 Datos RIF del OCR recibidos en PAGE1: $rifData');
+
+        if ((_addressController.text.isEmpty ||
+                _addressController.text.trim().isEmpty) &&
+            rifData['address'] != null &&
+            (rifData['address'] as String).isNotEmpty) {
+          final address = (rifData['address'] as String).trim();
+          _addressController.text = address;
+          debugPrint('✅ Dirección pre-llenada desde RIF: $address');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando datos del OCR: $e');
+      // No mostrar error al usuario, solo log
+    }
   }
 
   // Inicializar datos con token
@@ -916,6 +1013,58 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
+
+                      // Header distintivo para formulario de datos personales
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: colorScheme.primary.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.person_outline,
+                                color: colorScheme.onPrimary,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Datos Personales',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onBackground,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Completa tu información personal. Los campos marcados con * son obligatorios.',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onBackground.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
                       // Indicador de carga de datos
                       if (_isLoadingData)
