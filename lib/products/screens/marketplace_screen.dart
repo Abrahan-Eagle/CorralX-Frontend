@@ -260,23 +260,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               SizedBox(
                                 height: isTablet ? 56 : 48, // Altura fija para coincidir con TextField
                                 child: ElevatedButton(
-                                  onPressed: _performSearch,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: isTablet ? 20 : 16,
+                                onPressed: _performSearch,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 20 : 16,
                                       vertical: 0, // Padding vertical 0 porque usamos altura fija
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
                                   ),
-                                  child: Icon(
-                                    Icons.search,
-                                    size: isTablet ? 24 : 20,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.search,
+                                  size: isTablet ? 24 : 20,
                                   ),
                                 ),
                               ),

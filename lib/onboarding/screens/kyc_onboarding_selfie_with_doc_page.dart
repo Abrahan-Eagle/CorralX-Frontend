@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:corralx/kyc/providers/kyc_provider.dart';
 
@@ -19,6 +20,7 @@ class KycOnboardingSelfieWithDocPage extends StatefulWidget {
 class _KycOnboardingSelfieWithDocPageState
     extends State<KycOnboardingSelfieWithDocPage> {
   final ImagePicker _picker = ImagePicker();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   XFile? _selfieWithDoc;
   bool _isCapturing = false;
 
@@ -38,6 +40,10 @@ class _KycOnboardingSelfieWithDocPageState
         setState(() {
           _selfieWithDoc = image;
         });
+        
+        // Guardar ruta de la imagen en storage para subirla después
+        await _storage.write(key: 'kyc_selfie_with_doc_path', value: image.path);
+        debugPrint('💾 KYC: Selfie con documento guardada en storage: ${image.path}');
       }
     } catch (e) {
       debugPrint('Error capturando selfie con documento: $e');

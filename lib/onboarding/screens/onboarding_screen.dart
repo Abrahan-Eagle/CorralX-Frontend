@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'welcome_page.dart';
 import 'onboarding_page1.dart';
 import 'onboarding_page2.dart';
@@ -20,6 +22,7 @@ import '../../shared/widgets/amazon_widgets.dart';
 import '../models/onboarding_draft.dart';
 import '../services/onboarding_api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../kyc/services/kyc_service.dart';
 
 final OnboardingService _onboardingService = OnboardingService();
 
@@ -40,10 +43,15 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       GlobalKey<OnboardingPage1State>();
   final GlobalKey<OnboardingPage2State> _page2Key =
       GlobalKey<OnboardingPage2State>();
-  // Las páginas KYC no necesitan GlobalKey por ahora; solo bloquean avance si falta imagen.
+  // GlobalKeys para páginas KYC (necesarios para subir documentos al backend)
+  // Usamos GlobalKey<State> genérico porque los estados son privados
+  final GlobalKey<State> _kycSelfieKey = GlobalKey<State>();
+  final GlobalKey<State> _kycDocumentKey = GlobalKey<State>();
+  final GlobalKey<State> _kycSelfieWithDocKey = GlobalKey<State>();
 
   final OnboardingApiService _apiService = OnboardingApiService();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final KycService _kycService = KycService();
   bool _apiTokenInitialized = false;
   PersonalInfoDraft? _personalInfoDraft;
   RanchInfoDraft? _ranchInfoDraft;
@@ -58,9 +66,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       const WelcomePage(),
       // KYC completo primero
       const KycOnboardingIntroPage(),
-      const KycOnboardingSelfiePage(),
-      const KycOnboardingDocumentPage(), // CI + RIF juntos
-      const KycOnboardingSelfieWithDocPage(),
+      KycOnboardingSelfiePage(key: _kycSelfieKey),
+      KycOnboardingDocumentPage(key: _kycDocumentKey), // CI + RIF juntos
+      KycOnboardingSelfieWithDocPage(key: _kycSelfieWithDocKey),
       // Formularios pre-llenados con datos extraídos del OCR
       OnboardingPage1(key: _page1Key),
       OnboardingPage2(key: _page2Key),
@@ -78,13 +86,15 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _loadSavedDrafts() async {
     try {
       debugPrint('🔄 ONBOARDING: Cargando datos guardados del onboarding...');
-      
+
       // Cargar datos personales
-      final personalJson = await _storage.read(key: 'onboarding_personal_draft');
+      final personalJson =
+          await _storage.read(key: 'onboarding_personal_draft');
       if (personalJson != null && personalJson.isNotEmpty) {
         final personalMap = json.decode(personalJson) as Map<String, dynamic>;
         _personalInfoDraft = PersonalInfoDraft.fromJson(personalMap);
-        debugPrint('✅ ONBOARDING: Datos personales cargados desde almacenamiento');
+        debugPrint(
+            '✅ ONBOARDING: Datos personales cargados desde almacenamiento');
       }
 
       // Cargar datos de hacienda
@@ -92,7 +102,8 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       if (ranchJson != null && ranchJson.isNotEmpty) {
         final ranchMap = json.decode(ranchJson) as Map<String, dynamic>;
         _ranchInfoDraft = RanchInfoDraft.fromJson(ranchMap);
-        debugPrint('✅ ONBOARDING: Datos de hacienda cargados desde almacenamiento');
+        debugPrint(
+            '✅ ONBOARDING: Datos de hacienda cargados desde almacenamiento');
       }
 
       // NO restaurar datos automáticamente - el usuario debe comenzar desde 0
@@ -108,36 +119,39 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // Restaurar datos guardados en los formularios
-  Future<void> _restoreSavedData() async {
-    try {
-      if (_personalInfoDraft != null) {
-        final page1State = _page1Key.currentState;
-        if (page1State != null) {
-          await page1State.restoreFromDraft(_personalInfoDraft!);
-          debugPrint('✅ ONBOARDING: Datos personales restaurados en formulario');
-          
-          // Si también hay datos de hacienda, navegar a página 6
-          if (_ranchInfoDraft != null) {
-            final page2State = _page2Key.currentState;
-            if (page2State != null) {
-              await page2State.restoreFromDraft(_ranchInfoDraft!);
-              debugPrint('✅ ONBOARDING: Datos de hacienda restaurados en formulario');
-              // Navegar a página 6 si tenemos ambos formularios
-              _navigateToPage(6);
-            } else {
-              // Solo datos personales, navegar a página 5
-              _navigateToPage(5);
-            }
-          } else {
-            // Solo datos personales, navegar a página 5
-            _navigateToPage(5);
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ ONBOARDING: Error restaurando datos: $e');
-    }
-  }
+  // TODO: Implementar restauración de datos si es necesario en el futuro
+  // Future<void> _restoreSavedData() async {
+  //   try {
+  //     if (_personalInfoDraft != null) {
+  //       final page1State = _page1Key.currentState;
+  //       if (page1State != null) {
+  //         await page1State.restoreFromDraft(_personalInfoDraft!);
+  //         debugPrint(
+  //             '✅ ONBOARDING: Datos personales restaurados en formulario');
+  //
+  //         // Si también hay datos de hacienda, navegar a página 6
+  //         if (_ranchInfoDraft != null) {
+  //           final page2State = _page2Key.currentState;
+  //           if (page2State != null) {
+  //             await page2State.restoreFromDraft(_ranchInfoDraft!);
+  //             debugPrint(
+  //                 '✅ ONBOARDING: Datos de hacienda restaurados en formulario');
+  //             // Navegar a página 6 si tenemos ambos formularios
+  //             _navigateToPage(6);
+  //           } else {
+  //             // Solo datos personales, navegar a página 5
+  //             _navigateToPage(5);
+  //           }
+  //         } else {
+  //           // Solo datos personales, navegar a página 5
+  //           _navigateToPage(5);
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     debugPrint('❌ ONBOARDING: Error restaurando datos: $e');
+  //   }
+  // }
 
   // Guardar datos personales persistentemente
   Future<void> _savePersonalDraft(PersonalInfoDraft draft) async {
@@ -146,17 +160,21 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       final jsonMap = draft.toJson();
       debugPrint('💾 ONBOARDING: JSON generado: ${jsonMap.toString()}');
       final jsonString = json.encode(jsonMap);
-      debugPrint('💾 ONBOARDING: String JSON generado (${jsonString.length} caracteres)');
-      
+      debugPrint(
+          '💾 ONBOARDING: String JSON generado (${jsonString.length} caracteres)');
+
       await _storage.write(key: 'onboarding_personal_draft', value: jsonString);
-      debugPrint('💾 ONBOARDING: Datos personales guardados persistentemente en FlutterSecureStorage');
-      
+      debugPrint(
+          '💾 ONBOARDING: Datos personales guardados persistentemente en FlutterSecureStorage');
+
       // Verificar que se guardó correctamente
       final verify = await _storage.read(key: 'onboarding_personal_draft');
       if (verify != null && verify.isNotEmpty) {
-        debugPrint('✅ ONBOARDING: Verificación exitosa - datos personales confirmados en storage');
+        debugPrint(
+            '✅ ONBOARDING: Verificación exitosa - datos personales confirmados en storage');
       } else {
-        debugPrint('⚠️ ONBOARDING: ADVERTENCIA - No se pudo verificar el guardado de datos personales');
+        debugPrint(
+            '⚠️ ONBOARDING: ADVERTENCIA - No se pudo verificar el guardado de datos personales');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ ONBOARDING: Error guardando datos personales: $e');
@@ -172,17 +190,21 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       final jsonMap = draft.toJson();
       debugPrint('💾 ONBOARDING: JSON generado: ${jsonMap.toString()}');
       final jsonString = json.encode(jsonMap);
-      debugPrint('💾 ONBOARDING: String JSON generado (${jsonString.length} caracteres)');
-      
+      debugPrint(
+          '💾 ONBOARDING: String JSON generado (${jsonString.length} caracteres)');
+
       await _storage.write(key: 'onboarding_ranch_draft', value: jsonString);
-      debugPrint('💾 ONBOARDING: Datos de hacienda guardados persistentemente en FlutterSecureStorage');
-      
+      debugPrint(
+          '💾 ONBOARDING: Datos de hacienda guardados persistentemente en FlutterSecureStorage');
+
       // Verificar que se guardó correctamente
       final verify = await _storage.read(key: 'onboarding_ranch_draft');
       if (verify != null && verify.isNotEmpty) {
-        debugPrint('✅ ONBOARDING: Verificación exitosa - datos de hacienda confirmados en storage');
+        debugPrint(
+            '✅ ONBOARDING: Verificación exitosa - datos de hacienda confirmados en storage');
       } else {
-        debugPrint('⚠️ ONBOARDING: ADVERTENCIA - No se pudo verificar el guardado de datos de hacienda');
+        debugPrint(
+            '⚠️ ONBOARDING: ADVERTENCIA - No se pudo verificar el guardado de datos de hacienda');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ ONBOARDING: Error guardando datos de hacienda: $e');
@@ -224,6 +246,10 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       }
 
       await _submitOnboardingData(userId);
+
+      // Subir documentos KYC después de crear el perfil
+      await _uploadKycDocuments();
+
       await _onboardingService.completeOnboarding(userId);
       await _storage.write(key: 'userCompletedOnboarding', value: '1');
 
@@ -242,53 +268,62 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       );
     } catch (e) {
       debugPrint("Error al completar el onboarding: $e");
-      
+
       if (!mounted) return;
-      
+
       // Extraer el mensaje de error de forma más clara
       String errorMessage = e.toString();
-      String cleanErrorMessage = errorMessage.replaceAll('Exception: ', '').replaceAll('Exception: Exception: ', '');
-      
+      String cleanErrorMessage = errorMessage
+          .replaceAll('Exception: ', '')
+          .replaceAll('Exception: Exception: ', '');
+
       // Detectar el tipo de error y navegar a la página correspondiente
-      if (errorMessage.toLowerCase().contains('cédula') || 
-          errorMessage.toLowerCase().contains('cedula') || 
+      if (errorMessage.toLowerCase().contains('cédula') ||
+          errorMessage.toLowerCase().contains('cedula') ||
           errorMessage.toLowerCase().contains('ci_number') ||
           errorMessage.toLowerCase().contains('número de cédula')) {
         // Error de CI -> Navegar a página 5 (datos personales)
-        debugPrint('🔄 ONBOARDING: Error de CI detectado, navegando a página 5');
+        debugPrint(
+            '🔄 ONBOARDING: Error de CI detectado, navegando a página 5');
         _showSnackBar(cleanErrorMessage);
         _navigateToPage(5);
-      } else if (errorMessage.toLowerCase().contains('rif') || 
-                 errorMessage.toLowerCase().contains('tax_id')) {
+      } else if (errorMessage.toLowerCase().contains('rif') ||
+          errorMessage.toLowerCase().contains('tax_id')) {
         // Error de RIF -> Navegar a página 6 (datos de hacienda)
-        debugPrint('🔄 ONBOARDING: Error de RIF detectado, navegando a página 6');
+        debugPrint(
+            '🔄 ONBOARDING: Error de RIF detectado, navegando a página 6');
         _showSnackBar(cleanErrorMessage);
         _navigateToPage(6);
-      } else if (errorMessage.toLowerCase().contains('number') && 
-                 (errorMessage.toLowerCase().contains('unique') || 
-                  errorMessage.toLowerCase().contains('ya ha sido') || 
-                  errorMessage.toLowerCase().contains('ya existe'))) {
+      } else if (errorMessage.toLowerCase().contains('number') &&
+          (errorMessage.toLowerCase().contains('unique') ||
+              errorMessage.toLowerCase().contains('ya ha sido') ||
+              errorMessage.toLowerCase().contains('ya existe'))) {
         // Error de teléfono -> Navegar a página 5 (datos personales)
-        debugPrint('🔄 ONBOARDING: Error de teléfono detectado, navegando a página 5');
+        debugPrint(
+            '🔄 ONBOARDING: Error de teléfono detectado, navegando a página 5');
         _showSnackBar(cleanErrorMessage);
         _navigateToPage(5);
-      } else if (errorMessage.toLowerCase().contains('dirección') || 
-                 errorMessage.toLowerCase().contains('direccion') ||
-                 errorMessage.toLowerCase().contains('address')) {
+      } else if (errorMessage.toLowerCase().contains('dirección') ||
+          errorMessage.toLowerCase().contains('direccion') ||
+          errorMessage.toLowerCase().contains('address')) {
         // Error de dirección -> Navegar a página 5 (datos personales) para corregir
         // Pero si es "ya tiene una dirección", solo mostrar mensaje y continuar (ya se maneja arriba)
-        if (errorMessage.contains('ya tiene') || errorMessage.contains('ya existe')) {
+        if (errorMessage.contains('ya tiene') ||
+            errorMessage.contains('ya existe')) {
           debugPrint('ℹ️ ONBOARDING: Dirección ya existe, continuando...');
           // No navegar, solo mostrar mensaje informativo
-          _showSnackBar('Ya tienes una dirección guardada. Continuando con el onboarding...');
+          _showSnackBar(
+              'Ya tienes una dirección guardada. Continuando con el onboarding...');
         } else {
-          debugPrint('🔄 ONBOARDING: Error de dirección detectado, navegando a página 5');
+          debugPrint(
+              '🔄 ONBOARDING: Error de dirección detectado, navegando a página 5');
           _showSnackBar(cleanErrorMessage);
           _navigateToPage(5);
         }
       } else {
         // Para otros errores, mostrar un mensaje genérico
-        _showSnackBar('Error al completar el onboarding. Por favor, verifique sus datos e intente nuevamente.');
+        _showSnackBar(
+            'Error al completar el onboarding. Por favor, verifique sus datos e intente nuevamente.');
       }
     } finally {
       if (mounted) {
@@ -482,7 +517,8 @@ class OnboardingScreenState extends State<OnboardingScreen> {
                 '✅ ONBOARDING SCREEN: Datos de la página 5 almacenados en memoria y persistentemente');
             return true;
           } catch (e) {
-            debugPrint('❌ ONBOARDING SCREEN: Error al guardar datos personales persistentemente: $e');
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Error al guardar datos personales persistentemente: $e');
             // Aún así retornar true porque los datos están en memoria
             // El usuario puede continuar aunque falle el guardado persistente
             return true;
@@ -510,10 +546,12 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           // Guardar persistentemente
           try {
             await _saveRanchDraft(ranchDraft);
-            debugPrint('✅ ONBOARDING SCREEN: Datos de la página 6 almacenados en memoria y persistentemente');
+            debugPrint(
+                '✅ ONBOARDING SCREEN: Datos de la página 6 almacenados en memoria y persistentemente');
             return true;
           } catch (e) {
-            debugPrint('❌ ONBOARDING SCREEN: Error al guardar datos de hacienda persistentemente: $e');
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Error al guardar datos de hacienda persistentemente: $e');
             // Aún así retornar true porque los datos están en memoria
             // El usuario puede continuar aunque falle el guardado persistente
             return true;
@@ -547,10 +585,11 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     try {
       // 1. Crear perfil - Si el CI ya está registrado, detener el proceso
       debugPrint('📝 ONBOARDING: Paso 1/4 - Creando perfil...');
-      debugPrint('📝 ONBOARDING: Datos personales: firstName=${personal.firstName}, lastName=${personal.lastName}, ciNumber=${personal.ciNumber}');
-      
+      debugPrint(
+          '📝 ONBOARDING: Datos personales: firstName=${personal.firstName}, lastName=${personal.lastName}, ciNumber=${personal.ciNumber}');
+
       int? profileId;
-      
+
       try {
         debugPrint('📝 ONBOARDING: Creando nuevo perfil...');
         final profileResponse = await _apiService.createProfile(
@@ -561,7 +600,8 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           photoUsers: null,
         );
 
-        debugPrint('📝 ONBOARDING: Respuesta de creación de perfil: $profileResponse');
+        debugPrint(
+            '📝 ONBOARDING: Respuesta de creación de perfil: $profileResponse');
 
         final profileMap = profileResponse['profile'] ??
             profileResponse['data']?['profile'] ??
@@ -569,27 +609,35 @@ class OnboardingScreenState extends State<OnboardingScreen> {
         profileId = _parseInt(profileMap?['id']);
 
         if (profileId == null) {
-          debugPrint('❌ ONBOARDING: No se pudo obtener profileId de la respuesta');
-          throw Exception('No se pudo crear el perfil del usuario. Respuesta: $profileResponse');
+          debugPrint(
+              '❌ ONBOARDING: No se pudo obtener profileId de la respuesta');
+          throw Exception(
+              'No se pudo crear el perfil del usuario. Respuesta: $profileResponse');
         }
 
-        debugPrint('✅ ONBOARDING: Perfil creado exitosamente con ID: $profileId');
+        debugPrint(
+            '✅ ONBOARDING: Perfil creado exitosamente con ID: $profileId');
       } catch (e) {
         // Verificar si el error es por CI duplicado
         final errorMessage = e.toString().toLowerCase();
-        if (errorMessage.contains('ci_number') || errorMessage.contains('cédula') || 
-            errorMessage.contains('cedula') || errorMessage.contains('número de cédula')) {
-          if (errorMessage.contains('ya ha sido') || errorMessage.contains('ya existe') || 
-              errorMessage.contains('unique') || errorMessage.contains('registrado') ||
+        if (errorMessage.contains('ci_number') ||
+            errorMessage.contains('cédula') ||
+            errorMessage.contains('cedula') ||
+            errorMessage.contains('número de cédula')) {
+          if (errorMessage.contains('ya ha sido') ||
+              errorMessage.contains('ya existe') ||
+              errorMessage.contains('unique') ||
+              errorMessage.contains('registrado') ||
               errorMessage.contains('ya está registrado')) {
             debugPrint('❌ ONBOARDING: CI ya registrado - deteniendo proceso');
             // Usar el mensaje del backend si está disponible, de lo contrario usar uno genérico
             final backendMessage = e.toString().replaceAll('Exception: ', '');
-            if (backendMessage.toLowerCase().contains('cédula') || 
+            if (backendMessage.toLowerCase().contains('cédula') ||
                 backendMessage.toLowerCase().contains('cedula')) {
               throw Exception(backendMessage);
             } else {
-              throw Exception('El número de cédula ${personal.ciNumber} ya está registrado en el sistema. Por favor, verifique sus datos o contacte soporte si cree que esto es un error.');
+              throw Exception(
+                  'El número de cédula ${personal.ciNumber} ya está registrado en el sistema. Por favor, verifique sus datos o contacte soporte si cree que esto es un error.');
             }
           }
         }
@@ -599,8 +647,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
       // 2. Crear teléfono (o verificar si ya existe)
       debugPrint('📞 ONBOARDING: Paso 2/4 - Creando/verificando teléfono...');
-      debugPrint('📞 ONBOARDING: Datos: number=${personal.phoneNumber}, operatorCodeId=${personal.operatorCodeId}, userId=$userId');
-      
+      debugPrint(
+          '📞 ONBOARDING: Datos: number=${personal.phoneNumber}, operatorCodeId=${personal.operatorCodeId}, userId=$userId');
+
       try {
         await _apiService.createPhone(
           number: personal.phoneNumber,
@@ -611,8 +660,10 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       } catch (e) {
         // Si el error es porque el número ya existe, continuar sin problema
         final errorMessage = e.toString().toLowerCase();
-        if (errorMessage.contains('number') && 
-            (errorMessage.contains('unique') || errorMessage.contains('ya ha sido') || errorMessage.contains('ya existe'))) {
+        if (errorMessage.contains('number') &&
+            (errorMessage.contains('unique') ||
+                errorMessage.contains('ya ha sido') ||
+                errorMessage.contains('ya existe'))) {
           debugPrint('ℹ️ ONBOARDING: El teléfono ya existe, continuando...');
         } else {
           // Si es otro error, relanzarlo
@@ -622,8 +673,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
       // 3. Crear dirección (o verificar si ya existe)
       debugPrint('🏠 ONBOARDING: Paso 3/4 - Creando/verificando dirección...');
-      debugPrint('🏠 ONBOARDING: Datos: address=${personal.address}, cityId=${personal.cityId}, profileId=$profileId');
-      
+      debugPrint(
+          '🏠 ONBOARDING: Datos: address=${personal.address}, cityId=${personal.cityId}, profileId=$profileId');
+
       int? addressId;
       try {
         final addressResponse = await _apiService.createAddress(
@@ -634,23 +686,27 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           longitude: personal.longitude,
         );
 
-        debugPrint('🏠 ONBOARDING: Respuesta de creación de dirección: $addressResponse');
+        debugPrint(
+            '🏠 ONBOARDING: Respuesta de creación de dirección: $addressResponse');
 
         final addressMap = addressResponse['address'] ??
             addressResponse['data']?['address'] ??
             addressResponse;
         addressId = _parseInt(addressMap?['id']);
 
-        debugPrint('✅ ONBOARDING: Dirección creada exitosamente con ID: $addressId');
+        debugPrint(
+            '✅ ONBOARDING: Dirección creada exitosamente con ID: $addressId');
       } catch (e) {
         // Si el error es porque la dirección ya existe o hay un problema de validación, continuar
         final errorMessage = e.toString().toLowerCase();
-        if (errorMessage.contains('ya existe') || 
-            errorMessage.contains('already exists') || 
+        if (errorMessage.contains('ya existe') ||
+            errorMessage.contains('already exists') ||
             errorMessage.contains('ya ha sido') ||
             errorMessage.contains('ya tiene una dirección personal guardada') ||
-            errorMessage.contains('ya tiene') && errorMessage.contains('dirección')) {
-          debugPrint('ℹ️ ONBOARDING: La dirección ya existe o ya hay una dirección guardada, continuando sin addressId...');
+            errorMessage.contains('ya tiene') &&
+                errorMessage.contains('dirección')) {
+          debugPrint(
+              'ℹ️ ONBOARDING: La dirección ya existe o ya hay una dirección guardada, continuando sin addressId...');
           addressId = null; // Continuar sin addressId
         } else {
           // Si es otro error, relanzarlo
@@ -660,8 +716,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
       // 4. Crear hacienda - Si el RIF ya está registrado, detener el proceso
       debugPrint('🏡 ONBOARDING: Paso 4/4 - Creando hacienda...');
-      debugPrint('🏡 ONBOARDING: Datos: name=${ranch.name}, profileId=$profileId, addressId=$addressId, taxId=${ranch.rif}');
-      
+      debugPrint(
+          '🏡 ONBOARDING: Datos: name=${ranch.name}, profileId=$profileId, addressId=$addressId, taxId=${ranch.rif}');
+
       try {
         await _apiService.createRanch(
           name: ranch.name,
@@ -676,30 +733,165 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       } catch (e) {
         // Verificar si el error es por RIF duplicado
         final errorMessage = e.toString().toLowerCase();
-        if (errorMessage.contains('tax_id') || errorMessage.contains('rif') || 
+        if (errorMessage.contains('tax_id') ||
+            errorMessage.contains('rif') ||
             errorMessage.contains('tax id')) {
-          if (errorMessage.contains('ya ha sido') || errorMessage.contains('ya existe') || 
-              errorMessage.contains('unique') || errorMessage.contains('registrado') ||
+          if (errorMessage.contains('ya ha sido') ||
+              errorMessage.contains('ya existe') ||
+              errorMessage.contains('unique') ||
+              errorMessage.contains('registrado') ||
               errorMessage.contains('ya está registrado')) {
             debugPrint('❌ ONBOARDING: RIF ya registrado - deteniendo proceso');
             // Usar el mensaje del backend si está disponible, de lo contrario usar uno genérico
             final backendMessage = e.toString().replaceAll('Exception: ', '');
-            if (backendMessage.toLowerCase().contains('rif') || 
+            if (backendMessage.toLowerCase().contains('rif') ||
                 backendMessage.toLowerCase().contains('tax_id')) {
               throw Exception(backendMessage);
             } else {
-              throw Exception('El RIF ${ranch.rif} ya está registrado en el sistema. Esta hacienda ya existe. Por favor, verifique sus datos o contacte soporte si cree que esto es un error.');
+              throw Exception(
+                  'El RIF ${ranch.rif} ya está registrado en el sistema. Esta hacienda ya existe. Por favor, verifique sus datos o contacte soporte si cree que esto es un error.');
             }
           }
         }
         // Si es otro error, relanzarlo
         rethrow;
       }
-      
+
       debugPrint('🎉 ONBOARDING: Proceso de onboarding completado');
     } catch (e) {
       debugPrint('❌ ONBOARDING: Error en _submitOnboardingData: $e');
       rethrow; // Re-lanzar el error para que _completeOnboarding lo maneje
+    }
+  }
+
+  /// Subir todos los documentos KYC después de crear el perfil
+  /// Lee las rutas de las imágenes desde FlutterSecureStorage
+  Future<void> _uploadKycDocuments() async {
+    try {
+      debugPrint('📤 ONBOARDING: Iniciando subida de documentos KYC...');
+
+      // 1. Subir selfies del liveness detection (hasta 5)
+      List<XFile> livenessSelfies = [];
+      for (int i = 1; i <= 5; i++) {
+        final livenessPath = await _storage.read(key: 'kyc_liveness_${i}_path');
+        if (livenessPath != null && livenessPath.isNotEmpty) {
+          final file = File(livenessPath);
+          if (await file.exists()) {
+            livenessSelfies.add(XFile(livenessPath));
+            debugPrint('📤 ONBOARDING: Selfie de liveness $i encontrada: $livenessPath');
+          }
+        }
+      }
+      
+      if (livenessSelfies.isNotEmpty) {
+        debugPrint('📤 ONBOARDING: Subiendo ${livenessSelfies.length} selfies del liveness...');
+        try {
+          await _kycService.uploadLivenessSelfies(selfies: livenessSelfies);
+          debugPrint('✅ ONBOARDING: Selfies del liveness subidas exitosamente');
+          // Limpiar storage
+          for (int i = 1; i <= 5; i++) {
+            await _storage.delete(key: 'kyc_liveness_${i}_path');
+          }
+        } catch (e) {
+          debugPrint('⚠️ ONBOARDING: Error al subir selfies del liveness: $e');
+        }
+      } else {
+        debugPrint('⚠️ ONBOARDING: No hay selfies del liveness guardadas');
+      }
+
+      // 2. Subir selfie principal
+      final selfiePath = await _storage.read(key: 'kyc_selfie_path');
+      if (selfiePath != null && selfiePath.isNotEmpty) {
+        debugPrint('📤 ONBOARDING: Subiendo selfie desde: $selfiePath');
+        try {
+          final selfieFile = XFile(selfiePath);
+          await _kycService.uploadSelfie(selfie: selfieFile);
+          debugPrint('✅ ONBOARDING: Selfie subida exitosamente');
+          await _storage.delete(key: 'kyc_selfie_path');
+        } catch (e) {
+          debugPrint('⚠️ ONBOARDING: Error al subir selfie: $e');
+        }
+      } else {
+        debugPrint('⚠️ ONBOARDING: No hay selfie guardada en storage');
+      }
+
+      // 3. Subir documentos CI y RIF
+      final ciPath = await _storage.read(key: 'kyc_ci_path');
+      final rifPath = await _storage.read(key: 'kyc_rif_path');
+      if (ciPath != null &&
+          ciPath.isNotEmpty &&
+          rifPath != null &&
+          rifPath.isNotEmpty) {
+        debugPrint('📤 ONBOARDING: Subiendo documentos CI y RIF...');
+        debugPrint('   CI: $ciPath');
+        debugPrint('   RIF: $rifPath');
+        try {
+          final ciFile = XFile(ciPath);
+          final rifFile = XFile(rifPath);
+          await _kycService.uploadDocument(
+            front: ciFile,
+            rif: rifFile,
+            documentType: 'ci_ve',
+            countryCode: 'VE',
+          );
+          debugPrint(
+              '✅ ONBOARDING: Documentos (CI + RIF) subidos exitosamente');
+          await _storage.delete(key: 'kyc_ci_path');
+          await _storage.delete(key: 'kyc_rif_path');
+        } catch (e) {
+          debugPrint('⚠️ ONBOARDING: Error al subir documentos: $e');
+        }
+      } else {
+        debugPrint(
+            '⚠️ ONBOARDING: Faltan documentos (CI: ${ciPath != null ? "OK" : "FALTA"}, RIF: ${rifPath != null ? "OK" : "FALTA"})');
+      }
+
+      // 4. Subir selfie con documento
+      final selfieWithDocPath =
+          await _storage.read(key: 'kyc_selfie_with_doc_path');
+      if (selfieWithDocPath != null && selfieWithDocPath.isNotEmpty) {
+        debugPrint(
+            '📤 ONBOARDING: Subiendo selfie con documento desde: $selfieWithDocPath');
+        try {
+          // Verificar que el archivo existe
+          final file = File(selfieWithDocPath);
+          if (!await file.exists()) {
+            debugPrint('❌ ONBOARDING: El archivo no existe en la ruta: $selfieWithDocPath');
+            return;
+          }
+          
+          final fileSize = await file.length();
+          debugPrint('📊 ONBOARDING: Tamaño del archivo: ${fileSize / 1024 / 1024} MB');
+          
+          if (fileSize > 5 * 1024 * 1024) {
+            debugPrint('⚠️ ONBOARDING: El archivo es demasiado grande (${fileSize / 1024 / 1024} MB). Máximo: 5 MB');
+          }
+          
+          final selfieWithDocFile = XFile(selfieWithDocPath);
+          debugPrint('📤 ONBOARDING: Creando XFile desde: ${selfieWithDocFile.path}');
+          debugPrint('📤 ONBOARDING: XFile name: ${selfieWithDocFile.name}');
+          debugPrint('📤 ONBOARDING: XFile mimeType: ${selfieWithDocFile.mimeType}');
+          
+          await _kycService.uploadSelfieWithDoc(
+              selfieWithDoc: selfieWithDocFile);
+          debugPrint('✅ ONBOARDING: Selfie con documento subida exitosamente');
+          await _storage.delete(key: 'kyc_selfie_with_doc_path');
+        } catch (e, stackTrace) {
+          debugPrint('⚠️ ONBOARDING: Error al subir selfie con documento: $e');
+          debugPrint('⚠️ ONBOARDING: Stack trace: $stackTrace');
+        }
+      } else {
+        debugPrint(
+            '⚠️ ONBOARDING: No hay selfie con documento guardada en storage');
+      }
+
+      debugPrint(
+          '✅ ONBOARDING: Proceso de subida de documentos KYC completado');
+    } catch (e, stackTrace) {
+      debugPrint('⚠️ ONBOARDING: Error al subir documentos KYC: $e');
+      debugPrint('⚠️ ONBOARDING: Stack trace: $stackTrace');
+      // No lanzar excepción para no bloquear el onboarding
+      // Los documentos se pueden subir manualmente después
     }
   }
 
@@ -730,16 +922,17 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
-        backgroundColor: colorScheme.background, // Usar color del tema
+        backgroundColor: colorScheme.surface, // Usar surface en lugar de background (deprecado)
         body: Stack(
           children: [
             // Contenido principal
             PageView(
               controller: _controller,
-              physics: const ClampingScrollPhysics(),
+              // Bloquear deslizamiento manual - solo permitir navegación con botón
+              physics: const NeverScrollableScrollPhysics(),
               onPageChanged: (index) {
                 debugPrint(
                     '🔄 ONBOARDING SCREEN: onPageChanged llamado - de $_currentPage a $index');

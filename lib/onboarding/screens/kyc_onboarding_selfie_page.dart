@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:corralx/kyc/providers/kyc_provider.dart';
 import 'package:corralx/shared/services/liveness_detection_service.dart';
@@ -20,6 +21,7 @@ class KycOnboardingSelfiePage extends StatefulWidget {
 }
 
 class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   CameraController? _cameraController;
   bool _isInitializing = false;
   bool _isProcessing = false;
@@ -37,6 +39,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
   int _currentStep = 0;
   Map<HeadPose, bool> _completedSteps = {};
   XFile? _capturedSelfie;
+  List<XFile> _livenessSelfies = []; // Lista para guardar las 5 selfies del liveness
   LivenessDetectionService? _livenessService;
   Timer? _analysisTimer;
   String? _currentInstruction;
@@ -213,28 +216,40 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
               if (remainingMs <= 0) {
                 timer.cancel();
                 if (mounted && !_completedSteps.containsKey(requiredPose)) {
-                  // Tiempo suficiente, avanzar al siguiente paso
-                  setState(() {
-                    _completedSteps[requiredPose] = true;
-                    _currentStep++;
-                    _validPoseStartTime = null;
-                    _holdStillCountdown = null;
-                  });
-
-                  if (_currentStep < _livenessSequence.length) {
-                    // Esperar un momento antes del siguiente paso
-                    Future.delayed(const Duration(milliseconds: 500)).then((_) {
-                      if (mounted && _isLivenessActive) {
-                        setState(() {
-                          _currentInstruction =
-                              _getInstructionForPose(_livenessSequence[_currentStep]);
-                        });
-                      }
+                  // Capturar selfie de este paso del liveness y esperar a que termine
+                  _captureLivenessSelfie(requiredPose).then((_) {
+                    if (!mounted) return;
+                    
+                    // Tiempo suficiente, avanzar al siguiente paso
+                    setState(() {
+                      _completedSteps[requiredPose] = true;
+                      _currentStep++;
+                      _validPoseStartTime = null;
+                      _holdStillCountdown = null;
                     });
-                  } else {
-                    // Secuencia completada, capturar selfie final
-                    _captureFinalSelfie();
-                  }
+
+                    if (_currentStep < _livenessSequence.length) {
+                      // Esperar un momento antes del siguiente paso
+                      Future.delayed(const Duration(milliseconds: 500)).then((_) {
+                        if (mounted && _isLivenessActive) {
+                          setState(() {
+                            _currentInstruction =
+                                _getInstructionForPose(_livenessSequence[_currentStep]);
+                          });
+                        }
+                      });
+                    } else {
+                      // Secuencia completada, esperar un momento adicional para asegurar que todas las capturas terminaron
+                      // y luego capturar selfie final
+                      Future.delayed(const Duration(milliseconds: 1000)).then((_) {
+                        if (mounted) {
+                          _captureFinalSelfie();
+                        }
+                      });
+                    }
+                  }).catchError((error) {
+                    debugPrint('❌ KYC: Error en captura de liveness: $error');
+                  });
                 }
               } else {
                 setState(() {
@@ -269,11 +284,40 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
     });
   }
 
-  Future<void> _captureFinalSelfie() async {
+  /// Capturar selfie durante el liveness detection (una por cada pose)
+  Future<void> _captureLivenessSelfie(HeadPose pose) async {
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return;
     }
 
+    try {
+      // Capturar foto de este paso del liveness
+      final image = await _cameraController!.takePicture();
+      
+      if (mounted) {
+        setState(() {
+          _livenessSelfies.add(image);
+        });
+        
+        // Guardar ruta en storage para subirla después
+        final key = 'kyc_liveness_${_livenessSelfies.length}_path';
+        await _storage.write(key: key, value: image.path);
+        debugPrint('💾 KYC: Selfie de liveness (${_livenessSelfies.length}) guardada: ${image.path}');
+      }
+    } catch (e) {
+      debugPrint('Error capturando selfie de liveness: $e');
+    }
+  }
+
+  Future<void> _captureFinalSelfie() async {
+    debugPrint('📸 KYC: _captureFinalSelfie() llamado');
+    
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      debugPrint('❌ KYC: Cámara no inicializada, no se puede capturar selfie final');
+      return;
+    }
+
+    debugPrint('📸 KYC: Iniciando captura de selfie final...');
     setState(() {
       _isProcessing = true;
       _isLivenessActive = false;
@@ -282,23 +326,56 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
     try {
       // Detener el stream si está activo
       if (_cameraController!.value.isStreamingImages) {
+        debugPrint('📸 KYC: Deteniendo stream de imágenes...');
         await _cameraController!.stopImageStream();
+        debugPrint('📸 KYC: Stream de imágenes detenido');
       }
       
-      // Esperar un momento para que la cámara se estabilice
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Esperar tiempo suficiente para que todas las capturas anteriores terminen
+      // y la cámara se estabilice completamente
+      debugPrint('📸 KYC: Esperando a que la cámara se estabilice...');
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      // Verificar que la cámara sigue inicializada después de la espera
+      if (!_cameraController!.value.isInitialized) {
+        debugPrint('❌ KYC: Cámara se desinicializó durante la espera');
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+          });
+        }
+        return;
+      }
       
       // Capturar la foto final
+      debugPrint('📸 KYC: Tomando foto final...');
       final image = await _cameraController!.takePicture();
+      debugPrint('📸 KYC: Foto capturada: ${image.path}');
       
       if (mounted) {
         setState(() {
           _capturedSelfie = image;
           _isProcessing = false;
         });
+        
+        // Guardar ruta de la imagen en storage para subirla después
+        debugPrint('💾 KYC: Guardando selfie en storage con clave: kyc_selfie_path');
+        await _storage.write(key: 'kyc_selfie_path', value: image.path);
+        debugPrint('💾 KYC: Selfie guardada en storage: ${image.path}');
+        
+        // Verificar que se guardó correctamente
+        final savedPath = await _storage.read(key: 'kyc_selfie_path');
+        if (savedPath != null && savedPath.isNotEmpty) {
+          debugPrint('✅ KYC: Verificación: Selfie guardada correctamente en storage: $savedPath');
+        } else {
+          debugPrint('❌ KYC: ERROR: Selfie NO se guardó en storage');
+        }
+      } else {
+        debugPrint('⚠️ KYC: Widget no montado, no se puede guardar selfie');
       }
-    } catch (e) {
-      debugPrint('Error capturando selfie final: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ KYC: Error capturando selfie final: $e');
+      debugPrint('❌ KYC: Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isProcessing = false;

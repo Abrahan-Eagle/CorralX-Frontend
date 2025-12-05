@@ -269,30 +269,20 @@ class ProductCard extends StatelessWidget {
           ),
           child:
               primaryImage != null && !isBlockedImageHost(primaryImage.fileUrl)
-                  ? ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
+              ? ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: CachedNetworkImage(
+                    imageUrl: primaryImage.fileUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
                       ),
-                      child: CachedNetworkImage(
-                        imageUrl: primaryImage.fileUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.pets,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    )
-                  : Container(
+                    ),
+                    errorWidget: (context, url, error) => Container(
                       color: Colors.grey[200],
                       child: const Icon(
                         Icons.pets,
@@ -300,6 +290,16 @@ class ProductCard extends StatelessWidget {
                         color: Colors.grey,
                       ),
                     ),
+                  ),
+                )
+              : Container(
+                  color: Colors.grey[200],
+                  child: const Icon(
+                    Icons.pets,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
+                ),
         ),
 
         // Badge de estado

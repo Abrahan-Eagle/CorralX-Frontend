@@ -57,6 +57,13 @@ class _KycOnboardingDocumentPageState
           }
         });
 
+        // Guardar ruta de la imagen en storage para subirla después
+        await _storage.write(
+          key: isCI ? 'kyc_ci_path' : 'kyc_rif_path',
+          value: image.path,
+        );
+        debugPrint('💾 KYC: ${isCI ? "CI" : "RIF"} guardada en storage: ${image.path}');
+
         // Procesar OCR automáticamente después de capturar
         if (isCI) {
           await _processCIOCR(image);

@@ -167,6 +167,43 @@ class KycService {
     );
   }
 
+  /// POST /api/kyc/upload-liveness-selfies
+  Future<Map<String, dynamic>> uploadLivenessSelfies({
+    required List<XFile> selfies,
+  }) async {
+    final token = await _storage.read(key: 'token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Token de autenticación no disponible');
+    }
+
+    final uri = Uri.parse('$_baseUrl/api/kyc/upload-liveness-selfies');
+    _logger.i('KYC MULTIPART $uri - Subiendo ${selfies.length} selfies del liveness');
+
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+
+    // Agregar cada selfie como selfies[0], selfies[1], etc.
+    for (int i = 0; i < selfies.length; i++) {
+      final file = await http.MultipartFile.fromPath(
+        'selfies[$i]',
+        selfies[i].path,
+        filename: selfies[i].name,
+      );
+      request.files.add(file);
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    _logger.e('Error KYC MULTIPART $uri: ${response.statusCode} - ${response.body}');
+    throw Exception('Error KYC MULTIPART (${response.statusCode}): ${response.body}');
+  }
+
   /// POST /api/kyc/upload-selfie-with-doc
   Future<Map<String, dynamic>> uploadSelfieWithDoc({
     required XFile selfieWithDoc,
