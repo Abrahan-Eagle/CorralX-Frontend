@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 
 import 'package:corralx/kyc/providers/kyc_provider.dart';
+import 'package:corralx/kyc/services/kyc_service.dart';
 import 'package:corralx/shared/utils/ocr_utils.dart';
 
 /// Página de captura del documento de identidad (CI venezolana) y RIF.
@@ -24,7 +25,14 @@ class _KycOnboardingDocumentPageState
   XFile? _rifImage;
   bool _isCapturing = false;
   bool _isProcessingOCR = false;
+  bool _isExtractingWithGemini = false;
+  bool _geminiExtractionDone = false;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final KycService _kycService = KycService();
+  
+  // Almacenar datos del OCR para comparar con Gemini
+  Map<String, dynamic>? _ocrCiData;
+  Map<String, dynamic>? _ocrRifData;
 
   Future<void> _captureImage({
     required bool isCI,
@@ -107,11 +115,17 @@ class _KycOnboardingDocumentPageState
           ciData.ciNumber != null ||
           ciData.dateOfBirth != null) {
         final ciDataJson = ciData.toJson();
+        _ocrCiData = ciDataJson; // Guardar para comparar con Gemini
         await _storage.write(
           key: 'kyc_extracted_ci_data',
           value: jsonEncode(ciDataJson),
         );
         debugPrint('✅ Datos CI guardados para pre-llenar formularios');
+      }
+      
+      // Si ya tenemos ambas imágenes, llamar a Gemini
+      if (_ciImage != null && _rifImage != null && !_geminiExtractionDone) {
+        await _extractDataWithGemini();
       }
     } catch (e) {
       debugPrint('Error procesando OCR de CI: $e');
@@ -140,11 +154,17 @@ class _KycOnboardingDocumentPageState
       // Guardar datos extraídos para pre-llenar formularios
       if (rifData.businessName != null || rifData.rifNumber != null) {
         final rifDataJson = rifData.toJson();
+        _ocrRifData = rifDataJson; // Guardar para comparar con Gemini
         await _storage.write(
           key: 'kyc_extracted_rif_data',
           value: jsonEncode(rifDataJson),
         );
         debugPrint('✅ Datos RIF guardados para pre-llenar formularios');
+      }
+      
+      // Si ya tenemos ambas imágenes, llamar a Gemini
+      if (_ciImage != null && _rifImage != null && !_geminiExtractionDone) {
+        await _extractDataWithGemini();
       }
     } catch (e) {
       debugPrint('Error procesando OCR de RIF: $e');
@@ -153,6 +173,96 @@ class _KycOnboardingDocumentPageState
       if (mounted) {
         setState(() {
           _isProcessingOCR = false;
+        });
+      }
+    }
+  }
+
+  /// Extraer datos con Gemini AI y comparar con OCR
+  Future<void> _extractDataWithGemini() async {
+    if (_geminiExtractionDone || _isExtractingWithGemini) {
+      return;
+    }
+
+    if (_ciImage == null || _rifImage == null) {
+      debugPrint('⚠️ KYC: No se puede extraer con Gemini: faltan imágenes');
+      return;
+    }
+
+    setState(() {
+      _isExtractingWithGemini = true;
+    });
+
+    try {
+      debugPrint('🤖 KYC: Extrayendo datos con Gemini AI...');
+      
+      final result = await _kycService.extractDocumentDataWithGemini(
+        ciImage: _ciImage!,
+        rifImage: _rifImage!,
+        ocrCiData: _ocrCiData,
+        ocrRifData: _ocrRifData,
+      );
+
+      debugPrint('✅ KYC: Datos extraídos con Gemini: ${result['data']}');
+      debugPrint('📊 KYC: Comparación - CI coincide: ${result['comparison']?['ci_matched']}, RIF coincide: ${result['comparison']?['rif_matched']}');
+
+      // Guardar datos finales (priorizando Gemini si no coinciden)
+      final finalData = result['data'] as Map<String, dynamic>;
+      final ciData = finalData['ci'] as Map<String, dynamic>?;
+      final rifData = finalData['rif'] as Map<String, dynamic>?;
+
+      if (ciData != null) {
+        await _storage.write(
+          key: 'kyc_extracted_ci_data',
+          value: jsonEncode(ciData),
+        );
+        debugPrint('✅ KYC: Datos finales de CI guardados (fuente: ${result['source']})');
+      }
+
+      if (rifData != null) {
+        await _storage.write(
+          key: 'kyc_extracted_rif_data',
+          value: jsonEncode(rifData),
+        );
+        debugPrint('✅ KYC: Datos finales de RIF guardados (fuente: ${result['source']})');
+      }
+
+      // Mostrar mensaje al usuario si los datos no coincidieron
+      if (mounted && result['comparison'] != null) {
+        final ciMatched = result['comparison']['ci_matched'] as bool? ?? true;
+        final rifMatched = result['comparison']['rif_matched'] as bool? ?? true;
+
+        if (!ciMatched || !rifMatched) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Los datos extraídos con IA difieren del OCR. Se usaron los datos de la IA. '
+                'Puedes corregirlos en los siguientes formularios.',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+
+      _geminiExtractionDone = true;
+    } catch (e) {
+      debugPrint('⚠️ KYC: Error extrayendo datos con Gemini: $e');
+      // No mostrar error al usuario, usar datos del OCR como fallback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo extraer datos con IA. Se usarán los datos del OCR.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExtractingWithGemini = false;
         });
       }
     }

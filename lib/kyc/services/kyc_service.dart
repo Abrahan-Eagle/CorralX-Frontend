@@ -214,6 +214,60 @@ class KycService {
       files: {'selfie_with_doc': selfieWithDoc},
     );
   }
+
+  /// POST /api/kyc/extract-document-data
+  /// Extraer datos de CI y RIF usando Gemini AI y comparar con OCR
+  Future<Map<String, dynamic>> extractDocumentDataWithGemini({
+    required XFile ciImage,
+    required XFile rifImage,
+    Map<String, dynamic>? ocrCiData,
+    Map<String, dynamic>? ocrRifData,
+  }) async {
+    final token = await _storage.read(key: 'token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Token de autenticación no disponible');
+    }
+
+    final uri = Uri.parse('$_baseUrl/api/kyc/extract-document-data');
+    _logger.i('KYC MULTIPART $uri - Extrayendo datos con Gemini');
+
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+
+    // Agregar imágenes
+    final ciFile = await http.MultipartFile.fromPath(
+      'ci_image',
+      ciImage.path,
+      filename: ciImage.name,
+    );
+    request.files.add(ciFile);
+
+    final rifFile = await http.MultipartFile.fromPath(
+      'rif_image',
+      rifImage.path,
+      filename: rifImage.name,
+    );
+    request.files.add(rifFile);
+
+    // Agregar datos del OCR si existen
+    if (ocrCiData != null) {
+      request.fields['ocr_ci_data'] = jsonEncode(ocrCiData);
+    }
+    if (ocrRifData != null) {
+      request.fields['ocr_rif_data'] = jsonEncode(ocrRifData);
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    _logger.e('Error KYC EXTRACT DATA $uri: ${response.statusCode} - ${response.body}');
+    throw Exception('Error extrayendo datos con IA (${response.statusCode}): ${response.body}');
+  }
 }
 
 
