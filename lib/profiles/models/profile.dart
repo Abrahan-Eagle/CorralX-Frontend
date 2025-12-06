@@ -1,5 +1,7 @@
 import 'package:corralx/profiles/models/address.dart';
 import 'package:corralx/profiles/models/ranch.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 /// Modelo Profile - Datos del marketplace de ganado
 ///
@@ -107,6 +109,25 @@ class Profile {
 
   /// Factory para crear una instancia desde JSON
   factory Profile.fromJson(Map<String, dynamic> json) {
+    // Construir URL completa si photo_users es relativa
+    String? photoUsers = json['photo_users'];
+    if (photoUsers != null && photoUsers.isNotEmpty) {
+      // Si es una URL relativa (empieza con /storage/), construir URL completa
+      if (photoUsers.startsWith('/storage/') || 
+          (photoUsers.startsWith('storage/') && !photoUsers.startsWith('http'))) {
+        // Obtener la URL base desde .env
+        final bool isProduction = kReleaseMode || 
+            const bool.fromEnvironment('dart.vm.product');
+        final String baseUrl = isProduction
+            ? (dotenv.env['API_URL_PROD'] ?? '')
+            : (dotenv.env['API_URL_LOCAL'] ?? '');
+        
+        if (baseUrl.isNotEmpty) {
+          photoUsers = baseUrl + (photoUsers.startsWith('/') ? '' : '/') + photoUsers;
+        }
+      }
+    }
+    
     return Profile(
       id: _parseInt(json['id']) ?? 0,
       userId: _parseInt(json['user_id']) ?? 0,
@@ -114,7 +135,7 @@ class Profile {
       middleName: json['middleName'],
       lastName: json['lastName'] ?? '',
       secondLastName: json['secondLastName'],
-      photoUsers: json['photo_users'],
+      photoUsers: photoUsers,
       bio: json['bio'],
       dateOfBirth: _parseDateTime(json['date_of_birth']),
       maritalStatus: json['maritalStatus'],
