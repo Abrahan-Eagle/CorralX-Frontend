@@ -601,3 +601,137 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 ```
+
+## 🔀 FLUJO DE TRABAJO CON GIT (OBLIGATORIO)
+
+### Estrategia de Ramas
+
+**CRÍTICO:** Este proyecto utiliza un flujo de trabajo estricto con dos ramas:
+
+1. **`dev`** - Rama de pruebas/testing
+   - **Backend:** Se despliega automáticamente a `test.corralx.com`
+   - **Frontend:** Debe probar contra la API de `test.corralx.com`
+   - **SIEMPRE hacer push aquí primero**
+
+2. **`main`** - Rama de producción
+   - **Backend:** Se despliega automáticamente a `corralx.com`
+   - **Frontend:** Debe probar contra la API de `corralx.com`
+   - **Solo merge cuando estés 100% seguro**
+
+### Permisos y Roles
+
+#### 👑 ADMIN (Solo el administrador principal - el usuario)
+- ✅ Puede hacer **push directamente a `dev`**
+- ✅ Puede hacer **push directamente a `main`** (solo él)
+- ✅ Puede hacer **merge de `dev` → `main`** (solo él, cuando apruebe los cambios)
+
+#### 👨‍💻 PROGRAMADOR (No admin)
+- ✅ Puede hacer **push a `dev`** solamente
+- ❌ **NO puede hacer push directo a `main`**
+- ❌ **NO puede hacer merge de `dev` → `main`** (solo el admin puede)
+
+### Proceso OBLIGATORIO
+
+#### Para ADMIN:
+
+**OPCIÓN 1: Flujo Normal (Recomendado)**
+```bash
+# 1. Trabajar en dev
+git checkout dev
+git pull origin dev
+
+# 2. Hacer cambios y commits
+git add .
+git commit -m "feat: descripción"
+
+# 3. Push a dev (pruebas)
+git push origin dev
+# ✅ Backend se despliega automáticamente a test.corralx.com
+# ✅ Frontend debe probar contra la API de test.corralx.com
+
+# 4. Verificar en test.corralx.com
+# - Probar todos los cambios
+# - Verificar que no hay errores
+# - Ejecutar tests: flutter test
+
+# 5. Si todo está bien, merge a main
+git checkout main
+git pull origin main
+git merge dev
+git push origin main
+# ✅ Backend se despliega automáticamente a corralx.com
+# ✅ Frontend debe probar contra la API de corralx.com
+```
+
+**OPCIÓN 2: Push Directo a Main (Solo Admin)**
+```bash
+# Si el admin está 100% seguro y quiere saltar pruebas
+git checkout main
+git pull origin main
+git add .
+git commit -m "feat: cambio directo a producción"
+git push origin main
+# ✅ Backend se despliega automáticamente a corralx.com
+# ✅ Frontend debe probar contra la API de corralx.com
+```
+
+#### Para PROGRAMADOR:
+
+**Flujo Único (Solo dev)**
+```bash
+# 1. Trabajar en dev
+git checkout dev
+git pull origin dev
+
+# 2. Hacer cambios y commits
+git add .
+git commit -m "feat: descripción"
+
+# 3. Push a dev (pruebas)
+git push origin dev
+# ✅ Backend se despliega automáticamente a test.corralx.com
+# ✅ Frontend debe probar contra la API de test.corralx.com
+
+# 4. Esperar aprobación del admin
+# El admin revisará en test.corralx.com y hará el merge a main
+```
+
+### Reglas CRÍTICAS
+
+⚠️ **Para PROGRAMADORES:**
+- ❌ **NUNCA intentar push a `main`** (será rechazado por GitHub)
+- ❌ **NUNCA intentar merge a `main`** (solo el admin puede)
+- ✅ **Siempre trabajar en `dev`** y esperar aprobación del admin
+
+✅ **Flujo correcto para PROGRAMADOR:**
+1. Cambios → `dev` → Push → Probar en `test.corralx.com`
+2. Notificar al admin para revisión
+3. Admin verifica y hace merge a `main` si aprueba
+
+✅ **Flujo correcto para ADMIN:**
+1. Cambios → `dev` → Push → Probar en `test.corralx.com`
+2. Si todo está bien → Merge `dev` → `main` → Push → Producción
+3. O push directo a `main` si está 100% seguro
+
+### Control de Acceso Resumido
+
+| Acción | Admin | Programador |
+|--------|-------|-------------|
+| Push a `dev` | ✅ Sí | ✅ Sí |
+| Push a `main` | ✅ Sí | ❌ No |
+| Merge `dev` → `main` | ✅ Sí | ❌ No |
+
+**El asistente debe:**
+- Siempre hacer push a `dev` primero cuando el usuario (admin) lo solicite
+- Si el usuario es admin y está seguro, puede sugerir push directo a `main` o merge desde `dev`
+- NUNCA sugerir a programadores push directo a `main` o merge a `main`
+- Recordar al usuario (admin) verificar en `test.corralx.com` antes de merge a `main` (a menos que esté 100% seguro)
+- Solo hacer merge a `main` cuando el usuario explícitamente lo solicite y confirme que está seguro
+
+### Sincronización con Backend
+
+**IMPORTANTE:** El frontend debe estar sincronizado con el backend:
+- Si el backend tiene cambios en `dev`, el frontend debe probar contra `test.corralx.com`
+- Si el backend tiene cambios en `main`, el frontend debe probar contra `corralx.com`
+- Antes de hacer merge a `main` en frontend, verificar que el backend también esté actualizado en `main`
+- Los cambios de API del backend deben reflejarse primero en `dev` antes de actualizar el frontend
