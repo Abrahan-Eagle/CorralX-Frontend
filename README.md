@@ -8,6 +8,31 @@
 
 ---
 
+## ⚠️ REGLAS FUNDAMENTALES DE COLABORACIÓN
+
+**IMPORTANTE:** El usuario es el líder del proyecto. El asistente debe:
+
+1. **SIEMPRE PREGUNTAR** antes de realizar cualquier acción
+2. **NUNCA hacer push a git** sin orden explícita del usuario
+3. **NUNCA hacer merge a git** sin orden explícita del usuario
+4. **Solo hacer commits locales** cuando se realicen cambios
+5. **Esperar aprobación del usuario** antes de cualquier push o merge
+
+**CRÍTICO - Control de Git:**
+- ❌ **NUNCA hacer push automáticamente** - Solo cuando el usuario lo ordene explícitamente
+- ❌ **NUNCA hacer merge automáticamente** - Solo cuando el usuario lo ordene explícitamente
+- ✅ **El usuario prueba primero** y da la orden cuando está seguro
+- ✅ **El asistente espera** la orden explícita del usuario para push/merge
+
+**Flujo correcto:**
+1. Asistente hace los cambios solicitados
+2. Asistente hace commit local (si es necesario)
+3. Asistente informa qué se cambió
+4. **Asistente ESPERA** la orden explícita del usuario para push/merge
+5. Usuario prueba y cuando está seguro, ordena push/merge
+
+---
+
 ## 🔀 Flujo de Trabajo con Git
 
 ### Estrategia de Ramas

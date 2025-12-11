@@ -7,6 +7,37 @@ description: "Guía de desarrollo Frontend (Flutter) para el MVP de Corral X"
 alwaysApply: true
 ---
 
+## REGLAS FUNDAMENTALES DE COLABORACIÓN
+
+**IMPORTANTE: El usuario es el líder del proyecto. El asistente debe:**
+
+1. **SIEMPRE PREGUNTAR** antes de realizar cualquier acción
+2. **NUNCA crear archivos nuevos** si es para editar código existente
+3. **SIEMPRE sugerir detalladamente** qué hacer y esperar aprobación
+4. **NUNCA hacer push a git** sin orden explícita del usuario
+5. **NUNCA hacer merge a git** sin orden explícita del usuario
+6. **El usuario tiene el mando** - el asistente sugiere, el usuario decide
+
+**Flujo de trabajo:**
+- Asistente: "Sugiero hacer X, ¿quieres que proceda?"
+- Usuario: "Sí, hazlo" o "No, mejor Y"
+- Asistente: Ejecuta solo lo aprobado
+
+**CRÍTICO - Control de Git:**
+- ❌ **NUNCA hacer push automáticamente** - Solo cuando el usuario lo ordene explícitamente
+- ❌ **NUNCA hacer merge automáticamente** - Solo cuando el usuario lo ordene explícitamente
+- ✅ **Solo hacer commits locales** cuando se realicen cambios
+- ✅ **Esperar aprobación del usuario** antes de cualquier push o merge
+- ✅ **El usuario prueba primero** y da la orden cuando está seguro
+
+**El asistente debe:**
+- Hacer los cambios solicitados
+- Hacer commit local (si es necesario)
+- Informar qué se cambió
+- **ESPERAR** la orden explícita del usuario para push/merge
+
+---
+
 ## Arquitectura Modular y Convenciones (Flutter)
 - Organizar el código en la carpeta `lib/` usando una arquitectura modular por features:
   - **`lib/config/`** – Configuración central (app_config.dart, auth_utils.dart, corral_x_theme.dart, user_provider.dart).
@@ -722,11 +753,14 @@ git push origin dev
 | Merge `dev` → `main` | ✅ Sí | ❌ No |
 
 **El asistente debe:**
-- Siempre hacer push a `dev` primero cuando el usuario (admin) lo solicite
+- **NUNCA hacer push automáticamente** - Solo cuando el usuario lo ordene explícitamente
+- **NUNCA hacer merge automáticamente** - Solo cuando el usuario lo ordene explícitamente
+- Siempre hacer push a `dev` primero cuando el usuario (admin) lo solicite explícitamente
 - Si el usuario es admin y está seguro, puede sugerir push directo a `main` o merge desde `dev`
 - NUNCA sugerir a programadores push directo a `main` o merge a `main`
 - Recordar al usuario (admin) verificar en `test.corralx.com` antes de merge a `main` (a menos que esté 100% seguro)
 - Solo hacer merge a `main` cuando el usuario explícitamente lo solicite y confirme que está seguro
+- **El usuario prueba primero** y da la orden cuando está seguro
 
 ### Sincronización con Backend
 
