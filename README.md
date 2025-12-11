@@ -15,13 +15,13 @@
 **IMPORTANTE:** Este proyecto utiliza un flujo de trabajo con dos ramas principales:
 
 1. **`dev`** - Rama de pruebas/testing
-   - Despliegue automático a: `test.corralx.com` (backend)
-   - Ambiente: `APP_DEBUG=true`
+   - **Backend:** Se despliega automáticamente a `test.corralx.com`
+   - **Frontend:** Debe probar contra la API de `test.corralx.com`
    - Todos los cambios deben probarse aquí primero
 
 2. **`main`** - Rama de producción
-   - Despliegue automático a: `corralx.com` (backend)
-   - Ambiente: `APP_DEBUG=false`
+   - **Backend:** Se despliega automáticamente a `corralx.com`
+   - **Frontend:** Debe probar contra la API de `corralx.com`
    - Solo se actualiza cuando los cambios están 100% verificados
 
 ### Permisos y Roles
@@ -52,7 +52,8 @@ git commit -m "feat: descripción del cambio"
 
 # 3. Push a dev (pruebas)
 git push origin dev
-# ✅ Se despliega automáticamente a test.corralx.com (backend)
+# ✅ Backend se despliega automáticamente a test.corralx.com
+# ✅ Frontend debe probar contra la API de test.corralx.com
 
 # 4. Verificar en test.corralx.com
 # - Probar todos los cambios
@@ -64,7 +65,8 @@ git checkout main
 git pull origin main
 git merge dev
 git push origin main
-# ✅ Se despliega automáticamente a corralx.com (backend)
+# ✅ Backend se despliega automáticamente a corralx.com
+# ✅ Frontend debe probar contra la API de corralx.com
 ```
 
 **OPCIÓN 2: Push Directo a Main (Solo Admin)**
@@ -75,7 +77,8 @@ git pull origin main
 git add .
 git commit -m "feat: cambio directo a producción"
 git push origin main
-# ✅ Se despliega automáticamente a corralx.com (backend)
+# ✅ Backend se despliega automáticamente a corralx.com
+# ✅ Frontend debe probar contra la API de corralx.com
 ```
 
 #### Para PROGRAMADOR:
@@ -92,7 +95,8 @@ git commit -m "feat: descripción del cambio"
 
 # 3. Push a dev (pruebas)
 git push origin dev
-# ✅ Se despliega automáticamente a test.corralx.com (backend)
+# ✅ Backend se despliega automáticamente a test.corralx.com
+# ✅ Frontend debe probar contra la API de test.corralx.com
 
 # 4. Esperar aprobación del admin
 # El admin revisará en test.corralx.com y hará el merge a main
