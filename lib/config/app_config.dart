@@ -9,13 +9,13 @@ class AppConfig {
   static String get apiUrlLocal =>
       dotenv.env['API_URL_LOCAL'] ?? 'http://192.168.27.12:8000';
   static String get apiUrlProd =>
-      dotenv.env['API_URL_PROD'] ?? 'https://backend.corralx.com';
+      dotenv.env['API_URL_PROD'] ?? 'https://corralx.com';
 
   // URLs de WebSocket
   static String get wsUrlLocal =>
       dotenv.env['WS_URL_LOCAL'] ?? 'ws://192.168.27.12:6001';
   static String get wsUrlProd =>
-      dotenv.env['WS_URL_PROD'] ?? 'wss://backend.corralx.com';
+      dotenv.env['WS_URL_PROD'] ?? 'wss://corralx.com';
 
   // Configuración de Firebase
   static String get firebaseProjectId =>

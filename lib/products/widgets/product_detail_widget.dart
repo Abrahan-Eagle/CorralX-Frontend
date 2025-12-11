@@ -814,7 +814,7 @@ class ProductDetailWidget extends StatelessWidget {
         // Crear URL HTTPS que WhatsApp pueda reconocer como link clicable
         // Usar el dominio del backend según el entorno
         final baseUrl = AppConfig.isProduction
-            ? 'https://backend.corralx.com'
+            ? 'https://corralx.com'
             : 'http://192.168.27.12:8000';
         final deepLink =
             '$baseUrl/api/products/${product.id}'; // ✅ Incluir /api/ para la ruta correcta

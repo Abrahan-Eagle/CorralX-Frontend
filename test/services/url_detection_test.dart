@@ -20,7 +20,7 @@ void main() {
       
       expect(baseUrl, equals('$expectedUrl/api'));
       expect(baseUrl, contains('192.168.27.12'));
-      expect(baseUrl, isNot(contains('backend.corralx.com')));
+      expect(baseUrl, isNot(contains('corralx.com')));
     });
 
     test('ApiService baseUrl debe usar API_URL_LOCAL en modo debug', () {
@@ -29,7 +29,7 @@ void main() {
       
       expect(apiBaseUrl, equals(expectedUrl));
       expect(apiBaseUrl, contains('192.168.27.12'));
-      expect(apiBaseUrl, isNot(contains('backend.corralx.com')));
+      expect(apiBaseUrl, isNot(contains('corralx.com')));
     });
 
     test('LocationService debe usar API_URL_LOCAL en modo debug', () {

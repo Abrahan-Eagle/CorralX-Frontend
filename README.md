@@ -220,7 +220,7 @@ Archivo: `env_config.json`
 {
   "ENVIRONMENT": "development",
   "API_URL_LOCAL": "http://192.168.27.12:8000",
-  "API_URL_PROD": "https://backend.corralx.com"
+  "API_URL_PROD": "https://corralx.com"
 }
 ```
 
@@ -904,9 +904,9 @@ Order.status = completed + ratings actualizados
 {
   "ENVIRONMENT": "development|production",
   "API_URL_LOCAL": "http://TU_IP:8000",
-  "API_URL_PROD": "https://backend.corralx.com",
+  "API_URL_PROD": "https://corralx.com",
   "WS_URL_LOCAL": "ws://TU_IP:6001",
-  "WS_URL_PROD": "wss://backend.corralx.com",
+  "WS_URL_PROD": "wss://corralx.com",
   "CONNECTION_TIMEOUT": "30000",
   "MAX_RETRY_ATTEMPTS": "3"
 }

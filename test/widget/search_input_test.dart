@@ -15,9 +15,9 @@ void main() {
       // Si no existe .env en tests, usar valores mock
       dotenv.env.addAll({
         'API_URL_LOCAL': 'http://192.168.27.12:8000',
-        'API_URL_PROD': 'https://backend.corralx.com',
+        'API_URL_PROD': 'https://corralx.com',
         'WS_URL_LOCAL': 'ws://192.168.27.12:6001',
-        'WS_URL_PROD': 'wss://backend.corralx.com',
+        'WS_URL_PROD': 'wss://corralx.com',
         'ENVIRONMENT': 'development',
       });
     }

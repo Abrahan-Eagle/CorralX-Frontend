@@ -15,7 +15,7 @@ void main() {
     } catch (e) {
       dotenv.env.addAll({
         'API_URL_LOCAL': 'http://192.168.27.12:8000',
-        'API_URL_PROD': 'https://backend.corralx.com',
+        'API_URL_PROD': 'https://corralx.com',
         'ENVIRONMENT': 'development',
       });
     }
