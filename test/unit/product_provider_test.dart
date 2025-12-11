@@ -19,7 +19,7 @@ void main() {
         'API_URL_LOCAL': 'http://127.0.0.1:1',
         'API_URL_PROD': 'http://127.0.0.1:1',
         'WS_URL_LOCAL': 'ws://192.168.27.12:6001',
-        'WS_URL_PROD': 'wss://backend.corralx.com',
+        'WS_URL_PROD': 'wss://corralx.com',
         'ENVIRONMENT': 'development',
       });
     }

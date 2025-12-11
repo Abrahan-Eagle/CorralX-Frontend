@@ -31,7 +31,7 @@ void main() {
 
     test('apiUrlProd debe leer correctamente de .env', () {
       final apiUrlProd = AppConfig.apiUrlProd;
-      final expectedUrl = dotenv.env['API_URL_PROD'] ?? 'https://backend.corralx.com';
+      final expectedUrl = dotenv.env['API_URL_PROD'] ?? 'https://corralx.com';
       
       expect(apiUrlProd, equals(expectedUrl));
     });
