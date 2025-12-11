@@ -8,6 +8,144 @@
 
 ---
 
+## 🔀 Flujo de Trabajo con Git
+
+### Estrategia de Ramas
+
+**IMPORTANTE:** Este proyecto utiliza un flujo de trabajo con dos ramas principales:
+
+1. **`dev`** - Rama de pruebas/testing
+   - Despliegue automático a: `test.corralx.com` (backend)
+   - Ambiente: `APP_DEBUG=true`
+   - Todos los cambios deben probarse aquí primero
+
+2. **`main`** - Rama de producción
+   - Despliegue automático a: `corralx.com` (backend)
+   - Ambiente: `APP_DEBUG=false`
+   - Solo se actualiza cuando los cambios están 100% verificados
+
+### Permisos y Roles
+
+#### 👑 ADMIN (Solo el administrador principal)
+- ✅ Puede hacer **push directamente a `dev`**
+- ✅ Puede hacer **push directamente a `main`** (solo él)
+- ✅ Puede hacer **merge de `dev` → `main`** (solo él, cuando apruebe los cambios)
+
+#### 👨‍💻 PROGRAMADOR (No admin)
+- ✅ Puede hacer **push a `dev`** solamente
+- ❌ **NO puede hacer push directo a `main`**
+- ❌ **NO puede hacer merge de `dev` → `main`** (solo el admin puede)
+
+### Proceso de Trabajo
+
+#### Para ADMIN:
+
+**OPCIÓN 1: Flujo Normal (Recomendado)**
+```bash
+# 1. Trabajar en la rama dev
+git checkout dev
+git pull origin dev
+
+# 2. Hacer cambios y commits
+git add .
+git commit -m "feat: descripción del cambio"
+
+# 3. Push a dev (pruebas)
+git push origin dev
+# ✅ Se despliega automáticamente a test.corralx.com (backend)
+
+# 4. Verificar en test.corralx.com
+# - Probar todos los cambios
+# - Verificar que no hay errores
+# - Ejecutar tests: flutter test
+
+# 5. Si todo está bien, merge a main
+git checkout main
+git pull origin main
+git merge dev
+git push origin main
+# ✅ Se despliega automáticamente a corralx.com (backend)
+```
+
+**OPCIÓN 2: Push Directo a Main (Solo Admin)**
+```bash
+# Si estás 100% seguro y quieres saltar pruebas
+git checkout main
+git pull origin main
+git add .
+git commit -m "feat: cambio directo a producción"
+git push origin main
+# ✅ Se despliega automáticamente a corralx.com (backend)
+```
+
+#### Para PROGRAMADOR:
+
+**Flujo Único (Solo dev)**
+```bash
+# 1. Trabajar en la rama dev
+git checkout dev
+git pull origin dev
+
+# 2. Hacer cambios y commits
+git add .
+git commit -m "feat: descripción del cambio"
+
+# 3. Push a dev (pruebas)
+git push origin dev
+# ✅ Se despliega automáticamente a test.corralx.com (backend)
+
+# 4. Esperar aprobación del admin
+# El admin revisará en test.corralx.com y hará el merge a main
+```
+
+### Reglas Importantes
+
+⚠️ **Para PROGRAMADORES:**
+- ❌ **NUNCA intentar push a `main`** (será rechazado por GitHub)
+- ❌ **NUNCA intentar merge a `main`** (solo el admin puede)
+- ✅ **Siempre trabajar en `dev`** y esperar aprobación del admin
+
+✅ **Flujo correcto para PROGRAMADOR:**
+1. Cambios → `dev` → Push → Probar en `test.corralx.com`
+2. Notificar al admin para revisión
+3. Admin verifica y hace merge a `main` si aprueba
+
+✅ **Flujo correcto para ADMIN:**
+1. Cambios → `dev` → Push → Probar en `test.corralx.com`
+2. Si todo está bien → Merge `dev` → `main` → Push → Producción
+3. O push directo a `main` si estás 100% seguro
+
+### Control de Acceso Resumido
+
+| Acción | Admin | Programador |
+|--------|-------|-------------|
+| Push a `dev` | ✅ Sí | ✅ Sí |
+| Push a `main` | ✅ Sí | ❌ No |
+| Merge `dev` → `main` | ✅ Sí | ❌ No |
+
+### Configuración de GitHub (Branch Protection)
+
+Para aplicar estas restricciones automáticamente:
+
+1. **Rama `main`:**
+   - Activar "Require pull request reviews before merging"
+   - Activar "Restrict who can push to matching branches" (solo admin)
+   - Activar "Require status checks to pass before merging"
+
+2. **Rama `dev`:**
+   - Permitir push a todos los colaboradores
+   - No requiere pull request (push directo permitido)
+
+### Sincronización con Backend
+
+**IMPORTANTE:** El frontend debe estar sincronizado con el backend:
+- Si el backend tiene cambios en `dev`, el frontend debe probar contra `test.corralx.com`
+- Si el backend tiene cambios en `main`, el frontend debe probar contra `corralx.com`
+- Antes de hacer merge a `main` en frontend, verificar que el backend también esté actualizado en `main`
+- Los cambios de API del backend deben reflejarse primero en `dev` antes de actualizar el frontend
+
+---
+
 ## 🎯 Visión del Proyecto
 
 Conectar a ganaderos de Venezuela en un marketplace confiable y simple. App móvil nativa con UI moderna, navegación fluida y experiencia de usuario optimizada.
