@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:corralx/config/auth_utils.dart';
+import 'package:corralx/config/app_config.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -11,9 +11,8 @@ import 'package:corralx/chat/services/firebase_service.dart';
 final logger = Logger();
 const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-final String baseUrl = const bool.fromEnvironment('dart.vm.product')
-    ? dotenv.env['API_URL_PROD']!
-    : dotenv.env['API_URL_LOCAL']!;
+// Usa AppConfig que detecta automáticamente los 3 entornos (local/test/production)
+final String baseUrl = AppConfig.apiUrl;
 
 class UserProvider with ChangeNotifier {
   bool _isAuthenticated = false;

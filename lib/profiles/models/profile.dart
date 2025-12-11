@@ -1,7 +1,6 @@
 import 'package:corralx/profiles/models/address.dart';
 import 'package:corralx/profiles/models/ranch.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart';
+import 'package:corralx/config/app_config.dart';
 
 /// Modelo Profile - Datos del marketplace de ganado
 ///
@@ -115,12 +114,8 @@ class Profile {
       // Si es una URL relativa (empieza con /storage/), construir URL completa
       if (photoUsers.startsWith('/storage/') || 
           (photoUsers.startsWith('storage/') && !photoUsers.startsWith('http'))) {
-        // Obtener la URL base desde .env
-        final bool isProduction = kReleaseMode || 
-            const bool.fromEnvironment('dart.vm.product');
-        final String baseUrl = isProduction
-            ? (dotenv.env['API_URL_PROD'] ?? '')
-            : (dotenv.env['API_URL_LOCAL'] ?? '');
+        // Obtener la URL base desde AppConfig
+        final String baseUrl = AppConfig.apiUrl;
         
         if (baseUrl.isNotEmpty) {
           photoUsers = baseUrl + (photoUsers.startsWith('/') ? '' : '/') + photoUsers;

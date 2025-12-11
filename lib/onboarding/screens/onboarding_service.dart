@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:corralx/config/app_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 
 final logger = Logger();
 
-final String baseUrl = const bool.fromEnvironment('dart.vm.product')
-    ? dotenv.env['API_URL_PROD']!
-    : dotenv.env['API_URL_LOCAL']!;
+// Usa AppConfig que detecta automáticamente los 3 entornos (local/test/production)
+final String baseUrl = AppConfig.apiUrl;
 
 class OnboardingService {
   final _storage = const FlutterSecureStorage();

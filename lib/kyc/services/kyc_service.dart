@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:corralx/config/app_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -9,10 +9,7 @@ import 'package:logger/logger.dart';
 
 /// Servicio para comunicarse con los endpoints de KYC del backend.
 class KycService {
-  KycService()
-      : _baseUrl = const bool.fromEnvironment('dart.vm.product')
-            ? dotenv.env['API_URL_PROD']!
-            : dotenv.env['API_URL_LOCAL']!;
+  KycService() : _baseUrl = AppConfig.apiUrl;
 
   final String _baseUrl;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();

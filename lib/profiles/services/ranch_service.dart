@@ -2,26 +2,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart';
+import 'package:corralx/config/app_config.dart';
 
 /// Servicio para manejar operaciones CRUD de Ranches/Haciendas
 class RanchService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
+  // URL base desde AppConfig - Detecta automáticamente 3 entornos (local/test/production)
   static String get _baseUrl {
-    // Lógica simple: release = producción, debug = local
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product');
-
-    final String baseUrl = isProduction
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
-
-    print(
-        '🔧 RanchService - Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+    final String baseUrl = AppConfig.apiUrl;
+    print('🔧 RanchService - Entorno: ${AppConfig.buildType.toUpperCase()}');
     print('🔧 RanchService - URL Base: $baseUrl');
-
     return baseUrl;
   }
 

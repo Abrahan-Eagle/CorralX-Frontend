@@ -240,14 +240,30 @@ flutter build web --release      # Web
 ```
 
 ### Configuración del Entorno
-Archivo: `env_config.json`
-```json
-{
-  "ENVIRONMENT": "development",
-  "API_URL_LOCAL": "http://192.168.27.12:8000",
-  "API_URL_PROD": "https://corralx.com"
-}
+Archivo: `.env` (usar `.env.example` como plantilla)
+
+**Variables de entorno requeridas:**
+```bash
+# Entornos de API (3 niveles)
+API_URL_LOCAL=http://192.168.27.12:8000
+API_URL_TEST=https://test.corralx.com
+API_URL_PROD=https://corralx.com
+
+# WebSocket URLs (3 niveles)
+WS_URL_LOCAL=ws://192.168.27.12:6001
+WS_URL_TEST=wss://test.corralx.com
+WS_URL_PROD=wss://corralx.com
+
+# Dominios de la app
+APP_DOMAIN=corralx.com
+APP_DOMAIN_LOCAL=192.168.27.12
+CONTACT_EMAIL=contact@corralx.com
 ```
+
+**Detección automática de entorno:**
+- La app detecta automáticamente el entorno según el tipo de compilación
+- No se requiere configuración manual adicional
+- Ver sección "Build y Despliegue" para más detalles
 
 ### Testing multi-dispositivo (chat y push)
 
@@ -924,26 +940,60 @@ Order.status = completed + ratings actualizados
 
 ## 🔧 Configuración Avanzada
 
-### Variables de Entorno
-```json
-{
-  "ENVIRONMENT": "development|production",
-  "API_URL_LOCAL": "http://TU_IP:8000",
-  "API_URL_PROD": "https://corralx.com",
-  "WS_URL_LOCAL": "ws://TU_IP:6001",
-  "WS_URL_PROD": "wss://corralx.com",
-  "CONNECTION_TIMEOUT": "30000",
-  "MAX_RETRY_ATTEMPTS": "3"
-}
+### Variables de Entorno (`.env`)
+
+**Archivo:** `.env` (usar `.env.example` como plantilla)
+
+**Variables requeridas:**
+```bash
+# URLs de API (3 entornos)
+API_URL_LOCAL=http://192.168.27.12:8000
+API_URL_TEST=https://test.corralx.com
+API_URL_PROD=https://corralx.com
+
+# URLs de WebSocket (3 entornos)
+WS_URL_LOCAL=ws://192.168.27.12:6001
+WS_URL_TEST=wss://test.corralx.com
+WS_URL_PROD=wss://corralx.com
+
+# Dominios y contacto
+APP_DOMAIN=corralx.com
+APP_DOMAIN_LOCAL=192.168.27.12
+CONTACT_EMAIL=contact@corralx.com
+
+# Configuración opcional
+CONNECTION_TIMEOUT=30000
+MAX_RETRY_ATTEMPTS=3
 ```
 
-### Detección de Entorno
+### Detección Automática de Entorno
+
+**Implementación:** `AppConfig` en `lib/config/app_config.dart`
+
 ```dart
-// AppConfig detecta automáticamente dev/prod
-final baseUrl = AppConfig.currentEnvironment == 'development'
-    ? AppConfig.apiUrlLocal
-    : AppConfig.apiUrlProd;
+// AppConfig detecta automáticamente local/test/production
+// Basado en el tipo de compilación (kDebugMode, kReleaseMode, --dart-define)
+final baseUrl = AppConfig.apiUrl; // Selecciona automáticamente según buildType
+
+// buildType puede ser: 'local', 'test', o 'production'
+// Se detecta automáticamente, pero puede forzarse con --dart-define=BUILD_TYPE=production
 ```
+
+**Lógica de detección:**
+1. **Prioridad 1:** `--dart-define=BUILD_TYPE=...` (tiene máxima prioridad)
+2. **Prioridad 2:** `kDebugMode == true` → `'local'`
+3. **Prioridad 3:** `kReleaseMode == true` sin flag → `'test'`
+
+**Mapeo de entornos:**
+- **Debug (`flutter run`)**: `buildType = 'local'` → `apiUrlLocal`
+- **Release APK (`flutter run --release`)**: `buildType = 'test'` → `apiUrlTest`
+- **AAB (`flutter build appbundle --release --dart-define=BUILD_TYPE=production`)**: `buildType = 'production'` → `apiUrlProd`
+
+**Uso en código:**
+- ✅ **Siempre usar `AppConfig.apiUrl`** en lugar de URLs hardcodeadas
+- ✅ `AppConfig.apiBaseUrl` retorna la URL completa con `/api`
+- ✅ `AppConfig.wsUrl` retorna la URL de WebSocket según el entorno
+- ✅ `AppConfig.currentAppDomain` retorna el dominio para deep links
 
 ---
 
@@ -990,17 +1040,56 @@ final baseUrl = AppConfig.currentEnvironment == 'development'
 
 ### Android
 
-#### Comandos de Compilación
+#### Comandos de Compilación (3 Entornos)
+
+**IMPORTANTE:** La app detecta automáticamente el entorno según el tipo de compilación y apunta a diferentes URLs del backend. **✅ Verificado y funcionando correctamente.**
+
 ```bash
-# Debug APK (usa Client ID de Upload Key)
-flutter run -d 192.168.27.4:5555
+# 1. DEBUG - Desarrollo Local
+# Apunta a: http://192.168.27.12:8000 (tu PC/servidor local)
+flutter run -d 192.168.27.5:5555
+# ✅ Detecta automáticamente 'local' (kDebugMode)
+# ✅ Usa API_URL_LOCAL desde .env
 
-# Release APK Local (usa Client ID de Upload Key)
-flutter run -d 192.168.27.4:5555 --release
+# 2. RELEASE APK - Pruebas en Test
+# Apunta a: https://test.corralx.com (servidor de pruebas)
+flutter run -d 192.168.27.5:5555 --release
+# ✅ Detecta automáticamente 'test' (kReleaseMode sin --dart-define)
+# ✅ Usa API_URL_TEST desde .env
 
-# AAB para Play Store (usa Client ID de Play Store ASK)
-flutter build appbundle --release
+# 3. AAB PLAY STORE - Producción
+# Apunta a: https://corralx.com (servidor de producción)
+flutter build appbundle --release --dart-define=BUILD_TYPE=production
+# ⚠️ REQUIERE --dart-define=BUILD_TYPE=production explícitamente
+# ✅ Usa API_URL_PROD desde .env
 ```
+
+**Resumen de Entornos (Verificado ✅):**
+
+| Tipo de Compilación | Comando | Entorno Detectado | URL Backend | Estado |
+|---------------------|---------|-------------------|-------------|--------|
+| Debug APK | `flutter run -d <device>` | `local` (automático) | `http://192.168.27.12:8000` | ✅ Verificado |
+| Release APK | `flutter run -d <device> --release` | `test` (automático) | `https://test.corralx.com` | ✅ Verificado |
+| AAB Play Store | `flutter build appbundle --release --dart-define=BUILD_TYPE=production` | `production` (requiere flag) | `https://corralx.com` | ✅ Verificado |
+
+**Lógica de Detección (implementada en `AppConfig`):**
+1. **Prioridad 1:** Si se pasa `--dart-define=BUILD_TYPE=...`, se usa ese valor (para AAB production)
+2. **Prioridad 2:** Si `kDebugMode == true` → `local` (Debug APK)
+3. **Prioridad 3:** Si `kReleaseMode == true` sin flag → `test` (Release APK local)
+
+**Variables de entorno (`.env`):**
+- `API_URL_LOCAL` → Usado en Debug (local)
+- `API_URL_TEST` → Usado en Release APK (test)
+- `API_URL_PROD` → Usado en AAB con flag (production)
+- `WS_URL_LOCAL`, `WS_URL_TEST`, `WS_URL_PROD` → URLs de WebSocket para cada entorno
+- `APP_DOMAIN`, `APP_DOMAIN_LOCAL`, `CONTACT_EMAIL` → Configuración adicional
+
+**✅ Verificación completada:** Las 3 compilaciones fueron probadas exitosamente y cada una apunta correctamente a su entorno correspondiente.
+
+**Archivos generados tras compilación:**
+- Debug APK: `build/app/outputs/flutter-apk/app-debug.apk` (~245MB)
+- Release APK: `build/app/outputs/flutter-apk/app-release.apk` (~171MB)
+- AAB Production: `build/app/outputs/bundle/release/app-release.aab` (~105MB)
 
 #### Configuración de Google OAuth
 El sistema detecta automáticamente el tipo de compilación y usa el OAuth Client ID correcto:

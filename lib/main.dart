@@ -328,6 +328,7 @@ import 'package:logger/logger.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:corralx/auth/services/api_service.dart';
+import 'package:corralx/config/app_config.dart';
 import 'package:provider/provider.dart';
 import 'package:corralx/config/user_provider.dart';
 import 'package:corralx/config/corral_x_theme.dart';
@@ -381,9 +382,8 @@ import 'package:corralx/insights/providers/ia_insights_provider.dart';
 
 final ApiService apiService = ApiService();
 
-final String baseUrl = const bool.fromEnvironment('dart.vm.product')
-    ? dotenv.env['API_URL_PROD']!
-    : dotenv.env['API_URL_LOCAL']!;
+// Usa AppConfig que detecta automáticamente los 3 entornos (local/test/production)
+final String baseUrl = AppConfig.apiUrl;
 
 // Configuración del logger
 final logger = Logger();

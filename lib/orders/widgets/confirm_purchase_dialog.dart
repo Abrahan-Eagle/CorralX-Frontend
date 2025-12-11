@@ -4,6 +4,7 @@ import 'package:corralx/orders/providers/order_provider.dart';
 import 'package:corralx/products/models/product.dart';
 import 'package:corralx/products/providers/product_provider.dart';
 import 'package:corralx/profiles/providers/profile_provider.dart';
+import 'package:corralx/config/app_config.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -230,7 +231,7 @@ class _ConfirmPurchaseDialogState extends State<ConfirmPurchaseDialog> {
       final response = await http.get(
         url,
         headers: {
-          'User-Agent': 'CorralX App (contact@corralx.com)',
+          'User-Agent': 'CorralX App (${AppConfig.contactEmail})',
         },
       );
 

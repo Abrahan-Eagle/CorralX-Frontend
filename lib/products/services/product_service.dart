@@ -9,14 +9,11 @@ class ProductService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static bool get _isTestMode => TestEnvironment.isRunningTests;
 
-  // URL base desde AppConfig - Lógica simple: release = producción, debug = local
+  // URL base desde AppConfig - Detecta automáticamente 3 entornos (local/test/production)
   static String get _baseUrl {
-    final String baseUrl = AppConfig.isProduction
-        ? AppConfig.apiUrlProd
-        : AppConfig.apiUrlLocal;
+    final String baseUrl = AppConfig.apiUrl;
 
-    print(
-        '🔧 ProductService - Modo: ${AppConfig.isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+    print('🔧 ProductService - Entorno: ${AppConfig.buildType.toUpperCase()}');
     print('🔧 ProductService - URL Base: $baseUrl');
 
     return baseUrl;

@@ -10,14 +10,11 @@ class OrderService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static bool get _isTestMode => TestEnvironment.isRunningTests;
 
-  /// URL base desde AppConfig
+  /// URL base desde AppConfig - Detecta automáticamente 3 entornos (local/test/production)
   static String get _baseUrl {
-    final String baseUrl = AppConfig.isProduction
-        ? AppConfig.apiUrlProd
-        : AppConfig.apiUrlLocal;
+    final String baseUrl = AppConfig.apiUrl;
 
-    print(
-        '🔧 OrderService - Modo: ${AppConfig.isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+    print('🔧 OrderService - Entorno: ${AppConfig.buildType.toUpperCase()}');
     print('🔧 OrderService - URL Base: $baseUrl');
 
     return baseUrl;

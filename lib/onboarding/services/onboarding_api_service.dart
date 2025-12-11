@@ -3,20 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart';
+import 'package:corralx/config/app_config.dart';
 
 class OnboardingApiService {
-  String get baseUrl {
-    // Lógica simple: release = producción, debug = local
-    final bool isProduction =
-        kReleaseMode || const bool.fromEnvironment('dart.vm.product');
-
-    final String apiUrl = isProduction
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
-    return '$apiUrl/api';
-  }
+  // Usa AppConfig que detecta automáticamente los 3 entornos (local/test/production)
+  String get baseUrl => AppConfig.apiBaseUrl;
 
   String? _authToken;
 

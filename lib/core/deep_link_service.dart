@@ -1,4 +1,5 @@
 import 'package:app_links/app_links.dart';
+import '../config/app_config.dart';
 
 /// Servicio para manejar deep links en la app
 class DeepLinkService {
@@ -43,11 +44,12 @@ class DeepLinkService {
     final path = uri.path.startsWith('/') ? uri.path : '/${uri.path}';
     print('🔍 Path procesado: $path');
 
-    // Verificar si la URL es de corralx.com (HTTP o HTTPS)
+    // Verificar si la URL es del dominio configurado (HTTP o HTTPS)
+    // Usa variables de entorno desde AppConfig
     if ((uri.scheme == 'https' || uri.scheme == 'http') &&
-        (uri.host.contains('corralx.com') ||
-            uri.host.contains('corralx') ||
-            uri.host.contains('192.168.27.12'))) {
+        (uri.host.contains(AppConfig.appDomain) ||
+            uri.host.contains(AppConfig.appDomainLocal) ||
+            uri.host.contains('corralx'))) {
       // Soporta /product/, /products/, /api/product/, y /api/products/
       if (path.startsWith('/product/') ||
           path.startsWith('/products/') ||

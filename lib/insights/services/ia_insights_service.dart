@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:corralx/config/app_config.dart';
 import 'package:corralx/insights/models/ia_insights_payload.dart';
 
 /// Servicio encargado de consultar el backend (o proveer datos simulados)
@@ -13,17 +13,11 @@ class IAInsightsService {
 
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
+  // URL base desde AppConfig - Detecta automáticamente 3 entornos (local/test/production)
   static String get _baseUrl {
-    // Lógica simple: release = producción, debug = local
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product');
-
-    final String url = isProduction
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
-
+    final String url = AppConfig.apiUrl;
     debugPrint(
-        '🤖 IAInsightsService - URL base (${isProduction ? "PROD" : "DEV"}): $url');
+        '🤖 IAInsightsService - Entorno: ${AppConfig.buildType.toUpperCase()} - URL: $url');
     return url;
   }
 

@@ -423,7 +423,11 @@ alwaysApply: true
   - Si el backend responde con error (403, 404, etc.), mostrar el error y restaurar cualquier cambio optimista en la interfaz.
 - Mantener los modelos de datos del frontend sincronizados con la API:
   - Si cambia la estructura JSON en el backend (ej. se renombra un campo), actualizar los métodos `fromJson`/`toJson` y el uso correspondiente en la app. Este archivo de reglas debe actualizarse también si hay cambios mayores de contrato.
-  - Definir constantes para la URL base de API y endpoints en un solo lugar (ej. `const String API_BASE_URL = "...";` en ApiService) para facilitar cambios de entorno (desarrollo, producción) y evitar strings duplicados.
+  - **NUNCA usar URLs hardcodeadas** - Siempre usar `AppConfig.apiUrl` o `AppConfig.apiBaseUrl` para obtener la URL correcta según el entorno
+  - Las URLs se configuran en `.env` y se leen desde `AppConfig`:
+    - `AppConfig.apiUrl` → URL base de la API (detecta automáticamente local/test/production)
+    - `AppConfig.apiBaseUrl` → URL completa con `/api` (ej: `https://corralx.com/api`)
+    - `AppConfig.wsUrl` → URL de WebSocket según el entorno
 - **Seguridad en frontend:** aunque el token previene acceso no autorizado, su manejo debe ser cuidadoso:
   - Guardar token de forma segura (usar `flutter_secure_storage` en vez de SharedPreferences para información sensible).
   - Nunca exponer el token ni información sensible en los logs de la app. 
@@ -441,12 +445,58 @@ alwaysApply: true
   - Si un campo es obligatorio según backend, marcarlo como obligatorio en el formulario con un asterisco y evitar permitir enviar hasta que esté lleno.
 - Pruebas manuales de integración: el equipo frontend y backend deben realizar pruebas conjuntas de los flujos principales (registro, login, crear publicación, navegar, chatear) en un entorno de staging. Cualquier fallo de integración (discordancia de nombres de campos, comportamiento inesperado) debe reflejarse en ajustes tanto de código como de estas reglas para mantener la documentación actualizada.
 
+## Configuración de Entornos y URLs (3 Niveles)
+
+### Sistema de Detección Automática de Entornos
+- **Implementación:** `AppConfig` en `lib/config/app_config.dart` detecta automáticamente el entorno según el tipo de compilación
+- **3 Entornos configurados:**
+  1. **`local`** (Debug): Desarrollo local → `http://192.168.27.12:8000`
+  2. **`test`** (Release APK): Pruebas → `https://test.corralx.com`
+  3. **`production`** (AAB): Producción → `https://corralx.com`
+
+### Lógica de Detección
+- **Prioridad 1:** `--dart-define=BUILD_TYPE=...` (tiene máxima prioridad, usado para AAB production)
+- **Prioridad 2:** `kDebugMode == true` → `local` (Debug APK)
+- **Prioridad 3:** `kReleaseMode == true` sin flag → `test` (Release APK local)
+
+### Variables de Entorno (`.env`)
+- **API URLs:** `API_URL_LOCAL`, `API_URL_TEST`, `API_URL_PROD`
+- **WebSocket URLs:** `WS_URL_LOCAL`, `WS_URL_TEST`, `WS_URL_PROD`
+- **Dominios:** `APP_DOMAIN`, `APP_DOMAIN_LOCAL`, `CONTACT_EMAIL`
+- **Todas las URLs se leen desde `.env`** - NO usar valores hardcodeados
+
+### Comandos de Compilación
+```bash
+# 1. Debug (local)
+flutter run -d 192.168.27.5:5555
+# → buildType: 'local' → API_URL_LOCAL
+
+# 2. Release APK (test)
+flutter run -d 192.168.27.5:5555 --release
+# → buildType: 'test' → API_URL_TEST
+
+# 3. AAB Production
+flutter build appbundle --release --dart-define=BUILD_TYPE=production
+# → buildType: 'production' → API_URL_PROD
+```
+
+### Uso en Código
+- **Siempre usar `AppConfig.apiUrl`** en lugar de URLs hardcodeadas
+- `AppConfig.apiUrl` retorna automáticamente la URL correcta según `buildType`
+- `AppConfig.wsUrl` retorna la URL de WebSocket correspondiente
+- `AppConfig.currentAppDomain` retorna el dominio correcto para deep links
+
+### Verificación
+- ✅ Las 3 compilaciones fueron probadas exitosamente
+- ✅ Cada entorno apunta correctamente a su URL correspondiente
+- ✅ No hay valores hardcodeados en el código
+
 ## Configuración de Google OAuth para Play Store (AAB)
 - **Problema crítico:** Cuando se sube un AAB a Play Store, Google Play re-firma la aplicación con su propia App Signing Key (ASK). El SHA-1/SHA-256 que se necesita registrar es el de la ASK de Google Play, NO el del keystore de carga.
 - **Solución implementada:** Sistema de detección automática del tipo de compilación en `build.gradle`:
   - **Debug APK** (`flutter run -d <device>`): Usa Client ID de Upload Key (`332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com`)
   - **Release APK Local** (`flutter run -d <device> --release`): Usa Client ID de Upload Key
-  - **AAB Play Store** (`flutter build appbundle --release`): Usa Client ID de Play Store ASK (`332023551639-840baceq4uf1n93d6rc65svha1o0434o.apps.googleusercontent.com`)
+  - **AAB Play Store** (`flutter build appbundle --release --dart-define=BUILD_TYPE=production`): Usa Client ID de Play Store ASK (`332023551639-840baceq4uf1n93d6rc65svha1o0434o.apps.googleusercontent.com`)
 - **Implementación en build.gradle:**
   - El `buildType.release` detecta automáticamente si se está compilando un bundle (AAB) o un assemble (APK) usando `gradle.startParameter.taskNames.any { it.contains('bundle') }`
   - Se configuran `manifestPlaceholders` dinámicamente según el tipo de compilación

@@ -2,21 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart';
+import 'package:corralx/config/app_config.dart';
 
 final logger = Logger();
 const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-// Lógica simple: release = producción, debug = local
-String get baseUrl {
-  final bool isProduction =
-      kReleaseMode || const bool.fromEnvironment('dart.vm.product');
-
-  return isProduction
-      ? dotenv.env['API_URL_PROD']!
-      : dotenv.env['API_URL_LOCAL']!;
-}
+// Usa AppConfig que detecta automáticamente los 3 entornos (local/test/production)
+String get baseUrl => AppConfig.apiUrl;
 
 class ApiService {
   // Enviar el token al backend

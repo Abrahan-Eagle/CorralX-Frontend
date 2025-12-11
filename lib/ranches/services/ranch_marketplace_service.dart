@@ -1,21 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:corralx/config/app_config.dart';
 import '../../profiles/models/ranch.dart';
 
 class RanchMarketplaceService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  static String get _baseUrl {
-    // Lógica simple: release = producción, debug = local
-    final bool isProduction = kReleaseMode ||
-        const bool.fromEnvironment('dart.vm.product');
-    return isProduction
-        ? dotenv.env['API_URL_PROD']!
-        : dotenv.env['API_URL_LOCAL']!;
-  }
+  // URL base desde AppConfig - Detecta automáticamente 3 entornos (local/test/production)
+  static String get _baseUrl => AppConfig.apiUrl;
 
   static Future<Map<String, String>> _getHeaders() async {
     final token = await _storage.read(key: 'token');

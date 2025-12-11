@@ -97,6 +97,8 @@ android {
             manifestPlaceholders = [
                 googleOauthClientId: "332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com"
             ]
+            // Debug apunta a local
+            buildConfigField "String", "BUILD_TYPE", '"local"'
         }
 
         release {
@@ -113,11 +115,15 @@ android {
                 manifestPlaceholders = [
                     googleOauthClientId: "332023551639-840baceq4uf1n93d6rc65svha1o0434o.apps.googleusercontent.com"
                 ]
+                // AAB apunta a producción
+                buildConfigField "String", "BUILD_TYPE", '"production"'
             } else {
                 // Client ID de Upload Key para APK release local
                 manifestPlaceholders = [
                     googleOauthClientId: "332023551639-bbhv3lmlbgeu9t7oap48k006m7uf0lkh.apps.googleusercontent.com"
                 ]
+                // APK release local apunta a test
+                buildConfigField "String", "BUILD_TYPE", '"test"'
             }
         }
     }
@@ -147,6 +153,8 @@ dependencies {
 
 flutter {
     source = "../.."
+    // Configurar --dart-define automáticamente según el tipo de build
+    // Esto se hace a través de los comandos documentados en README.md
 }
 
 
