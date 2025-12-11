@@ -119,3 +119,7 @@ app.*.symbols
 !/dev/ci/**/Gemfile.lockandroid/gradle/wrapper/gradle-*.zip
 android/gradle/wrapper/gradle-*.zip
 .env
+
+# Archivos de credenciales de Google OAuth (NO deben estar en git)
+client_secret_*.json
+**/client_secret*.json
