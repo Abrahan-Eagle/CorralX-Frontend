@@ -58,18 +58,18 @@ class _KycOnboardingIntroPageState extends State<KycOnboardingIntroPage> {
               const SizedBox(height: 24),
               _buildStep(
                 context,
-                index: 1,
-                title: 'Documento de identidad',
-                description:
-                    'Tomaremos una foto frontal de tu cédula venezolana (CI). Opcionalmente podrás añadir el dorso.',
-              ),
-              const SizedBox(height: 16),
-              _buildStep(
-                context,
                 index: 2,
                 title: 'Selfie',
                 description:
                     'Luego haremos una foto de tu rostro para confirmar que eres tú.',
+              ),
+              const SizedBox(height: 16),
+              _buildStep(
+                context,
+                index: 1,
+                title: 'Documento de identidad',
+                description:
+                    'Tomaremos una foto frontal de tu cédula venezolana (CI). Opcionalmente podrás añadir el dorso.',
               ),
               const SizedBox(height: 16),
               _buildStep(
