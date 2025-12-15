@@ -278,27 +278,9 @@ class _KycOnboardingDocumentPageState
       );
       return false;
     }
-
-    final kycProvider = Provider.of<KycProvider>(context, listen: false);
-    final success = await kycProvider.submitDocument(
-      front: _ciImage!,
-      rif: _rifImage!,
-      documentType: 'ci_ve',
-      countryCode: 'VE',
-    );
-
-    if (!success && mounted) {
-      final error = kycProvider.errorMessage ??
-          'No se pudo enviar los documentos. Intenta nuevamente.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-
-    return success;
+    // En el flujo de onboarding solo validamos que existan las fotos de CI y RIF.
+    // La subida real al backend se hará más adelante cuando el perfil exista.
+    return true;
   }
 
   @override

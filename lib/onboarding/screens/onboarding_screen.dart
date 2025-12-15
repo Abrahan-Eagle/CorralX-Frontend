@@ -475,18 +475,45 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           debugPrint(
               '✅ ONBOARDING SCREEN: Página 1 (KYC Intro) - no necesita guardado');
           return true;
-        case 2: // KycOnboardingSelfiePage - el guardado se hace automáticamente
+        case 2: // KycOnboardingSelfiePage - subir selfie si hace falta
+          debugPrint('📝 ONBOARDING SCREEN: Procesando página 2 (KYC Selfie)');
+          final selfieState = _kycSelfieKey.currentState as dynamic;
+          if (selfieState == null) {
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Error: No se pudo acceder al estado de la página 2');
+            return false;
+          }
+          final selfieOk = await selfieState.submitSelfieIfNeeded();
           debugPrint(
-              '✅ ONBOARDING SCREEN: Página 2 (KYC Selfie) - guardado automático');
-          return true;
-        case 3: // KycOnboardingDocumentPage - el guardado se hace automáticamente
+              '✅ ONBOARDING SCREEN: Resultado submitSelfieIfNeeded: $selfieOk');
+          return selfieOk;
+        case 3: // KycOnboardingDocumentPage - subir CI + RIF si hace falta
           debugPrint(
-              '✅ ONBOARDING SCREEN: Página 3 (KYC Document) - guardado automático');
-          return true;
-        case 4: // KycOnboardingSelfieWithDocPage - el guardado se hace automáticamente
+              '📝 ONBOARDING SCREEN: Procesando página 3 (KYC Document)');
+          final docState = _kycDocumentKey.currentState as dynamic;
+          if (docState == null) {
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Error: No se pudo acceder al estado de la página 3');
+            return false;
+          }
+          final docsOk = await docState.submitDocumentIfNeeded();
           debugPrint(
-              '✅ ONBOARDING SCREEN: Página 4 (KYC Selfie with Doc) - guardado automático');
-          return true;
+              '✅ ONBOARDING SCREEN: Resultado submitDocumentIfNeeded: $docsOk');
+          return docsOk;
+        case 4: // KycOnboardingSelfieWithDocPage - validar selfie con CI
+          debugPrint(
+              '📝 ONBOARDING SCREEN: Procesando página 4 (KYC Selfie with Doc)');
+          final selfieDocState = _kycSelfieWithDocKey.currentState as dynamic;
+          if (selfieDocState == null) {
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Error: No se pudo acceder al estado de la página 4');
+            return false;
+          }
+          final selfieDocOk =
+              await selfieDocState.submitSelfieWithDocIfNeeded();
+          debugPrint(
+              '✅ ONBOARDING SCREEN: Resultado submitSelfieWithDocIfNeeded: $selfieDocOk');
+          return selfieDocOk;
         case 5: // OnboardingPage1 - Datos Personales
           debugPrint(
               '📝 ONBOARDING SCREEN: Procesando página 5 (Datos Personales)');
@@ -778,13 +805,15 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           final file = File(livenessPath);
           if (await file.exists()) {
             livenessSelfies.add(XFile(livenessPath));
-            debugPrint('📤 ONBOARDING: Selfie de liveness $i encontrada: $livenessPath');
+            debugPrint(
+                '📤 ONBOARDING: Selfie de liveness $i encontrada: $livenessPath');
           }
         }
       }
-      
+
       if (livenessSelfies.isNotEmpty) {
-        debugPrint('📤 ONBOARDING: Subiendo ${livenessSelfies.length} selfies del liveness...');
+        debugPrint(
+            '📤 ONBOARDING: Subiendo ${livenessSelfies.length} selfies del liveness...');
         try {
           await _kycService.uploadLivenessSelfies(selfies: livenessSelfies);
           debugPrint('✅ ONBOARDING: Selfies del liveness subidas exitosamente');
@@ -856,22 +885,27 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           // Verificar que el archivo existe
           final file = File(selfieWithDocPath);
           if (!await file.exists()) {
-            debugPrint('❌ ONBOARDING: El archivo no existe en la ruta: $selfieWithDocPath');
+            debugPrint(
+                '❌ ONBOARDING: El archivo no existe en la ruta: $selfieWithDocPath');
             return;
           }
-          
+
           final fileSize = await file.length();
-          debugPrint('📊 ONBOARDING: Tamaño del archivo: ${fileSize / 1024 / 1024} MB');
-          
+          debugPrint(
+              '📊 ONBOARDING: Tamaño del archivo: ${fileSize / 1024 / 1024} MB');
+
           if (fileSize > 5 * 1024 * 1024) {
-            debugPrint('⚠️ ONBOARDING: El archivo es demasiado grande (${fileSize / 1024 / 1024} MB). Máximo: 5 MB');
+            debugPrint(
+                '⚠️ ONBOARDING: El archivo es demasiado grande (${fileSize / 1024 / 1024} MB). Máximo: 5 MB');
           }
-          
+
           final selfieWithDocFile = XFile(selfieWithDocPath);
-          debugPrint('📤 ONBOARDING: Creando XFile desde: ${selfieWithDocFile.path}');
+          debugPrint(
+              '📤 ONBOARDING: Creando XFile desde: ${selfieWithDocFile.path}');
           debugPrint('📤 ONBOARDING: XFile name: ${selfieWithDocFile.name}');
-          debugPrint('📤 ONBOARDING: XFile mimeType: ${selfieWithDocFile.mimeType}');
-          
+          debugPrint(
+              '📤 ONBOARDING: XFile mimeType: ${selfieWithDocFile.mimeType}');
+
           await _kycService.uploadSelfieWithDoc(
               selfieWithDoc: selfieWithDocFile);
           debugPrint('✅ ONBOARDING: Selfie con documento subida exitosamente');
@@ -925,7 +959,8 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: colorScheme.surface, // Usar surface en lugar de background (deprecado)
+        backgroundColor: colorScheme
+            .surface, // Usar surface en lugar de background (deprecado)
         body: Stack(
           children: [
             // Contenido principal
@@ -989,7 +1024,9 @@ class OnboardingScreenState extends State<OnboardingScreen> {
                           text: _currentPage == onboardingPages.length - 1
                               ? 'Comenzar'
                               : 'Siguiente',
-                          onPressed: _isLoading ? null : _handleNext,
+                          onPressed: _isLoading || !_isCurrentPageValid
+                              ? null
+                              : _handleNext,
                           isLoading: _isLoading,
                           width: 200,
                           icon: _currentPage == onboardingPages.length - 1

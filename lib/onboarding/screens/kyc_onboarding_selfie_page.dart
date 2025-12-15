@@ -497,22 +497,9 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
       );
       return false;
     }
-
-    final kycProvider = Provider.of<KycProvider>(context, listen: false);
-    final success = await kycProvider.submitSelfie(_capturedSelfie!);
-
-    if (!success && mounted) {
-      final error = kycProvider.errorMessage ??
-          'No se pudo enviar la selfie. Intenta nuevamente.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-
-    return success;
+    // En el flujo de onboarding solo validamos que la selfie exista.
+    // La subida real al backend se hará más adelante cuando el perfil exista.
+    return true;
   }
 
   @override
