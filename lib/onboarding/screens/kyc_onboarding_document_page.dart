@@ -305,18 +305,11 @@ class _KycOnboardingDocumentPageState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isTablet = MediaQuery.of(context).size.width > 600;
+    final mediaQuery = MediaQuery.of(context);
+    final isTablet = mediaQuery.size.width > 600;
 
     return Scaffold(
       backgroundColor: colorScheme.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -324,156 +317,168 @@ class _KycOnboardingDocumentPageState
 
             return Padding(
               padding: EdgeInsets.all(padding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header compacto
-                  Text(
-                    'Verificación de documentos',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onBackground,
-                    ),
+              child: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - padding * 2,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Fotografía tu CI y RIF',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onBackground.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header compacto
+                        Text(
+                          'Verificación de documentos',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onBackground,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Fotografía tu CI y RIF',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onBackground.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
 
-                  // Card única con CI y RIF (altura reducida)
-                  SizedBox(
-                    height: isTablet ? 280 : 240,
-                    child: _buildUnifiedDocumentCard(
-                      context,
-                      cardHeight: isTablet ? 280 : 240,
-                    ),
-                  ),
+                        // Card única con CI y RIF (altura adaptada)
+                        SizedBox(
+                          height: isTablet ? 280 : 240,
+                          child: _buildUnifiedDocumentCard(
+                            context,
+                            cardHeight: isTablet ? 280 : 240,
+                          ),
+                        ),
 
-                  const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                  // Indicador de procesamiento OCR (compacto)
-                  if (_isProcessingOCR)
-                    Container(
-                      height: 36,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colorScheme.primary,
+                        // Indicador de procesamiento OCR (compacto)
+                        if (_isProcessingOCR)
+                          Container(
+                            height: 36,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Extrayendo datos...',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onPrimaryContainer,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Extrayendo datos...',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onPrimaryContainer,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
-                  // Indicador de subida (compacto)
-                  Consumer<KycProvider>(
-                    builder: (context, kyc, child) {
-                      if (kyc.isUploading) {
-                        return Container(
-                          height: 36,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        // Indicador de subida (compacto)
+                        Consumer<KycProvider>(
+                          builder: (context, kyc, child) {
+                            if (kyc.isUploading) {
+                              return Container(
+                                height: 36,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primaryContainer
+                                      .withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Subiendo...',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color:
+                                              colorScheme.onPrimaryContainer,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Instrucciones compactas
+                        Container(
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withOpacity(0.3),
+                            color: colorScheme.surfaceVariant.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Subiendo...',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onPrimaryContainer,
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: colorScheme.primary,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Consejos:',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              _buildTipItem(
+                                context,
+                                'Superficie plana y buena iluminación',
+                                compact: true,
+                              ),
+                              _buildTipItem(
+                                context,
+                                'Sin sombras y datos legibles',
+                                compact: true,
                               ),
                             ],
                           ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Instrucciones compactas
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 16,
-                              color: colorScheme.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Consejos:',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        _buildTipItem(
-                          context,
-                          'Superficie plana y buena iluminación',
-                          compact: true,
-                        ),
-                        _buildTipItem(
-                          context,
-                          'Sin sombras y datos legibles',
-                          compact: true,
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             );
           },

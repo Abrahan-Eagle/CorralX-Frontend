@@ -334,6 +334,11 @@ class _KycOnboardingSelfieWithDocPageState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final screenSize = MediaQuery.of(context).size;
+    final screenHeight = screenSize.height;
+    // Offset inferior del badge de validación adaptado a la altura de la pantalla
+    final validationBottomOffset =
+        (screenHeight * 0.16).clamp(80.0, 140.0); // responsive
 
     if (_isInitializing) {
       return Scaffold(
@@ -373,14 +378,6 @@ class _KycOnboardingSelfieWithDocPageState
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -540,7 +537,7 @@ class _KycOnboardingSelfieWithDocPageState
           // Indicador de validación en tiempo real (abajo, más visible)
           if (_capturedSelfieWithDoc == null)
             Positioned(
-              bottom: 120,
+              bottom: validationBottomOffset,
               left: 0,
               right: 0,
               child: Center(
