@@ -26,14 +26,14 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
   bool _isInitializing = false;
   bool _isProcessing = false;
   bool _isLivenessActive = false;
-
+  
   // Secuencia de poses para liveness detection
   final List<HeadPose> _livenessSequence = [
     HeadPose.front,
     HeadPose.left,
     HeadPose.right,
   ];
-
+  
   int _currentStep = 0;
   Map<HeadPose, bool> _completedSteps = {};
   XFile? _capturedSelfie;
@@ -152,7 +152,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
         final deviceOrientation = _cameraController!.value.deviceOrientation;
         final isPortrait = deviceOrientation == DeviceOrientation.portraitUp ||
             deviceOrientation == DeviceOrientation.portraitDown;
-
+        
         // Cámara frontal: en portrait la imagen viene rotada 270° (o 90° dependiendo del dispositivo)
         // Probar con diferentes rotaciones si no detecta
         InputImageRotation rotation;
@@ -178,17 +178,17 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
           _isFaceDetected = result.detectedPose != null;
           _poseProgress = result.progress; // Actualizar progreso
           _lastEulerY = result.headEulerY;
-
+          
           // Suavizar el progreso para evitar fluctuaciones (filtro exponencial)
           const smoothingFactor =
               0.3; // 0.0 = sin suavizado, 1.0 = completamente suavizado
           _smoothedProgress = _smoothedProgress * (1 - smoothingFactor) +
               _poseProgress * smoothingFactor;
-
+          
           // Calcular pista direccional basada en los ángulos de Euler
           _directionHint = _calculateDirectionHint(
               requiredPose, result.headEulerY, result.headEulerZ);
-
+          
           _currentInstruction =
               result.errorMessage ?? _getInstructionForPose(requiredPose);
         });
@@ -201,13 +201,13 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
             _validPoseStartTime = DateTime.now();
             // Tiempo adaptativo: más corto y tolerante
             // 0.4s si progreso > 90%, 0.7s si > 70%, 1.0s si menor
-            final adaptiveTime = result.progress >= 0.9
+            final adaptiveTime = result.progress >= 0.9 
                 ? 0.4
-                : result.progress >= 0.7
+                : result.progress >= 0.7 
                     ? 0.7
                     : 1.0;
             _holdStillCountdown = adaptiveTime.ceil();
-
+            
             // Iniciar timer para actualizar el contador (cada 200ms para feedback más fluido)
             _countdownTimer?.cancel();
             final targetTimeMs =
@@ -218,7 +218,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
                 timer.cancel();
                 return;
               }
-
+              
               final elapsed = DateTime.now()
                   .difference(_validPoseStartTime!)
                   .inMilliseconds;
@@ -226,14 +226,14 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
               final remaining = (remainingMs / 1000)
                   .ceil()
                   .clamp(0, _holdStillCountdown!); // Redondear hacia arriba
-
+              
               if (remainingMs <= 0) {
                 timer.cancel();
                 if (mounted && !_completedSteps.containsKey(requiredPose)) {
                   // Capturar selfie de este paso del liveness y esperar a que termine
                   _captureLivenessSelfie(requiredPose).then((_) {
                     if (!mounted) return;
-
+                    
                     // Tiempo suficiente, avanzar al siguiente paso
                     setState(() {
                       _completedSteps[requiredPose] = true;
@@ -310,12 +310,12 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
     try {
       // Capturar foto de este paso del liveness
       final image = await _cameraController!.takePicture();
-
+      
       if (mounted) {
         setState(() {
           _livenessSelfies.add(image);
         });
-
+        
         // Guardar ruta en storage para subirla después
         final key = 'kyc_liveness_${_livenessSelfies.length}_path';
         await _storage.write(key: key, value: image.path);
@@ -329,7 +329,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
 
   Future<void> _captureFinalSelfie() async {
     debugPrint('📸 KYC: _captureFinalSelfie() llamado');
-
+    
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       debugPrint(
           '❌ KYC: Cámara no inicializada, no se puede capturar selfie final');
@@ -349,12 +349,12 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
         await _cameraController!.stopImageStream();
         debugPrint('📸 KYC: Stream de imágenes detenido');
       }
-
+      
       // Esperar tiempo suficiente para que todas las capturas anteriores terminen
       // y la cámara se estabilice completamente
       debugPrint('📸 KYC: Esperando a que la cámara se estabilice...');
       await Future.delayed(const Duration(milliseconds: 1000));
-
+      
       // Verificar que la cámara sigue inicializada después de la espera
       if (!_cameraController!.value.isInitialized) {
         debugPrint('❌ KYC: Cámara se desinicializó durante la espera');
@@ -365,24 +365,24 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
         }
         return;
       }
-
+      
       // Capturar la foto final
       debugPrint('📸 KYC: Tomando foto final...');
       final image = await _cameraController!.takePicture();
       debugPrint('📸 KYC: Foto capturada: ${image.path}');
-
+      
       if (mounted) {
         setState(() {
           _capturedSelfie = image;
           _isProcessing = false;
         });
-
+        
         // Guardar ruta de la imagen en storage para subirla después
         debugPrint(
             '💾 KYC: Guardando selfie en storage con clave: kyc_selfie_path');
         await _storage.write(key: 'kyc_selfie_path', value: image.path);
         debugPrint('💾 KYC: Selfie guardada en storage: ${image.path}');
-
+        
         // Verificar que se guardó correctamente
         final savedPath = await _storage.read(key: 'kyc_selfie_path');
         if (savedPath != null && savedPath.isNotEmpty) {
@@ -416,9 +416,9 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
   String? _calculateDirectionHint(
       HeadPose requiredPose, double? eulerY, double? eulerZ) {
     if (eulerY == null || eulerZ == null) return null;
-
+    
     const threshold = 5.0;
-
+    
     switch (requiredPose) {
       case HeadPose.right:
         // Para girar: usamos principalmente eulerY (yaw)
@@ -528,11 +528,11 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final screenWidth = constraints.maxWidth;
-
-            final cardWidth = isTablet
+            
+            final cardWidth = isTablet 
                 ? (screenWidth * 0.6).clamp(300.0, 400.0)
                 : (screenWidth * 0.85).clamp(250.0, double.infinity);
-
+            
             return Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isTablet ? 32.0 : 16.0,
@@ -543,23 +543,23 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header
-                    Text(
-                      'Verificación facial',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onBackground,
-                      ),
+                  // Header
+                  Text(
+                    'Verificación facial',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onBackground,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isLivenessActive
-                          ? 'Coloca tu rostro dentro del óvalo y sigue las instrucciones.'
-                          : 'Sigue las instrucciones y mueve tu cabeza según se indique.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onBackground.withOpacity(0.8),
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isLivenessActive
+                        ? 'Coloca tu rostro dentro del óvalo y sigue las instrucciones.'
+                        : 'Sigue las instrucciones y mueve tu cabeza según se indique.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onBackground.withOpacity(0.8),
                     ),
+                  ),
                     const SizedBox(height: 16),
 
                     // Cámara preview con guía
@@ -603,9 +603,9 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
                     if (_isLivenessActive ||
                         (_capturedSelfie == null && !_isInitializing))
                       _buildProgressIndicators(context),
-
+                    
                     if (_capturedSelfie != null) _buildSuccessMessage(context),
-
+                    
                     // Botón "Comenzar verificación" - solo cuando no está activo
                     if (!_isLivenessActive &&
                         _capturedSelfie == null &&
@@ -647,7 +647,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
                           ),
                         ),
                       ),
-
+                    
                     // Upload indicator
                     Consumer<KycProvider>(
                       builder: (context, kyc, child) {
@@ -686,7 +686,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
                         return const SizedBox.shrink();
                       },
                     ),
-
+                    
                     // Espacio adicional al final para evitar que choque con el botón siguiente
                     const SizedBox(height: 20),
                   ],
@@ -745,7 +745,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
               child: InkWell(
                 onTap: () async {
                   // Detener stream si está activo
-                  if (_cameraController != null &&
+                  if (_cameraController != null && 
                       _cameraController!.value.isStreamingImages) {
                     await _cameraController!.stopImageStream();
                   }
@@ -879,15 +879,15 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
       BuildContext context, HeadPose requiredPose) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
+    
     // Usar progreso suavizado para mejor UX
     final displayProgress = _smoothedProgress;
-
+    
     // Determinar color según el progreso (con animación suave)
     Color progressColor;
     IconData statusIcon;
     String statusText;
-
+    
     if (displayProgress >= 0.8) {
       progressColor = Colors.green; // Casi listo
       statusIcon = Icons.check_circle;
@@ -901,7 +901,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
       statusIcon = Icons.info_outline;
       statusText = 'Ajusta tu posición';
     }
-
+    
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -910,7 +910,7 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: displayProgress >= 0.8
+          color: displayProgress >= 0.8 
               ? progressColor.withOpacity(0.5)
               : colorScheme.outline.withOpacity(0.3),
           width: displayProgress >= 0.8 ? 2 : 1,
@@ -973,38 +973,38 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
             _buildYawAxisIndicator(context, requiredPose, progressColor)
           else
             // Barra de progreso mejorada (genérica)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Stack(
-                children: [
-                  // Fondo
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Stack(
+              children: [
+                // Fondo
+                Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  // Progreso con animación
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    height: 8,
+                ),
+                // Progreso con animación
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  height: 8,
                     width: MediaQuery.of(context).size.width *
                         0.7 *
                         displayProgress,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          progressColor,
-                          progressColor.withOpacity(0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        progressColor,
+                        progressColor.withOpacity(0.7),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
           // Pista direccional si está disponible
           if (_directionHint != null && displayProgress < 0.8)
             Padding(
@@ -1226,9 +1226,9 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
                         : colorScheme.outline.withOpacity(0.3),
                   ),
               ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1329,7 +1329,7 @@ class FaceGuidePainter extends CustomPainter {
     // Dibujar fondo oscuro fuera del óvalo (estilo Onfido)
     final backgroundPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-
+    
     // Óvalo guía en el centro
     final center = Offset(size.width / 2, size.height / 2);
     final ovalWidth = size.width * 0.75;
@@ -1339,9 +1339,9 @@ class FaceGuidePainter extends CustomPainter {
       width: ovalWidth,
       height: ovalHeight,
     );
-
+    
     final ovalPath = Path()..addOval(ovalRect);
-
+    
     // Recortar el fondo para mostrar solo el área del óvalo
     final clippedPath =
         Path.combine(PathOperation.difference, backgroundPath, ovalPath);
@@ -1359,7 +1359,7 @@ class FaceGuidePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12.0;
     canvas.drawOval(ovalRect, outerBorderPaint);
-
+    
     // Borde medio
     final middleBorderPaint = Paint()
       ..color = isFaceDetected
@@ -1368,7 +1368,7 @@ class FaceGuidePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8.0;
     canvas.drawOval(ovalRect, middleBorderPaint);
-
+    
     // Borde interior (principal - muy visible)
     final borderPaint = Paint()
       ..color = isFaceDetected ? Colors.green : Colors.white
@@ -1393,7 +1393,7 @@ class FaceGuidePainter extends CustomPainter {
         progressPaint,
       );
     }
-
+    
     // Dibujar contador si está activo
     if (showHoldStill && countdown != null) {
       final textPainter = TextPainter(

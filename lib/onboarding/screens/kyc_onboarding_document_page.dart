@@ -19,17 +19,20 @@ class KycOnboardingDocumentPage extends StatefulWidget {
       _KycOnboardingDocumentPageState();
 }
 
-class _KycOnboardingDocumentPageState
-    extends State<KycOnboardingDocumentPage> {
+class _KycOnboardingDocumentPageState extends State<KycOnboardingDocumentPage> {
   XFile? _ciImage;
   XFile? _rifImage;
   bool _isCapturing = false;
   bool _isProcessingOCR = false;
   bool _isExtractingWithGemini = false;
   bool _geminiExtractionDone = false;
+  bool? _ciMatchedByIa;
+  bool? _rifMatchedByIa;
+  bool? _isCiValid;
+  bool? _isRifValid;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final KycService _kycService = KycService();
-  
+
   // Almacenar datos del OCR para comparar con Gemini
   Map<String, dynamic>? _ocrCiData;
   Map<String, dynamic>? _ocrRifData;
@@ -70,7 +73,8 @@ class _KycOnboardingDocumentPageState
           key: isCI ? 'kyc_ci_path' : 'kyc_rif_path',
           value: image.path,
         );
-        debugPrint('💾 KYC: ${isCI ? "CI" : "RIF"} guardada en storage: ${image.path}');
+        debugPrint(
+            '💾 KYC: ${isCI ? "CI" : "RIF"} guardada en storage: ${image.path}');
 
         // Procesar OCR automáticamente después de capturar
         if (isCI) {
@@ -121,8 +125,22 @@ class _KycOnboardingDocumentPageState
           value: jsonEncode(ciDataJson),
         );
         debugPrint('✅ Datos CI guardados para pre-llenar formularios');
+
+        // Validación ligera local: verificar formato de número de CI venezolano
+        final ciNumber = ciData.ciNumber?.toString().trim();
+        if (ciNumber != null && ciNumber.isNotEmpty) {
+          // Formato típico: V-12345678, E-12345678, con o sin guion
+          final ciRegex = RegExp(r'^[VE]-?\d{5,9}$', caseSensitive: false);
+          final isValid = ciRegex.hasMatch(ciNumber);
+          debugPrint(
+              '🔎 Validación local CI - número: $ciNumber, válido: $isValid');
+          _isCiValid = isValid;
+        } else {
+          debugPrint('🔎 Validación local CI - número no encontrado');
+          _isCiValid = false;
+        }
       }
-      
+
       // Si ya tenemos ambas imágenes, llamar a Gemini
       if (_ciImage != null && _rifImage != null && !_geminiExtractionDone) {
         await _extractDataWithGemini();
@@ -160,8 +178,22 @@ class _KycOnboardingDocumentPageState
           value: jsonEncode(rifDataJson),
         );
         debugPrint('✅ Datos RIF guardados para pre-llenar formularios');
+
+        // Validación ligera local: verificar formato de RIF venezolano
+        final rifNumber = rifData.rifNumber?.toString().trim();
+        if (rifNumber != null && rifNumber.isNotEmpty) {
+          // Formato típico: J-12345678-9, V-12345678-9, etc.
+          final rifRegex = RegExp(r'^[JGVEP]-\d{8}-\d$', caseSensitive: false);
+          final isValid = rifRegex.hasMatch(rifNumber);
+          debugPrint(
+              '🔎 Validación local RIF - número: $rifNumber, válido: $isValid');
+          _isRifValid = isValid;
+        } else {
+          debugPrint('🔎 Validación local RIF - número no encontrado');
+          _isRifValid = false;
+        }
       }
-      
+
       // Si ya tenemos ambas imágenes, llamar a Gemini
       if (_ciImage != null && _rifImage != null && !_geminiExtractionDone) {
         await _extractDataWithGemini();
@@ -195,7 +227,7 @@ class _KycOnboardingDocumentPageState
 
     try {
       debugPrint('🤖 KYC: Extrayendo datos con Gemini AI...');
-      
+
       final result = await _kycService.extractDocumentDataWithGemini(
         ciImage: _ciImage!,
         rifImage: _rifImage!,
@@ -204,7 +236,8 @@ class _KycOnboardingDocumentPageState
       );
 
       debugPrint('✅ KYC: Datos extraídos con Gemini: ${result['data']}');
-      debugPrint('📊 KYC: Comparación - CI coincide: ${result['comparison']?['ci_matched']}, RIF coincide: ${result['comparison']?['rif_matched']}');
+      debugPrint(
+          '📊 KYC: Comparación - CI coincide: ${result['comparison']?['ci_matched']}, RIF coincide: ${result['comparison']?['rif_matched']}');
 
       // Guardar datos finales (priorizando Gemini si no coinciden)
       final finalData = result['data'] as Map<String, dynamic>;
@@ -216,7 +249,8 @@ class _KycOnboardingDocumentPageState
           key: 'kyc_extracted_ci_data',
           value: jsonEncode(ciData),
         );
-        debugPrint('✅ KYC: Datos finales de CI guardados (fuente: ${result['source']})');
+        debugPrint(
+            '✅ KYC: Datos finales de CI guardados (fuente: ${result['source']})');
       }
 
       if (rifData != null) {
@@ -224,20 +258,23 @@ class _KycOnboardingDocumentPageState
           key: 'kyc_extracted_rif_data',
           value: jsonEncode(rifData),
         );
-        debugPrint('✅ KYC: Datos finales de RIF guardados (fuente: ${result['source']})');
+        debugPrint(
+            '✅ KYC: Datos finales de RIF guardados (fuente: ${result['source']})');
       }
 
-      // Mostrar mensaje al usuario si los datos no coincidieron
-      if (mounted && result['comparison'] != null) {
-        final ciMatched = result['comparison']['ci_matched'] as bool? ?? true;
-        final rifMatched = result['comparison']['rif_matched'] as bool? ?? true;
+      // Guardar resultado de comparación IA vs OCR para usarlo en la validación de avance
+      if (result['comparison'] != null) {
+        _ciMatchedByIa = result['comparison']['ci_matched'] as bool?;
+        _rifMatchedByIa = result['comparison']['rif_matched'] as bool?;
 
-        if (!ciMatched || !rifMatched) {
+        // Mostrar mensaje si la IA detecta inconsistencias
+        if (mounted &&
+            ((_ciMatchedByIa == false) || (_rifMatchedByIa == false))) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Los datos extraídos con IA difieren del OCR. Se usaron los datos de la IA. '
-                'Puedes corregirlos en los siguientes formularios.',
+                'Tus datos de CI o RIF no coinciden con lo detectado por la IA. '
+                'Revisa que las fotos sean claras y correspondan a tus documentos.',
               ),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 5),
@@ -253,7 +290,8 @@ class _KycOnboardingDocumentPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No se pudo extraer datos con IA. Se usarán los datos del OCR.'),
+            content: Text(
+                'No se pudo extraer datos con IA. Se usarán los datos del OCR.'),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 3),
           ),
@@ -278,7 +316,50 @@ class _KycOnboardingDocumentPageState
       );
       return false;
     }
-    // En el flujo de onboarding solo validamos que existan las fotos de CI y RIF.
+
+    // Si aún se está procesando OCR o IA, pedir al usuario que espere
+    if (_isProcessingOCR || _isExtractingWithGemini) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Estamos analizando tus documentos, espera unos segundos.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+
+    // Validación ligera local: número de CI / RIF con formato venezolano
+    if (_isCiValid == false || _isRifValid == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tus documentos no parecen una CI o RIF venezolanos válidos. '
+            'Asegúrate de que se vean completos y legibles y vuelve a tomar las fotos.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+
+    // Si la extracción con IA (Gemini) se completó y detecta que CI/RIF no coinciden,
+    // no permitir avanzar a la siguiente vista.
+    if (_geminiExtractionDone &&
+        ((_ciMatchedByIa == false) || (_rifMatchedByIa == false))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tus fotos de CI y RIF no pudieron ser validadas por la IA. '
+            'Vuelve a tomar las fotos asegurándote de que sean claras y del documento correcto.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+
+    // En el flujo de onboarding solo validamos que existan y pasen la validación básica.
     // La subida real al backend se hará más adelante cuando el perfil exista.
     return true;
   }
@@ -305,159 +386,166 @@ class _KycOnboardingDocumentPageState
                     minHeight: constraints.maxHeight - padding * 2,
                   ),
                   child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header compacto
-                  Text(
-                    'Verificación de documentos',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onBackground,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Fotografía tu CI y RIF',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onBackground.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header compacto
+                        Text(
+                          'Verificación de documentos',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onBackground,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Fotografía tu CI y RIF',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onBackground.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Solo aceptamos Cédula de Identidad venezolana y RIF emitidos en Venezuela.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onBackground.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
 
                         // Card única con CI y RIF (altura adaptada)
-                  SizedBox(
-                    height: isTablet ? 280 : 240,
-                    child: _buildUnifiedDocumentCard(
-                      context,
-                      cardHeight: isTablet ? 280 : 240,
-                    ),
-                  ),
+                        SizedBox(
+                          height: isTablet ? 280 : 240,
+                          child: _buildUnifiedDocumentCard(
+                            context,
+                            cardHeight: isTablet ? 280 : 240,
+                          ),
+                        ),
 
-                  const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                  // Indicador de procesamiento OCR (compacto)
-                  if (_isProcessingOCR)
-                    Container(
-                      height: 36,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colorScheme.primary,
+                        // Indicador de procesamiento OCR (compacto)
+                        if (_isProcessingOCR)
+                          Container(
+                            height: 36,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color:
+                                  colorScheme.primaryContainer.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Extrayendo datos...',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onPrimaryContainer,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Extrayendo datos...',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onPrimaryContainer,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
-                  // Indicador de subida (compacto)
-                  Consumer<KycProvider>(
-                    builder: (context, kyc, child) {
-                      if (kyc.isUploading) {
-                        return Container(
-                          height: 36,
+                        // Indicador de subida (compacto)
+                        Consumer<KycProvider>(
+                          builder: (context, kyc, child) {
+                            if (kyc.isUploading) {
+                              return Container(
+                                height: 36,
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
+                                decoration: BoxDecoration(
                                   color: colorScheme.primaryContainer
                                       .withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Subiendo...',
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Subiendo...',
                                         style:
                                             theme.textTheme.bodySmall?.copyWith(
-                                          color:
-                                              colorScheme.onPrimaryContainer,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                          color: colorScheme.onPrimaryContainer,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Instrucciones compactas
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceVariant.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Consejos:',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              _buildTipItem(
+                                context,
+                                'Superficie plana y buena iluminación',
+                                compact: true,
+                              ),
+                              _buildTipItem(
+                                context,
+                                'Sin sombras y datos legibles',
+                                compact: true,
                               ),
                             ],
                           ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Instrucciones compactas
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceVariant.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 16,
-                              color: colorScheme.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Consejos:',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        _buildTipItem(
-                          context,
-                          'Superficie plana y buena iluminación',
-                          compact: true,
-                        ),
-                        _buildTipItem(
-                          context,
-                          'Sin sombras y datos legibles',
-                          compact: true,
                         ),
                       ],
-                    ),
-                  ),
-                ],
                     ),
                   ),
                 ),
@@ -469,7 +557,8 @@ class _KycOnboardingDocumentPageState
     );
   }
 
-  Widget _buildUnifiedDocumentCard(BuildContext context, {required double cardHeight}) {
+  Widget _buildUnifiedDocumentCard(BuildContext context,
+      {required double cardHeight}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isTablet = MediaQuery.of(context).size.width > 600;
@@ -703,15 +792,23 @@ class _KycOnboardingDocumentPageState
                     ),
                   ),
                 ),
-                // Badge de completado
+                // Badge de completado (diseñado para reflejar validación básica del documento)
                 Positioned(
                   bottom: 8,
                   left: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
+                      color: (() {
+                        final isValidDoc =
+                            isCI ? (_isCiValid ?? true) : (_isRifValid ?? true);
+                        if (isValidDoc) {
+                          return colorScheme.primaryContainer;
+                        }
+                        return colorScheme.error.withOpacity(0.9);
+                      })(),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -724,13 +821,46 @@ class _KycOnboardingDocumentPageState
                           size: 14,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          label,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11,
-                          ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (() {
+                                final isValidDoc = isCI
+                                    ? (_isCiValid ?? true)
+                                    : (_isRifValid ?? true);
+                                return isValidDoc
+                                    ? 'Foto capturada'
+                                    : 'Documento no reconocido';
+                              })(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                            ),
+                            Text(
+                              (() {
+                                final isValidDoc = isCI
+                                    ? (_isCiValid ?? true)
+                                    : (_isRifValid ?? true);
+                                if (isValidDoc) {
+                                  return isCI
+                                      ? 'CI venezolana (formato válido)'
+                                      : 'RIF venezolano (formato válido)';
+                                }
+                                return isCI
+                                    ? 'Revisa que sea una Cédula venezolana legible'
+                                    : 'Revisa que sea un RIF venezolano legible';
+                              })(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onPrimaryContainer
+                                    .withOpacity(0.9),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -741,7 +871,8 @@ class _KycOnboardingDocumentPageState
     );
   }
 
-  Widget _buildTipItem(BuildContext context, String text, {bool compact = false}) {
+  Widget _buildTipItem(BuildContext context, String text,
+      {bool compact = false}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -799,20 +930,28 @@ class _CiFramePainter extends CustomPainter {
 
     // Esquinas
     // Superior izquierda
-    canvas.drawLine(rect.topLeft, rect.topLeft + const Offset(cornerLength, 0), paint);
-    canvas.drawLine(rect.topLeft, rect.topLeft + const Offset(0, cornerLength), paint);
+    canvas.drawLine(
+        rect.topLeft, rect.topLeft + const Offset(cornerLength, 0), paint);
+    canvas.drawLine(
+        rect.topLeft, rect.topLeft + const Offset(0, cornerLength), paint);
 
     // Superior derecha
-    canvas.drawLine(rect.topRight, rect.topRight + const Offset(-cornerLength, 0), paint);
-    canvas.drawLine(rect.topRight, rect.topRight + const Offset(0, cornerLength), paint);
+    canvas.drawLine(
+        rect.topRight, rect.topRight + const Offset(-cornerLength, 0), paint);
+    canvas.drawLine(
+        rect.topRight, rect.topRight + const Offset(0, cornerLength), paint);
 
     // Inferior izquierda
-    canvas.drawLine(rect.bottomLeft, rect.bottomLeft + const Offset(cornerLength, 0), paint);
-    canvas.drawLine(rect.bottomLeft, rect.bottomLeft + const Offset(0, -cornerLength), paint);
+    canvas.drawLine(rect.bottomLeft,
+        rect.bottomLeft + const Offset(cornerLength, 0), paint);
+    canvas.drawLine(rect.bottomLeft,
+        rect.bottomLeft + const Offset(0, -cornerLength), paint);
 
     // Inferior derecha
-    canvas.drawLine(rect.bottomRight, rect.bottomRight + const Offset(-cornerLength, 0), paint);
-    canvas.drawLine(rect.bottomRight, rect.bottomRight + const Offset(0, -cornerLength), paint);
+    canvas.drawLine(rect.bottomRight,
+        rect.bottomRight + const Offset(-cornerLength, 0), paint);
+    canvas.drawLine(rect.bottomRight,
+        rect.bottomRight + const Offset(0, -cornerLength), paint);
   }
 
   @override
