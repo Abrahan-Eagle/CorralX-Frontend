@@ -302,10 +302,10 @@ class LivenessDetectionService {
     }
 
     // Umbral unificado para todos los movimientos (en grados).
-    // Valor ligeramente más alto para hacer el liveness más tolerante en el MVP.
-    const unifiedThreshold = 8.0;
+    // Valor un poco más alto para exigir un movimiento más claro (mayor fidelidad).
+    const unifiedThreshold = 10.0;
     // Umbral para la otra dimensión (más permisivo para evitar falsos negativos).
-    const otherThreshold = 30.0;
+    const otherThreshold = 25.0;
 
     // Calcular progreso hacia la pose correcta (0.0 a 1.0)
     double calculateProgress() {
@@ -346,16 +346,25 @@ class LivenessDetectionService {
 
     switch (required) {
       case HeadPose.front:
-        final isValid = eulerY.abs() < unifiedThreshold && eulerZ.abs() < unifiedThreshold;
+        // Requerimos estar dentro del rango y un progreso razonablemente alto
+        final meetsAngles =
+            eulerY.abs() < unifiedThreshold && eulerZ.abs() < unifiedThreshold;
+        final isValid = meetsAngles && progress >= 0.8;
         return (isValid, progress);
       case HeadPose.up:
-        final isValid = eulerZ < -unifiedThreshold && eulerY.abs() < otherThreshold;
+        final meetsAngles =
+            eulerZ < -unifiedThreshold && eulerY.abs() < otherThreshold;
+        final isValid = meetsAngles && progress >= 0.8;
         return (isValid, progress);
       case HeadPose.down:
-        final isValid = eulerZ > unifiedThreshold && eulerY.abs() < otherThreshold;
+        final meetsAngles =
+            eulerZ > unifiedThreshold && eulerY.abs() < otherThreshold;
+        final isValid = meetsAngles && progress >= 0.8;
         return (isValid, progress);
       case HeadPose.left:
-        final isValid = eulerY > unifiedThreshold && eulerZ.abs() < otherThreshold;
+        final meetsAngles =
+            eulerY > unifiedThreshold && eulerZ.abs() < otherThreshold;
+        final isValid = meetsAngles && progress >= 0.85;
         if (!isValid) {
           _logger.d('❌ Left no válido - eulerY: $eulerY (necesita > $unifiedThreshold), eulerZ: $eulerZ, progreso: ${(progress * 100).toStringAsFixed(1)}%');
         } else {
@@ -363,7 +372,9 @@ class LivenessDetectionService {
         }
         return (isValid, progress);
       case HeadPose.right:
-        final isValid = eulerY < -unifiedThreshold && eulerZ.abs() < otherThreshold;
+        final meetsAngles =
+            eulerY < -unifiedThreshold && eulerZ.abs() < otherThreshold;
+        final isValid = meetsAngles && progress >= 0.85;
         if (!isValid) {
           _logger.d('❌ Right no válido - eulerY: $eulerY (necesita < -$unifiedThreshold), eulerZ: $eulerZ, progreso: ${(progress * 100).toStringAsFixed(1)}%');
         } else {
