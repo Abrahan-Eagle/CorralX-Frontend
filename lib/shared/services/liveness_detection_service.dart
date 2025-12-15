@@ -263,21 +263,27 @@ class LivenessDetectionService {
     // Umbrales para detectar movimientos (en grados) - más permisivos
     const threshold = 12.0;
 
-    // Priorizar rotación horizontal sobre vertical si ambas están presentes
-    // Rotación horizontal (eulerZ) - más importante para left/right
-    if (eulerZ.abs() > threshold) {
-      if (eulerZ > threshold) {
-        return HeadPose.right; // Cabeza hacia la derecha
-      } else if (eulerZ < -threshold) {
-        return HeadPose.left; // Cabeza hacia la izquierda
+    // IMPORTANTE:
+    // - En ML Kit, headEulerY ≈ giro (yaw) izquierda/derecha.
+    // - headEulerZ ≈ inclinación (roll) de la cabeza.
+    //
+    // Para el MVP nos interesa que LEFT/RIGHT respondan a "girar" la cabeza,
+    // no a inclinarla, por eso usamos principalmente eulerY.
+
+    // Giro horizontal (eulerY) - más importante para left/right
+    if (eulerY.abs() > threshold) {
+      if (eulerY > threshold) {
+        return HeadPose.left; // Cabeza girada hacia la izquierda (según convención de ML Kit)
+      } else if (eulerY < -threshold) {
+        return HeadPose.right; // Cabeza girada hacia la derecha
       }
     }
 
-    // Rotación vertical (eulerY) - solo si no hay rotación horizontal significativa
-    if (eulerY > threshold) {
-      return HeadPose.down; // Cabeza hacia abajo
-    } else if (eulerY < -threshold) {
-      return HeadPose.up; // Cabeza hacia arriba
+    // Inclinación (eulerZ) - se puede usar como referencia para up/down
+    if (eulerZ > threshold) {
+      return HeadPose.down; // Cabeza inclinada hacia un lado (abajo relativo a cámara)
+    } else if (eulerZ < -threshold) {
+      return HeadPose.up; // Cabeza inclinada hacia el otro lado (arriba relativo a cámara)
     }
 
     return HeadPose.front; // Frente (ángulos cercanos a 0)
@@ -295,43 +301,44 @@ class LivenessDetectionService {
       return (false, 0.0);
     }
 
-    // Umbral unificado para todos los movimientos (5°)
-    const unifiedThreshold = 5.0;
-    // Umbral para la otra dimensión (más permisivo para evitar falsos negativos)
-    const otherThreshold = 25.0;
+    // Umbral unificado para todos los movimientos (en grados).
+    // Valor ligeramente más alto para hacer el liveness más tolerante en el MVP.
+    const unifiedThreshold = 8.0;
+    // Umbral para la otra dimensión (más permisivo para evitar falsos negativos).
+    const otherThreshold = 30.0;
 
     // Calcular progreso hacia la pose correcta (0.0 a 1.0)
     double calculateProgress() {
       switch (required) {
         case HeadPose.front:
           // Progreso basado en qué tan cerca está de 0° en ambas dimensiones
-          final yProgress = (1.0 - (eulerY.abs() / unifiedThreshold)).clamp(0.0, 1.0);
-          final zProgress = (1.0 - (eulerZ.abs() / unifiedThreshold)).clamp(0.0, 1.0);
-          return (yProgress + zProgress) / 2.0;
+          final yawProgress = (1.0 - (eulerY.abs() / unifiedThreshold)).clamp(0.0, 1.0);
+          final rollProgress = (1.0 - (eulerZ.abs() / unifiedThreshold)).clamp(0.0, 1.0);
+          return (yawProgress + rollProgress) / 2.0;
         case HeadPose.up:
-          // Progreso basado en qué tan negativo es eulerY
-          if (eulerY >= 0) return 0.0; // No está mirando arriba
-          final yProgress = (eulerY.abs() / unifiedThreshold).clamp(0.0, 1.0);
-          final zProgress = (1.0 - (eulerZ.abs() / otherThreshold)).clamp(0.0, 1.0);
-          return (yProgress * 0.7 + zProgress * 0.3);
+          // Progreso basado en inclinación (roll negativo)
+          if (eulerZ >= 0) return 0.0; // No está inclinando hacia "arriba" relativo a cámara
+          final rollUpProgress = (eulerZ.abs() / unifiedThreshold).clamp(0.0, 1.0);
+          final yawCenterProgress = (1.0 - (eulerY.abs() / otherThreshold)).clamp(0.0, 1.0);
+          return (rollUpProgress * 0.7 + yawCenterProgress * 0.3);
         case HeadPose.down:
-          // Progreso basado en qué tan positivo es eulerY
-          if (eulerY <= 0) return 0.0; // No está mirando abajo
-          final yProgress = (eulerY / unifiedThreshold).clamp(0.0, 1.0);
-          final zProgress = (1.0 - (eulerZ.abs() / otherThreshold)).clamp(0.0, 1.0);
-          return (yProgress * 0.7 + zProgress * 0.3);
+          // Progreso basado en inclinación (roll positivo)
+          if (eulerZ <= 0) return 0.0; // No está inclinando hacia "abajo" relativo a cámara
+          final rollDownProgress = (eulerZ / unifiedThreshold).clamp(0.0, 1.0);
+          final yawCenterProgress = (1.0 - (eulerY.abs() / otherThreshold)).clamp(0.0, 1.0);
+          return (rollDownProgress * 0.7 + yawCenterProgress * 0.3);
         case HeadPose.left:
-          // Progreso basado en qué tan negativo es eulerZ
-          if (eulerZ >= 0) return 0.0; // No está girando a la izquierda
-          final zProgress = (eulerZ.abs() / unifiedThreshold).clamp(0.0, 1.0);
-          final yProgress = (1.0 - (eulerY.abs() / otherThreshold)).clamp(0.0, 1.0);
-          return (zProgress * 0.7 + yProgress * 0.3);
+          // Progreso basado en qué tan positivo es eulerY (giro a la izquierda)
+          if (eulerY <= 0) return 0.0; // No está girando a la izquierda
+          final yawLeftProgress = (eulerY / unifiedThreshold).clamp(0.0, 1.0);
+          final rollCenterProgress = (1.0 - (eulerZ.abs() / otherThreshold)).clamp(0.0, 1.0);
+          return (yawLeftProgress * 0.7 + rollCenterProgress * 0.3);
         case HeadPose.right:
-          // Progreso basado en qué tan positivo es eulerZ
-          if (eulerZ <= 0) return 0.0; // No está girando a la derecha
-          final zProgress = (eulerZ / unifiedThreshold).clamp(0.0, 1.0);
-          final yProgress = (1.0 - (eulerY.abs() / otherThreshold)).clamp(0.0, 1.0);
-          return (zProgress * 0.7 + yProgress * 0.3);
+          // Progreso basado en qué tan negativo es eulerY (giro a la derecha)
+          if (eulerY >= 0) return 0.0; // No está girando a la derecha
+          final yawRightProgress = (eulerY.abs() / unifiedThreshold).clamp(0.0, 1.0);
+          final rollCenterProgress = (1.0 - (eulerZ.abs() / otherThreshold)).clamp(0.0, 1.0);
+          return (yawRightProgress * 0.7 + rollCenterProgress * 0.3);
       }
     }
 
@@ -342,25 +349,25 @@ class LivenessDetectionService {
         final isValid = eulerY.abs() < unifiedThreshold && eulerZ.abs() < unifiedThreshold;
         return (isValid, progress);
       case HeadPose.up:
-        final isValid = eulerY < -unifiedThreshold && eulerZ.abs() < otherThreshold;
+        final isValid = eulerZ < -unifiedThreshold && eulerY.abs() < otherThreshold;
         return (isValid, progress);
       case HeadPose.down:
-        final isValid = eulerY > unifiedThreshold && eulerZ.abs() < otherThreshold;
+        final isValid = eulerZ > unifiedThreshold && eulerY.abs() < otherThreshold;
         return (isValid, progress);
       case HeadPose.left:
-        final isValid = eulerZ < -unifiedThreshold && eulerY.abs() < otherThreshold;
+        final isValid = eulerY > unifiedThreshold && eulerZ.abs() < otherThreshold;
         if (!isValid) {
-          _logger.d('❌ Left no válido - eulerZ: $eulerZ (necesita < -$unifiedThreshold), eulerY: $eulerY, progreso: ${(progress * 100).toStringAsFixed(1)}%');
+          _logger.d('❌ Left no válido - eulerY: $eulerY (necesita > $unifiedThreshold), eulerZ: $eulerZ, progreso: ${(progress * 100).toStringAsFixed(1)}%');
         } else {
-          _logger.d('✅ Left válido - eulerZ: $eulerZ, eulerY: $eulerY, progreso: ${(progress * 100).toStringAsFixed(1)}%');
+          _logger.d('✅ Left válido - eulerY: $eulerY, eulerZ: $eulerZ, progreso: ${(progress * 100).toStringAsFixed(1)}%');
         }
         return (isValid, progress);
       case HeadPose.right:
-        final isValid = eulerZ > unifiedThreshold && eulerY.abs() < otherThreshold;
+        final isValid = eulerY < -unifiedThreshold && eulerZ.abs() < otherThreshold;
         if (!isValid) {
-          _logger.d('❌ Right no válido - eulerZ: $eulerZ (necesita > $unifiedThreshold), eulerY: $eulerY, progreso: ${(progress * 100).toStringAsFixed(1)}%');
+          _logger.d('❌ Right no válido - eulerY: $eulerY (necesita < -$unifiedThreshold), eulerZ: $eulerZ, progreso: ${(progress * 100).toStringAsFixed(1)}%');
         } else {
-          _logger.d('✅ Right válido - eulerZ: $eulerZ, eulerY: $eulerY, progreso: ${(progress * 100).toStringAsFixed(1)}%');
+          _logger.d('✅ Right válido - eulerY: $eulerY, eulerZ: $eulerZ, progreso: ${(progress * 100).toStringAsFixed(1)}%');
         }
         return (isValid, progress);
     }
