@@ -1229,26 +1229,6 @@ class _KycOnboardingSelfiePageState extends State<KycOnboardingSelfiePage> {
             ),
           ),
         ),
-        // Instrucción actual
-        if (_isLivenessActive && _currentInstruction != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _currentInstruction!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
       ],
     );
   }

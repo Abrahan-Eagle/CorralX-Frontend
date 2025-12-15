@@ -305,159 +305,159 @@ class _KycOnboardingDocumentPageState
                     minHeight: constraints.maxHeight - padding * 2,
                   ),
                   child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header compacto
-                        Text(
-                          'Verificación de documentos',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onBackground,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Fotografía tu CI y RIF',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onBackground.withOpacity(0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header compacto
+                  Text(
+                    'Verificación de documentos',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onBackground,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Fotografía tu CI y RIF',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onBackground.withOpacity(0.8),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                         // Card única con CI y RIF (altura adaptada)
-                        SizedBox(
-                          height: isTablet ? 280 : 240,
-                          child: _buildUnifiedDocumentCard(
-                            context,
-                            cardHeight: isTablet ? 280 : 240,
-                          ),
-                        ),
+                  SizedBox(
+                    height: isTablet ? 280 : 240,
+                    child: _buildUnifiedDocumentCard(
+                      context,
+                      cardHeight: isTablet ? 280 : 240,
+                    ),
+                  ),
 
-                        const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                        // Indicador de procesamiento OCR (compacto)
-                        if (_isProcessingOCR)
-                          Container(
-                            height: 36,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.primary,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Extrayendo datos...',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onPrimaryContainer,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                  // Indicador de procesamiento OCR (compacto)
+                  if (_isProcessingOCR)
+                    Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colorScheme.primary,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Extrayendo datos...',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                        // Indicador de subida (compacto)
-                        Consumer<KycProvider>(
-                          builder: (context, kyc, child) {
-                            if (kyc.isUploading) {
-                              return Container(
-                                height: 36,
+                  // Indicador de subida (compacto)
+                  Consumer<KycProvider>(
+                    builder: (context, kyc, child) {
+                      if (kyc.isUploading) {
+                        return Container(
+                          height: 36,
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
+                          decoration: BoxDecoration(
                                   color: colorScheme.primaryContainer
                                       .withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.primary,
                                 ),
-                                child: Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: colorScheme.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Subiendo...',
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Subiendo...',
                                         style:
                                             theme.textTheme.bodySmall?.copyWith(
                                           color:
                                               colorScheme.onPrimaryContainer,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Instrucciones compactas
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 16,
-                                    color: colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Consejos:',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: colorScheme.onSurfaceVariant,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              _buildTipItem(
-                                context,
-                                'Superficie plana y buena iluminación',
-                                compact: true,
-                              ),
-                              _buildTipItem(
-                                context,
-                                'Sin sombras y datos legibles',
-                                compact: true,
                               ),
                             ],
                           ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Instrucciones compactas
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Consejos:',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        _buildTipItem(
+                          context,
+                          'Superficie plana y buena iluminación',
+                          compact: true,
+                        ),
+                        _buildTipItem(
+                          context,
+                          'Sin sombras y datos legibles',
+                          compact: true,
                         ),
                       ],
+                    ),
+                  ),
+                ],
                     ),
                   ),
                 ),
