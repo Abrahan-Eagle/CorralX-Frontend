@@ -72,28 +72,34 @@ class OnboardingPage1State extends State<OnboardingPage1> {
     try {
       const storage = FlutterSecureStorage();
       final ciDataJson = await storage.read(key: 'kyc_extracted_ci_data');
-      
+
       if (ciDataJson != null && ciDataJson.isNotEmpty) {
         final ciData = jsonDecode(ciDataJson) as Map<String, dynamic>;
-        
+
         debugPrint('📋 Datos CI del OCR recibidos: $ciData');
-        
+
         // Pre-llenar campos solo si están vacíos o tienen valores por defecto
-        if ((_firstNameController.text.isEmpty || _firstNameController.text.trim().isEmpty) && 
-            ciData['firstName'] != null && (ciData['firstName'] as String).isNotEmpty) {
+        if ((_firstNameController.text.isEmpty ||
+                _firstNameController.text.trim().isEmpty) &&
+            ciData['firstName'] != null &&
+            (ciData['firstName'] as String).isNotEmpty) {
           _firstNameController.text = (ciData['firstName'] as String).trim();
-          debugPrint('✅ Primer nombre pre-llenado: ${_firstNameController.text}');
+          debugPrint(
+              '✅ Primer nombre pre-llenado: ${_firstNameController.text}');
         }
-        
-        if ((_lastNameController.text.isEmpty || _lastNameController.text.trim().isEmpty) && 
-            ciData['lastName'] != null && (ciData['lastName'] as String).isNotEmpty) {
+
+        if ((_lastNameController.text.isEmpty ||
+                _lastNameController.text.trim().isEmpty) &&
+            ciData['lastName'] != null &&
+            (ciData['lastName'] as String).isNotEmpty) {
           _lastNameController.text = (ciData['lastName'] as String).trim();
           debugPrint('✅ Apellido pre-llenado: ${_lastNameController.text}');
         }
-        
+
         // Pre-llenar CI si está vacío o solo tiene 'V-'
-        if ((_ciController.text.isEmpty || _ciController.text == 'V-') && 
-            ciData['ciNumber'] != null && (ciData['ciNumber'] as String).isNotEmpty) {
+        if ((_ciController.text.isEmpty || _ciController.text == 'V-') &&
+            ciData['ciNumber'] != null &&
+            (ciData['ciNumber'] as String).isNotEmpty) {
           final ciNumber = (ciData['ciNumber'] as String).trim().toUpperCase();
           // Asegurar formato correcto V-12345678
           if (ciNumber.startsWith('V') || ciNumber.startsWith('E')) {
@@ -101,9 +107,10 @@ class OnboardingPage1State extends State<OnboardingPage1> {
             debugPrint('✅ CI pre-llenada: ${_ciController.text}');
           }
         }
-        
+
         // Pre-llenar fecha de nacimiento si está disponible
-        if (_dateOfBirthController.text.isEmpty && ciData['dateOfBirth'] != null) {
+        if (_dateOfBirthController.text.isEmpty &&
+            ciData['dateOfBirth'] != null) {
           final dateStr = (ciData['dateOfBirth'] as String).trim();
           // Formato esperado: DD/MM/YYYY
           try {
@@ -120,19 +127,19 @@ class OnboardingPage1State extends State<OnboardingPage1> {
             debugPrint('Error parseando fecha del OCR: $e');
           }
         }
-        
+
         // Pre-llenar sexo si está disponible (aunque no hay campo visible, se puede usar internamente)
         if (ciData['sex'] != null) {
           // Guardar para uso futuro si se necesita
           debugPrint('Sexo extraído del OCR: ${ciData['sex']}');
         }
-        
+
         if (mounted) {
           setState(() {
             _formKey.currentState?.validate();
           });
         }
-        
+
         debugPrint('✅ Datos CI del OCR cargados y pre-llenados');
       }
 
@@ -266,6 +273,17 @@ class OnboardingPage1State extends State<OnboardingPage1> {
         _selectedCity != null &&
         _selectedOperatorCode != null;
 
+    // ✅ Validar parroquia si el país es Venezuela
+    bool parroquiaValid = true;
+    if (_selectedCountry?.toLowerCase().contains('venezuela') == true) {
+      parroquiaValid =
+          _selectedParroquia != null && _selectedParroquia!.isNotEmpty;
+      if (!parroquiaValid) {
+        debugPrint(
+            '⚠️ isFormValid: Parroquia requerida para Venezuela pero no seleccionada');
+      }
+    }
+
     // Validar formato del teléfono EXACTAMENTE 7 dígitos
     bool phoneValid = false;
     if (_phoneController.text.trim().isNotEmpty) {
@@ -294,13 +312,60 @@ class OnboardingPage1State extends State<OnboardingPage1> {
       }
     }
 
-    return hasContent && phoneValid && dateValid;
+    final isValid = hasContent && phoneValid && dateValid && parroquiaValid;
+
+    // Debug para identificar qué campo falta
+    if (!isValid) {
+      debugPrint('❌ isFormValid: Formulario no válido');
+      debugPrint('  - hasContent: $hasContent');
+      debugPrint('  - phoneValid: $phoneValid');
+      debugPrint('  - dateValid: $dateValid');
+      debugPrint('  - parroquiaValid: $parroquiaValid');
+      debugPrint('  - _selectedCountry: $_selectedCountry');
+      debugPrint('  - _selectedState: $_selectedState');
+      debugPrint('  - _selectedCity: $_selectedCity');
+      debugPrint('  - _selectedParroquia: $_selectedParroquia');
+      debugPrint('  - _selectedOperatorCode: $_selectedOperatorCode');
+    }
+
+    return isValid;
   }
 
   // Método para validar el formulario en tiempo real
   void _validateForm() {
     setState(() {
       // Forzar rebuild para actualizar el estado del botón
+    });
+    // ✅ Notificar al padre (OnboardingScreen) que el formulario cambió
+    // Esto actualiza el estado del botón "Siguiente"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        // Buscar el State del OnboardingScreen usando visitAncestorElements
+        context.visitAncestorElements((element) {
+          if (element is StatefulElement) {
+            final state = element.state;
+            if (state != null) {
+              final dynamic parentState = state;
+              // Verificar si es OnboardingScreenState por nombre de tipo
+              final typeName = parentState.runtimeType.toString();
+              if (typeName.contains('OnboardingScreenState')) {
+                if (parentState.mounted) {
+                  // Llamar a setState en el padre para forzar actualización del botón
+                  parentState.setState(() {});
+                  debugPrint(
+                      '✅ ONBOARDING PAGE1: Notificado cambio al OnboardingScreen - Botón actualizado');
+                  return false; // Detener búsqueda
+                }
+              }
+            }
+          }
+          return true; // Continuar buscando
+        });
+      } catch (e) {
+        debugPrint(
+            '⚠️ ONBOARDING PAGE1: Error notificando cambio al padre: $e');
+      }
     });
   }
 
@@ -532,10 +597,29 @@ class OnboardingPage1State extends State<OnboardingPage1> {
 
       final parroquias = await _apiService.getParroquias(cityId);
       debugPrint('Parroquias recibidas: ${parroquias.length} parroquias');
+      debugPrint(
+          '🔍 ONBOARDING PAGE1: Parroquias cargadas: ${parroquias.map((p) => p['name']).toList()}');
+      debugPrint(
+          '🔍 ONBOARDING PAGE1: Parroquia seleccionada antes de actualizar lista: $_selectedParroquia');
 
       if (mounted) {
         setState(() {
           _parroquias = parroquias;
+          // ✅ Si ya había una parroquia seleccionada, verificar que siga existiendo en la nueva lista
+          if (_selectedParroquia != null && _selectedParroquia!.isNotEmpty) {
+            final parroquiaExiste =
+                parroquias.any((p) => p['name'] == _selectedParroquia);
+            if (!parroquiaExiste) {
+              debugPrint(
+                  '⚠️ ONBOARDING PAGE1: La parroquia seleccionada "$_selectedParroquia" no existe en la nueva lista, limpiando...');
+              _selectedParroquia = null;
+            } else {
+              debugPrint(
+                  '✅ ONBOARDING PAGE1: La parroquia seleccionada "$_selectedParroquia" existe en la nueva lista, manteniendo valor');
+            }
+          }
+          debugPrint(
+              '🔍 ONBOARDING PAGE1: Parroquia seleccionada después de actualizar lista: $_selectedParroquia');
         });
       }
     } catch (e) {
@@ -574,6 +658,10 @@ class OnboardingPage1State extends State<OnboardingPage1> {
         _selectedParroquia = null;
         // No limpiar las listas aquí, solo limpiar cuando se carguen nuevos datos
       });
+      // ✅ Validar formulario después de cambiar el país
+      _validateForm();
+      // ✅ Forzar validación del campo país
+      _formKey.currentState?.validate();
     }
     if (value != null) {
       // Cargar estados y limpiar listas solo cuando se empiece a cargar
@@ -598,6 +686,10 @@ class OnboardingPage1State extends State<OnboardingPage1> {
         _selectedParroquia = null;
         // No limpiar las listas aquí, solo limpiar cuando se carguen nuevos datos
       });
+      // ✅ Validar formulario después de cambiar el estado
+      _validateForm();
+      // ✅ Forzar validación del campo estado
+      _formKey.currentState?.validate();
     }
     if (value != null) {
       // Cargar ciudades y limpiar listas solo cuando se empiece a cargar
@@ -843,6 +935,16 @@ class OnboardingPage1State extends State<OnboardingPage1> {
       return null;
     }
 
+    // ✅ Validar parroquia si el país es Venezuela
+    if (_selectedCountry?.toLowerCase().contains('venezuela') == true) {
+      if (_selectedParroquia == null || _selectedParroquia!.isEmpty) {
+        _showErrorSnackBar('Por favor selecciona una parroquia');
+        debugPrint(
+            '❌ FRONTEND: Parroquia requerida para Venezuela pero no seleccionada');
+        return null;
+      }
+    }
+
     final operatorCode = _operatorCodes.firstWhere(
       (code) => code['code'] == _selectedOperatorCode,
       orElse: () => {},
@@ -897,7 +999,7 @@ class OnboardingPage1State extends State<OnboardingPage1> {
   // Restaurar datos desde un draft guardado
   Future<void> restoreFromDraft(PersonalInfoDraft draft) async {
     debugPrint('🔄 ONBOARDING PAGE1: Restaurando datos desde draft...');
-    
+
     try {
       // Restaurar campos básicos
       _firstNameController.text = draft.firstName;
@@ -905,7 +1007,7 @@ class OnboardingPage1State extends State<OnboardingPage1> {
       _phoneController.text = draft.phoneNumber;
       _addressController.text = draft.address;
       _ciController.text = draft.ciNumber;
-      
+
       // Restaurar fecha de nacimiento
       if (draft.dateOfBirthIso.isNotEmpty) {
         try {
@@ -939,13 +1041,13 @@ class OnboardingPage1State extends State<OnboardingPage1> {
         _onCountryChanged(draft.countryName);
         // Esperar a que se carguen los estados
         await Future.delayed(const Duration(milliseconds: 500));
-        
+
         // Restaurar estado y cargar ciudades
         if (draft.stateName != null && _states.isNotEmpty) {
           _onStateChanged(draft.stateName);
           // Esperar a que se carguen las ciudades
           await Future.delayed(const Duration(milliseconds: 500));
-          
+
           // Restaurar ciudad
           if (draft.cityName != null && _cities.isNotEmpty) {
             _selectedCity = draft.cityName;
@@ -1055,7 +1157,8 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                   Text(
                                     'Completa tu información personal. Los campos marcados con * son obligatorios.',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onBackground.withOpacity(0.7),
+                                      color: colorScheme.onBackground
+                                          .withOpacity(0.7),
                                     ),
                                   ),
                                 ],
@@ -1396,9 +1499,15 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                       setState(() {
                                         _selectedOperatorCode = value;
                                       });
+                                      // ✅ Validar formulario después de cambiar el código
+                                      _validateForm();
+                                      // ✅ Forzar validación del campo código
+                                      _formKey.currentState?.validate();
                                     }
                                   },
                                   validator: _validateOperatorCode,
+                                  autovalidateMode:
+                                      AutovalidateMode.onUserInteraction,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -1622,6 +1731,8 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                         }).toList(),
                                         onChanged: _onCountryChanged,
                                         validator: _validateCountry,
+                                        autovalidateMode:
+                                            AutovalidateMode.onUserInteraction,
                                       ),
                                     ),
                                     const SizedBox(width: 16),
@@ -1657,6 +1768,8 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                         }).toList(),
                                         onChanged: _onStateChanged,
                                         validator: _validateState,
+                                        autovalidateMode:
+                                            AutovalidateMode.onUserInteraction,
                                       ),
                                     ),
                                   ],
@@ -1694,6 +1807,8 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                       }).toList(),
                                       onChanged: _onCountryChanged,
                                       validator: _validateCountry,
+                                      autovalidateMode:
+                                          AutovalidateMode.onUserInteraction,
                                     ),
                                     const SizedBox(height: 16),
                                     DropdownButtonFormField<String>(
@@ -1726,6 +1841,8 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                       }).toList(),
                                       onChanged: _onStateChanged,
                                       validator: _validateState,
+                                      autovalidateMode:
+                                          AutovalidateMode.onUserInteraction,
                                     ),
                                   ],
                                 );
@@ -1764,11 +1881,17 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                   _selectedParroquia =
                                       null; // Limpiar parroquia seleccionada
                                 });
+                                // ✅ Validar formulario después de cambiar la ciudad
+                                _validateForm();
+                                // ✅ Forzar validación del campo ciudad
+                                _formKey.currentState?.validate();
                               }
                               // Cargar parroquias para la ciudad seleccionada
                               _loadParroquias();
                             },
                             validator: _validateCity,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                           ),
 
                           // Parroquia (solo para Venezuela)
@@ -1778,7 +1901,11 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                               true) ...[
                             const SizedBox(height: 16),
                             DropdownButtonFormField<String>(
-                              value: _selectedParroquia,
+                              // ✅ Asegurar que el valor exista en la lista, si no, usar null
+                              value: _parroquias.any(
+                                      (p) => p['name'] == _selectedParroquia)
+                                  ? _selectedParroquia
+                                  : null,
                               decoration: InputDecoration(
                                 labelText: 'Parroquia',
                                 border: OutlineInputBorder(
@@ -1799,10 +1926,27 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                 );
                               }).toList(),
                               onChanged: (value) {
+                                debugPrint(
+                                    '🔵 ONBOARDING PAGE1: Parroquia seleccionada: $value');
                                 if (mounted) {
                                   setState(() {
                                     _selectedParroquia = value;
+                                    debugPrint(
+                                        '✅ ONBOARDING PAGE1: _selectedParroquia actualizada a: $_selectedParroquia');
                                   });
+                                  // ✅ Validar formulario después de cambiar la parroquia
+                                  _validateForm();
+                                  // ✅ Forzar validación del campo parroquia
+                                  _formKey.currentState?.validate();
+                                  // ✅ Verificar estado después de setState
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    debugPrint(
+                                        '🔍 ONBOARDING PAGE1: Estado después de setState - _selectedParroquia: $_selectedParroquia');
+                                  });
+                                } else {
+                                  debugPrint(
+                                      '⚠️ ONBOARDING PAGE1: Widget no montado, no se puede actualizar _selectedParroquia');
                                 }
                               },
                               validator: _selectedCountry
@@ -1811,6 +1955,8 @@ class OnboardingPage1State extends State<OnboardingPage1> {
                                       true
                                   ? _validateParroquia
                                   : null,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                             ),
                           ],
                         ],

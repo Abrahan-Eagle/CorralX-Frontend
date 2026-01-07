@@ -552,23 +552,33 @@ class OnboardingScreenState extends State<OnboardingScreen> {
           }
 
         case 6: // OnboardingPage2 - Datos de Hacienda
+          debugPrint(
+              '📝 ONBOARDING SCREEN: Procesando página 6 (Datos de Hacienda)');
           final page2State = _page2Key.currentState;
           if (page2State == null) {
-            debugPrint('Error: No se pudo acceder al estado de la página 6');
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Error: No se pudo acceder al estado de la página 6');
             return false;
           }
 
+          debugPrint(
+              '🔍 ONBOARDING SCREEN: Verificando isFormValid de página 6...');
           if (!page2State.isFormValid) {
-            debugPrint('Formulario página 6 no válido - campos incompletos');
+            debugPrint(
+                '❌ ONBOARDING SCREEN: Formulario página 6 no válido - campos incompletos');
             return false;
           }
 
+          debugPrint(
+              '✅ ONBOARDING SCREEN: Formulario página 6 válido, recopilando datos...');
           final ranchDraft = await page2State.collectFormData();
           if (ranchDraft == null) {
             debugPrint(
                 '❌ ONBOARDING SCREEN: No se pudo recopilar la información de la página 6');
             return false;
           }
+          debugPrint(
+              '✅ ONBOARDING SCREEN: Datos recopilados de página 6, guardando...');
           _ranchInfoDraft = ranchDraft;
           // Guardar persistentemente
           try {

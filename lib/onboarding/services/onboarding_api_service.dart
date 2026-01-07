@@ -564,7 +564,7 @@ class OnboardingApiService {
         Uri.parse('$baseUrl/onboarding/$userId'),
         headers: _headers,
         body: json.encode({
-          'completed': true,
+          'completed_onboarding': true, // ✅ CORREGIDO: debe ser 'completed_onboarding' no 'completed'
         }),
       );
 

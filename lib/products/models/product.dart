@@ -305,13 +305,6 @@ class Ranch {
   });
 
   factory Ranch.fromJson(Map<String, dynamic> json) {
-    // Debug: verificar si address viene en el JSON
-    if (json['address'] != null) {
-      print('✅ Ranch.fromJson: address encontrado: ${json['address']}');
-    } else {
-      print('⚠️ Ranch.fromJson: address NO encontrado en JSON. Keys disponibles: ${json.keys.toList()}');
-    }
-    
     return Ranch(
       id: Product._parseInt(json['id']) ?? 0,
       profileId: Product._parseInt(json['profile_id']),

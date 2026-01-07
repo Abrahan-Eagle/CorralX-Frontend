@@ -360,13 +360,56 @@ class OnboardingPage2State extends State<OnboardingPage2> {
       rifValid = rifPattern.hasMatch(_rifController.text.trim().toUpperCase());
     }
 
-    return hasRequiredContent && rifValid;
+    final isValid = hasRequiredContent && rifValid;
+
+    // Debug para identificar qué campo falta
+    if (!isValid) {
+      debugPrint('❌ ONBOARDING PAGE2 isFormValid: Formulario no válido');
+      debugPrint('  - hasRequiredContent: $hasRequiredContent');
+      debugPrint('  - rifValid: $rifValid');
+      debugPrint('  - nombreHacienda: "${_haciendaNameController.text.trim()}"');
+      debugPrint('  - descripcion: "${_descriptionController.text.trim()}"');
+      debugPrint('  - rif: "${_rifController.text.trim()}"');
+    }
+
+    return isValid;
   }
 
   // Método para validar el formulario en tiempo real
   void _validateForm() {
     setState(() {
       // Forzar rebuild para actualizar el estado del botón
+    });
+    // ✅ Notificar al padre (OnboardingScreen) que el formulario cambió
+    // Esto actualiza el estado del botón "Siguiente"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        // Buscar el State del OnboardingScreen usando visitAncestorElements
+        context.visitAncestorElements((element) {
+          if (element is StatefulElement) {
+            final state = element.state;
+            if (state != null) {
+              final dynamic parentState = state;
+              // Verificar si es OnboardingScreenState por nombre de tipo
+              final typeName = parentState.runtimeType.toString();
+              if (typeName.contains('OnboardingScreenState')) {
+                if (parentState.mounted) {
+                  // Llamar a setState en el padre para forzar actualización del botón
+                  parentState.setState(() {});
+                  debugPrint(
+                      '✅ ONBOARDING PAGE2: Notificado cambio al OnboardingScreen - Botón actualizado');
+                  return false; // Detener búsqueda
+                }
+              }
+            }
+          }
+          return true; // Continuar buscando
+        });
+      } catch (e) {
+        debugPrint(
+            '⚠️ ONBOARDING PAGE2: Error notificando cambio al padre: $e');
+      }
     });
   }
 
@@ -637,13 +680,27 @@ class OnboardingPage2State extends State<OnboardingPage2> {
   }
 
   Future<RanchInfoDraft?> collectFormData() async {
+    debugPrint('🔵 ONBOARDING PAGE2: collectFormData() llamado');
+    debugPrint('  - nombreHacienda: "${_haciendaNameController.text.trim()}"');
+    debugPrint('  - razonSocial: "${_razonSocialController.text.trim()}"');
+    debugPrint('  - rif: "${_rifController.text.trim()}"');
+    debugPrint('  - descripcion: "${_descriptionController.text.trim()}"');
+    debugPrint('  - horario: "${_horarioController.text.trim()}"');
+    debugPrint('  - isFormValid: $isFormValid');
+
     if (!_formKey.currentState!.validate()) {
       debugPrint(
-          '❌ FRONTEND PAGE2: Formulario no válido - no se puede guardar');
+          '❌ FRONTEND PAGE2: Formulario no válido (validación fallida) - no se puede guardar');
       return null;
     }
 
-    return RanchInfoDraft(
+    if (!isFormValid) {
+      debugPrint(
+          '❌ FRONTEND PAGE2: Formulario no válido (isFormValid=false) - no se puede guardar');
+      return null;
+    }
+
+    final draft = RanchInfoDraft(
       name: _haciendaNameController.text.trim(),
       legalName: _razonSocialController.text.trim(),
       rif: _rifController.text.trim(),
@@ -652,6 +709,14 @@ class OnboardingPage2State extends State<OnboardingPage2> {
           ? _horarioController.text.trim()
           : null,
     );
+
+    debugPrint('✅ ONBOARDING PAGE2: RanchInfoDraft creado exitosamente');
+    debugPrint('  - draft.name: "${draft.name}"');
+    debugPrint('  - draft.legalName: "${draft.legalName}"');
+    debugPrint('  - draft.rif: "${draft.rif}"');
+    debugPrint('  - draft.description: "${draft.description}"');
+
+    return draft;
   }
 
   // Restaurar datos desde un draft guardado
