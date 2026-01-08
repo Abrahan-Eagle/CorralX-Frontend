@@ -1,6 +1,6 @@
 name: corralx
 description: "Corral X - Plataforma de Mercado Ganadero"
-version: 3.0.17+41
+version: 3.0.18+42
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
