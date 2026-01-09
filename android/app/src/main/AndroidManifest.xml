@@ -66,27 +66,43 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             
-            <!-- Deep Links para compartir productos y haciendas -->
+            <!-- App Links verificables (autoVerify) - Solo dominios verificables -->
+            <!-- Estos dominios requieren verificación con assetlinks.json -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Backend URL para deep links - Producción -->
+                <!-- Producción: corralx.com -->
                 <data android:scheme="https"
                       android:host="corralx.com"
-                      android:pathPrefix="/api/products" />
+                      android:pathPattern="/api/products/.*" />
                 <data android:scheme="https"
                       android:host="corralx.com"
-                      android:pathPrefix="/api/ranches" />
-                <!-- Backend URL para deep links - Desarrollo local -->
+                      android:pathPattern="/api/ranches/.*" />
+                <!-- Test: test.corralx.com -->
+                <data android:scheme="https"
+                      android:host="test.corralx.com"
+                      android:pathPattern="/api/products/.*" />
+                <data android:scheme="https"
+                      android:host="test.corralx.com"
+                      android:pathPattern="/api/ranches/.*" />
+            </intent-filter>
+            
+            <!-- Deep Links NO verificables - Solo para desarrollo local (IP local) -->
+            <!-- Este intent-filter NO tiene autoVerify porque las IPs no se pueden verificar -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Desarrollo local: 192.168.27.12:8000 -->
                 <data android:scheme="http"
                       android:host="192.168.27.12"
                       android:port="8000"
-                      android:pathPrefix="/api/products" />
+                      android:pathPattern="/api/products/.*" />
                 <data android:scheme="http"
                       android:host="192.168.27.12"
                       android:port="8000"
-                      android:pathPrefix="/api/ranches" />
+                      android:pathPattern="/api/ranches/.*" />
             </intent-filter>
             
             <!-- App Links para URLs personalizadas -->

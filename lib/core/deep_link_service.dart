@@ -45,10 +45,12 @@ class DeepLinkService {
     print('🔍 Path procesado: $path');
 
     // Verificar si la URL es del dominio configurado (HTTP o HTTPS)
-    // Usa variables de entorno desde AppConfig
+    // Soporta los 3 entornos: corralx.com, test.corralx.com, y 192.168.27.12:8000
     if ((uri.scheme == 'https' || uri.scheme == 'http') &&
-        (uri.host.contains(AppConfig.appDomain) ||
-            uri.host.contains(AppConfig.appDomainLocal) ||
+        (uri.host == 'corralx.com' ||
+            uri.host == 'test.corralx.com' ||
+            uri.host == AppConfig.appDomain ||
+            uri.host == AppConfig.appDomainLocal ||
             uri.host.contains('corralx'))) {
       // Soporta /product/, /products/, /api/product/, y /api/products/
       if (path.startsWith('/product/') ||
@@ -56,7 +58,7 @@ class DeepLinkService {
           path.startsWith('/api/product/') ||
           path.startsWith('/api/products/')) {
         final productId = int.tryParse(path.split('/').last);
-        print('🔍 Product ID extraído (HTTPS): $productId');
+        print('🔍 Product ID extraído (HTTP/HTTPS): $productId');
         return productId;
       }
     }
