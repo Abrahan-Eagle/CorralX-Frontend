@@ -3,7 +3,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.example.zonix",
+      "package_name": "com.corralx.app",
       "sha256_cert_fingerprints": [
         "10:CF:23:0F:2E:E8:E5:9D:26:48:DD:39:8F:30:76:A2:73:1C:21:F0:32:A7:D0:F8:39:4A:0C:9D:DA:2C:47:20"
       ]
