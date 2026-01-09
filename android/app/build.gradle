@@ -55,6 +55,13 @@ android {
         }
     }
     
+    // Configuración de alineación de biblioteca nativa de 16 KB para compatibilidad con dispositivos modernos
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+    
     signingConfigs {
         debug {
             // Usa el mismo keystore de producción para debug y release (un solo SHA-1)
@@ -140,6 +147,9 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:34.3.0')
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.firebase:firebase-analytics'
+
+    // AndroidX Core para edge-to-edge display (API moderna)
+    implementation 'androidx.core:core-ktx:1.15.0'
 
     // Aquí puedes agregar otras dependencias necesarias para tu proyecto
 
